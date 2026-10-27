@@ -1,0 +1,52 @@
+/* Properties of named styles: the only presentation a game may ask for. Shared by the text box and full-screen text. */
+.style-italic {
+  font-style: italic;
+}
+
+.style-bold {
+  font-weight: 700;
+}
+
+.style-small {
+  font-size: 0.82em;
+}
+
+/* Modest, so that the two lines the page was cut for still fit. */
+.style-large {
+  font-size: 1.15em;
+}
+
+.style-grey {
+  color: #9aa3b2;
+}
+
+.style-red {
+  color: #ff7676;
+}
+
+.style-blue {
+  color: #7cc4ff;
+}
+
+.style-green {
+  color: #7ee0a1;
+}
+
+.style-gold {
+  color: #f2c94c;
+}
+
+.style-shaking {
+  display: inline-block;
+  animation: shaking 0.25s linear infinite;
+}
+
+@keyframes shaking {
+  25% {
+    transform: translate(1px, -1px);
+  }
+
+  75% {
+    transform: translate(-1px, 1px);
+  }
+}

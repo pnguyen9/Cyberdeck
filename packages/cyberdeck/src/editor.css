@@ -1,0 +1,139 @@
+/* Controls shared by the editor's screens. */
+
+.editor-page {
+  box-sizing: border-box;
+  max-width: 1120px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  font: 16px/1.5 system-ui, sans-serif;
+  color: #e6e9ef;
+}
+
+.editor-page h1 {
+  margin: 0;
+  font-size: 28px;
+  color: #9eeaff;
+}
+
+.section-title {
+  margin: 24px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7b8597;
+}
+
+.button {
+  padding: 8px 16px;
+  border: 1px solid #2c3442;
+  border-radius: 6px;
+  background: #11151d;
+  font: inherit;
+  color: #e6e9ef;
+  cursor: pointer;
+}
+
+.button.primary {
+  border-color: #9eeaff;
+  background: #0e2a36;
+  color: #9eeaff;
+  font-weight: 600;
+}
+
+.button.danger {
+  border-color: #f28b82;
+  color: #f28b82;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.button.small {
+  padding: 4px 10px;
+  font-size: 14px;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: #7b8597;
+  cursor: pointer;
+}
+
+.link-button:hover,
+.link-button:focus-visible {
+  color: #9eeaff;
+}
+
+.link-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.text-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #2c3442;
+  border-radius: 6px;
+  background: #11151d;
+  font: inherit;
+  color: #e6e9ef;
+}
+
+textarea.text-input {
+  resize: vertical;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field > span {
+  font-size: 14px;
+  color: #a3acbb;
+}
+
+.file-button {
+  position: relative;
+  display: inline-block;
+}
+
+.file-button input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-button:focus-within {
+  outline: 2px solid #9eeaff;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.muted {
+  color: #7b8597;
+}
+
+.message {
+  color: #a3e4b0;
+}
+
+.error {
+  color: #f28b82;
+}
+
+.download {
+  color: #a3e4b0;
+  overflow-wrap: anywhere;
+}

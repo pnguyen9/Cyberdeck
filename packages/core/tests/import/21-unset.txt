@@ -1,0 +1,9 @@
+[decision multi: Clues = Letter | Key]
+[set: Clues = Key]
+She took the key.
+[unset: Clues = Key]
+The key fell into the well.
+[unset: Clues]
+She forgot everything.
+[unset: Clues =]
+[unset:]

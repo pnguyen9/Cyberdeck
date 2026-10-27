@@ -1,0 +1,8 @@
+[decision multi: Visited = Library | Park]
+[choice: Where]
+> The library = Library [if: Visited is not Library]
+> [if: Visited is not Park] The park = Park
+> Go home = Home
+[choice: Mood]
+> Smile [if: Visited is Library]
+> Frown [if: Broken condition]

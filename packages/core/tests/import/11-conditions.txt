@@ -1,0 +1,12 @@
+[choice: Answer]
+> Accept
+> Refuse
+[if: Answer is A]
+— Marie: Really?!
+[else if: Answer is not B and Mood is Happy or Mood is Sad]
+— Marie: Hm.
+[else]
+[marie: sad]
+[end]
+[bg: rooftop]
+The wind was cold.

@@ -1,0 +1,13 @@
+> Orphan option
+[else]
+[end]
+[choice]
+[choice: Empty]
+Text after empty choice. [if: X is Y]
+[if: Broken condition]
+[end]
+[if: X is Y]
+Never closed.
+[jump: Rooftop]
+[else]
+[else]

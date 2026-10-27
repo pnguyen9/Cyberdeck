@@ -1,0 +1,10 @@
+[if: not remembered The ghost's name]
+Who are you?
+[else]
+Hello again, Mira.
+[end]
+[remember: The ghost's name]
+[if: seen ending Departure or Answer is Yes and remembered The ghost's name]
+You have done this before.
+[end]
+[remember]

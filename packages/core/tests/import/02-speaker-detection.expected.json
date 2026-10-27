@@ -1,0 +1,108 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 1,
+          "kind": "dialogue",
+          "speaker": "Old Marie",
+          "text": "Back in my day...",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 2,
+          "kind": "dialogue",
+          "speaker": "MARIE",
+          "text": "Stop shouting.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 3,
+          "kind": "dialogue",
+          "speaker": "Marie",
+          "text": "Je suis là.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 4,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Marie: No dash, so narration.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 5,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Note to self: lowercase words mean narration.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 6,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Il dit : « Viens. »",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 7,
+          "kind": "narration",
+          "speaker": null,
+          "text": "• Bullet from a Word list.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 8,
+          "kind": "narration",
+          "speaker": null,
+          "text": "-5 degrees outside.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 9,
+          "kind": "dialogue",
+          "speaker": "???",
+          "text": "Who goes there?",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": [
+    {
+      "severity": "warning",
+      "code": "speakerWithoutDash",
+      "line": 4,
+      "subject": "Marie"
+    },
+    {
+      "severity": "warning",
+      "code": "dashWithoutSpeaker",
+      "line": 7
+    }
+  ]
+}

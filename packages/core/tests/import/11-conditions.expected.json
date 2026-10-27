@@ -1,0 +1,64 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "choice",
+          "sourceLine": 1,
+          "decision": "Answer",
+          "options": [
+            { "sourceLine": 2, "text": "Accept", "value": "A" },
+            { "sourceLine": 3, "text": "Refuse", "value": "B" }
+          ]
+        },
+        {
+          "type": "condition",
+          "sourceLine": 4,
+          "branches": [
+            {
+              "sourceLine": 4,
+              "condition": { "type": "is", "decision": "Answer", "value": "A", "negated": false },
+              "nodes": [
+                { "type": "page", "sourceLine": 5, "kind": "dialogue", "speaker": "Marie", "text": "Really?!", "directivesBefore": [], "inlineDirectives": [] }
+              ]
+            },
+            {
+              "sourceLine": 6,
+              "condition": {
+                "type": "or",
+                "conditions": [
+                  {
+                    "type": "and",
+                    "conditions": [
+                      { "type": "is", "decision": "Answer", "value": "B", "negated": true },
+                      { "type": "is", "decision": "Mood", "value": "Happy", "negated": false }
+                    ]
+                  },
+                  { "type": "is", "decision": "Mood", "value": "Sad", "negated": false }
+                ]
+              },
+              "nodes": [
+                { "type": "page", "sourceLine": 7, "kind": "dialogue", "speaker": "Marie", "text": "Hm.", "directivesBefore": [], "inlineDirectives": [] }
+              ]
+            },
+            {
+              "sourceLine": 8,
+              "condition": null,
+              "nodes": [
+                { "type": "stage", "sourceLine": 9, "directives": [{ "name": "marie", "arguments": ["sad"] }] }
+              ]
+            }
+          ]
+        },
+        { "type": "page", "sourceLine": 12, "kind": "narration", "speaker": null, "text": "The wind was cold.", "directivesBefore": [{ "name": "bg", "arguments": ["rooftop"] }], "inlineDirectives": [] }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": []
+}

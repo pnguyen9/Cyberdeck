@@ -1,0 +1,21 @@
+{
+  "name": "@cyberdeck/desktop",
+  "version": "1.0.0",
+  "license": "Unlicense",
+  "private": true,
+  "description": "What the desktop builds of Cyberdeck and Datajack share: a hardened Electron window, checked channels, safe file writing, packaging",
+  "type": "module",
+  "exports": {
+    "./files": "./src/files.ts",
+    "./app": "./src/secureApp.ts",
+    "./preload": "./src/preloadBridge.ts",
+    "./invoke": "./src/invoke.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "6.0.3"
+  }
+}

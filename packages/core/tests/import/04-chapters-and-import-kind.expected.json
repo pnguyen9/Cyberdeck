@@ -1,0 +1,46 @@
+{
+  "kind": "story",
+  "decisions": [],
+  "chapters": [
+    {
+      "title": "Chapter 1 — The Classroom",
+      "sourceLine": 2,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 3,
+          "kind": "narration",
+          "speaker": null,
+          "text": "The classroom was empty.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    },
+    {
+      "title": "Chapter 2 — Rooftop",
+      "sourceLine": 4,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 6,
+          "kind": "narration",
+          "speaker": null,
+          "text": "The wind was cold.",
+          "directivesBefore": [
+            {
+              "name": "bg",
+              "arguments": [
+                "rooftop"
+              ]
+            }
+          ],
+          "inlineDirectives": []
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": []
+}

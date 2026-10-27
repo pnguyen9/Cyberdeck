@@ -1,0 +1,106 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": "Prologue",
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "choice",
+          "sourceLine": 2,
+          "decision": "Route",
+          "options": [
+            {
+              "sourceLine": 3,
+              "text": "Follow Marie",
+              "value": "Marie"
+            },
+            {
+              "sourceLine": 4,
+              "text": "Follow Jules",
+              "value": "Jules"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Marie's route",
+      "sourceLine": 5,
+      "condition": {
+        "type": "is",
+        "decision": "Route",
+        "value": "Marie",
+        "negated": false
+      },
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 7,
+          "kind": "narration",
+          "speaker": null,
+          "text": "The library.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    },
+    {
+      "title": "Jules's route",
+      "sourceLine": 8,
+      "condition": {
+        "type": "is",
+        "decision": "Route",
+        "value": "Jules",
+        "negated": false
+      },
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 11,
+          "kind": "narration",
+          "speaker": null,
+          "text": "The rooftop.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [
+    {
+      "title": "Aside",
+      "sourceLine": 13,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 15,
+          "kind": "narration",
+          "speaker": null,
+          "text": "A whisper.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    }
+  ],
+  "problems": [
+    {
+      "severity": "error",
+      "code": "onlyIfMisplaced",
+      "line": 10
+    },
+    {
+      "severity": "error",
+      "code": "onlyIfMisplaced",
+      "line": 12
+    },
+    {
+      "severity": "error",
+      "code": "onlyIfMisplaced",
+      "line": 14
+    }
+  ]
+}

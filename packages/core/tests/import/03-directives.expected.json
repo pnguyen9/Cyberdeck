@@ -1,0 +1,103 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 4,
+          "kind": "dialogue",
+          "speaker": "Marie",
+          "text": "You came after all.",
+          "directivesBefore": [
+            {
+              "name": "bg",
+              "arguments": [
+                "classroom_evening"
+              ]
+            },
+            {
+              "name": "music",
+              "arguments": [
+                "calm"
+              ]
+            },
+            {
+              "name": "enter",
+              "arguments": [
+                "marie",
+                "left",
+                "smile"
+              ]
+            }
+          ],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 6,
+          "kind": "narration",
+          "speaker": null,
+          "text": "The wind was cold.",
+          "directivesBefore": [
+            {
+              "name": "transition",
+              "arguments": [
+                "fade"
+              ]
+            },
+            {
+              "name": "bg",
+              "arguments": [
+                "rooftop"
+              ]
+            }
+          ],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 7,
+          "kind": "dialogue",
+          "speaker": "Marie",
+          "text": "Wait, you mean the letter was yours?",
+          "directivesBefore": [],
+          "inlineDirectives": [
+            {
+              "offset": 15,
+              "name": "marie",
+              "arguments": [
+                "surprised"
+              ]
+            },
+            {
+              "offset": 36,
+              "name": "marie",
+              "arguments": [
+                "panicked"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "stage",
+          "sourceLine": 8,
+          "directives": [
+            {
+              "name": "transition",
+              "arguments": [
+                "fade"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": []
+}

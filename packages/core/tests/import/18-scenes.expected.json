@@ -1,0 +1,175 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": "Hallway",
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "choice",
+          "sourceLine": 2,
+          "decision": "Door",
+          "options": [
+            {
+              "sourceLine": 3,
+              "text": "Open it",
+              "value": "Open"
+            },
+            {
+              "sourceLine": 4,
+              "text": "Leave",
+              "value": "Leave"
+            }
+          ]
+        },
+        {
+          "type": "condition",
+          "sourceLine": 5,
+          "branches": [
+            {
+              "sourceLine": 5,
+              "condition": {
+                "type": "is",
+                "decision": "Door",
+                "value": "Open",
+                "negated": false
+              },
+              "nodes": [
+                {
+                  "type": "play",
+                  "sourceLine": 6,
+                  "scene": "Caught"
+                },
+                {
+                  "type": "page",
+                  "sourceLine": 7,
+                  "kind": "narration",
+                  "speaker": null,
+                  "text": "Never read.",
+                  "directivesBefore": [],
+                  "inlineDirectives": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "play",
+          "sourceLine": 9,
+          "scene": "Small talk"
+        },
+        {
+          "type": "page",
+          "sourceLine": 10,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Back in the hallway.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "play",
+          "sourceLine": 11,
+          "scene": "Nowhere"
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [
+    {
+      "title": "Caught",
+      "sourceLine": 12,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 13,
+          "kind": "dialogue",
+          "speaker": "Guard",
+          "text": "Stop right there.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "ending",
+          "sourceLine": 14,
+          "name": "Caught"
+        }
+      ]
+    },
+    {
+      "title": "Small talk",
+      "sourceLine": 15,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 16,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Nice weather.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "play",
+          "sourceLine": 17,
+          "scene": "Echo"
+        }
+      ]
+    },
+    {
+      "title": "Echo",
+      "sourceLine": 18,
+      "nodes": [
+        {
+          "type": "play",
+          "sourceLine": 19,
+          "scene": "Small talk"
+        }
+      ]
+    },
+    {
+      "title": "",
+      "sourceLine": 20,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 21,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Nameless.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    },
+    {
+      "title": "caught",
+      "sourceLine": 22,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 23,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Twice.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    }
+  ],
+  "problems": [
+    {
+      "severity": "warning",
+      "code": "unreachable",
+      "line": 7
+    },
+    {
+      "severity": "error",
+      "code": "missingSceneName",
+      "line": 20
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 1,
+          "kind": "dialogue",
+          "speaker": "Marie",
+          "text": "I read your letter again last night.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 1,
+          "kind": "dialogue",
+          "speaker": "Marie",
+          "text": "Then I found the second one, hidden under the first.",
+          "directivesBefore": [],
+          "inlineDirectives": [
+            {
+              "offset": 0,
+              "name": "marie",
+              "arguments": [
+                "surprised"
+              ]
+            },
+            {
+              "offset": 52,
+              "name": "marie",
+              "arguments": [
+                "panicked"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": []
+}

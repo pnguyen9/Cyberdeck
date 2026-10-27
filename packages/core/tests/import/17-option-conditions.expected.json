@@ -1,0 +1,98 @@
+{
+  "kind": null,
+  "decisions": [
+    {
+      "sourceLine": 1,
+      "name": "Visited",
+      "values": [
+        "Library",
+        "Park"
+      ],
+      "multiple": true
+    }
+  ],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 2,
+      "nodes": [
+        {
+          "type": "choice",
+          "sourceLine": 2,
+          "decision": "Where",
+          "options": [
+            {
+              "sourceLine": 3,
+              "text": "The library",
+              "value": "Library",
+              "condition": {
+                "type": "is",
+                "decision": "Visited",
+                "value": "Library",
+                "negated": true
+              }
+            },
+            {
+              "sourceLine": 4,
+              "text": "The park",
+              "value": "Park",
+              "condition": {
+                "type": "is",
+                "decision": "Visited",
+                "value": "Park",
+                "negated": true
+              }
+            },
+            {
+              "sourceLine": 5,
+              "text": "Go home",
+              "value": "Home"
+            }
+          ]
+        },
+        {
+          "type": "choice",
+          "sourceLine": 6,
+          "decision": "Mood",
+          "options": [
+            {
+              "sourceLine": 7,
+              "text": "Smile",
+              "value": "A",
+              "condition": {
+                "type": "is",
+                "decision": "Visited",
+                "value": "Library",
+                "negated": false
+              }
+            },
+            {
+              "sourceLine": 8,
+              "text": "Frown",
+              "value": "B",
+              "condition": {
+                "type": "invalid",
+                "text": "Broken condition"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": [
+    {
+      "severity": "warning",
+      "code": "everyOptionConditional",
+      "line": 6
+    },
+    {
+      "severity": "error",
+      "code": "invalidCondition",
+      "line": 8,
+      "subject": "Broken condition"
+    }
+  ]
+}

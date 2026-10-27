@@ -1,0 +1,63 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "condition",
+          "sourceLine": 1,
+          "branches": [
+            {
+              "sourceLine": 1,
+              "condition": { "type": "remembered", "memory": "The ghost's name", "negated": true },
+              "nodes": [
+                { "type": "page", "sourceLine": 2, "kind": "narration", "speaker": null, "text": "Who are you?", "directivesBefore": [], "inlineDirectives": [] }
+              ]
+            },
+            {
+              "sourceLine": 3,
+              "condition": null,
+              "nodes": [
+                { "type": "page", "sourceLine": 4, "kind": "narration", "speaker": null, "text": "Hello again, Mira.", "directivesBefore": [], "inlineDirectives": [] }
+              ]
+            }
+          ]
+        },
+        { "type": "remember", "sourceLine": 6, "name": "The ghost's name" },
+        {
+          "type": "condition",
+          "sourceLine": 7,
+          "branches": [
+            {
+              "sourceLine": 7,
+              "condition": {
+                "type": "or",
+                "conditions": [
+                  { "type": "endingSeen", "ending": "Departure", "negated": false },
+                  {
+                    "type": "and",
+                    "conditions": [
+                      { "type": "is", "decision": "Answer", "value": "Yes", "negated": false },
+                      { "type": "remembered", "memory": "The ghost's name", "negated": false }
+                    ]
+                  }
+                ]
+              },
+              "nodes": [
+                { "type": "page", "sourceLine": 8, "kind": "narration", "speaker": null, "text": "You have done this before.", "directivesBefore": [], "inlineDirectives": [] }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": [
+    { "severity": "error", "code": "missingMemoryName", "line": 10 }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "kind": null,
+  "decisions": [],
+  "styles": [
+    {
+      "sourceLine": 1,
+      "name": "Whisper",
+      "properties": [
+        "italic",
+        "small",
+        "grey"
+      ]
+    }
+  ],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 2,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 2,
+          "kind": "dialogue",
+          "speaker": "Marie",
+          "text": "Don't tell anyone.",
+          "directivesBefore": [],
+          "inlineDirectives": [],
+          "styles": [
+            {
+              "start": 0,
+              "end": 18,
+              "style": "whisper"
+            }
+          ]
+        },
+        {
+          "type": "page",
+          "sourceLine": 3,
+          "kind": "narration",
+          "speaker": null,
+          "text": "It was very quiet, and nobody heard.",
+          "directivesBefore": [],
+          "inlineDirectives": [],
+          "styles": [
+            {
+              "start": 7,
+              "end": 11,
+              "style": "bold"
+            },
+            {
+              "start": 23,
+              "end": 36,
+              "style": "italic"
+            }
+          ]
+        },
+        {
+          "type": "page",
+          "sourceLine": 6,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Plain.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    }
+  ],
+  "scenes": [],
+  "problems": [
+    {
+      "severity": "error",
+      "code": "invalidStyle",
+      "line": 4,
+      "subject": "huge"
+    },
+    {
+      "severity": "error",
+      "code": "styleWithoutText",
+      "line": 5
+    }
+  ]
+}

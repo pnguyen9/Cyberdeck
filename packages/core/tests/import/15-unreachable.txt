@@ -1,0 +1,19 @@
+# One
+[choice: Door]
+> Open it
+> Walk away
+[if: Door is B]
+[ending: Short]
+[end]
+Read when the door was opened.
+[if: Door is A]
+The room was empty.
+[ending: The Empty Room]
+[else]
+You went home.
+[ending: Home]
+[end]
+Nobody reads this.
+Nor this.
+# Two
+Still nobody.

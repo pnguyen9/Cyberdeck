@@ -1,0 +1,6 @@
+[import: Story]
+# Chapter 1 — The Classroom
+The classroom was empty.
+# Chapter 2 — Rooftop
+[bg: rooftop]
+The wind was cold.

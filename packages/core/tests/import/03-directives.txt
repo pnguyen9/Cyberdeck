@@ -1,0 +1,8 @@
+[bg: classroom_evening] [music: calm]
+
+[enter: marie left smile]
+— Marie: You came after all.
+[transition: fade]
+[bg: rooftop] The wind was cold.
+— Marie: Wait, you mean [marie: surprised] the letter was yours? [marie: panicked]
+[transition: fade]

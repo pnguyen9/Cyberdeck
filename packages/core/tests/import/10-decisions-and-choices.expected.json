@@ -1,0 +1,30 @@
+{
+  "kind": null,
+  "decisions": [
+    { "sourceLine": 1, "name": "Confession", "values": ["Accept", "Refuse", "Ignore"], "multiple": false },
+    { "sourceLine": 2, "name": "Clues", "values": ["Letter", "Key", "Photo"], "multiple": true }
+  ],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 3,
+      "nodes": [
+        { "type": "page", "sourceLine": 3, "kind": "dialogue", "speaker": "Marie", "text": "So... what's your answer?", "directivesBefore": [], "inlineDirectives": [] },
+        {
+          "type": "choice",
+          "sourceLine": 4,
+          "decision": "Confession",
+          "options": [
+            { "sourceLine": 5, "text": "Yes, I'll go out with you.", "value": "Accept" },
+            { "sourceLine": 6, "text": "I'm sorry...", "value": "Refuse" },
+            { "sourceLine": 8, "text": "(Say nothing)", "value": "Ignore" }
+          ]
+        },
+        { "type": "set", "sourceLine": 9, "decision": "Clues", "value": "Letter" }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": []
+}

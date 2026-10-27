@@ -1,0 +1,42 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 1,
+          "kind": "narration",
+          "speaker": null,
+          "text": "The rain had not stopped for three days.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 1,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Every street in the district was flooded.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 1,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Nobody remembered when the sun had last shown itself.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": []
+}

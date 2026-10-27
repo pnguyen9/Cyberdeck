@@ -1,0 +1,23 @@
+# Hallway
+[choice: Door]
+> Open it = Open
+> Leave = Leave
+[if: Door is Open]
+[play: Caught]
+Never read.
+[end]
+[play: Small talk]
+Back in the hallway.
+[play: Nowhere]
+# Scene: Caught
+— Guard: Stop right there.
+[ending: Caught]
+# Scene: Small talk
+Nice weather.
+[play: Echo]
+# Scene: Echo
+[play: Small talk]
+# Scene:
+Nameless.
+# scene: caught
+Twice.

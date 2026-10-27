@@ -1,0 +1,11 @@
+[choice: Door]
+> Open it
+> Walk away
+[if: Door is A]
+The room was empty.
+[ending: The Empty Room]
+[end]
+[bg: street]
+[ending]
+You went home.
+[ending: Home]

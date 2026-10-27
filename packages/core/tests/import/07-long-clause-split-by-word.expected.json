@@ -1,0 +1,33 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 1,
+          "kind": "narration",
+          "speaker": null,
+          "text": "The endless grey corridor stretched on and on beneath flickering lights that",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 1,
+          "kind": "narration",
+          "speaker": null,
+          "text": "hummed like distant insects in the dark",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": []
+}

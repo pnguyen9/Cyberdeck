@@ -1,0 +1,15 @@
+# Prologue
+[choice: Route]
+> Follow Marie = Marie
+> Follow Jules = Jules
+# Marie's route
+[only if: Route is Marie]
+The library.
+# Jules's route
+[only if: Route is Jules]
+[only if: Route is Marie]
+The rooftop.
+[only if: Route is Marie]
+# Scene: Aside
+[only if: Route is Jules]
+A whisper.

@@ -1,0 +1,64 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 3,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 3,
+          "kind": "narration",
+          "speaker": null,
+          "text": "The door [was ajar.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "stage",
+          "sourceLine": 5,
+          "directives": [
+            {
+              "name": "marie",
+              "arguments": [
+                "happy"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": [
+    {
+      "severity": "error",
+      "code": "unknownImportKind",
+      "line": 1,
+      "subject": "everything"
+    },
+    {
+      "severity": "warning",
+      "code": "emptyDirective",
+      "line": 2
+    },
+    {
+      "severity": "warning",
+      "code": "unclosedBracket",
+      "line": 3
+    },
+    {
+      "severity": "error",
+      "code": "misplacedImportKind",
+      "line": 4
+    },
+    {
+      "severity": "warning",
+      "code": "emptyDialogue",
+      "line": 5,
+      "subject": "Marie"
+    }
+  ]
+}

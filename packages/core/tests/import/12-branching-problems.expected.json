@@ -1,0 +1,124 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 6,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 6,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Text after empty choice.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "condition",
+          "sourceLine": 7,
+          "branches": [
+            {
+              "sourceLine": 7,
+              "condition": {
+                "type": "invalid",
+                "text": "Broken condition"
+              },
+              "nodes": []
+            }
+          ]
+        },
+        {
+          "type": "condition",
+          "sourceLine": 9,
+          "branches": [
+            {
+              "sourceLine": 9,
+              "condition": {
+                "type": "is",
+                "decision": "X",
+                "value": "Y",
+                "negated": false
+              },
+              "nodes": [
+                {
+                  "type": "page",
+                  "sourceLine": 10,
+                  "kind": "narration",
+                  "speaker": null,
+                  "text": "Never closed.",
+                  "directivesBefore": [],
+                  "inlineDirectives": []
+                }
+              ]
+            },
+            {
+              "sourceLine": 12,
+              "condition": null,
+              "nodes": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": [
+    {
+      "severity": "error",
+      "code": "optionOutsideChoice",
+      "line": 1
+    },
+    {
+      "severity": "error",
+      "code": "elseWithoutIf",
+      "line": 2
+    },
+    {
+      "severity": "error",
+      "code": "endWithoutIf",
+      "line": 3
+    },
+    {
+      "severity": "error",
+      "code": "missingDecisionName",
+      "line": 4
+    },
+    {
+      "severity": "error",
+      "code": "emptyChoice",
+      "line": 5,
+      "subject": "Empty"
+    },
+    {
+      "severity": "error",
+      "code": "controlDirectiveWithText",
+      "line": 6,
+      "subject": "if"
+    },
+    {
+      "severity": "error",
+      "code": "invalidCondition",
+      "line": 7,
+      "subject": "Broken condition"
+    },
+    {
+      "severity": "error",
+      "code": "unclosedIf",
+      "line": 9
+    },
+    {
+      "severity": "error",
+      "code": "noJumps",
+      "line": 11,
+      "subject": "jump"
+    },
+    {
+      "severity": "error",
+      "code": "branchAfterElse",
+      "line": 13
+    }
+  ]
+}

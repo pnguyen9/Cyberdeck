@@ -1,0 +1,72 @@
+// The tag editor of a page: tags as chips of their kind, suggestions as tags are typed and chosen with the
+// arrows, chips removed whole and stepped over, undo, the insert menu, and invalid tags explained.
+import { createProjectWithSample, pause } from './harness.mjs'
+
+export default async function check(page, { url }) {
+  const typeText = async text => {
+    await page.typeText(text)
+    await pause(250)
+  }
+  const fieldValue = () => page.evaluate(`document.querySelector('.tag-editor .field').value`)
+  const chips = () => page.evaluate(`[...document.querySelectorAll('.mirror .chip')].map(chip => chip.className.replace('chip ', '') + ' ' + chip.textContent)`)
+  const suggestions = () => page.evaluate(`[...document.querySelectorAll('.completion li .item-label')].map(item => item.textContent).join(', ')`)
+  const caretAtEnd = () => page.evaluate(`(() => { const field = document.querySelector('.tag-editor .field'); field.focus(); field.setSelectionRange(field.value.length, field.value.length); field.dispatchEvent(new Event('click')); return true })()`)
+
+  await createProjectWithSample(page, url, 'Chips')
+  await page.clickButton('Storyboard', '.tab')
+  await page.waitFor('.grid')
+  await page.evaluate(`[...document.querySelectorAll('.grid .lane > .elements > .element.card')][2].click()`)
+  await pause(200)
+  await page.press('Enter')
+  await pause(300)
+  page.check('tags show as chips of their kind', await chips(), ['character [enter: Marie]'])
+
+  await caretAtEnd()
+  await typeText(' [')
+  page.check('typing [ suggests directives and characters', (await suggestions()).startsWith('bg, transition, music, sound'), true)
+  await typeText('Ma')
+  page.check('suggestions follow what is typed', await suggestions(), 'Marie')
+  await page.press('Escape')
+  page.check('Esc closes the suggestions, not the editor', [await suggestions(), await page.evaluate(`!!document.querySelector('.tag-editor')`)], ['', true])
+  await page.press('Backspace')
+  await page.press('Backspace')
+  await pause(250)
+  await page.press('ArrowDown')
+  page.check('the down arrow goes to the next suggestion', await page.evaluate(`document.querySelectorAll('.completion li')[1]?.classList.contains('chosen')`), true)
+  await typeText('Ma')
+  await page.press('Enter')
+  page.check('choosing a character continues with its expressions', (await suggestions()).includes('normal'), true)
+  await typeText('sm')
+  await page.press('Enter')
+  page.check('choosing an expression closes the tag', (await fieldValue()).endsWith('[Marie: smile]'), true)
+  page.check('which becomes a chip', await chips(), ['character [enter: Marie]', 'character [Marie: smile]'])
+  await page.screenshot('chips')
+
+  await page.press('Backspace')
+  page.check('Backspace removes the chip whole', (await fieldValue()).endsWith('after all. '), true)
+  await page.press('z', { ctrl: true, commands: ['undo'] })
+  page.check('undo brings it back', (await fieldValue()).endsWith('[Marie: smile]'), true)
+  await page.press('ArrowLeft')
+  page.check('the left arrow steps over the chip', await page.evaluate(`(() => { const field = document.querySelector('.tag-editor .field'); return field.value.length - field.selectionStart })()`), '[Marie: smile]'.length)
+
+  await caretAtEnd()
+  await page.evaluate(`[...document.querySelectorAll('.tag-editor .button')].find(button => button.textContent.startsWith('Insert tag')).click()`)
+  await pause(200)
+  page.check('the insert menu offers tags by group', await page.evaluate(`[...document.querySelectorAll('.menu-group')].map(group => group.textContent).join(', ')`), 'Stage, Screen, Characters, Story')
+  await page.evaluate(`[...document.querySelectorAll('.menu-item')].find(item => item.textContent.trim() === 'Background').click()`)
+  await pause(300)
+  page.check('a tag from the menu suggests what it takes', await suggestions(), 'classroom_evening, rooftop')
+  await page.evaluate(`[...document.querySelectorAll('.completion li')].find(item => item.textContent.includes('rooftop')).dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))`)
+  await pause(300)
+  page.check('clicking a suggestion completes the tag', (await fieldValue()).endsWith('[bg: rooftop]'), true)
+
+  await caretAtEnd()
+  await typeText(' [enter: Marie left right]')
+  await pause(300)
+  page.check('an invalid tag is drawn as such', (await chips()).at(-1), 'character invalid [enter: Marie left right]')
+  page.check('and says why when the caret is at it', (await page.evaluate(`document.querySelector('.chip-problem')?.textContent`))?.length > 0, true)
+  await page.press('Backspace')
+  await page.press('Enter', { ctrl: true })
+  await pause(500)
+  page.check('Ctrl+Enter saves', (await page.statusText())?.startsWith('Saved'), true)
+}

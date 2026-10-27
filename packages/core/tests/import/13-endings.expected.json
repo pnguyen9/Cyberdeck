@@ -1,0 +1,50 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "choice",
+          "sourceLine": 1,
+          "decision": "Door",
+          "options": [
+            { "sourceLine": 2, "text": "Open it", "value": "A" },
+            { "sourceLine": 3, "text": "Walk away", "value": "B" }
+          ]
+        },
+        {
+          "type": "condition",
+          "sourceLine": 4,
+          "branches": [
+            {
+              "sourceLine": 4,
+              "condition": { "type": "is", "decision": "Door", "value": "A", "negated": false },
+              "nodes": [
+                { "type": "page", "sourceLine": 5, "kind": "narration", "speaker": null, "text": "The room was empty.", "directivesBefore": [], "inlineDirectives": [] },
+                { "type": "ending", "sourceLine": 6, "name": "The Empty Room" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "page",
+          "sourceLine": 10,
+          "kind": "narration",
+          "speaker": null,
+          "text": "You went home.",
+          "directivesBefore": [{ "name": "bg", "arguments": ["street"] }],
+          "inlineDirectives": []
+        },
+        { "type": "ending", "sourceLine": 11, "name": "Home" }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": [
+    { "severity": "error", "code": "missingEndingName", "line": 9 }
+  ]
+}

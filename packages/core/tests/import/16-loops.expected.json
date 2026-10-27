@@ -1,0 +1,157 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "loop",
+          "sourceLine": 1,
+          "nodes": [
+            {
+              "type": "choice",
+              "sourceLine": 2,
+              "decision": "Where",
+              "options": [
+                {
+                  "sourceLine": 3,
+                  "text": "The library",
+                  "value": "Library"
+                },
+                {
+                  "sourceLine": 4,
+                  "text": "The park",
+                  "value": "Park"
+                },
+                {
+                  "sourceLine": 5,
+                  "text": "Go home",
+                  "value": "Home"
+                }
+              ]
+            },
+            {
+              "type": "condition",
+              "sourceLine": 6,
+              "branches": [
+                {
+                  "sourceLine": 6,
+                  "condition": {
+                    "type": "is",
+                    "decision": "Where",
+                    "value": "Library",
+                    "negated": false
+                  },
+                  "nodes": [
+                    {
+                      "type": "page",
+                      "sourceLine": 7,
+                      "kind": "narration",
+                      "speaker": null,
+                      "text": "Dust and silence.",
+                      "directivesBefore": [],
+                      "inlineDirectives": []
+                    }
+                  ]
+                },
+                {
+                  "sourceLine": 8,
+                  "condition": {
+                    "type": "is",
+                    "decision": "Where",
+                    "value": "Home",
+                    "negated": false
+                  },
+                  "nodes": [
+                    {
+                      "type": "break",
+                      "sourceLine": 9
+                    },
+                    {
+                      "type": "page",
+                      "sourceLine": 10,
+                      "kind": "narration",
+                      "speaker": null,
+                      "text": "Never read.",
+                      "directivesBefore": [],
+                      "inlineDirectives": []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "page",
+          "sourceLine": 13,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Home at last.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "loop",
+          "sourceLine": 14,
+          "nodes": [
+            {
+              "type": "page",
+              "sourceLine": 15,
+              "kind": "narration",
+              "speaker": null,
+              "text": "Round and round.",
+              "directivesBefore": [],
+              "inlineDirectives": []
+            }
+          ]
+        },
+        {
+          "type": "page",
+          "sourceLine": 17,
+          "kind": "narration",
+          "speaker": null,
+          "text": "Nobody gets here.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "loop",
+          "sourceLine": 19,
+          "nodes": []
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": [
+    {
+      "severity": "warning",
+      "code": "unreachable",
+      "line": 10
+    },
+    {
+      "severity": "warning",
+      "code": "endlessLoop",
+      "line": 14
+    },
+    {
+      "severity": "warning",
+      "code": "unreachable",
+      "line": 17
+    },
+    {
+      "severity": "error",
+      "code": "breakOutsideLoop",
+      "line": 18
+    },
+    {
+      "severity": "error",
+      "code": "unclosedLoop",
+      "line": 19
+    }
+  ]
+}

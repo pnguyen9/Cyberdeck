@@ -1,0 +1,62 @@
+{
+  "kind": null,
+  "decisions": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "page",
+          "sourceLine": 1,
+          "kind": "narration",
+          "speaker": null,
+          "text": "The classroom was empty.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 3,
+          "kind": "dialogue",
+          "speaker": "Marie",
+          "text": "You came after all.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 4,
+          "kind": "narration",
+          "speaker": null,
+          "text": "— I said I would.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "page",
+          "sourceLine": 5,
+          "kind": "narration",
+          "speaker": null,
+          "text": "- Fine.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    }
+  ],
+  "styles": [],
+  "scenes": [],
+  "problems": [
+    {
+      "severity": "warning",
+      "code": "dashWithoutSpeaker",
+      "line": 4
+    },
+    {
+      "severity": "warning",
+      "code": "dashWithoutSpeaker",
+      "line": 5
+    }
+  ]
+}

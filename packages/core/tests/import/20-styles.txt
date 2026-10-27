@@ -1,0 +1,6 @@
+[style: Whisper = italic, small, grey]
+— Marie: [style: whisper]Don't tell anyone.
+It was [style: bold]very[style: none] quiet, and [style: italic]nobody heard.
+[style: Loud = huge]
+[style: italic]
+Plain.

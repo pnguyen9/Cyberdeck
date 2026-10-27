@@ -1,0 +1,9 @@
+[decision: Confession = Accept | Refuse | Ignore]
+[decision multi: Clues = Letter | Key | Photo]
+— Marie: So... what's your answer?
+[choice: Confession]
+> Yes, I'll go out with you. = Accept
+> I'm sorry... = Refuse
+
+> (Say nothing) = Ignore
+[set: Clues = Letter]

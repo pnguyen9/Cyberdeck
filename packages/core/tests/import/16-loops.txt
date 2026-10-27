@@ -1,0 +1,19 @@
+[loop]
+[choice: Where]
+> The library = Library
+> The park = Park
+> Go home = Home
+[if: Where is Library]
+Dust and silence.
+[else if: Where is Home]
+[break]
+Never read.
+[end]
+[end]
+Home at last.
+[loop]
+Round and round.
+[end]
+Nobody gets here.
+[break]
+[loop]
