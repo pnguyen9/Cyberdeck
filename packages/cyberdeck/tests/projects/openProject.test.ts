@@ -1,6 +1,6 @@
 import { CHAPTER_START, flattenStoredNodes, moveNodes, previewImport, previewNodeEdit, readGameArchive, removeNodes, StoryRuntime, type ChapterDocument } from '@cyberdeck/core'
 import { describe, expect, it } from 'vitest'
-import { createNewProject, listProjects, OpenProject, restoreBackup } from '../../src/projects/openProject'
+import { createNewProject, createProjectWithoutStory, listProjects, OpenProject, restoreBackup } from '../../src/projects/openProject'
 import { memoryProjectStore } from './memoryProjectStore'
 
 const layout = { lineWidth: 40, maxLines: 2, measureText: (text: string) => [...text].length }
@@ -112,18 +112,15 @@ describe('projects', () => {
     expect((await listProjects(elsewhere.store))).toHaveLength(1)
   })
 
-  it('restore a backup as a copy, beside the project it was made from', async () => {
+  it('copy a project without its story, its files with it, for a translation', async () => {
     const { open, store } = await projectWith('# One\n[bg: street]\nHello.')
     await open.addFiles([file('street.png', 'image/png', 1)])
-    const backup = await open.backup(new Date(NOW))
-
-    const copy = await restoreBackup(store, backup, { copyName: name => `${name} (copy)`, environment: { createId: () => 'copy-id', now: () => NOW } })
-    expect(copy.id).toBe('copy-id')
-    expect(copy.name).toBe(`${open.project.name} (copy)`)
-    expect((await listProjects(store)).map(project => project.id).sort()).toEqual([open.project.id, 'copy-id'].sort())
-    const reopened = await OpenProject.open(store, 'copy-id')
-    expect(reopened.chapters).toEqual(open.chapters)
-    expect(await store.readAsset('copy-id', open.project.assets[0]!.id)).toEqual(new Uint8Array([1]))
+    const copy = await createProjectWithoutStory(store, open.project, 'La Lettre', 'fr')
+    const reopened = await OpenProject.open(store, copy.id)
+    expect([reopened.project.name, reopened.project.locale, reopened.chapters.length]).toEqual(['La Lettre', 'fr', 0])
+    expect(reopened.project.backgrounds.map(background => background.name)).toEqual(['street'])
+    expect(await store.readAsset(copy.id, open.project.assets[0]!.id)).toEqual(new Uint8Array([1]))
+    expect(await listProjects(store)).toHaveLength(2)
   })
 
   it('preview from a chapter', async () => {

@@ -85,6 +85,7 @@ const EXTENSIONS_BY_MEDIA_TYPE: Readonly<Record<string, string>> = {
   'audio/webm': 'weba',
   'video/webm': 'webm',
   'video/mp4': 'mp4',
+  'text/vtt': 'vtt',
   'font/woff2': 'woff2',
   'font/woff': 'woff',
   'font/ttf': 'ttf',
@@ -106,6 +107,7 @@ export const MEDIA_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
   weba: 'audio/webm',
   webm: 'video/webm',
   mp4: 'video/mp4',
+  vtt: 'text/vtt',
   woff2: 'font/woff2',
   woff: 'font/woff',
   ttf: 'font/ttf',
@@ -195,12 +197,19 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
  * The oldest format that holds the game, so that players who have not updated Datajack can still
  * play what it draws. 1.1, which Datajack 1.0 reads, unless the game uses what 1.0 would refuse
  * rather than leave out: a style property it does not know or a font file need 1.2 (Datajack 1.1);
- * counters, voices and videos need 1.3 (Datajack 1.2). What an older player does not know besides,
+ * counters, voices and videos need 1.3 (Datajack 1.2); names asked for, timed choices and captions
+ * need 1.4 (Datajack 1.3). What an older player does not know besides,
  * the CSS and title cards for 1.0, it leaves out.
  */
 export function playerFormatVersion(project: ProjectDocument, documents: readonly ChapterDocument[] = []): string {
   // An older Datajack refuses the nodes, conditions, commands and files it does not know: told the
   // game is newer, its player knows to update.
+  const needsDatajack13 = project.askedNames.length > 0
+    || project.videos.some(video => video.captionsAssetId !== undefined)
+    || documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'choice' && node.timeLimitMs !== undefined))
+  if (needsDatajack13) {
+    return '1.4'
+  }
   const needsDatajack12 = project.counters.length > 0
     || project.videos.length > 0
     || documents.some(document => flattenStoredNodes(document.nodes).some(node => commandsOf(node).some(command => command.type === 'voice')))
@@ -306,9 +315,12 @@ export function assetsUsedBy(project: ProjectDocument, chapters: readonly Chapte
       case 'voice':
         add(project.sounds.find(sound => sound.id === command.soundId)?.assetId)
         break
-      case 'video':
-        add(project.videos.find(video => video.id === command.videoId)?.assetId)
+      case 'video': {
+        const video = project.videos.find(candidate => candidate.id === command.videoId)
+        add(video?.assetId)
+        add(video?.captionsAssetId)
         break
+      }
       case 'illustration':
         add(project.illustrations.find(illustration => illustration.id === command.illustrationId)?.assetId)
         break
@@ -346,7 +358,7 @@ function assetFolderAndName(project: ProjectDocument, assetId: string): { folder
   if (sound !== undefined) {
     return { folder: 'assets/sounds', name: sound.name }
   }
-  const video = project.videos.find(candidate => candidate.assetId === assetId)
+  const video = project.videos.find(candidate => candidate.assetId === assetId || candidate.captionsAssetId === assetId)
   if (video !== undefined) {
     return { folder: 'assets/videos', name: video.name }
   }

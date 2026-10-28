@@ -1,9 +1,10 @@
 // Counters, voices and videos: a counter counts up in a loop and decides the page after it, the
 // storyboard and the Index show it; a video plays over the whole screen, the text waiting until the
-// player passes it; a voice plays at its own volume and stops as the player moves on. The video is
-// made by ffmpeg, which most Linux systems have, rather than kept in the repository.
+// player passes it, with its captions for a player who wants them; a voice plays at its own volume
+// and stops as the player moves on. The video is made by ffmpeg, which most Linux systems have,
+// rather than kept in the repository.
 import { execFileSync } from 'node:child_process'
-import { copyFileSync } from 'node:fs'
+import { copyFileSync, writeFileSync } from 'node:fs'
 import { createProjectWithStory, pause, shownStep } from './harness.mjs'
 
 const STORY = `[counter: Trust = 1]
@@ -25,6 +26,8 @@ The end.`
 export default async function check(page, { url, assets, output }) {
   const video = `${output}/Opening.webm`
   execFileSync('ffmpeg', ['-loglevel', 'error', '-f', 'lavfi', '-i', 'testsrc=duration=4:size=320x180:rate=15', '-c:v', 'libvpx', '-y', video])
+  const captions = `${output}/Opening.vtt`
+  writeFileSync(captions, 'WEBVTT\n\n00:00.000 --> 00:04.000\nOnce upon a time.\n')
   const voice = `${output}/hello-line.wav`
   copyFileSync(`${assets}/door.wav`, voice)
 
@@ -33,9 +36,9 @@ export default async function check(page, { url, assets, output }) {
 
   await page.clickButton('Cast & files', '.tab')
   await page.waitFor('.drop-zone .file-input')
-  await page.setFiles('.drop-zone .file-input', [video, voice])
+  await page.setFiles('.drop-zone .file-input', [video, captions, voice])
   await pause(1200)
-  page.check('the video and the voice get their files', await page.statusText(), '2 files added: Opening.webm → Video Opening, hello-line.wav → Sound hello-line.')
+  page.check('the video, its captions and the voice get their files', await page.statusText(), '3 files added: Opening.webm → Video Opening, Opening.vtt → Captions of Opening, hello-line.wav → Sound hello-line.')
   page.check('Cast & files lists the video', await page.evaluate(`[...document.querySelectorAll('.section-title')].map(title => title.textContent.trim()).includes('Videos')`), true)
 
   await page.clickButton('Storyboard', '.tab')
@@ -66,6 +69,17 @@ export default async function check(page, { url, assets, output }) {
   await pause(800)
   page.check('the video plays over the whole screen, the text and the menu hidden', await page.evaluate(`[!!document.querySelector('.viewport .video-screen video'), !!document.querySelector('.viewport .textbox'), !!document.querySelector('.viewport .quick-menu')]`), [true, false, false])
   page.check('the voice of the page waits for the video', await page.evaluate(`window.voices.length`), 0)
+  page.check('captions stay off until the player asks for them', await page.evaluate(`document.querySelector('.viewport video track') === null`), true)
+  await page.press('o')
+  await page.evaluate(`[...document.querySelectorAll('.overlay .category-button')].find(button => button.textContent.trim() === 'Accessibility').click()`)
+  await pause(100)
+  await page.evaluate(`[...document.querySelectorAll('.overlay .check')].find(check => check.textContent.includes('Captions')).querySelector('input').click()`)
+  await page.press('Escape')
+  await pause(800)
+  page.check('then the video shows its captions', await page.evaluate(`(() => {
+    const track = document.querySelector('.viewport video').textTracks[0]
+    return [track?.mode, track?.cues?.[0]?.text]
+  })()`), ['showing', 'Once upon a time.'])
   await page.screenshot('video')
 
   await page.press(' ')

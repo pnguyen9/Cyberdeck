@@ -296,7 +296,7 @@ describe('checkChapterDocument', () => {
   })
 
   it('refuses documents from a newer minor version, which may hold nodes this player does not know', () => {
-    expect(() => checkChapterDocument({ formatVersion: '1.4', id: 'chapter', title: null, nodes: [], createdAt: '', updatedAt: '' }, 'chapter'))
+    expect(() => checkChapterDocument({ formatVersion: '1.5', id: 'chapter', title: null, nodes: [], createdAt: '', updatedAt: '' }, 'chapter'))
       .toThrow('chapter.formatVersion: expected a format version this player reads')
   })
 })

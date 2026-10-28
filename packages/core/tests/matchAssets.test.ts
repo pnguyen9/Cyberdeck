@@ -11,6 +11,7 @@ const project: ProjectDocument = {
   styles: [],
   decisions: [],
   counters: [],
+  askedNames: [],
   videos: [],
   characters: [
     { id: 'marie', name: 'Marie', drawnFacing: null, expressions: [{ id: 'marie-normal', name: 'normal', assetId: null }, { id: 'marie-smile', name: 'smile', assetId: null }] },

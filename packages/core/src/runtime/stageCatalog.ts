@@ -13,6 +13,8 @@ export interface StageCatalog {
   musicUrl: (musicId: string) => string | null
   soundUrl: (soundId: string) => string | null
   videoUrl: (videoId: string) => string | null
+  /** The captions of a video, null when it has none. */
+  captionsUrl: (videoId: string) => string | null
   illustrationName: (illustrationId: string) => string
   illustrationUrl: (illustrationId: string) => string | null
   /** The game's fonts that have a file, for the player to load before the CSS names them. */
@@ -42,6 +44,7 @@ export function createStageCatalog(story: PlayableStory): StageCatalog {
     musicUrl: musicId => urlOf(music.get(musicId)?.assetId),
     soundUrl: soundId => urlOf(sounds.get(soundId)?.assetId),
     videoUrl: videoId => urlOf(videos.get(videoId)?.assetId),
+    captionsUrl: videoId => urlOf(videos.get(videoId)?.captionsAssetId),
     illustrationName: illustrationId => illustrations.get(illustrationId)?.name ?? '',
     illustrationUrl: illustrationId => urlOf(illustrations.get(illustrationId)?.assetId),
     fonts: project.fonts.flatMap(font => {

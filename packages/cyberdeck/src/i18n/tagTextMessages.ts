@@ -39,6 +39,8 @@ const en = {
     remember: 'the profile remembers it for good',
     decision: 'declares a decision and its values',
     counter: 'declares a counter and the number it starts at',
+    ask: 'asks the player for a name, which {Name} then shows',
+    timeout: 'on an option: taken when the time of the choice runs out',
   },
   /** What a word suggested is. */
   details: {
@@ -110,6 +112,8 @@ const en = {
     unset: 'Take a value away',
     counter: 'Counter',
     add: 'Add to a counter',
+    ask: 'Ask for a name',
+    timedChoice: 'Timed choice',
     loopEnd: 'Loop … end',
     break: 'Leave the loop',
     play: 'Play a scene',
@@ -160,6 +164,8 @@ const fr: TagTextMessages = {
     remember: 'le profil s’en souviendra dans toutes ses parties',
     decision: 'déclare une décision et ses valeurs',
     counter: 'déclare un compteur et sa valeur de départ',
+    ask: 'demande un nom au joueur, que {Nom} affiche ensuite',
+    timeout: 'sur une option\u00a0: prise quand le temps du choix est écoulé',
   },
   details: {
     characterExpression: 'expression du personnage',
@@ -230,6 +236,8 @@ const fr: TagTextMessages = {
     unset: 'Retirer une valeur',
     counter: 'Compteur',
     add: 'Ajouter à un compteur',
+    ask: 'Demander un nom',
+    timedChoice: 'Choix minuté',
     loopEnd: 'Boucle … fin',
     break: 'Sortir de la boucle',
     play: 'Jouer une scène',

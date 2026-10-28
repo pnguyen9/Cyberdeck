@@ -23,10 +23,11 @@ const DIALOGUE_DASH = /^[-‐‑‒–—―•]\s+/u
 
 /**
  * One to three words each starting with a capital, then a colon: `Marie:`, `Old Marie:`,
- * `MARIE :` (French spacing); or question marks, the name of a voice nobody knows yet: `???:`.
+ * `MARIE :` (French spacing); or question marks, the name of a voice nobody knows yet: `???:`;
+ * or a name the player gives, `{Hero}:`.
  * Lower-case words (`Note to self:`, `Il dit :`) are never a name.
  */
-const SPEAKER_PREFIX = /^(\p{Lu}[\p{L}\p{M}'’.-]*(?: \p{Lu}[\p{L}\p{M}'’.-]*){0,2}|\?{2,})[   ]?:(?:[   ]+|$)/u
+const SPEAKER_PREFIX = /^(\p{Lu}[\p{L}\p{M}'’.-]*(?: \p{Lu}[\p{L}\p{M}'’.-]*){0,2}|\?{2,}|\{[\p{L}\p{N}_-]+\})[   ]?:(?:[   ]+|$)/u
 
 type Token =
   | { type: 'text'; value: string }

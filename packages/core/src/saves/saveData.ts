@@ -1,9 +1,10 @@
 import { normalizeName } from '../importer/storyNodes'
+import { givenName } from '../format/askedNames'
 import { flattenStoredNodes, type Facing, type FadeColor, type TintName } from '../format/storyFormat'
 import type { PlayableStory } from '../runtime/playableStory'
 import { chaptersInOrder } from '../runtime/playableStory'
 import { EMPTY_STAGE, PAGES_PER_SCREENFUL, type CharacterOnStage } from '../runtime/stageState'
-import type { CounterState, DecisionState, RuntimeState } from '../runtime/storyRuntime'
+import type { CounterState, DecisionState, NameState, RuntimeState } from '../runtime/storyRuntime'
 
 /**
  * A save file: plain JSON a player can read, with names wherever a person might look. Editing it
@@ -22,6 +23,8 @@ export interface SaveData {
   decisions: Record<string, string[]>
   /** Counter name → its value, for those changed so far; absent when none was. */
   counters?: Record<string, number>
+  /** Asked name → the name the player gave, for those given so far; absent when none was. */
+  names?: Record<string, string>
   stage: {
     background: string | null
     music: string | null
@@ -49,6 +52,10 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
     const counter = countersById.get(counterId)
     return counter === undefined ? [] : [[counter.name, count] as const]
   })
+  const names = Object.entries(state.names).flatMap(([askedNameId, given]) => {
+    const asked = project.askedNames.find(candidate => candidate.id === askedNameId)
+    return asked === undefined ? [] : [[asked.name, given] as const]
+  })
   const charactersById = new Map(project.characters.map(character => [character.id, character]))
   const chapter = chaptersInOrder(story).find(candidate => candidate.id === state.page?.chapterId)
   // Scenes included: a choice made in one is part of the playthrough too.
@@ -69,6 +76,7 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
       ]]
     })),
     ...(counters.length === 0 ? {} : { counters: Object.fromEntries(counters) }),
+    ...(names.length === 0 ? {} : { names: Object.fromEntries(names) }),
     stage: {
       background: project.backgrounds.find(background => background.id === state.stage.backgroundId)?.name ?? null,
       music: project.music.find(track => track.id === state.stage.musicId)?.name ?? null,
@@ -119,6 +127,14 @@ export function stateFromSave(story: PlayableStory, save: SaveData): RuntimeStat
     }
   }
 
+  const names: Record<string, string> = {}
+  for (const [askedName, given] of Object.entries(save.names ?? {})) {
+    const asked = findNamed(project.askedNames, askedName)
+    if (asked !== undefined) {
+      names[asked.id] = givenName(given)
+    }
+  }
+
   const characters: CharacterOnStage[] = save.stage.characters.flatMap(saved => {
     const character = findNamed(project.characters, saved.name)
     const expression = findNamed(character?.expressions ?? [], saved.expression)
@@ -139,6 +155,7 @@ export function stateFromSave(story: PlayableStory, save: SaveData): RuntimeStat
     page: save.page,
     decisions: decisions satisfies DecisionState,
     counters: counters satisfies CounterState,
+    names: names satisfies NameState,
     stage: {
       ...EMPTY_STAGE,
       backgroundId: findNamed(project.backgrounds, save.stage.background)?.id ?? null,
@@ -171,6 +188,7 @@ export function parseSave(value: unknown): SaveData | null {
       && (page.playedFrom === undefined || (Array.isArray(page.playedFrom) && page.playedFrom.every(isString)))))
     && isRecord(decisions) && Object.values(decisions).every(values => Array.isArray(values) && values.every(isString))
     && (value.counters === undefined || (isRecord(value.counters) && Object.values(value.counters).every(count => Number.isSafeInteger(count))))
+    && (value.names === undefined || (isRecord(value.names) && Object.values(value.names).every(isString)))
     && isRecord(stage)
     && (stage.background === null || isString(stage.background))
     && (stage.music === null || isString(stage.music))

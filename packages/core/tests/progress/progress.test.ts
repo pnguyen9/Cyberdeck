@@ -46,7 +46,7 @@ function play(story: PlayableStory, progress: ProgressData, optionTexts: string[
       }
       pending = { pointKey: recorded.pointKey, optionId: option.id }
       runtime.choose(option.id)
-    } else {
+    } else if (step.type === 'end') {
       return recordEndReached(progress, step.endingId, pending)
     }
   }

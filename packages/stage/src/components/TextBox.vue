@@ -45,9 +45,10 @@ const lineHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT}px`
 </script>
 
 <template>
-  <div class="textbox">
+  <div class="textbox" aria-hidden="true">
+    <!-- Typed a letter at a time: screen readers hear the page whole from the player's announcements instead. -->
     <div v-if="speaker !== null" class="speaker" :style="plateStyle">{{ speaker }}</div>
-    <p class="text" aria-live="polite">
+    <p class="text">
       <span v-for="run in runs" :key="run.start" :class="run.classes">{{ run.text }}</span>
     </p>
     <div v-if="isComplete" class="continue-mark" aria-hidden="true">▼</div>
@@ -82,14 +83,17 @@ const lineHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT}px`
   color: #9eeaff;
 }
 
-/* A game's CSS draws within the text's two lines, never over the menu or the stage around them. */
+/*
+ * A game's CSS draws within the text's lines, never over the menu or the stage around them. Text the
+ * player chose larger, or in a plainer font, takes more lines: the box grows upwards to hold them.
+ */
 .text {
   contain: paint;
-  height: v-bind(textHeight);
+  min-height: calc(v-bind(textHeight) * var(--text-scale, 1));
   margin: 0;
   font-family: v-bind(TEXTBOX_FONT_FAMILY);
-  font-size: v-bind(fontSize);
-  line-height: v-bind(lineHeight);
+  font-size: calc(v-bind(fontSize) * var(--text-scale, 1));
+  line-height: calc(v-bind(lineHeight) * var(--text-scale, 1));
   color: #f2f4f8;
   overflow-wrap: normal;
 }
@@ -113,5 +117,6 @@ const lineHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT}px`
     visibility: hidden;
   }
 }
+
 </style>
 

@@ -3,6 +3,7 @@ const en = {
   filesUnused: (fileNames: string) => `Not used, no entry of that name: ${fileNames}.`,
   dropTitle: 'Drop images, music, sounds, videos and fonts here',
   dropHelpStart: 'or click to choose them. Each file goes to the entry it is named after:',
+  dropHelpCaptions: 'and its captions',
   dropHelpMiddle: '; a new file replaces the old one. A font file (',
   dropHelpEnd: ') becomes a font of its name, for the CSS.',
   nothingYet: 'Characters, backgrounds, illustrations, music, sounds and videos appear here once a text naming them is imported.',
@@ -28,6 +29,9 @@ const en = {
   soundTarget: (name: string) => `Sound ${name}`,
   illustrationTarget: (name: string) => `Illustration ${name}`,
   videoTarget: (name: string) => `Video ${name}`,
+  captionsTarget: (name: string) => `Captions of ${name}`,
+  captions: (fileName: string) => `captions: ${fileName}`,
+  noCaptions: 'no captions',
   fontTarget: (name: string) => `Font ${name}`,
 }
 
@@ -38,6 +42,7 @@ const fr: CastMessages = {
   filesUnused: fileNames => `Non utilisés, faute d’entrée portant leur nom : ${fileNames}.`,
   dropTitle: 'Déposez ici images, musiques, sons, vidéos et polices',
   dropHelpStart: 'ou cliquez pour les choisir. Chaque fichier est associé à l’entrée qui porte son nom :',
+  dropHelpCaptions: 'et ses sous-titres',
   dropHelpMiddle: ' ; un nouveau fichier remplace l’ancien. Un fichier de police (',
   dropHelpEnd: ') devient une police du même nom, utilisable dans le CSS.',
   nothingYet: 'Les personnages, décors, illustrations, musiques, sons et vidéos apparaissent ici dès qu’un texte qui les nomme est importé.',
@@ -62,6 +67,9 @@ const fr: CastMessages = {
   soundTarget: name => `Son ${name}`,
   illustrationTarget: name => `Illustration ${name}`,
   videoTarget: name => `Vidéo ${name}`,
+  captionsTarget: name => `Sous-titres de ${name}`,
+  captions: fileName => `sous-titres\u00a0: ${fileName}`,
+  noCaptions: 'pas de sous-titres',
   fontTarget: name => `Police ${name}`,
 }
 

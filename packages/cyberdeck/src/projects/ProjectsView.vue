@@ -6,7 +6,7 @@ import { commonMessages } from '../i18n/commonMessages'
 import { errorText } from '../i18n/errorMessages'
 import { projectsMessages } from '../i18n/projectsMessages'
 import LanguageSelect from '../settings/LanguageSelect.vue'
-import { createNewProject, listProjects, restoreBackup } from './openProject'
+import { createNewProject, createProjectWithoutStory, listProjects, restoreBackup } from './openProject'
 import type { ProjectStore } from './projectStore'
 
 const props = defineProps<{ store: ProjectStore }>()
@@ -17,6 +17,8 @@ const isLoaded = ref(false)
 const newName = ref('')
 const newLocale = ref('en')
 const deletingId = ref<string | null>(null)
+/** The project being copied without its story, for a translation, with the name and language of the copy. */
+const copying = ref<{ projectId: string; name: string; locale: string } | null>(null)
 /** Where the projects are, on the desktop; null in the browser, which keeps them itself. */
 const projectsFolder = ref<string | null>(null)
 const message = ref<string | null>(null)
@@ -60,16 +62,32 @@ function create() {
   })
 }
 
-/** A backup replaces the project it was made from, or comes beside it as a copy. */
-function restore(fileList: FileList | null, asCopy: boolean) {
+function restore(fileList: FileList | null) {
   const file = fileList?.[0]
   if (file === undefined) {
     return
   }
   return attempt(async () => {
-    const project = await restoreBackup(props.store, new Uint8Array(await file.arrayBuffer()), asCopy ? { copyName: text.value.copyName } : undefined)
+    const project = await restoreBackup(props.store, new Uint8Array(await file.arrayBuffer()))
     await refresh()
-    message.value = asCopy ? text.value.restoredAsCopy(project.name) : text.value.restored(project.name)
+    message.value = text.value.restored(project.name)
+  })
+}
+
+function startCopy(project: ProjectDocument) {
+  deletingId.value = null
+  copying.value = { projectId: project.id, name: project.name, locale: project.locale }
+}
+
+function copyWithoutStory(project: ProjectDocument) {
+  const copy = copying.value
+  if (copy === null) {
+    return
+  }
+  return attempt(async () => {
+    const created = await createProjectWithoutStory(props.store, project, copy.name, copy.locale)
+    copying.value = null
+    emit('open', created.id)
   })
 }
 
@@ -110,6 +128,23 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
             <button class="button" @click="deletingId = null">{{ common.cancel }}</button>
           </div>
         </div>
+        <form v-else-if="copying?.projectId === project.id" class="copy" @submit.prevent="copyWithoutStory(project)">
+          <p class="muted">{{ text.copyHelp(project.name) }}</p>
+          <div class="new-project">
+            <label class="field name">
+              <span>{{ text.name }}</span>
+              <input v-model="copying.name" class="text-input" autocomplete="off">
+            </label>
+            <label class="field">
+              <span>{{ text.storyLanguage }}</span>
+              <select v-model="copying.locale" class="text-input">
+                <option v-for="(label, code) in LANGUAGES" :key="code" :value="code">{{ label }}</option>
+              </select>
+            </label>
+            <button class="button primary" type="submit" :disabled="copying.name.trim() === ''">{{ text.create }}</button>
+            <button class="button" type="button" @click="copying = null">{{ common.cancel }}</button>
+          </div>
+        </form>
         <template v-else>
           <button class="open-project" @click="emit('open', project.id)">
             <span class="project-name">{{ project.name }}</span>
@@ -118,7 +153,8 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
               · {{ LANGUAGES[project.locale] ?? project.locale }} · {{ text.changedOn(formatDate(project.updatedAt)) }}
             </span>
           </button>
-          <button class="link-button" @click="deletingId = project.id">{{ text.delete }}</button>
+          <button class="link-button" @click="startCopy(project)">{{ text.copyWithoutStory }}</button>
+          <button class="link-button" @click="deletingId = project.id; copying = null">{{ text.delete }}</button>
         </template>
       </li>
     </ul>
@@ -139,16 +175,10 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
     </form>
 
     <h2 class="section-title">{{ text.backups }}</h2>
-    <div class="backup-actions">
-      <label class="button file-button">
-        {{ text.restoreBackup }}
-        <input type="file" accept=".zip,application/zip" @change="restore(($event.target as HTMLInputElement).files, false)">
-      </label>
-      <label class="button file-button">
-        {{ text.restoreAsCopy }}
-        <input type="file" accept=".zip,application/zip" @change="restore(($event.target as HTMLInputElement).files, true)">
-      </label>
-    </div>
+    <label class="button file-button">
+      {{ text.restoreBackup }}
+      <input type="file" accept=".zip,application/zip" @change="restore(($event.target as HTMLInputElement).files)">
+    </label>
     <p class="muted">{{ text.backupReplaces }}</p>
 
     <p v-if="message !== null" class="message" role="status">{{ message }}</p>
@@ -157,12 +187,6 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
 </template>
 
 <style scoped>
-.backup-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .page-header {
   display: flex;
   flex-wrap: wrap;
@@ -215,6 +239,13 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
   color: #9eeaff;
 }
 
+.copy {
+  flex: 1;
+  display: grid;
+  gap: 10px;
+}
+
+.copy p,
 .confirmation p {
   margin: 0;
 }

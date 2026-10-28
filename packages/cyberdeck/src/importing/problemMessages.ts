@@ -87,6 +87,14 @@ const en: ProblemMessages = {
     : `The counter "${subject}" is already declared in ${suggestion}: change it there, or move it to Definitions first.`,
   counterNamedLikeDecision: subject => `"${subject}" is both a counter and a decision: give one of them another name.`,
   unsetCounter: subject => `${subject} is a counter: [unset] takes values away from decisions. To start it over, write [set: ${subject} = 0].`,
+  invalidAsk: subject => subject === ''
+    ? '[ask: …] needs the name to ask for, one word, and a default if wished: [ask: Hero = Alex].'
+    : `"${subject}" should look like: Hero, or Hero = Alex; the name one word, the default at most 12 characters.`,
+  unknownAskedName: subject => `Nothing asks the player for {${subject}}: add [ask: ${subject}] where they give it, or check the spelling.`,
+  timedChoiceWithoutTimeout: subject => `The timed choice ${subject} needs an option for when time runs out: add one ending with [timeout].`,
+  timeoutWithoutTime: subject => `[timeout] marks what happens when time runs out, but the choice ${subject} has no time: write it after its name, [choice: ${subject} 10s].`,
+  severalTimeouts: subject => `The choice ${subject} has more than one option for when time runs out: keep one [timeout].`,
+  timeoutOutsideOption: () => '[timeout] belongs on an option of a timed choice: > … = Silent [timeout].',
   decisionValueStillUsed: subject => {
     const [decision, value] = subject.split(': ')
     return `"${value}" is still used elsewhere as a value of ${decision}: keep it in the list, or change those places first (the Index shows them).`
@@ -183,6 +191,14 @@ const fr: ProblemMessages = {
     : `Le compteur ${quoted(subject)} est déjà déclaré dans ${suggestion}\u00a0: modifiez-le là-bas, ou déplacez-le d’abord dans Définitions.`,
   counterNamedLikeDecision: subject => `${quoted(subject)} est à la fois un compteur et une décision\u00a0: renommez l’un des deux.`,
   unsetCounter: subject => `${subject} est un compteur\u00a0: [unset] retire des valeurs aux décisions. Pour le remettre à zéro, écrivez [set: ${subject} = 0].`,
+  invalidAsk: subject => subject === ''
+    ? '[ask: …] attend le nom à demander, en un seul mot, et une valeur par défaut si besoin\u00a0: [ask: Héros = Alex].'
+    : `${quoted(subject)} devrait avoir cette forme\u00a0: Héros, ou Héros = Alex\u00a0; le nom en un seul mot, la valeur par défaut en 12 caractères au plus.`,
+  unknownAskedName: subject => `Rien ne demande {${subject}} au joueur\u00a0: ajoutez [ask: ${subject}] là où il le donne, ou vérifiez l’orthographe.`,
+  timedChoiceWithoutTimeout: subject => `Le choix minuté ${subject} a besoin d’une option pour quand le temps est écoulé\u00a0: ajoutez-en une qui se termine par [timeout].`,
+  timeoutWithoutTime: subject => `[timeout] indique ce qui se passe quand le temps est écoulé, mais le choix ${subject} n’a pas de durée\u00a0: écrivez-la après son nom, [choice: ${subject} 10s].`,
+  severalTimeouts: subject => `Le choix ${subject} a plusieurs options pour quand le temps est écoulé\u00a0: n’en gardez qu’une avec [timeout].`,
+  timeoutOutsideOption: () => '[timeout] se place sur une option d’un choix minuté\u00a0: > … = Silence [timeout].',
   decisionValueStillUsed: subject => {
     const [decision, value] = subject.split(': ')
     return `${quoted(value ?? '')} est encore utilisée ailleurs comme valeur de ${decision}\u00a0: gardez-la dans la liste, ou modifiez d’abord ces endroits (l’Index les montre).`

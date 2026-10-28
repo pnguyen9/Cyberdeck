@@ -2,6 +2,7 @@ import { styleClassName } from '../format/authorCss'
 import { flattenStoredNodes, type ChapterDocument, type ProjectDocument } from '../format/storyFormat'
 import type { PageLayout } from '../pagination/paginate'
 import { wrapLines } from '../pagination/wrapLines'
+import { measuringAskedNames } from '../format/askedNames'
 import { styleWidthScales } from './projectEdits'
 
 /**
@@ -16,7 +17,8 @@ export function pagesTooLong(project: ProjectDocument, documents: readonly Chapt
       return []
     }
     const scale = Math.max(1, ...node.styles.map(span => scales.get(styleClassName(stylesById.get(span.styleId)?.name ?? '')) ?? 1))
-    const fits = scale === 1 || wrapLines(node.text, layout.lineWidth, text => layout.measureText(text) * scale).length <= layout.maxLines
+    const measureText = measuringAskedNames(layout.measureText)
+    const fits = scale === 1 || wrapLines(node.text, layout.lineWidth, text => measureText(text) * scale).length <= layout.maxLines
     return fits ? [] : [{ documentId: document.id, nodeId: node.id }]
   }))
 }

@@ -1,4 +1,4 @@
-// The player's settings, in Cyberdeck's preview: pages shown at once, a key given to another action,
+// The player's settings, in Cyberdeck's preview, a category at a time: pages shown at once, a key given to another action,
 // the music volume, the text hidden with the right button, and all of it kept for the next preview.
 import { createProjectWithSample, pause, shownStep, visibleText } from './harness.mjs'
 
@@ -13,6 +13,8 @@ export default async function check(page, { url }) {
   await page.evaluate(`[...document.querySelectorAll('.overlay .check input')][0].click()`)
   await pause(100)
   page.check('pages can be shown at once', await page.evaluate(`document.querySelector('.overlay .setting-value').textContent`), 'instant')
+  await page.evaluate(`[...document.querySelectorAll('.overlay .category-button')].find(button => button.textContent.trim() === 'Controls').click()`)
+  await pause(100)
 
   await page.evaluate(`[...document.querySelectorAll('.overlay .key-row')].find(row => row.textContent.includes('Next')).querySelector('.add').click()`)
   await pause(100)
@@ -26,6 +28,8 @@ export default async function check(page, { url }) {
   await page.evaluate(`[...document.querySelectorAll('.overlay .key-row')].find(row => row.textContent.includes('Next')).querySelector('.add').click()`)
   await pause(100)
   await page.press('n')
+  await page.evaluate(`[...document.querySelectorAll('.overlay .category-button')].find(button => button.textContent.trim() === 'General').click()`)
+  await pause(100)
   await page.setValue('.overlay input[aria-label="Music and videos volume"]', '20')
   await pause(100)
   page.check('the music volume follows the slider', await page.evaluate(`document.querySelector('.viewport audio').volume`), 0.2)
@@ -56,9 +60,13 @@ export default async function check(page, { url }) {
   await page.waitFor('.viewport')
   await pause(500)
   await page.press('o')
+  const instant = await page.evaluate(`document.querySelector('.overlay .setting-value').textContent`)
+  await page.screenshot('settings')
+  await page.evaluate(`[...document.querySelectorAll('.overlay .category-button')].find(button => button.textContent.trim() === 'Controls').click()`)
+  await pause(100)
   page.check('the settings are kept for the next preview', [
-    await page.evaluate(`document.querySelector('.overlay .setting-value').textContent`),
+    instant,
     await page.evaluate(`[...document.querySelectorAll('.overlay .key-row')].find(row => row.textContent.includes('Next')).querySelector('.inputs').textContent.includes('N')`),
   ], ['instant', true])
-  await page.screenshot('settings')
+  await page.screenshot('settings-controls')
 }

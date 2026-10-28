@@ -9,7 +9,8 @@ import type {
   StoredNode,
   StoredPage,
 } from '../format/storyFormat'
-import { flattenStoredNodes, innerListsOf } from '../format/storyFormat'
+import { flattenStoredNodes, innerListsOf, type AskedName, type StoredAsk } from '../format/storyFormat'
+import { givenName, nameLookup, pageWithNames, withNames, type NameOf } from '../format/askedNames'
 import { chaptersInOrder, scenesOf, type PlayableStory } from './playableStory'
 import { applyStageCommand, createStageContext, EMPTY_STAGE, showPage, type StageContext, type StageState } from './stageState'
 
@@ -17,6 +18,8 @@ export type PlayerStep =
   | { type: 'page'; page: StoredPage }
   /** The choice as offered: only the options whose condition holds. */
   | { type: 'choice'; choice: StoredChoice }
+  /** The player is asked for a name. */
+  | { type: 'ask'; ask: StoredAsk }
   /** The end of the story, or of this path when an `[ending: …]` was reached. */
   | { type: 'end'; endingId: string | null }
 
@@ -25,6 +28,9 @@ export type DecisionState = Readonly<Record<string, readonly string[]>>
 
 /** Values of the counters changed so far, by identifier; one never changed holds its initial value. */
 export type CounterState = Readonly<Record<string, number>>
+
+/** Names the player gave, by identifier of the asked name. */
+export type NameState = Readonly<Record<string, string>>
 
 /** An option picked, in the order of the playthrough. */
 export interface ChoiceRecord {
@@ -37,6 +43,7 @@ export interface PlayerSnapshot {
   stage: StageState
   decisions: DecisionState
   counters: CounterState
+  names: NameState
   /** Every option picked so far: the playthrough itself, from which it could be replayed. */
   choices: readonly ChoiceRecord[]
 }
@@ -55,6 +62,7 @@ export interface RuntimeState {
   page: { chapterId: string; nodeId: string; playedFrom?: string[] } | null
   decisions: DecisionState
   counters: CounterState
+  names: NameState
   stage: StageState
   choices: readonly ChoiceRecord[]
 }
@@ -67,7 +75,7 @@ export type BacklogEntry =
   | { type: 'page'; page: StoredPage; stopIndex: number }
   | { type: 'choice'; choice: StoredChoice; optionText: string; stopIndex: number }
 
-const START_SNAPSHOT: PlayerSnapshot = { step: { type: 'end', endingId: null }, stage: EMPTY_STAGE, decisions: {}, counters: {}, choices: [] }
+const START_SNAPSHOT: PlayerSnapshot = { step: { type: 'end', endingId: null }, stage: EMPTY_STAGE, decisions: {}, counters: {}, names: {}, choices: [] }
 
 /** A list of nodes being played, and the index of the next node to play in it. */
 interface Frame {
@@ -102,6 +110,7 @@ export class StoryRuntime {
   private readonly chapters: ChapterDocument[]
   private readonly decisionsById: Map<string, Decision>
   private readonly initialCounts: ReadonlyMap<string, number>
+  private readonly askedNames: readonly AskedName[]
   private readonly stageContext: StageContext
   private chapterIndex = -1
   private readonly scenes: ReadonlyMap<string, ChapterDocument>
@@ -124,6 +133,7 @@ export class StoryRuntime {
     this.scenes = scenesOf(story)
     this.decisionsById = new Map(story.project.decisions.map(decision => [decision.id, decision]))
     this.initialCounts = new Map(story.project.counters.map(counter => [counter.id, counter.initial]))
+    this.askedNames = story.project.askedNames
     this.stageContext = createStageContext(story.project)
   }
 
@@ -169,12 +179,13 @@ export class StoryRuntime {
   exportState(): RuntimeState {
     const step = this.currentSnapshot.step
     const chapter = this.chapters[this.chapterIndex]
-    const nodeId = step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : null
+    const nodeId = step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : step.type === 'ask' ? step.ask.id : null
     const playedFrom = this.frames.flatMap(frame => frame.playId === undefined ? [] : [frame.playId])
     return {
       page: chapter === undefined || nodeId === null ? null : { chapterId: chapter.id, nodeId, ...(playedFrom.length === 0 ? {} : { playedFrom }) },
       decisions: this.currentSnapshot.decisions,
       counters: this.currentSnapshot.counters,
+      names: this.currentSnapshot.names,
       stage: this.currentSnapshot.stage,
       choices: this.currentSnapshot.choices,
     }
@@ -222,6 +233,7 @@ export class StoryRuntime {
         : stage,
       decisions: state.decisions,
       counters: state.counters,
+      names: state.names,
       choices: state.choices,
     }
     this.playUntilStop()
@@ -311,7 +323,34 @@ export class StoryRuntime {
     this.pagesById ??= new Map([...this.chapters, ...this.scenes.values()]
       .flatMap(document => flattenStoredNodes(document.nodes))
       .flatMap(node => node.type === 'page' ? [[node.id, node] as const] : []))
-    return stage.screenfulPageIds.flatMap(pageId => this.pagesById?.get(pageId) ?? [])
+    const nameOf = this.nameOf()
+    return stage.screenfulPageIds.flatMap(pageId => {
+      const page = this.pagesById?.get(pageId)
+      return page === undefined ? [] : [pageWithNames(page, nameOf)]
+    })
+  }
+
+  /** A text with the names the player gave in place of `{Name}`: a speaker's name, for instance. */
+  withNames(text: string): string {
+    return withNames(text, this.nameOf())
+  }
+
+  /** Gives the name asked for, cut to the longest allowed; nothing typed keeps the default. */
+  answer(typed: string) {
+    const step = this.currentSnapshot.step
+    if (step.type !== 'ask') {
+      return
+    }
+    this.isReplaying = false
+    const name = givenName(typed)
+    const names = { ...this.currentSnapshot.names }
+    if (name === '') {
+      delete names[step.ask.askedNameId]
+    } else {
+      names[step.ask.askedNameId] = name
+    }
+    this.currentSnapshot = { ...this.currentSnapshot, names }
+    this.playUntilStop()
   }
 
   /** Leaves the current page; inline commands not reached yet still apply. */
@@ -375,17 +414,24 @@ export class StoryRuntime {
           node.commandsBefore.forEach(command => this.applyToStage(command))
           this.currentSnapshot = { ...this.currentSnapshot, stage: showPage(this.currentSnapshot.stage, node.id) }
           this.appliedInlineCommandCount = 0
-          this.setStep({ type: 'page', page: node })
+          this.setStep({ type: 'page', page: pageWithNames(node, this.nameOf()) })
           return
         case 'choice': {
           // The step carries the choice as offered: options whose condition does not hold are left out.
+          // The option taken when time runs out is never shown: without another, the choice is skipped.
           const options = node.options.filter(option => option.condition === null || this.holds(option.condition))
-          if (options.length === 0) {
+          if (!options.some(option => option.timeout !== true)) {
             break
           }
-          this.setStep({ type: 'choice', choice: options.length === node.options.length ? node : { ...node, options } })
+          const nameOf = this.nameOf()
+          const shown = options.map(option => option.text.includes('{') ? { ...option, text: withNames(option.text, nameOf) } : option)
+          const isUnchanged = shown.length === node.options.length && shown.every((option, index) => option === node.options[index])
+          this.setStep({ type: 'choice', choice: isUnchanged ? node : { ...node, options: shown } })
           return
         }
+        case 'ask':
+          this.setStep({ type: 'ask', ask: node })
+          return
         case 'stage':
           node.commands.forEach(command => this.applyToStage(command))
           break
@@ -461,6 +507,10 @@ export class StoryRuntime {
   /** Own entries only: a decision identifier from a downloaded game may be `constructor` or `__proto__`. */
   private heldValues(decisionId: string): readonly string[] {
     return Object.hasOwn(this.currentSnapshot.decisions, decisionId) ? this.currentSnapshot.decisions[decisionId] ?? [] : []
+  }
+
+  private nameOf(): NameOf {
+    return nameLookup(this.askedNames, this.currentSnapshot.names)
   }
 
   /** Own entries only, as for decisions. */

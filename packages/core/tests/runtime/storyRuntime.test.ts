@@ -32,6 +32,9 @@ function playThrough(lines: string[], optionTexts: string[] = []): string[] {
       const speaker = story.project.characters.find(character => character.id === step.page.speakerId)
       shown.push(speaker === undefined ? step.page.text : `${speaker.name}: ${step.page.text}`)
       runtime.next()
+    } else if (step.type === 'ask') {
+      shown.push(`? ${step.ask.askedNameId}`)
+      runtime.answer(remainingOptions.shift() ?? '')
     } else {
       const optionText = remainingOptions.shift()
       const option = step.choice.options.find(candidate => candidate.text === optionText)

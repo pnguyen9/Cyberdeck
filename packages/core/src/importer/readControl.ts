@@ -6,6 +6,8 @@ export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
   'decision multi',
   'counter',
   'add',
+  'ask',
+  'timeout',
   'choice',
   'if',
   'else if',
@@ -65,6 +67,13 @@ export function readAddition(text: string): { name: string; amount: number } | n
   const amount = withAmount === null ? 1 : readAmount(withAmount[2]!)
   const name = withAmount === null ? text.trim() : withAmount[1]!
   return name === '' || amount === null ? null : { name, amount }
+}
+
+/** `Answer 10s` → the decision and the time to pick, in milliseconds; the decision alone when no time ends the text. */
+export function readChoiceHeading(text: string): { decision: string; timeLimitMs: number | null } {
+  const timed = /^(.*\S)\s+(\d+(?:\.\d+)?)\s*s$/i.exec(text.trim())
+  const seconds = timed === null ? 0 : Number(timed[2])
+  return timed === null || seconds <= 0 || seconds > 600 ? { decision: text.trim(), timeLimitMs: null } : { decision: timed[1]!, timeLimitMs: Math.round(seconds * 1000) }
 }
 
 /** `Clues = Letter` → decision and value; null when either is missing. */

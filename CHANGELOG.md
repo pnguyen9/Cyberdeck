@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.3.0 — 2026-10-28
+
+The player's name, timed choices, accessibility, captions, and a start for translations. Projects of 1.2.0
+open as they were; games using names, timed choices or captions need Datajack 1.3, which an older one says
+rather than failing.
+
+### Cyberdeck, the editor
+- The player's name: `[ask: Hero = Alex]` asks for it, at most 12 characters, and `{Hero}` shows it
+  in the text, in options and as a speaker, `— {Hero}: Hi.`; Alex until it is given. Pages are cut
+  as if every name were as long as the longest allowed, so that they always fit.
+- Timed choices: `[choice: Answer 10s]`, and an option ending with `[timeout]`, never shown, taken
+  when time runs out.
+- Video captions: a WebVTT file named like its video (`Opening.vtt`), dropped in Cast & files.
+- Copy without the story, on the projects screen: a new project with another's files, characters
+  and settings and none of its chapters, in a language of its own, to import a translation into.
+- Restore as a copy, added in 1.2.0, is gone: a copy of a story is the same text imported under
+  another name.
+
+### Datajack, the player
+- Asks for names and shows them; times choices with a bar running out.
+- Settings has three categories: General, Accessibility and Controls. Accessibility sets the text
+  size (the text box growing to hold it), a plainer font, a stronger contrast behind the text,
+  pages and options read aloud, choices that wait for the player, even timed ones, and the
+  captions of videos.
+- Screen readers hear each page whole as it appears, rather than letter by letter as it is typed.
+
+### Downloads
+As before, nothing to install: unpack a download and start the application inside.
+- `Cyberdeck-1.3.0-windows-x64.zip` and `Datajack-1.3.0-windows-x64.zip`: for Windows; start
+  `Cyberdeck.exe` or `Datajack.exe` (*More info → Run anyway* the first time: they are not signed).
+- `Cyberdeck-1.3.0-linux-x64.zip` and `Datajack-1.3.0-linux-x64.zip`: for Linux; start `cyberdeck`
+  or `datajack`.
+- `Cyberdeck-1.3.0-web.zip` and `Datajack-1.3.0-web.zip`: for any computer with a browser; open
+  `index.html`, without a server.
+- `Cyberdeck-1.3.0-documentation.zip`: the illustrated guide for authors (open
+  `docs/guide/index.html`), the README, these changes and the licence.
+- `SHA256SUMS`: the checksum of each download.
+
 ## 1.2.0 — 2026-10-28
 
 Counting, voices and videos. Projects of 1.1.0 open as they were; a game keeps opening in older

@@ -30,10 +30,12 @@ import {
   toSave,
   waitMillisecondsOf,
   EFFECT_DEFAULTS,
+  MAXIMUM_ASKED_NAME_LENGTH,
   type Cue,
   type PendingOption,
   type PlayableStory,
   type PlayerSnapshot,
+  type PlayerStep,
   type ProgressData,
   type RestoreOutcome,
   type SaveData,
@@ -90,8 +92,8 @@ const errorMessage = ref<string | null>(null)
 const openPanel = ref<'none' | 'log' | 'save' | 'load' | 'settings'>('none')
 /** The text box and the menu hidden, to look at the picture; any input shows them again. */
 const isTextHidden = ref(false)
-/** The video over the whole screen: the text waits until it ends, or the player passes it. */
-const playingVideo = ref<{ url: string } | null>(null)
+/** The video over the whole screen, and its captions: the text waits until it ends, or the player passes it. */
+const playingVideo = ref<{ url: string; captionsUrl: string | null } | null>(null)
 const videoElement = useTemplateRef<HTMLVideoElement>('video')
 /** The text, choices and menu: hidden by the player, and under a panel or the end screen, which have their own buttons. */
 const isHudShown = computed(() => !isTextHidden.value && openPanel.value === 'none' && snapshot.value.step.type !== 'end' && errorMessage.value === null && titleCard.value === null && playingVideo.value === null)
@@ -115,6 +117,16 @@ let lastWheelTime = Number.NEGATIVE_INFINITY
 
 const page = computed(() => snapshot.value.step.type === 'page' ? snapshot.value.step.page : null)
 const choice = computed(() => snapshot.value.step.type === 'choice' ? snapshot.value.step.choice : null)
+/** The name the player is asked for, with what stands in for it. */
+const asked = computed(() => {
+  const step = snapshot.value.step
+  return step.type === 'ask' ? props.story.project.askedNames.find(candidate => candidate.id === step.ask.askedNameId) ?? null : null
+})
+const typedName = ref('')
+const askInput = useTemplateRef<HTMLInputElement>('askInput')
+watch(askInput, input => input?.focus())
+/** A character's name, which may be one the player gave: `{Hero}`. */
+const characterName = (characterId: string) => runtime.withNames(catalog.characterName(characterId))
 /** The styled parts of a page, with the properties of their styles. */
 function stylesOf(shownPage: StoredPage): StyledPart[] {
   return (shownPage.styles ?? []).map(span => {
@@ -166,15 +178,35 @@ const fullScreenPages = computed(() => snapshot.value.stage.textMode !== 'full'
   ? null
   : screenful.value.map(shownPage => ({
     id: shownPage.id,
-    speaker: shownPage.speakerId === null ? null : catalog.characterName(shownPage.speakerId),
+    speaker: shownPage.speakerId === null ? null : characterName(shownPage.speakerId),
     text: shownPage.text,
     styles: stylesOf(shownPage),
   })))
 const isTypingComplete = computed(() => page.value !== null && visibleLength.value >= page.value.text.length)
 /** Where the speaker stands, for the name plate to sit above; null when not on stage. */
 const speakerX = computed(() => snapshot.value.stage.characters.find(onStage => onStage.characterId === page.value?.speakerId)?.x ?? null)
-const speakerName = computed(() => page.value?.speakerId == null ? null : catalog.characterName(page.value.speakerId))
+const speakerName = computed(() => page.value?.speakerId == null ? null : characterName(page.value.speakerId))
 const musicUrl = computed(() => snapshot.value.stage.musicId === null ? null : catalog.musicUrl(snapshot.value.stage.musicId))
+/**
+ * What screen readers announce: each page whole as it appears, rather than letter by letter as it is
+ * typed; the options of a choice; the name asked for; the end. Nothing while a video plays.
+ */
+const announcement = computed(() => {
+  const step = snapshot.value.step
+  if (playingVideo.value !== null) {
+    return ''
+  }
+  switch (step.type) {
+    case 'page':
+      return speakerName.value === null ? step.page.text : `${speakerName.value}: ${step.page.text}`
+    case 'choice':
+      return step.choice.options.filter(option => option.timeout !== true).map(option => option.text).join(' / ')
+    case 'ask':
+      return asked.value?.name ?? ''
+    case 'end':
+      return errorMessage.value ?? endingName.value ?? storyText.value.theEnd
+  }
+})
 const endingName = computed(() => {
   const step = snapshot.value.step
   return step.type === 'end' && step.endingId !== null ? props.story.project.endings.find(ending => ending.id === step.endingId)?.name ?? null : null
@@ -307,6 +339,29 @@ function stopVoice() {
   voice?.pause()
   voice = null
   voiceAfterVideo = null
+  if (typeof speechSynthesis !== 'undefined') {
+    speechSynthesis.cancel()
+  }
+}
+
+/**
+ * Reads the page or the options aloud, in the language of the story, when the player asked for it;
+ * a page with a voice of its own is heard, not read.
+ */
+function readAloud() {
+  if (!settings.value.readAloud || typeof speechSynthesis === 'undefined' || isSkipping.value || voice !== null || voiceAfterVideo !== null || playingVideo.value !== null) {
+    return
+  }
+  const step = runtime.snapshot.step
+  const parts = step.type === 'page' ? [speakerName.value ?? '', step.page.text]
+    : step.type === 'choice' ? step.choice.options.filter(option => option.timeout !== true).map(option => option.text)
+      : step.type === 'ask' ? [asked.value?.name ?? ''] : []
+  const spoken = parts.filter(part => part !== '').join('. ')
+  if (spoken !== '') {
+    const utterance = new SpeechSynthesisUtterance(spoken)
+    utterance.lang = props.story.project.locale
+    speechSynthesis.speak(utterance)
+  }
 }
 
 /** Coming back to a page, by going back or loading, its line is heard again; its other effects are not. */
@@ -324,7 +379,7 @@ function playVideo(videoId: string) {
     return
   }
   clearTimeout(typingTimer)
-  playingVideo.value = { url }
+  playingVideo.value = { url, captionsUrl: catalog.captionsUrl(videoId) }
 }
 
 /** Starts the video once shown; a browser that refuses to play sound before a click plays it muted rather than not at all. */
@@ -346,6 +401,8 @@ function endVideo() {
   playingVideo.value = null
   if (voiceAfterVideo !== null) {
     playVoice(voiceAfterVideo)
+  } else {
+    readAloud()
   }
   if (page.value !== null && !isTypingComplete.value) {
     if (visibleLength.value === 0) {
@@ -372,6 +429,7 @@ function act(action: () => void) {
   }
   playCues(runtime.takeCues())
   if (runtime.snapshot.step !== stepBefore) {
+    readAloud()
     recordProgress()
   }
   if (runtime.snapshot.step !== stepBefore && runtime.snapshot.step.type !== 'end') {
@@ -396,7 +454,7 @@ function recordProgress() {
     recorded = reached.progress
     currentPointKey = reached.pointKey
     pendingOption = null
-  } else {
+  } else if (step.type === 'end') {
     recorded = recordEndReached(recorded, step.endingId, pendingOption)
     pendingOption = null
   }
@@ -432,7 +490,7 @@ const backlogLines = ref<BacklogLine[]>([])
 
 function openLog() {
   backlogLines.value = runtime.backlog().map(entry => entry.type === 'page'
-    ? { stopIndex: entry.stopIndex, speaker: entry.page.speakerId === null ? null : catalog.characterName(entry.page.speakerId), text: entry.page.text, styles: stylesOf(entry.page), isChoice: false }
+    ? { stopIndex: entry.stopIndex, speaker: entry.page.speakerId === null ? null : characterName(entry.page.speakerId), text: entry.page.text, styles: stylesOf(entry.page), isChoice: false }
     : { stopIndex: entry.stopIndex, speaker: null, text: entry.optionText, styles: [], isChoice: true })
   openPanel.value = 'log'
 }
@@ -602,6 +660,56 @@ function goBack() {
   replayVoice()
 }
 
+/** Gives the name typed; nothing typed keeps the default. */
+function answer() {
+  const typed = typedName.value
+  typedName.value = ''
+  playForward(() => runtime.answer(typed))
+}
+
+/**
+ * The time left to pick in a timed choice, counted while the choice is shown: a panel opened over it
+ * pauses it. Nothing counts when the player asked choices to wait for them.
+ */
+const choiceTime = ref<{ step: PlayerStep; leftMs: number; limitMs: number } | null>(null)
+let choiceTimer: ReturnType<typeof setTimeout> | undefined
+let choiceTimerStartedAt = 0
+
+watch([() => snapshot.value.step, isHudShown, () => settings.value.untimedChoices], ([step, isShown, untimed]) => {
+  pauseChoiceTimer()
+  if (step.type !== 'choice' || step.choice.timeLimitMs === undefined || untimed) {
+    choiceTime.value = null
+    return
+  }
+  if (choiceTime.value?.step !== step) {
+    choiceTime.value = { step, leftMs: step.choice.timeLimitMs, limitMs: step.choice.timeLimitMs }
+  }
+  if (isShown) {
+    choiceTimerStartedAt = performance.now()
+    choiceTimer = setTimeout(timeRunsOut, choiceTime.value.leftMs)
+  }
+})
+
+function pauseChoiceTimer() {
+  if (choiceTimer === undefined) {
+    return
+  }
+  clearTimeout(choiceTimer)
+  choiceTimer = undefined
+  const time = choiceTime.value
+  if (time !== null) {
+    choiceTime.value = { ...time, leftMs: Math.max(0, time.leftMs - (performance.now() - choiceTimerStartedAt)) }
+  }
+}
+
+function timeRunsOut() {
+  choiceTimer = undefined
+  const timeout = choice.value?.options.find(option => option.timeout === true)
+  if (timeout !== undefined) {
+    choose(timeout.id)
+  }
+}
+
 function choose(optionId: string) {
   pendingOption = currentPointKey === null ? null : { pointKey: currentPointKey, optionId }
   playForward(() => runtime.choose(optionId))
@@ -663,6 +771,10 @@ function perform(action: PlayerAction) {
 }
 
 function onKeydown(event: KeyboardEvent) {
+  // Typing a name is not playing: its letters and Space are the player's; Escape still leaves.
+  if (event.target instanceof HTMLInputElement && event.target.type === 'text' && event.code !== 'Escape') {
+    return
+  }
   const action = actionForKey(bindings.value, event.code)
   if (action === null) {
     return
@@ -760,6 +872,23 @@ const resizeObserver = new ResizeObserver(([entry]) => {
   }
 })
 
+/** The menu stays above the text box, which grows with text the player chose larger. */
+const QUICK_MENU_BOTTOM = 310
+const textBox = useTemplateRef<{ $el: HTMLElement }>('textBox')
+const quickMenuBottom = ref(QUICK_MENU_BOTTOM)
+const textBoxObserver = new ResizeObserver(([entry]) => {
+  const box = entry?.target as HTMLElement | undefined
+  quickMenuBottom.value = box === undefined ? QUICK_MENU_BOTTOM : Math.max(QUICK_MENU_BOTTOM, 48 + box.offsetHeight + 26)
+})
+watch(textBox, (current, previous) => {
+  if (previous?.$el instanceof HTMLElement) {
+    textBoxObserver.unobserve(previous.$el)
+  }
+  if (current?.$el instanceof HTMLElement) {
+    textBoxObserver.observe(current.$el)
+  }
+})
+
 onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
   document.addEventListener('fullscreenchange', onFullscreenChange)
@@ -781,10 +910,12 @@ onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
   playingSounds.forEach(sound => sound.pause())
   stopVoice()
+  clearTimeout(choiceTimer)
   document.removeEventListener('fullscreenchange', onFullscreenChange)
   window.removeEventListener('mousedown', onMouseDown)
   window.removeEventListener('mouseup', onMouseUp)
   resizeObserver.disconnect()
+  textBoxObserver.disconnect()
   clearTimeout(typingTimer)
   clearTimeout(noticeTimer)
   clearTimeout(titleCardTimer)
@@ -800,11 +931,13 @@ onUnmounted(() => {
   <div ref="viewport" class="viewport">
     <div
       class="screen"
-      :style="{ width: `${STAGE_WIDTH}px`, height: `${STAGE_HEIGHT}px`, transform: `translate(-50%, -50%) scale(${scale})` }"
+      :class="{ 'readable-font': settings.readableFont, 'strong-contrast': settings.strongContrast }"
+      :style="{ width: `${STAGE_WIDTH}px`, height: `${STAGE_HEIGHT}px`, transform: `translate(-50%, -50%) scale(${scale})`, '--text-scale': settings.textScale }"
       @click="onScreenClick"
       @contextmenu="onContextMenu"
       @wheel.passive="onWheel"
     >
+      <p class="announcement" aria-live="polite" aria-atomic="true">{{ announcement }}</p>
       <div ref="scene" class="scene">
         <StageView :stage="snapshot.stage" :catalog="catalog" />
       </div>
@@ -819,7 +952,9 @@ onUnmounted(() => {
       <div ref="flash" class="flash" />
       <MusicPlayer :url="musicUrl" :volume="playingVideo === null ? settings.musicVolume : 0" />
       <div v-if="playingVideo !== null" class="video-screen">
-        <video ref="video" :src="playingVideo.url" playsinline @ended="endVideo" @error="endVideo" />
+        <video ref="video" :src="playingVideo.url" playsinline @ended="endVideo" @error="endVideo">
+          <track v-if="playingVideo.captionsUrl !== null && settings.captions" kind="captions" :src="playingVideo.captionsUrl" :srclang="story.project.locale" default>
+        </video>
       </div>
       <FullScreenText
         v-if="fullScreenPages !== null && fullScreenPages.length > 0 && isHudShown"
@@ -829,6 +964,7 @@ onUnmounted(() => {
       />
       <TextBox
         v-else-if="page !== null && isHudShown"
+        ref="textBox"
         :speaker="speakerName"
         :text="page.text"
         :visible-length="visibleLength"
@@ -836,8 +972,23 @@ onUnmounted(() => {
         :styles="pageStyles"
         :speaker-x="speakerX"
       />
-      <ChoiceMenu v-if="choice !== null && isHudShown" :key="choice.id" :choice="choice" @choose="choose" />
-      <div v-if="isHudShown" class="quick-menu" :class="{ low: fullScreenPages !== null }">
+      <ChoiceMenu v-if="choice !== null && isHudShown" :key="choice.id" :choice="choice" :time="choiceTime" @choose="choose" />
+      <form v-if="asked !== null && isHudShown" class="ask" @click.stop @submit.prevent="answer">
+        <label class="ask-label" for="asked-name">{{ asked.name }}</label>
+        <input
+          id="asked-name"
+          ref="askInput"
+          v-model="typedName"
+          class="ask-input"
+          type="text"
+          autocomplete="off"
+          :maxlength="MAXIMUM_ASKED_NAME_LENGTH"
+          :placeholder="asked.defaultName"
+          @keydown.enter.prevent="answer"
+        >
+        <button class="ask-button" type="submit">{{ text.confirmName }}</button>
+      </form>
+      <div v-if="isHudShown" class="quick-menu" :class="{ low: fullScreenPages !== null }" :style="fullScreenPages === null ? { bottom: `${quickMenuBottom}px` } : undefined">
         <button class="quick-button" :disabled="!canGoBack" @click.stop="goBack">{{ text.back }}</button>
         <button class="quick-button" @click.stop="openLog">{{ text.log }}</button>
         <button class="quick-button" @click.stop="openSlots('save')">{{ text.save }}</button>
@@ -1011,6 +1162,75 @@ onUnmounted(() => {
 
 /* A chapter's title over the stage, before its text; the style `chapter title` and the game's CSS give it its looks. */
 /* The default looks sit on the card and are inherited: a style's class on the title itself wins over them. */
+/* The player's accessibility settings, over the game's own styles. */
+.readable-font :deep(.textbox .text),
+.readable-font :deep(.textbox .text span),
+.readable-font :deep(.full-text),
+.readable-font :deep(.full-text .paragraph-text span),
+.readable-font :deep(.option) {
+  font-family: Verdana, 'DejaVu Sans', 'Bitstream Vera Sans', sans-serif !important;
+}
+
+.strong-contrast :deep(.textbox),
+.strong-contrast :deep(.option) {
+  background: #000;
+  border-color: rgb(158 234 255 / 0.9);
+}
+
+.strong-contrast :deep(.full-text) {
+  background: #000;
+}
+
+.ask {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 24px;
+  padding: 40px 72px;
+  border: 2px solid rgb(120 220 255 / 0.4);
+  border-radius: 20px;
+  background: rgb(8 10 16 / 0.9);
+  font-size: calc(38px * var(--text-scale, 1));
+}
+
+.ask-label {
+  font: 600 1em/1.2 system-ui, sans-serif;
+  color: #9eeaff;
+}
+
+.ask-input {
+  width: 14em;
+  padding: 12px 20px;
+  border: 2px solid rgb(120 220 255 / 0.5);
+  border-radius: 10px;
+  background: #05070c;
+  font: 1em/1.3 Georgia, serif;
+  color: #f2f4f8;
+  text-align: center;
+}
+
+.ask-button {
+  padding: 10px 40px;
+  border: 1px solid rgb(120 220 255 / 0.5);
+  border-radius: 8px;
+  background: #0e2a36;
+  font: 0.7em/1.2 system-ui, sans-serif;
+  color: #9eeaff;
+  cursor: pointer;
+}
+
+.announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .video-screen {
   position: absolute;
   inset: 0;
@@ -1021,6 +1241,11 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.video-screen video::cue {
+  font-size: calc(40px * var(--text-scale, 1));
+  background: rgb(0 0 0 / 0.75);
 }
 
 .title-card {

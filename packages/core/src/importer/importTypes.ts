@@ -64,6 +64,8 @@ export interface ChoiceOption {
   value: string
   /** `[if: …]` on the option's line: it is offered only while this holds. */
   condition?: Condition
+  /** `[timeout]` on the option's line: never shown, taken when the time of the choice runs out. */
+  timeout?: true
 }
 
 /** Offers options to the player; the one picked becomes the value of `decision`. */
@@ -72,6 +74,16 @@ export interface ChoiceNode {
   sourceLine: number
   decision: string
   options: ChoiceOption[]
+  /** `[choice: Answer 10s]`: the time the player has to pick. */
+  timeLimitMs?: number
+}
+
+/** `[ask: Hero = Alex]`: the player gives a name, which `{Hero}` then shows; Alex until they do. */
+export interface AskNode {
+  type: 'ask'
+  sourceLine: number
+  name: string
+  defaultName: string | null
 }
 
 export type Condition =
@@ -172,7 +184,7 @@ export interface PlayNode {
   scene: string
 }
 
-export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | AddNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
+export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | AddNode | AskNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
 
 /** `[decision: Confession = Accept | Refuse]`, or `[decision multi: …]` when several values can hold at once. */
 export interface DecisionDeclaration {
@@ -248,6 +260,12 @@ export type ImportProblemCode =
   | 'duplicateCounter'
   | 'counterNamedLikeDecision'
   | 'unsetCounter'
+  | 'invalidAsk'
+  | 'unknownAskedName'
+  | 'timedChoiceWithoutTimeout'
+  | 'timeoutWithoutTime'
+  | 'severalTimeouts'
+  | 'timeoutOutsideOption'
   | 'invalidStageDirective'
   | 'looksLikeStageKeyword'
   | 'unreachable'

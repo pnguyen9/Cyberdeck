@@ -14,6 +14,8 @@ export interface StoryWords {
   colon: string
   /** After the name of a decision several values of which can hold at once. */
   several: string
+  /** A name asked for, and what stands in until the player gives one. */
+  askedName: (name: string, defaultName: string) => string
   /** What a counter holds before anything changes it. */
   startsAt: (amount: number) => string
   /** In place of the properties of a style drawn by the CSS alone. */
@@ -36,6 +38,7 @@ export const ENGLISH_STORY_WORDS: StoryWords = {
   colon: ': ',
   several: 'several',
   startsAt: amount => `starts at ${amount}`,
+  askedName: (name, defaultName) => defaultName === '' ? name : `${name}, ${defaultName} by default`,
   fromTheCss: 'from the CSS',
   none: 'none',
   noMore: value => `no more ${value}`,

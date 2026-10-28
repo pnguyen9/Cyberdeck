@@ -125,13 +125,13 @@ const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => elemen
           </template>
           <template v-else-if="element.kind === 'entry' && element.entry.type === 'card' && element.entry.node.type === 'choice'">
             <span class="number">{{ element.entry.number }}</span>
-            <span class="speaker">{{ text.choiceOf(decisionName(element.entry.node.decisionId)) }}</span>
+            <span class="speaker">{{ text.choiceOf(decisionName(element.entry.node.decisionId)) }}<template v-if="element.entry.node.timeLimitMs !== undefined"> · ⏱</template></span>
             <span
               v-for="option in element.entry.node.options"
               :key="option.id"
               class="option"
               :title="option.condition === null ? undefined : text.optionOfferedOnlyIf(conditionText(option.condition))"
-            >› {{ option.text }}<span v-if="option.condition !== null" class="option-condition"> · if {{ conditionText(option.condition) }}</span></span>
+            >{{ option.timeout === true ? '⏱' : '›' }} {{ option.text }}<span v-if="option.condition !== null" class="option-condition"> · if {{ conditionText(option.condition) }}</span></span>
           </template>
           <template v-else-if="element.kind === 'entry'">
             <span class="marker-kind">{{ MARKER_SYMBOLS[element.entry.node.type] }}</span>

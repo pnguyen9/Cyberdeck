@@ -9,16 +9,37 @@ export interface PlayerSettings {
   soundVolume: number
   /** Lines spoken, `[voice]`. */
   voiceVolume: number
+  /** How much larger the text is drawn; the text box grows to hold it. */
+  textScale: TextScale
+  /** The text in a plain, open font, whatever the game's styles name. */
+  readableFont: boolean
+  /** The text box opaque, its border brighter. */
+  strongContrast: boolean
+  /** Pages and options read aloud by the voice of the browser or the system. */
+  readAloud: boolean
+  /** Timed choices wait for the player, however long they take. */
+  untimedChoices: boolean
+  /** The captions of videos that have them, over the picture. */
+  captions: boolean
   bindings: Bindings
 }
 
 export const TEXT_SPEED_RANGE = { slowest: 10, fastest: 150 } as const
+
+export const TEXT_SCALES = [1, 1.25, 1.5] as const
+export type TextScale = (typeof TEXT_SCALES)[number]
 
 export const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
   textSpeed: 45,
   musicVolume: 0.6,
   soundVolume: 0.8,
   voiceVolume: 1,
+  textScale: 1,
+  readableFont: false,
+  strongContrast: false,
+  readAloud: false,
+  untimedChoices: false,
+  captions: false,
   bindings: DEFAULT_BINDINGS,
 }
 
@@ -37,6 +58,12 @@ export function parsePlayerSettings(value: unknown): PlayerSettings {
     musicVolume: isVolume(fields.musicVolume) ? fields.musicVolume : DEFAULT_PLAYER_SETTINGS.musicVolume,
     soundVolume: isVolume(fields.soundVolume) ? fields.soundVolume : DEFAULT_PLAYER_SETTINGS.soundVolume,
     voiceVolume: isVolume(fields.voiceVolume) ? fields.voiceVolume : DEFAULT_PLAYER_SETTINGS.voiceVolume,
+    textScale: (TEXT_SCALES as readonly unknown[]).includes(fields.textScale) ? fields.textScale as TextScale : DEFAULT_PLAYER_SETTINGS.textScale,
+    readableFont: fields.readableFont === true,
+    strongContrast: fields.strongContrast === true,
+    readAloud: fields.readAloud === true,
+    untimedChoices: fields.untimedChoices === true,
+    captions: fields.captions === true,
     bindings: Object.fromEntries(actions.map(action => {
       const saved = savedBindings[action]
       return [action, Array.isArray(saved) ? saved.filter(isInputBinding) : DEFAULT_BINDINGS[action]]

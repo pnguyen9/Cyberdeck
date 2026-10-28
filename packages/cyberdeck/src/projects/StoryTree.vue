@@ -139,7 +139,7 @@ const stateClasses = (entryId: string) => ({
         </template>
         <template v-else-if="node.type === 'choice'">
           <span class="number">{{ numberOf(node.id) }}</span>
-          <span class="line"><strong class="speaker">{{ text.choiceOf(decisionName(node.decisionId)) }}</strong>{{ node.options.map(option => option.condition === null ? option.text : `${option.text} (if ${conditionText(option.condition)})`).join(' / ') }}</span>
+          <span class="line"><strong class="speaker">{{ text.choiceOf(decisionName(node.decisionId)) }}</strong>{{ node.options.map(option => `${option.timeout === true ? '⏱ ' : ''}${option.condition === null ? option.text : `${option.text} (if ${conditionText(option.condition)})`}`).join(' / ') }}</span>
         </template>
         <template v-else>
           <span class="symbol">{{ MARKER_SYMBOLS[node.type] }}</span>

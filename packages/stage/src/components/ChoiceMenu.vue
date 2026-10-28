@@ -1,8 +1,18 @@
 <script setup lang="ts">
 import type { StoredChoice } from '@cyberdeck/core'
-import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
+import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
 
-const props = defineProps<{ choice: StoredChoice }>()
+const props = defineProps<{
+  choice: StoredChoice
+  /** For a timed choice: the time left and the whole time, which the bar shows running out. */
+  time?: { leftMs: number; limitMs: number } | null
+}>()
+/** The option taken when time runs out is never offered. */
+const options = computed(() => props.choice.options.filter(option => option.timeout !== true))
+const timeBarStyle = computed(() => props.time == null ? undefined : {
+  '--time-left': String(props.time.leftMs / props.time.limitMs),
+  animationDuration: `${props.time.leftMs}ms`,
+})
 const emit = defineEmits<{ choose: [optionId: string] }>()
 
 /**
@@ -53,7 +63,7 @@ onUnmounted(() => {
 <template>
   <div class="choice-menu" :class="{ armed: isArmed }" role="menu">
     <button
-      v-for="option in props.choice.options"
+      v-for="option in options"
       ref="optionButtons"
       :key="option.id"
       class="option"
@@ -62,6 +72,9 @@ onUnmounted(() => {
     >
       {{ option.text }}
     </button>
+    <div v-if="timeBarStyle !== undefined" class="time" aria-hidden="true">
+      <div class="time-left" :style="timeBarStyle" />
+    </div>
   </div>
 </template>
 
@@ -82,7 +95,7 @@ onUnmounted(() => {
   border-radius: 14px;
   border: 2px solid rgb(120 220 255 / 0.4);
   background: rgb(8 10 16 / 0.85);
-  font: 38px/1.3 Georgia, serif;
+  font: calc(38px * var(--text-scale, 1))/1.3 Georgia, serif;
   color: #f2f4f8;
   cursor: pointer;
   opacity: 0;
@@ -100,4 +113,31 @@ onUnmounted(() => {
   background: #0e2a36;
   box-shadow: 0 0 30px rgb(0 200 255 / 0.25);
 }
+
+.time {
+  width: 900px;
+  height: 10px;
+  border-radius: 5px;
+  background: rgb(120 220 255 / 0.15);
+  overflow: hidden;
+}
+
+.time-left {
+  height: 100%;
+  background: #9eeaff;
+  transform-origin: left;
+  animation-name: run-out;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes run-out {
+  from {
+    transform: scaleX(var(--time-left));
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 </style>

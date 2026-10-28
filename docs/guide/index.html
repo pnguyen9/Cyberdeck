@@ -230,6 +230,8 @@ turns it into pages, characters and choices. Your players play it in Datajack.</
     <li><a href="#word">Working in Word</a></li>
     <li><a href="#tools">Tree view, shortcuts and backups</a></li>
     <li><a href="#players">What your players see</a></li>
+    <li><a href="#names">The player's name, and timed choices</a></li>
+    <li><a href="#translating">Translating your story</a></li>
   </ol>
 </nav>
 
@@ -310,6 +312,7 @@ goes where its name says:</p>
   <tr><td><code>marie-smile.png</code></td><td>Marie's “smile” expression</td></tr>
   <tr><td><code>calm.mp3</code></td><td>The track “calm”</td></tr>
   <tr><td><code>opening.webm</code></td><td>The video “opening” (<code>.webm</code> or <code>.mp4</code>)</td></tr>
+  <tr><td><code>opening.vtt</code></td><td>Its captions, for players who want them</td></tr>
 </table>
 <p>Capitals, spaces, hyphens and underscores don't matter. Dropping a new file replaces the old one.</p>
 <figure>
@@ -532,7 +535,7 @@ turns them the right way.</p>
   <tr><th>You write</th><th>What happens</th></tr>
   <tr><td><code>[sound: door]</code></td><td>A sound plays once. Its file is named after it: <code>door.ogg</code>.</td></tr>
   <tr><td><code>[voice: marie-01]— Marie: Hello.</code></td><td>Marie's line is heard: <code>marie-01.ogg</code>. It stops when the player moves on, and plays again if they come back to the page.</td></tr>
-  <tr><td><code>[video: Opening]</code></td><td>A video fills the screen, and the text waits until it ends. Clicking or pressing Space passes it.</td></tr>
+  <tr><td><code>[video: Opening]</code></td><td>A video fills the screen, and the text waits until it ends. Clicking or pressing Space passes it. Captions go in a file named like it, <code>Opening.vtt</code>.</td></tr>
   <tr><td><code>[transition: fade]</code></td><td>The next background fades in. Also <code>black</code> or <code>white</code>, with a duration: <code>[transition: black 1.5s]</code>.</td></tr>
   <tr><td><code>[shake]</code>, <code>[shake: strong]</code></td><td>The screen trembles.</td></tr>
   <tr><td><code>[flash: red]</code></td><td>A flash of colour.</td></tr>
@@ -599,14 +602,19 @@ block side by side, to follow how the story goes. Here is the fair of chapter 2 
 </figure>
 <p><strong>Shortcuts</strong> (or <kbd>?</kbd>) lists every key by screen; click one to change it.</p>
 <p><strong>Back up</strong> downloads your whole project as one file. <strong>Restore a backup…</strong>, on
-the projects screen, brings it back, on this computer or another. Do it now and then.
-<strong>Restore as a copy…</strong> adds it beside the project instead: a version to try something on.</p>
+the projects screen, brings it back, on this computer or another. Do it now and then.</p>
 
 <h2 id="players">22. What your players see</h2>
-<p>Players have their own <strong>Settings</strong>: text speed, volumes (music and videos, sounds,
-voices), full screen, and their own keys.</p>
+<p>Players have their own <strong>Settings</strong>, in three categories. <strong>General</strong>: text
+speed, volumes (music and videos, sounds, voices), full screen. <strong>Accessibility</strong>: larger text,
+a plainer font, a stronger contrast, pages read aloud, choices that wait for them, and captions on
+videos. Players with a screen reader hear each page whole as it appears.
+<strong>Controls</strong>: their own keys. You have nothing to do for any of it: it works in every game.</p>
 <figure>
-  <a href="images/settings.png"><img src="images/settings.png" alt="The Settings screen: text speed, the volumes of music, sounds and voices, full screen on the left; on the right, each action with its keys and an “Add a key” button." loading="lazy"></a>
+  <a href="images/settings.png"><img src="images/settings.png" alt="The Settings screen, General: text speed, the volumes of music, sounds and voices, full screen." loading="lazy"></a>
+</figure>
+<figure>
+  <a href="images/accessibility.png"><img src="images/accessibility.png" alt="The Settings screen, Accessibility: text size at 100, 125 or 150 %, a plainer font, stronger contrast, reading aloud, and choices that wait." loading="lazy"></a>
 </figure>
 <p>The <strong>Log</strong> shows what they read and picked. Clicking a line goes back to it.</p>
 <figure>
@@ -616,6 +624,28 @@ voices), full screen, and their own keys.</p>
 save as a file, to put aside or to carry to another computer. There, <strong>Load a save…</strong> in the
 library opens it, if the game is installed. The <strong>Map</strong> shows each choice they have reached and
 where each option led, so that they can try another from there.</p>
+
+<h2 id="names">23. The player's name, and timed choices</h2>
+<p>To let players name the hero, ask for it, then write the name between braces wherever it goes:</p>
+<pre>[ask: Hero = Alex]
+— {Hero}: So that's my name.
+Marie looked up. “{Hero}? Is that you?”</pre>
+<p>The story stops on a small box to type the name, at most 12 letters. <code>Alex</code> stands in until
+they give one, or if they leave it empty.</p>
+<p>A choice can have a time limit. Write it after its name, and end one option with <code>[timeout]</code>:
+it is never shown, and it is what happens when time runs out.</p>
+<pre>[choice: Answer 10s]
+> Tell her the truth. = Truth
+> Lie. = Lie
+> … = Silent [timeout]</pre>
+<div class="tip"><p>Players who need more time can ask choices to wait for them, in their settings.</p></div>
+
+<h2 id="translating">24. Translating your story</h2>
+<p>On the projects screen, <strong>Copy without the story</strong> makes a new project with your files,
+characters and settings, but none of your chapters. Give it a name and the language of the
+translation, then import the translated text into it, from Word or pasted. Keep the tags as they are,
+<code>[bg: rooftop]</code> or <code>[enter: marie]</code>: that is how the translation finds your pictures and
+sounds.</p>
 
 </main>
 </body>

@@ -8,6 +8,7 @@ import {
   applyImport,
   applyNodeEdit,
   assignAsset,
+  captionsMediaTypeOf,
   checkChapterDocument,
   checkProjectDocument,
   createGameArchive,
@@ -20,6 +21,7 @@ import {
   isSupportedAssetMediaType,
   matchAssetFile,
   moveChapter,
+  projectWithoutStory,
   readProjectBackup,
   removeChapter,
   removeNodes,
@@ -89,31 +91,33 @@ export async function createNewProject(store: ProjectStore, name: string, locale
 }
 
 /**
- * Restores a backup, replacing the project of the same identifier if there is one; or, as a copy,
- * beside it, as a new project named by `copyName` after the one backed up.
+ * A new project made from another for a translation: its files, characters and settings, none of its
+ * story, in a language of its own. The translated text is then imported into it.
  */
-export async function restoreBackup(
-  store: ProjectStore,
-  bytes: Uint8Array<ArrayBuffer>,
-  asCopy?: { copyName: (name: string) => string; environment?: Environment },
-): Promise<ProjectDocument> {
-  const backup = await readProjectBackup(bytes)
-  const environment = asCopy?.environment ?? defaultEnvironment
-  const now = environment.now()
-  const project = asCopy === undefined
-    ? backup.project
-    : { ...backup.project, id: environment.createId(), name: asCopy.copyName(backup.project.name), createdAt: now, updatedAt: now }
-  if (asCopy === undefined) {
-    await store.deleteProject(project.id)
+export async function createProjectWithoutStory(store: ProjectStore, source: ProjectDocument, name: string, locale: string, environment: Environment = defaultEnvironment): Promise<ProjectDocument> {
+  if (name.trim() === '') {
+    throw new AuthorError(text => text.projectWithoutName)
   }
-  for (const chapter of backup.chapters) {
-    await store.writeChapter(project.id, chapter)
-  }
+  const project = projectWithoutStory(source, { name, locale }, environment)
   for (const asset of project.assets) {
-    await store.writeAsset(project.id, asset.id, backup.assetFiles.get(asset.id)!, asset.mediaType)
+    await store.writeAsset(project.id, asset.id, await store.readAsset(source.id, asset.id), asset.mediaType)
   }
   await store.writeProject(project)
   return project
+}
+
+/** Restores a backup, replacing the project of the same identifier if there is one. */
+export async function restoreBackup(store: ProjectStore, bytes: Uint8Array<ArrayBuffer>): Promise<ProjectDocument> {
+  const backup = await readProjectBackup(bytes)
+  await store.deleteProject(backup.project.id)
+  for (const chapter of backup.chapters) {
+    await store.writeChapter(backup.project.id, chapter)
+  }
+  for (const asset of backup.project.assets) {
+    await store.writeAsset(backup.project.id, asset.id, backup.assetFiles.get(asset.id)!, asset.mediaType)
+  }
+  await store.writeProject(backup.project)
+  return backup.project
 }
 
 /**
@@ -195,14 +199,16 @@ export class OpenProject {
         matches.push({ fileName: file.name, entry: describeTarget(project, { type: 'font', fontId: added.fontId }, locale) })
         continue
       }
-      const target = isSupportedAssetMediaType(file.mediaType) ? matchAssetFile(file.name, file.mediaType, project) : null
+      // Systems name caption files many ways, or not at all: their extension says what they are.
+      const mediaType = captionsMediaTypeOf(file.name) ?? file.mediaType
+      const target = isSupportedAssetMediaType(mediaType) ? matchAssetFile(file.name, mediaType, project) : null
       if (target === null) {
         matches.push({ fileName: file.name, entry: null })
         continue
       }
       const assetId = this.environment.createId()
-      await this.store.writeAsset(project.id, assetId, file.bytes, file.mediaType)
-      project = assignAsset(project, target, { id: assetId, fileName: file.name, mediaType: file.mediaType, byteSize: file.bytes.length })
+      await this.store.writeAsset(project.id, assetId, file.bytes, mediaType)
+      project = assignAsset(project, target, { id: assetId, fileName: file.name, mediaType, byteSize: file.bytes.length })
       matches.push({ fileName: file.name, entry: describeTarget(project, target, locale) })
     }
     await this.saveWithoutUnusedFiles(project)
@@ -448,6 +454,8 @@ function describeTarget(project: ProjectDocument, target: AssetTarget, locale: L
       return text.illustrationTarget(`${project.illustrations.find(illustration => illustration.id === target.illustrationId)?.name}`)
     case 'video':
       return text.videoTarget(`${project.videos.find(video => video.id === target.videoId)?.name}`)
+    case 'captions':
+      return text.captionsTarget(`${project.videos.find(video => video.id === target.videoId)?.name}`)
     case 'font':
       return text.fontTarget(`${project.fonts.find(font => font.id === target.fontId)?.name}`)
     case 'expression': {

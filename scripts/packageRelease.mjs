@@ -54,12 +54,15 @@ for (const { product, workspace } of APPS) {
 
 // The guide as it is read in a browser, its images beside it, with the README, the changes and the
 // licence, where the repository has them: the README's link to the guide works in the archive too.
+// What is planned for later versions stays in the repository: the documentation is of this release.
 const documentationName = `Cyberdeck-${version}-documentation`
 const documentationFolder = join(workFolder, documentationName)
 cpSync(join(root, 'docs', 'guide'), join(documentationFolder, 'docs', 'guide'), { recursive: true })
-for (const fileName of ['README.md', 'CHANGELOG.md', 'LICENSE']) {
+for (const fileName of ['CHANGELOG.md', 'LICENSE']) {
   cpSync(join(root, fileName), join(documentationFolder, fileName))
 }
+const readme = readFileSync(join(root, 'README.md'), 'utf8')
+writeFileSync(join(documentationFolder, 'README.md'), readme.replace(/^## Planned for [^\n]*\n[\s\S]*?(?=^## )/m, ''))
 zipFolder(workFolder, documentationName, `${documentationName}.zip`)
 rmSync(workFolder, { recursive: true, force: true })
 

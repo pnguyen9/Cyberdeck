@@ -1,6 +1,7 @@
 import { DEFAULT_POSITION_PRESETS } from '../format/storyFormat'
 import { alwaysStops, readingFlow } from '../format/readingFlow'
 import { styleClassName } from '../format/authorCss'
+import { isAskableName, MAXIMUM_ASKED_NAME_LENGTH, measuringAskedNames } from '../format/askedNames'
 import { LARGE_WIDTH_SCALE, readStyleProperty } from '../format/textStyles'
 import { paginate, type PageLayout } from '../pagination/paginate'
 import type { TextRange } from '../pagination/textRange'
@@ -26,6 +27,7 @@ import {
   isControlDirective,
   readAddition,
   readAssignment,
+  readChoiceHeading,
   readCondition,
   readCounterDeclaration,
   readDecisionDeclaration,
@@ -66,6 +68,8 @@ function asInTags(text: string): string {
 
 /** `[if: …]` on an option's line, before or after its text. */
 const OPTION_CONDITION = /\[\s*if\s*:([^\]]*)\]/i
+/** `[timeout]` on an option's line: the option taken when the time of the choice runs out. */
+const OPTION_TIMEOUT = /\[\s*timeout\s*\]/i
 
 /**
  * Turns a text into chapters of story nodes.
@@ -311,12 +315,14 @@ class TextImporter {
       return
     }
 
-    const conditionTag = OPTION_CONDITION.exec(optionLine)
+    const timeoutTag = OPTION_TIMEOUT.exec(optionLine)
+    const withoutTimeout = timeoutTag === null ? optionLine : optionLine.replace(timeoutTag[0], ' ')
+    const conditionTag = OPTION_CONDITION.exec(withoutTimeout)
     const condition = conditionTag === null ? undefined : readCondition(asInTags(conditionTag[1]!))
     if (condition?.type === 'invalid') {
       this.addProblem('error', 'invalidCondition', lineNumber, condition.text)
     }
-    const optionText = conditionTag === null ? optionLine : optionLine.replace(conditionTag[0], ' ').replace(/\s+/g, ' ').trim()
+    const optionText = (conditionTag === null ? withoutTimeout : withoutTimeout.replace(conditionTag[0], ' ')).replace(/\s+/g, ' ').trim()
     const optionWithValue = OPTION_WITH_VALUE.exec(optionText)
     const optionLetter = String.fromCharCode('A'.charCodeAt(0) + this.openChoice.options.length)
     this.openChoice.options.push({
@@ -324,6 +330,7 @@ class TextImporter {
       text: optionWithValue?.[1] ?? optionText,
       value: optionWithValue?.[2] === undefined ? optionLetter : asInTags(optionWithValue[2]),
       ...(condition === undefined ? {} : { condition }),
+      ...(timeoutTag === null ? {} : { timeout: true as const }),
     })
   }
 
@@ -362,13 +369,28 @@ class TextImporter {
         this.addNode({ type: 'add', sourceLine: lineNumber, counter: addition.name, amount: addition.amount })
         return
       }
-      case 'choice':
+      case 'choice': {
         if (text === '') {
           this.addProblem('error', 'missingDecisionName', lineNumber)
           return
         }
         this.flushPendingDirectives()
-        this.openChoice = { type: 'choice', sourceLine: lineNumber, decision: text, options: [] }
+        const heading = readChoiceHeading(text)
+        this.openChoice = { type: 'choice', sourceLine: lineNumber, decision: heading.decision, options: [], ...(heading.timeLimitMs === null ? {} : { timeLimitMs: heading.timeLimitMs }) }
+        return
+      }
+      case 'ask': {
+        const assignment = text.includes('=') ? readAssignment(text) : { name: text, value: '' }
+        if (assignment === null || !isAskableName(assignment.name) || [...assignment.value].length > MAXIMUM_ASKED_NAME_LENGTH) {
+          this.addProblem('error', 'invalidAsk', lineNumber, text === '' ? undefined : text)
+          return
+        }
+        this.flushPendingDirectives()
+        this.addNode({ type: 'ask', sourceLine: lineNumber, name: assignment.name, defaultName: assignment.value === '' ? null : assignment.value })
+        return
+      }
+      case 'timeout':
+        this.addProblem('error', 'timeoutOutsideOption', lineNumber)
         return
       case 'if': {
         this.flushPendingDirectives()
@@ -492,7 +514,8 @@ class TextImporter {
     this.pendingDirectivesLine = null
 
     const scale = Math.max(1, ...styleSpans.map(span => this.widthScaleOf(span.style)))
-    const layout = scale === 1 ? this.options.layout : { ...this.options.layout, measureText: (text: string) => this.options.layout.measureText(text) * scale }
+    const measureText = measuringAskedNames(this.options.layout.measureText)
+    const layout = { ...this.options.layout, measureText: scale === 1 ? measureText : (text: string) => measureText(text) * scale }
     const pageRanges = paginate(parsedLine.text, layout, this.options.locale)
     pageRanges.forEach((pageRange, pageIndex) => {
       const isLastPage = pageIndex === pageRanges.length - 1
@@ -532,8 +555,16 @@ class TextImporter {
       this.addProblem('error', 'emptyChoice', choice.sourceLine, choice.decision)
       return
     }
+    const timeouts = choice.options.filter(option => option.timeout === true)
+    if (choice.timeLimitMs !== undefined && timeouts.length === 0) {
+      this.addProblem('error', 'timedChoiceWithoutTimeout', choice.sourceLine, choice.decision)
+    } else if (choice.timeLimitMs === undefined && timeouts.length > 0) {
+      this.addProblem('error', 'timeoutWithoutTime', timeouts[0]!.sourceLine, choice.decision)
+    } else if (timeouts.length > 1) {
+      this.addProblem('error', 'severalTimeouts', timeouts[1]!.sourceLine, choice.decision)
+    }
     // The player skips a choice none of whose options holds: one always offered rules that out.
-    if (choice.options.every(option => option.condition !== undefined)) {
+    if (choice.options.filter(option => option.timeout !== true).every(option => option.condition !== undefined)) {
       this.addProblem('warning', 'everyOptionConditional', choice.sourceLine)
     }
     this.addNode(choice)

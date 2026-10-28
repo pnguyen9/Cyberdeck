@@ -5,7 +5,7 @@ import type { StyleProperty } from './textStyles'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '1.3'
+export const FORMAT_VERSION = '1.4'
 
 /** True when this version of the code can read a document written in `version`. */
 export function isSupportedFormatVersion(version: string): boolean {
@@ -53,6 +53,16 @@ export interface Counter {
   initial: number
   /** Declared nowhere: an `[add]` made it, starting at 0. */
   implicit?: true
+}
+
+/**
+ * A name the player gives, `[ask: Hero = Alex]`, which the text shows wherever it writes `{Hero}`.
+ * `defaultName` stands in until the player gives one, and when they give none. Since 1.4.
+ */
+export interface AskedName {
+  id: string
+  name: string
+  defaultName: string
 }
 
 /** A file of the project: an image or a sound, stored as `assets/<id>` whatever its original name. */
@@ -179,6 +189,8 @@ export interface VideoClip {
   id: string
   name: string
   assetId: string | null
+  /** Its captions, a WebVTT file shown over it when the player wants them. Since 1.4. */
+  captionsAssetId?: string
 }
 
 /** An ending of the story, named by `[ending: …]`; players see how many they have reached. */
@@ -224,6 +236,8 @@ export interface ProjectDocument extends Audited {
   decisions: Decision[]
   /** Since 1.3. */
   counters: Counter[]
+  /** Since 1.4. */
+  askedNames: AskedName[]
   endings: Ending[]
   memories: Memory[]
   styles: TextStyle[]
@@ -332,6 +346,8 @@ export interface StoredChoice {
   id: string
   decisionId: string
   options: StoredChoiceOption[]
+  /** The time the player has to pick, after which the option marked `timeout` is taken. Since 1.4. */
+  timeLimitMs?: number
 }
 
 export interface StoredChoiceOption {
@@ -340,6 +356,8 @@ export interface StoredChoiceOption {
   valueId: string
   /** Offered only while this holds; always when null. */
   condition: StoredCondition | null
+  /** Never shown: taken when the time of a timed choice runs out. Since 1.4. */
+  timeout?: true
 }
 
 export type CounterOperator = '=' | '!=' | '<' | '<=' | '>' | '>='
@@ -404,6 +422,13 @@ export interface StoredDefinition {
 
 export type DefinitionKind = 'decision' | 'counter' | 'style'
 
+/** Asks the player for a name: the story stops until they give one. Since 1.4. */
+export interface StoredAsk {
+  type: 'ask'
+  id: string
+  askedNameId: string
+}
+
 /** The profile remembers this from now on, in every playthrough. */
 export interface StoredRemember {
   type: 'remember'
@@ -431,7 +456,7 @@ export interface StoredBreak {
   id: string
 }
 
-export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredCount | StoredDefinition | StoredEnding | StoredRemember
+export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredCount | StoredAsk | StoredDefinition | StoredEnding | StoredRemember
 
 /** A list of nodes inside a block: a branch of a condition, or the body of a loop, which bears the loop's identifier. */
 export interface InnerList {
@@ -508,6 +533,7 @@ export function createProject(settings: { name: string; locale: string }, enviro
     sceneOrder: [],
     decisions: [],
     counters: [],
+    askedNames: [],
     endings: [],
     memories: [],
     styles: [],

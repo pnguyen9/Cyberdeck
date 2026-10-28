@@ -6,6 +6,8 @@ import {
   type Placement,
   type ProjectDocument,
   type StageCommand,
+  type StoredChoice,
+  type VideoClip,
   type StoredCondition,
   type StoredNode,
   type StoredPage,
@@ -71,6 +73,11 @@ function object<Shape extends object>(shape: { [Key in keyof Shape]: Check<Shape
 /** The shape's fields, plus `implicit` when it is true: the mark of a name declared nowhere, kept apart from the shape. */
 function withImplicit<Shape extends object>(check: Check<Shape>): Check<Shape & { implicit?: true }> {
   return (value, path) => record(value, path).implicit === true ? { ...check(value, path), implicit: true } : check(value, path)
+}
+
+/** The fields of an option, plus `timeout` when it is true: the option a timed choice takes when time runs out. */
+function withTimeout<Shape extends object>(check: Check<Shape>): Check<Shape & { timeout?: true }> {
+  return (value, path) => record(value, path).timeout === true ? { ...check(value, path), timeout: true } : check(value, path)
 }
 
 /** Properties this version draws; those a newer version adds are dropped, the text shown without them. */
@@ -180,13 +187,20 @@ function node(value: unknown, path: string, depth: number): StoredNode {
     }
     case 'stage':
       return object({ type: oneOf('stage'), id: string, commands: array(stageCommand) })(value, path)
-    case 'choice':
-      return object({
+    case 'choice': {
+      const choice: StoredChoice = object({
         type: oneOf('choice'),
         id: string,
         decisionId: string,
-        options: array(object({ id: string, text: string, valueId: string, condition: (option, optionPath) => option === null ? null : condition(option, optionPath, 0) })),
+        options: array(withTimeout(object({ id: string, text: string, valueId: string, condition: (option, optionPath) => option === null ? null : condition(option, optionPath, 0) }))),
       })(value, path)
+      if (fields.timeLimitMs !== undefined) {
+        choice.timeLimitMs = duration(fields.timeLimitMs, `${path}.timeLimitMs`)
+      }
+      return choice
+    }
+    case 'ask':
+      return object({ type: oneOf('ask'), id: string, askedNameId: string })(value, path)
     case 'set':
       return object({ type: oneOf('set'), id: string, decisionId: string, valueId: string })(value, path)
     case 'unset':
@@ -240,6 +254,7 @@ const withAssetId = object({ id: string, name: string, assetId: nullable(string)
 /** Fields added to projects after documents were first written: absent from those, they take these values. */
 const LATER_PROJECT_FIELDS = {
   counters: [],
+  askedNames: [],
   illustrations: [],
   videos: [],
   fonts: [],
@@ -270,6 +285,7 @@ const checkProjectFields: Check<ProjectDocument> = object({
   sceneOrder: array(string),
   decisions: array(withImplicit(object({ id: string, name: string, multiple: boolean, values: array(object({ id: string, name: string })) }))),
   counters: array(withImplicit(object({ id: string, name: string, initial: integer }))),
+  askedNames: array(object({ id: string, name: string, defaultName: string })),
   endings: array(object({ id: string, name: string })),
   memories: array(object({ id: string, name: string })),
   styles: array(withImplicit(object({ id: string, name: string, properties: styleProperties }))),
@@ -278,7 +294,11 @@ const checkProjectFields: Check<ProjectDocument> = object({
   music: array(withAssetId),
   sounds: array(withAssetId),
   illustrations: array(withAssetId),
-  videos: array(withAssetId),
+  videos: array((value, path) => {
+    const video: VideoClip = withAssetId(value, path)
+    const captions = record(value, path).captionsAssetId
+    return captions === undefined ? video : { ...video, captionsAssetId: string(captions, `${path}.captionsAssetId`) }
+  }),
   fonts: array(object({ id: string, name: string, assetId: nullable(string), widthScale: (value, path) => finiteNumber(value, path) > 0 && (value as number) <= 4 ? value as number : fail(path, 'a width scale') })),
   assets: array(object({ id: string, fileName: string, mediaType: string, byteSize: finiteNumber })),
   positions: array(object({ id: string, name: string, x: percentage })),

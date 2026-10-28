@@ -30,7 +30,7 @@ function pagesShown(lines: string[], optionTexts: string[] = []): string[] {
     if (step.type === 'page') {
       shown.push(step.page.text)
       runtime.next()
-    } else {
+    } else if (step.type === 'choice') {
       const wanted = remaining.shift()
       const option = step.choice.options.find(candidate => wanted === undefined || candidate.text === wanted)!
       shown.push(`> ${option.text}`)

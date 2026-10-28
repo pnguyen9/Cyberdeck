@@ -21,7 +21,8 @@ const paragraphs = computed(() => props.pages.map((page, index) => ({
 </script>
 
 <template>
-  <div class="full-text" aria-live="polite">
+  <div class="full-text" aria-hidden="true">
+    <!-- Typed a letter at a time: screen readers hear each page whole from the player's announcements instead. -->
     <div v-for="paragraph in paragraphs" :key="paragraph.id" class="paragraph">
       <div v-if="paragraph.speaker !== null" class="speaker">{{ paragraph.speaker }}</div>
       <p class="paragraph-text">
@@ -41,7 +42,9 @@ const paragraphs = computed(() => props.pages.map((page, index) => ({
   padding: 70px 260px 150px;
   background: rgb(5 7 12 / 0.82);
   /* The line height in pixels, inherited as such: a larger style keeps the lines where they are. */
-  font: 34px/49px Georgia, serif;
+  font: calc(34px * var(--text-scale, 1)) / calc(49px * var(--text-scale, 1)) Georgia, serif;
+  /* Text the player chose larger may not hold on one screen: it scrolls rather than spill. */
+  overflow-y: auto;
   color: #f2f4f8;
 }
 
@@ -83,5 +86,6 @@ const paragraphs = computed(() => props.pages.map((page, index) => ({
     visibility: hidden;
   }
 }
+
 </style>
 

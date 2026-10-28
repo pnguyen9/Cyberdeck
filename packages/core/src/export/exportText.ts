@@ -136,11 +136,17 @@ class TextWriter {
           break
         case 'choice': {
           const decision = this.decision(node.decisionId)
-          this.line(`[choice: ${decision?.name ?? '?'}]`)
+          this.line(`[choice: ${decision?.name ?? '?'}${node.timeLimitMs === undefined ? '' : ` ${node.timeLimitMs / 1000}s`}]`)
           for (const option of node.options) {
             const condition = option.condition === null ? '' : ` [if: ${this.condition(option.condition)}]`
-            this.line(`> ${option.text} = ${decision?.values.find(value => value.id === option.valueId)?.name ?? '?'}${condition}`)
+            const timeout = option.timeout === true ? ' [timeout]' : ''
+            this.line(`> ${option.text} = ${decision?.values.find(value => value.id === option.valueId)?.name ?? '?'}${condition}${timeout}`)
           }
+          break
+        }
+        case 'ask': {
+          const asked = this.project.askedNames.find(candidate => candidate.id === node.askedNameId)
+          this.line(`[ask: ${asked?.name ?? '?'}${asked === undefined || asked.defaultName === '' ? '' : ` = ${asked.defaultName}`}]`)
           break
         }
         case 'condition': {

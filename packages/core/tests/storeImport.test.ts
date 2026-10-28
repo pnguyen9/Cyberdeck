@@ -50,6 +50,7 @@ describe('createProject', () => {
       sceneOrder: [],
       decisions: [],
       counters: [],
+      askedNames: [],
       characters: [],
       backgrounds: [],
       music: [],

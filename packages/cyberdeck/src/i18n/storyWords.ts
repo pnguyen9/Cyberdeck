@@ -14,6 +14,7 @@ export const storyWords: Readonly<Record<Locale, StoryWords>> = {
     colon: '\u00a0: ',
     several: 'plusieurs',
     startsAt: amount => `commence à ${amount}`,
+    askedName: (name, defaultName) => defaultName === '' ? name : `${name}, ${defaultName} par défaut`,
     fromTheCss: 'depuis le CSS',
     none: 'aucune',
     noMore: value => `plus de ${value}`,

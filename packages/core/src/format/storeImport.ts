@@ -7,6 +7,7 @@ import { StageRegistry, type RegistryCreations } from './stageRegistry'
 import {
   defaultEnvironment,
   FORMAT_VERSION,
+  type AskedName,
   type ChapterDocument,
   type Counter,
   type Decision,
@@ -66,6 +67,12 @@ export function storeImport(
   for (const node of importedNodes) {
     if (node.type === 'add') {
       counters.use(node.counter)
+    }
+  }
+  const askedNames = new AskedNameRegistry(project.askedNames, environment)
+  for (const node of importedNodes) {
+    if (node.type === 'ask') {
+      askedNames.ask(node.name, node.defaultName)
     }
   }
 
@@ -130,7 +137,9 @@ export function storeImport(
             text: option.text,
             valueId: decisions.findValue(decision, option.value).id,
             condition: option.condition === undefined ? null : toCondition(option.condition),
+            ...(option.timeout === true ? { timeout: true as const } : {}),
           })),
+          ...(node.timeLimitMs === undefined ? {} : { timeLimitMs: node.timeLimitMs }),
         }
       }
       case 'condition':
@@ -162,6 +171,8 @@ export function storeImport(
         const decision = decisions.find(node.decision)
         return { type: 'set', id, decisionId: decision.id, valueId: decisions.findValue(decision, node.value).id }
       }
+      case 'ask':
+        return { type: 'ask', id, askedNameId: askedNames.find(node.name).id }
       case 'add':
         return { type: 'count', id, counterId: counters.find(node.counter).id, operation: 'add', amount: node.amount }
       case 'unset': {
@@ -208,6 +219,7 @@ export function storeImport(
       ...project,
       decisions: decisions.all(),
       counters: counters.all(),
+      askedNames: askedNames.all(),
       endings: endings.all(),
       memories: memories.all(),
       styles: styles.all(),
@@ -374,6 +386,36 @@ class CounterRegistry {
 
   all(): Counter[] {
     return this.counters
+  }
+}
+
+/** The names the player is asked for: created by the first `[ask]`, the latest default given kept. */
+class AskedNameRegistry {
+  private readonly names: AskedName[]
+
+  constructor(existing: readonly AskedName[], private readonly environment: Environment) {
+    this.names = existing.map(asked => ({ ...asked }))
+  }
+
+  ask(name: string, defaultName: string | null) {
+    const existing = this.names.find(asked => normalizeName(asked.name) === normalizeName(name))
+    if (existing === undefined) {
+      this.names.push({ id: this.environment.createId(), name, defaultName: defaultName ?? '' })
+    } else if (defaultName !== null) {
+      existing.defaultName = defaultName
+    }
+  }
+
+  find(name: string): AskedName {
+    const asked = this.names.find(candidate => normalizeName(candidate.name) === normalizeName(name))
+    if (asked === undefined) {
+      throw new Error(`Unknown asked name "${name}"`)
+    }
+    return asked
+  }
+
+  all(): AskedName[] {
+    return this.names
   }
 }
 

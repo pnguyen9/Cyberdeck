@@ -985,9 +985,10 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
           </template>
           <template v-else-if="focusedEntry?.type === 'card' && focusedEntry.node.type === 'choice'">
             <h3>{{ text.choiceHeading(focusedEntry.number, decisionName(focusedEntry.node.decisionId)) }}</h3>
+            <p v-if="focusedEntry.node.timeLimitMs !== undefined" class="muted">{{ text.timeToPick(focusedEntry.node.timeLimitMs / 1000) }}</p>
             <ul>
               <li v-for="option in focusedEntry.node.options" :key="option.id">
-                {{ option.text }} → {{ valueName(focusedEntry.node.decisionId, option.valueId) }}<span v-if="option.condition !== null" class="muted">{{ text.offeredOnlyIf(conditionText(option.condition)) }}</span>
+                {{ option.text }} → {{ valueName(focusedEntry.node.decisionId, option.valueId) }}<span v-if="option.condition !== null" class="muted">{{ text.offeredOnlyIf(conditionText(option.condition)) }}</span><span v-if="option.timeout === true" class="muted">{{ text.whenTimeRunsOut }}</span>
               </li>
             </ul>
           </template>

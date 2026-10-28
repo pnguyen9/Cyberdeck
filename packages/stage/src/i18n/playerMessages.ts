@@ -19,6 +19,7 @@ const en = {
     storyStart: 'This chapter no longer exists in the story: resumed at the start, with your decisions.',
   },
   skipsReadTextOnly: 'Skipping passes only text already read.',
+  confirmName: 'OK',
   fullscreenUnavailable: 'Full screen is not available here.',
 }
 
@@ -43,6 +44,7 @@ const fr: PlayerMessages = {
     storyStart: 'Ce chapitre n’existe plus dans l’histoire : reprise au début de l’histoire, avec vos décisions.',
   },
   skipsReadTextOnly: 'Seul le texte déjà lu peut être passé.',
+  confirmName: 'Valider',
   fullscreenUnavailable: 'Le plein écran n’est pas disponible ici.',
 }
 

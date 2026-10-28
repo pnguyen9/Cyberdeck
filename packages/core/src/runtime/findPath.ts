@@ -1,6 +1,6 @@
 import { testedIdsOf } from '../format/storyFormat'
 import type { PlayableStory } from './playableStory'
-import { StoryRuntime, type RuntimeState } from './storyRuntime'
+import { StoryRuntime, type PlayerStep, type RuntimeState } from './storyRuntime'
 
 /** Stops visited in all before the search gives up: deep enough for any story, quick enough for a click. */
 const MAXIMUM_STOPS = 50_000
@@ -10,6 +10,10 @@ export interface FoundPath {
   state: RuntimeState
   /** The options picked on the way. */
   optionIds: string[]
+}
+
+function nodeIdOf(step: PlayerStep): string | null {
+  return step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : step.type === 'ask' ? step.ask.id : null
 }
 
 /**
@@ -32,11 +36,16 @@ export function findPathTo(story: PlayableStory, nodeId: string, memory: { memor
     const queue = [{ runtime: first, optionIds: [] as string[] }]
     for (let next = 0; next < queue.length; next++) {
       const { runtime, optionIds } = queue[next]!
-      while (budget-- > 0 && runtime.snapshot.step.type === 'page' && runtime.snapshot.step.page.id !== nodeId) {
-        runtime.next()
+      // Pages are read on; names asked for are left to their defaults.
+      for (let step = runtime.snapshot.step; budget-- > 0 && (step.type === 'page' || step.type === 'ask') && nodeIdOf(step) !== nodeId; step = runtime.snapshot.step) {
+        if (step.type === 'page') {
+          runtime.next()
+        } else {
+          runtime.answer('')
+        }
       }
       const step = runtime.snapshot.step
-      if ((step.type === 'page' && step.page.id === nodeId) || (step.type === 'choice' && step.choice.id === nodeId)) {
+      if (nodeIdOf(step) === nodeId) {
         return { state: runtime.exportState(), optionIds }
       }
       if (budget <= 0) {

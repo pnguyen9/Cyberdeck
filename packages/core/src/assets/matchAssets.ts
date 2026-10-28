@@ -8,6 +8,7 @@ export type AssetTarget =
   | { type: 'sound'; soundId: string }
   | { type: 'illustration'; illustrationId: string }
   | { type: 'video'; videoId: string }
+  | { type: 'captions'; videoId: string }
   | { type: 'font'; fontId: string }
 
 /** Expression a file named after a character alone is meant for: `marie.png`. */
@@ -26,7 +27,7 @@ function withoutExtension(fileName: string): string {
  * Finds the registry entry a file is meant for from its name, so that a whole folder can be
  * dropped at once: `rooftop.jpg` for the background `rooftop`, `marie-smile.png` for Marie's
  * `smile` expression, `marie.png` for her `normal` one, `calm.mp3` for the track `calm`, `door.ogg`
- * for the sound `door`, `opening.webm` for the video `opening`. Images only go to backgrounds,
+ * for the sound `door`, `opening.webm` for the video `opening` and `opening.vtt` for its captions. Images only go to backgrounds,
  * illustrations and expressions, audio only to music and sounds, videos to videos.
  * A name both a track and a sound bear goes to the track.
  */
@@ -36,6 +37,11 @@ export function matchAssetFile(fileName: string, mediaType: string, project: Pro
   if (mediaType.startsWith('font/')) {
     const font = project.fonts.find(candidate => matchingKey(candidate.name) === fileKey)
     return font === undefined ? null : { type: 'font', fontId: font.id }
+  }
+
+  if (mediaType === 'text/vtt') {
+    const video = project.videos.find(candidate => matchingKey(candidate.name) === fileKey)
+    return video === undefined ? null : { type: 'captions', videoId: video.id }
   }
 
   if (mediaType.startsWith('video/')) {
@@ -110,6 +116,11 @@ export function assignAsset(project: ProjectDocument, target: AssetTarget, asset
         ...withAsset,
         videos: project.videos.map(video => video.id === target.videoId ? { ...video, assetId: asset.id } : video),
       }
+    case 'captions':
+      return {
+        ...withAsset,
+        videos: project.videos.map(video => video.id === target.videoId ? { ...video, captionsAssetId: asset.id } : video),
+      }
     case 'font':
       return {
         ...withAsset,
@@ -127,6 +138,11 @@ export function assignAsset(project: ProjectDocument, target: AssetTarget, asset
 }
 
 const FONT_MEDIA_TYPES: Readonly<Record<string, string>> = { woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf', otf: 'font/otf' }
+
+/** The media type of a file of captions, `.vtt`, which systems do not always name. */
+export function captionsMediaTypeOf(fileName: string): string | null {
+  return /\.vtt$/i.test(fileName) ? 'text/vtt' : null
+}
 
 /** The media type of a font file, by its extension: browsers and systems name font files many ways, or not at all. */
 export function fontMediaTypeOf(fileName: string): string | null {

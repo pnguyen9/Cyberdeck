@@ -9,6 +9,7 @@ import type { ImportProblem, ImportResult } from '../importer/importTypes'
 import type { PageLayout } from '../pagination/paginate'
 import { storeImport, type StoredImport } from '../format/storeImport'
 import {
+  createProject,
   defaultEnvironment,
   flattenStoredNodes,
   FORMAT_VERSION,
@@ -130,6 +131,7 @@ export function knownNamesFor(project: ProjectDocument, documents: readonly Chap
     return {
       decisions: project.decisions.map(decision => ({ name: decision.name, values: decision.values.map(value => value.name), declaredIn: '' })),
       counters: project.counters.map(counter => ({ name: counter.name, declaredIn: '' })),
+      askedNames: project.askedNames.map(asked => asked.name),
       endings,
       memories,
       styles: project.styles.map(style => style.name),
@@ -162,6 +164,7 @@ export function knownNamesFor(project: ProjectDocument, documents: readonly Chap
       }
     }),
     counters: project.counters.map(counter => ({ name: counter.name, declaredIn: declaredIn('counter', counter.id), ...(counter.implicit === true ? { implicit: true } : {}) })),
+    askedNames: project.askedNames.map(asked => asked.name),
     endings,
     memories,
     styles: project.styles.map(style => ({ name: style.name, declaredIn: declaredIn('style', style.id), ...(style.implicit === true ? { implicit: true } : {}) })),
@@ -333,6 +336,34 @@ export function renameChapter(chapter: ChapterDocument, title: string, now: stri
   return { ...chapter, title: trimmedTitle === '' ? null : trimmedTitle, updatedAt: now }
 }
 
+/**
+ * A new project made from another for a translation: all a text cannot hold (files, characters and
+ * the way they were drawn looking, backgrounds, music, sounds, illustrations, videos, fonts,
+ * positions, animation defaults, the CSS, title cards, details) and none of the story (chapters,
+ * scenes, decisions, counters, names asked for, endings, memories, styles), which the translated text
+ * declares again as it is imported. Its files keep their identifiers: they are copied as they are.
+ */
+export function projectWithoutStory(source: ProjectDocument, settings: { name: string; locale: string }, environment: Environment = defaultEnvironment): ProjectDocument {
+  const empty = createProject(settings, environment)
+  return {
+    ...source,
+    id: empty.id,
+    name: settings.name.trim(),
+    locale: settings.locale,
+    formatVersion: empty.formatVersion,
+    chapterOrder: [],
+    sceneOrder: [],
+    decisions: [],
+    counters: [],
+    askedNames: [],
+    endings: [],
+    memories: [],
+    styles: [],
+    createdAt: empty.createdAt,
+    updatedAt: empty.updatedAt,
+  }
+}
+
 export function renameProject(project: ProjectDocument, name: string, now: string): ProjectDocument {
   const trimmedName = name.trim()
   if (trimmedName === '') {
@@ -361,7 +392,7 @@ export function unusedAssetIds(project: ProjectDocument): string[] {
     ...project.music.map(track => track.assetId),
     ...project.sounds.map(sound => sound.assetId),
     ...project.illustrations.map(illustration => illustration.assetId),
-    ...project.videos.map(video => video.assetId),
+    ...project.videos.flatMap(video => [video.assetId, video.captionsAssetId ?? null]),
     ...project.fonts.map(font => font.assetId),
     ...project.characters.flatMap(character => character.expressions.map(expression => expression.assetId)),
   ])

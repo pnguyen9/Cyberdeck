@@ -58,7 +58,7 @@ const MAXIMUM_ITEMS = 8
 const CHARACTER_DIRECTIVES = new Set(['enter', 'exit', 'move'])
 
 /** Directives that take nothing after them: they close at once. */
-const BARE_DIRECTIVES = new Set(['else', 'end', 'loop', 'break', 'clear'])
+const BARE_DIRECTIVES = new Set(['else', 'end', 'loop', 'break', 'clear', 'timeout'])
 
 export function vocabularyOf(project: ProjectDocument, scenes: readonly ChapterDocument[]): TagVocabulary {
   return {

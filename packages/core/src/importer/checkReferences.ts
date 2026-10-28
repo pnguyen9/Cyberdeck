@@ -1,4 +1,5 @@
 import { styleClassName } from '../format/authorCss'
+import { placeholdersIn } from '../format/askedNames'
 import { readStyleProperty } from '../format/textStyles'
 import type { Condition, ImportedChapter, ImportProblem, ImportResult, StoryNode } from './importTypes'
 import { readAmount } from './readControl'
@@ -25,6 +26,8 @@ export interface KnownDecision extends KnownDefinition {
 export interface KnownNames {
   decisions: KnownDecision[]
   counters?: KnownDefinition[]
+  /** Names the player gives, which `{Name}` shows. */
+  askedNames?: string[]
   endings?: string[]
   memories?: string[]
   /** The project's styles; a name alone is declared elsewhere. */
@@ -183,7 +186,17 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     }
   }
 
+  problems.push(...checkPlaceholders(allNodes, knownNames.askedNames ?? []))
   return problems.sort((first, second) => first.line - second.line)
+}
+
+/** `{Name}` in a page, a speaker or an option, where no `[ask]` of the story asks for that name. */
+function checkPlaceholders(allNodes: readonly StoryNode[], knownAskedNames: readonly string[]): ImportProblem[] {
+  const asked = new Set([...knownAskedNames, ...allNodes.flatMap(node => node.type === 'ask' ? [node.name] : [])].map(normalizeName))
+  const textsOf = (node: StoryNode): string[] => node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : []
+  return allNodes.flatMap(node => [...new Set(textsOf(node).flatMap(placeholdersIn))]
+    .filter(name => !asked.has(normalizeName(name)))
+    .map((name): ImportProblem => ({ severity: 'error', code: 'unknownAskedName', line: node.sourceLine, subject: name })))
 }
 
 /**

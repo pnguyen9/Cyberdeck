@@ -191,7 +191,7 @@ one per language, of the same shape: another language is one more table each.
 | `[illustration: Sunrise]` (or `[cg: …]`), `[illustration: none]` | A full-screen picture of a key moment over the stage, until taken away. Each profile keeps those it has seen, in any playthrough: Datajack's library shows them in the game's **Gallery**, the others locked. |
 | `[sound: door]` | Plays a sound effect once, over the music; inside a sentence, when the text reaches it. Going back, loading a save and skipping play none. |
 | `[voice: marie-01]— Marie: Hello.` | Plays a line spoken, one of the project's sounds, at the player's voice volume. It stops as the player moves on; going back to its page or loading a save there plays it again. Needs Datajack 1.2. |
-| `[video: Opening]` | Plays a video (`.webm` or `.mp4`) over the whole screen, the music silent; the text waits until it ends, or until the player moves on, which passes it. A voice of the same page waits for it. Needs Datajack 1.2. |
+| `[video: Opening]` | Plays a video (`.webm` or `.mp4`) over the whole screen, the music silent; the text waits until it ends, or until the player moves on, which passes it. A voice of the same page waits for it. Its captions, a WebVTT file named like it (`Opening.vtt`), show for players who ask for them (Datajack 1.3). Needs Datajack 1.2. |
 | `[enter: marie]`, `[exit: marie]`, `[move: marie right]` | A character enters (`normal` expression unless told), leaves, moves. |
 | `[enter: marie left smile]`, `[enter: marie 35%]` | Positions: presets (`far-left`, `left`, `center`, `right`, `far-right`, or the project's own) or a percentage of the stage width. |
 | `[enter: marie slide-from-right 1.2s wait]`, `[exit: marie slide-to-left]`, `[move: marie right instant]` | Animations: `fade`, `instant`, `slide-from-left/right` (enter), `slide-to-left/right` (exit); a duration in `s` or `ms`; `wait` holds the text until the animation ends. |
@@ -203,6 +203,8 @@ one per language, of the same shape: another language is one more table each.
 | `[decision multi: Clues = Letter \| Key]` | A decision where several values can hold at once. |
 | `[choice: Confession]` then `> Yes = Accept` lines | Offers a choice; the option picked becomes the decision's value. Without `= Value`, an option's value is its letter: `A`, `B`, `C`… |
 | `> The library = Library [if: Visited is not Library]` | An option offered only while its condition holds. A choice none of whose options holds is skipped; one with no option always offered is reported. |
+| `[choice: Answer 10s]` with `> … = Silent [timeout]` | A timed choice: a bar shows the time running out, then the option marked `[timeout]`, never shown, is taken. A timed choice has exactly one. Players may ask choices to wait for them (Settings, Accessibility). Needs Datajack 1.3. |
+| `[ask: Hero = Alex]`, then `{Hero}` | Asks the player for a name, at most 12 characters, which `{Hero}` then shows in the text, in options and as a speaker, `— {Hero}: Hi.`; `Alex` until they give one, and if they give none. Pages are cut as if each name were as long as the longest allowed, so that they always fit. Saves keep it. Needs Datajack 1.3. |
 | `[if: Confession is Accept]` … `[else if: …]` … `[else]` … `[end]` | Plays the first branch whose condition holds. Conditions use `is`, `is not`, `and`, `or`. |
 | `[loop]` … `[break]` … `[end]` | Plays what is inside again and again; `[break]`, usually in a branch, leaves the innermost loop and goes on after its `[end]`. A loop with nothing inside to leave it (no `[break]` or `[ending]`) is reported. |
 | `[set: Clues = Letter]` | Sets a decision without a choice. |
@@ -215,7 +217,7 @@ one per language, of the same shape: another language is one more table each.
 | `[if: remembered The ghost's name]`, `[if: not seen ending Departure]` | Tests what the profile remembers, or the endings it has reached in any playthrough; combines with decisions by `and` / `or`. A memory or ending may be tested before the place naming it; one named nowhere is reported as a typo. |
 
 Story directives (`decision`, `counter`, `choice`, `if`, `else`, `end`, `loop`, `break`, `play`,
-`only if`, `set`, `add`, `unset`, `ending`, `remember`) must be alone on their line. Names are compared ignoring case.
+`only if`, `set`, `add`, `unset`, `ask`, `ending`, `remember`) must be alone on their line. Names are compared ignoring case.
 
 **Decisions.** A decision is what the story remembers of a playthrough: a name and the values it
 may take, `Confession` being `Accept` or `Refuse`. Until a choice or a `[set]` gives it one, a
@@ -355,7 +357,7 @@ styles. A
 directive whose name looks like a misspelled keyword (`[backgound: …]`) is reported rather than
 taken for a new character. Images and sounds are then given to these entries by file name:
 `rooftop.jpg`, `marie-smile.png` (Marie's `smile`), `marie.png` (her `normal`), `calm.mp3`,
-`door.wav`, `opening.webm`; case, spaces, hyphens and underscores do not matter. An entry without a file shows as
+`door.wav`, `opening.webm` and its captions `opening.vtt`; case, spaces, hyphens and underscores do not matter. An entry without a file shows as
 a placeholder.
 
 A paragraph longer than the textbox is cut into several pages: between sentences first, then
@@ -476,8 +478,14 @@ author chooses another folder on the projects screen (a synced one, for instance
 old version and swapped in one move. Deleting a project moves its folder to the system's trash.
 In the browser, projects live in IndexedDB (the browser is asked to keep them). In both,
 **Back up** downloads the project folder zipped, and **Restore a backup** reads it back, on this
-computer or another, in place of the project it was made from. **Restore as a copy** adds it as a
-new project beside the first, named `… (copy)`: a version to try something on.
+computer or another.
+
+**Copy without the story**, on the projects screen, starts a translation: a new project with all a
+text cannot hold (the files, characters and the way they were drawn looking, backgrounds, music,
+sounds, illustrations, videos, fonts, positions, animation defaults, the CSS, title cards and the
+game's details) and none of the story, in a language of its own. Importing the translated text then
+declares its decisions, counters and styles again, and cuts its pages by the rules of its language.
+Tags stay as they were written, so that the text finds the characters and files it names.
 
 ## Game archives
 
@@ -486,11 +494,12 @@ so an author may offer either for download; installing an archive of a game alre
 merges it.
 
 ```
-game.json                      the project: decisions, counters, characters, backgrounds, music,
-                               sounds, illustrations, videos, positions, styles and their CSS, title cards, the
-                               order of scenes, dates, description, credits; the release; every
-                               chapter of the game with whether this archive includes it; each
-                               asset file and its SHA-256
+game.json                      the project: decisions, counters, names asked for, characters,
+                               backgrounds, music, sounds, illustrations, videos and their
+                               captions, positions, styles and their CSS, title cards, the order
+                               of scenes, dates, description, credits; the release; every chapter
+                               of the game with whether this archive includes it; each asset file
+                               and its SHA-256
 chapters/<id>/chapter.json     each included chapter
 scenes/<id>/scene.json         every scene, in every archive: any chapter may play it
 assets/cover.png               the cover, in every archive of the game
@@ -500,6 +509,7 @@ assets/music/calm.ogg
 assets/sounds/door.ogg
 assets/illustrations/Sunrise.png
 assets/videos/Opening.webm
+assets/videos/Opening.vtt
 ```
 
 Assets are named after their entries; content used by several entries is stored once. Datajack
@@ -512,9 +522,10 @@ imported from, or where definitions are written, is not exported.
 Each document says the format it is written in. An archive takes the oldest format that holds the
 game, so that players who have not updated Datajack still play it: format 1.1, which Datajack 1.0
 reads; 1.2, which Datajack 1.1 reads, when a style uses `fade-in`, `rise` or `glow` or the project
-has fonts; 1.3, for Datajack 1.2, when the game uses counters, voices or videos. An older Datajack
+has fonts; 1.3, for Datajack 1.2, when the game uses counters, voices or videos; 1.4, for Datajack
+1.3, when it asks for names, times its choices or has captions. An older Datajack
 says a newer game needs an update rather than failing on it, and Datajack 1.0 shows a game's text
-without the CSS and title cards it does not know of. Projects are written in the current format, 1.3.
+without the CSS and title cards it does not know of. Projects are written in the current format, 1.4.
 
 When an archive is installed, the newer export (by date) brings the project, the release, the
 chapter list and the scenes; an older archive only adds chapters still missing. Asset files go first and
@@ -549,9 +560,18 @@ the desktop, games live in the application's data folder (`library/games/<game>/
 
 ### Settings
 
-The **Settings** screen sets the text speed (or each page shown at once), the volumes of the music
-(and videos), the sound effects and the voices, full screen, and the inputs of every action: *Add a key* then press a key or a
-mouse button, which leaves the action that had it; × removes one; *Default keys* restores them.
+The **Settings** screen has three categories. **General** sets the text speed (or each page shown
+at once), the volumes of the music (and videos), the sound effects and the voices, full screen and
+the language. **Accessibility** sets the size of the text (100, 125 or 150 %, the text box growing
+to hold it), a plainer font, a stronger contrast behind the text, pages and options read aloud by
+the voice of the browser or the system (a page with a voice of its own is heard instead), timed
+choices that wait for the player, and the captions of videos that have them. Screen readers (NVDA,
+JAWS, VoiceOver, Orca) read the game as they read any page: each page is announced whole as it
+appears, never letter by letter as it is typed, and choices, the name asked for and every menu are
+buttons and fields they reach. With one, reading aloud is best left off, or the text is heard
+twice. **Controls** sets the inputs of every action: *Add a key* then
+press a key or a mouse button, which leaves the action that had it; × removes one; *Default keys*
+restores them.
 Keys are bound by their place on the keyboard (`KeyboardEvent.code`), so a binding means the same
 key on AZERTY and QWERTY; they are named as on a US keyboard, so on another layout a name may
 differ from the letter printed on the key. Datajack keeps the settings per
@@ -616,6 +636,26 @@ navigation, new windows, web views and permission requests are refused. It reach
 through a short list of channels whose arguments the main process checks again: strings, bytes and
 lists of strings only; identifiers that cannot leave their folder; asset files whose content matches
 the SHA-256 in their name; and only save folders the player picked in the system dialog.
+
+## Planned for 1.4
+
+- **Auto mode**: pages move on by themselves. A page with a voice waits for its line to end; other
+  pages wait a reading time counted from the length of their text, once the whole page is shown,
+  so that text shown at once is given the same time. Videos are waited for, choices and the end
+  stop it, and any key or click takes over again. A speed of its own in Settings.
+- **A state panel in Cyberdeck's preview**: the values of the decisions, counters and names, and
+  what the profile remembers, as they stand on the page shown, for checking what a condition will do.
+- **A colour for each character's name**, on their name plate: either a style, as for text
+  (`[style: Marie = gold]` or a class of the CSS), or a colour given to the character in Cast & files.
+- **The look of the text box and the name plate**: two reserved styles, `text box` and
+  `name plate` (or the classes `.text-box` and `.name-plate` of the CSS), for their colour, border,
+  rounded corners, shadow and gradient, with the properties the CSS of text already allows; and a
+  picture frame, an image of the project dropped in Cast & files as `text-box.png` or
+  `name-plate.png`, stretched by its edges so that its corners stay whole whatever the size of the
+  box (a floral frame, for instance). Stronger contrast, in the player's settings, still puts a plain
+  box behind the text, and the menus stay Datajack's own.
+- **Save slots with a picture**: each slot shows the stage as it was when the game was saved, the
+  same shape as the game's cover, beside the chapter and the excerpt it shows today.
 
 ## License
 
