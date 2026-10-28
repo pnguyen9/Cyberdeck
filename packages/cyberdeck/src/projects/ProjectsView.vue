@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type { ProjectDocument } from '@cyberdeck/core'
+import { LOCALE_NAMES, useLocale, useMessages } from '@cyberdeck/stage'
 import { onMounted, ref, shallowRef } from 'vue'
+import { commonMessages } from '../i18n/commonMessages'
+import { errorText } from '../i18n/errorMessages'
+import { projectsMessages } from '../i18n/projectsMessages'
+import LanguageSelect from '../settings/LanguageSelect.vue'
 import { createNewProject, listProjects, restoreBackup } from './openProject'
 import type { ProjectStore } from './projectStore'
 
@@ -16,6 +21,9 @@ const deletingId = ref<string | null>(null)
 const projectsFolder = ref<string | null>(null)
 const message = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
+const locale = useLocale()
+const text = useMessages(projectsMessages)
+const common = useMessages(commonMessages)
 
 onMounted(refresh)
 
@@ -30,7 +38,7 @@ function chooseFolder() {
     const folder = await props.store.folder?.choose()
     if (folder != null) {
       await refresh()
-      message.value = `Projects are now kept in ${folder}.`
+      message.value = text.value.folderChanged(folder)
     }
   })
 }
@@ -41,7 +49,7 @@ async function attempt(change: () => Promise<void>) {
   try {
     await change()
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : String(error)
+    errorMessage.value = errorText(error, locale.value)
   }
 }
 
@@ -60,7 +68,7 @@ function restore(fileList: FileList | null) {
   return attempt(async () => {
     const project = await restoreBackup(props.store, new Uint8Array(await file.arrayBuffer()))
     await refresh()
-    message.value = `${project.name} was restored.`
+    message.value = text.value.restored(project.name)
   })
 }
 
@@ -69,68 +77,72 @@ function remove(project: ProjectDocument) {
     await props.store.deleteProject(project.id)
     deletingId.value = null
     await refresh()
-    message.value = `${project.name} was deleted.`
+    message.value = text.value.deleted(project.name)
   })
 }
 
-const LANGUAGES: Record<string, string> = { en: 'English', fr: 'Français' }
-const formatDate = (date: string) => new Date(date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+/** The languages a story may be written in, each in its own words. */
+const LANGUAGES: Record<string, string> = LOCALE_NAMES
+const formatDate = (date: string) => new Date(date).toLocaleString(locale.value, { dateStyle: 'medium', timeStyle: 'short' })
 </script>
 
 <template>
   <main class="editor-page">
-    <h1>Cyberdeck</h1>
+    <header class="page-header">
+      <h1>Cyberdeck</h1>
+      <LanguageSelect />
+    </header>
 
-    <h2 class="section-title">Projects</h2>
+    <h2 class="section-title">{{ text.projects }}</h2>
     <p v-if="projectsFolder !== null" class="muted folder">
-      In <code>{{ projectsFolder }}</code>, a folder per project.
-      <button class="link-button" @click="chooseFolder">Change…</button>
+      {{ text.folderBefore }} <code>{{ projectsFolder }}</code>{{ text.folderAfter }}
+      <button class="link-button" @click="chooseFolder">{{ text.changeFolder }}</button>
     </p>
-    <p v-if="isLoaded && projects.length === 0" class="muted">No project yet: create one below, then import its text.</p>
+    <p v-if="isLoaded && projects.length === 0" class="muted">{{ text.noProject }}</p>
     <ul class="projects">
       <li v-for="project in projects" :key="project.id" class="project">
         <div v-if="deletingId === project.id" class="confirmation">
-          <p v-if="projectsFolder !== null">Delete {{ project.name }}? Its folder goes to the trash, from where it can be brought back.</p>
-          <p v-else>Delete {{ project.name }}, its chapters and its files? Download a backup first if you may want it back.</p>
+          <p v-if="projectsFolder !== null">{{ text.confirmDeleteFolder(project.name) }}</p>
+          <p v-else>{{ text.confirmDelete(project.name) }}</p>
           <div class="actions">
-            <button class="button danger" @click="remove(project)">Delete</button>
-            <button class="button" @click="deletingId = null">Cancel</button>
+            <button class="button danger" @click="remove(project)">{{ text.delete }}</button>
+            <button class="button" @click="deletingId = null">{{ common.cancel }}</button>
           </div>
         </div>
         <template v-else>
           <button class="open-project" @click="emit('open', project.id)">
             <span class="project-name">{{ project.name }}</span>
             <span class="muted">
-              {{ project.chapterOrder.length }} {{ project.chapterOrder.length === 1 ? 'chapter' : 'chapters' }}
-              · {{ LANGUAGES[project.locale] ?? project.locale }} · changed {{ formatDate(project.updatedAt) }}
+              {{ common.chapterCount(project.chapterOrder.length) }}
+              · {{ LANGUAGES[project.locale] ?? project.locale }} · {{ text.changedOn(formatDate(project.updatedAt)) }}
             </span>
           </button>
-          <button class="link-button" @click="deletingId = project.id">Delete</button>
+          <button class="link-button" @click="deletingId = project.id">{{ text.delete }}</button>
         </template>
       </li>
     </ul>
 
-    <h2 class="section-title">New project</h2>
+    <h2 class="section-title">{{ text.newProject }}</h2>
     <form class="new-project" @submit.prevent="create">
       <label class="field name">
-        <span>Name</span>
+        <span>{{ text.name }}</span>
         <input v-model="newName" class="text-input" autocomplete="off">
       </label>
       <label class="field">
-        <span>Language of the story</span>
+        <span>{{ text.storyLanguage }}</span>
         <select v-model="newLocale" class="text-input">
           <option v-for="(label, code) in LANGUAGES" :key="code" :value="code">{{ label }}</option>
         </select>
       </label>
-      <button class="button primary" type="submit" :disabled="newName.trim() === ''">Create</button>
+      <button class="button primary" type="submit" :disabled="newName.trim() === ''">{{ text.create }}</button>
     </form>
 
-    <h2 class="section-title">Backups</h2>
+    <h2 class="section-title">{{ text.backups }}</h2>
     <label class="button file-button">
-      Restore a backup…
+      {{ text.restoreBackup }}
       <input type="file" accept=".zip,application/zip" @change="restore(($event.target as HTMLInputElement).files)">
     </label>
-    <p class="muted">A backup replaces the project of the same identifier, if this browser has it.</p>
+    <p class="muted">{{ text.backupReplaces }}</p>
 
     <p v-if="message !== null" class="message" role="status">{{ message }}</p>
     <p v-if="errorMessage !== null" class="error" role="alert">{{ errorMessage }}</p>
@@ -138,6 +150,14 @@ const formatDate = (date: string) => new Date(date).toLocaleString(undefined, { 
 </template>
 
 <style scoped>
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 24px;
+}
+
 .projects {
   display: flex;
   flex-direction: column;

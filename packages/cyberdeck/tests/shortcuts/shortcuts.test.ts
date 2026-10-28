@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   actionFor,
   assignChord,
+  chordDescriber,
   conflictsOf,
   DEFAULT_SHORTCUTS,
   describeChord,
@@ -41,6 +42,14 @@ describe('shortcuts', () => {
     expect(DEFAULT_SHORTCUTS.moveSelectionBack.map(describeChord)).toEqual(['Ctrl+Shift+←'])
     expect(DEFAULT_SHORTCUTS.toggleSelected.map(describeChord)).toEqual(['Space'])
     expect(DEFAULT_SHORTCUTS.addPage.map(describeChord)).toEqual(['N'])
+  })
+
+  it('are described with the key names of French keyboards', () => {
+    const describeInFrench = chordDescriber('fr')
+    expect(DEFAULT_SHORTCUTS.moveSelectionBack.map(describeInFrench)).toEqual(['Ctrl+Maj+←'])
+    expect(DEFAULT_SHORTCUTS.toggleSelected.map(describeInFrench)).toEqual(['Espace'])
+    expect(DEFAULT_SHORTCUTS.remove.map(describeInFrench)).toEqual(['Suppr', 'Retour arrière'])
+    expect(DEFAULT_SHORTCUTS.save.map(describeInFrench)).toEqual(['Ctrl+Entrée'])
   })
 
   it('take keys from the action that had them, and say so first', () => {

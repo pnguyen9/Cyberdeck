@@ -1,4 +1,4 @@
-import type { ChapterDocument, ProjectDocument } from '@cyberdeck/core'
+import type { ChapterDocument, NameKind, ProjectDocument } from '@cyberdeck/core'
 import { inject, type InjectionKey, type Ref, type ShallowRef } from 'vue'
 import type { GivenFile, OpenProject } from './openProject'
 
@@ -18,10 +18,25 @@ export interface EditorContext {
   importDraft: Ref<{ text: string; fileName: string | null }>
   /** The chapter or scene the storyboard shows; null shows the first chapter. */
   storyboardChapterId: Ref<string | null>
-  openStoryboard: (chapterId: string) => void
+  openStoryboard: (chapterId: string, nodeId?: string) => void
+  /**
+   * Asked before the tab shown changes or the project closes: true lets it happen now; false means
+   * the tab asked the author first, and calls `proceed` once they have chosen.
+   */
+  setLeaveGuard: (guard: ((proceed: () => void) => boolean) | null) => void
+  /** What the storyboard is asked to do from anywhere in the project, numbered so that the same request twice is seen twice. */
+  storyboardRequest: Readonly<Ref<{ kind: 'goToBoard' | 'togglePanel' | 'reveal'; nodeId?: string; count: number } | null>>
+  /** Begins a chapter, or a scene, with no page yet, and opens it in the storyboard to write it. */
+  startEmptyDocument: (kind: 'chapter' | 'scene') => void
+  /** The name the Index opens on; set by `openIndex`. */
+  indexFocus: Ref<{ kind: NameKind; id: string } | null>
+  openIndex: (kind: NameKind, id: string) => void
 }
 
 export const EDITOR: InjectionKey<EditorContext> = Symbol('editor')
+
+/** Storyboard requests already answered: each storyboard shown answers the one waiting, never one answered before. */
+export const answeredStoryboardRequests = new WeakSet<object>()
 
 export function useEditor(): EditorContext {
   const context = inject(EDITOR)

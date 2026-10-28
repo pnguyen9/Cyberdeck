@@ -133,6 +133,15 @@ textarea.text-input {
   color: #f28b82;
 }
 
+/* Problems of a text, an edit or the CSS, wherever they are listed. */
+.problems .error {
+  color: #f28b82;
+}
+
+.problems .warning {
+  color: #f6c177;
+}
+
 .download {
   color: #a3e4b0;
   overflow-wrap: anywhere;

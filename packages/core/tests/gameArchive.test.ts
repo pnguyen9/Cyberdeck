@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ArchiveError,
   assignAsset,
   chapterPath,
   checkChapterDocument,
@@ -85,8 +86,9 @@ describe('game archives', () => {
     const game = buildGame()
     const archive = await readGameArchive(await game.archive())
 
-    expect(archive.manifest.project).toEqual(game.project)
-    expect(archive.chapters).toEqual(game.chapters.map(({ importedFrom: _importedFrom, ...chapter }) => chapter))
+    // Stamped with the oldest format that holds the game, for players of Datajack 1.0.
+    expect(archive.manifest.project).toEqual({ ...game.project, formatVersion: '1.1' })
+    expect(archive.chapters).toEqual(game.chapters.map(({ importedFrom: _importedFrom, ...chapter }) => ({ ...chapter, formatVersion: '1.1' })))
     expect(archive.manifest.chapters).toEqual([
       { id: game.one.id, title: 'One', included: true },
       { id: game.two.id, title: 'Two', included: true },
@@ -229,6 +231,36 @@ describe('game archives', () => {
       }))).toBe('game.json is invalid: game.project.id: expected a plain identifier')
     })
 
+    it('with a code and its parameters, for players to read it in their language', async () => {
+      async function problemOf(change: (files: Map<string, Uint8Array<ArrayBuffer>>, game: ReturnType<typeof buildGame>) => void) {
+        const game = buildGame()
+        const bytes = await alter(await game.archive(), files => change(files, game))
+        return readGameArchive(bytes).then(() => null, (error: unknown) => error instanceof ArchiveError ? error.problem : error)
+      }
+      expect(await problemOf(files => files.delete(MANIFEST_PATH))).toEqual({ code: 'notAGame', path: 'game.json' })
+      expect(await problemOf(files => changeJson(files, MANIFEST_PATH, manifest => {
+        manifest.archiveFormat = 2
+      }))).toEqual({ code: 'newerPlayer' })
+      expect(await problemOf((files, game) => changeJson(files, chapterPath(game.one.id), chapter => {
+        chapter.formatVersion = '2.0'
+      }))).toMatchObject({ code: 'newerFormat', path: chapterPath(buildGame().one.id), detail: 'chapter.formatVersion: expected a format version this player reads' })
+      expect(await problemOf(files => changeJson(files, MANIFEST_PATH, manifest => {
+        manifest.project.id = '../escape'
+      }))).toEqual({ code: 'invalidDocument', path: 'game.json', detail: 'game.project.id: expected a plain identifier' })
+      expect(await problemOf(files => files.set(MANIFEST_PATH, new TextEncoder().encode('{')))).toEqual({ code: 'invalidJson', path: 'game.json' })
+      expect(await problemOf(files => {
+        const path = [...files.keys()].find(candidate => candidate.endsWith('.webp'))!
+        files.set(path, new Uint8Array([31]))
+      })).toEqual({ code: 'alteredFile', path: 'assets/backgrounds/rooftop.webp' })
+    })
+
+    it('a file that is not a ZIP archive, keeping the English sentence as message', async () => {
+      const error = await readGameArchive(new TextEncoder().encode('just some text')).catch((caught: unknown) => caught)
+      expect(error).toBeInstanceOf(ArchiveError)
+      expect((error as ArchiveError).code).toBe('notZip')
+      expect((error as ArchiveError).message).toBe('This file is not a ZIP archive')
+    })
+
     it('an asset file of a kind Datajack does not play', async () => {
       expect(await refusal(files => changeJson(files, MANIFEST_PATH, manifest => {
         manifest.assetFiles['asset-street.png'].path = 'assets/backgrounds/script.js'
@@ -264,7 +296,7 @@ describe('checkChapterDocument', () => {
   })
 
   it('refuses documents from a newer minor version, which may hold nodes this player does not know', () => {
-    expect(() => checkChapterDocument({ formatVersion: '1.2', id: 'chapter', title: null, nodes: [], createdAt: '', updatedAt: '' }, 'chapter'))
+    expect(() => checkChapterDocument({ formatVersion: '1.3', id: 'chapter', title: null, nodes: [], createdAt: '', updatedAt: '' }, 'chapter'))
       .toThrow('chapter.formatVersion: expected a format version this player reads')
   })
 })

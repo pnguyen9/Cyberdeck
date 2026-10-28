@@ -1,26 +1,89 @@
 {
   "kind": null,
   "decisions": [
-    { "sourceLine": 1, "name": "Clues", "values": ["Letter", "Key"], "multiple": true }
-  ],
-  "chapters": [
     {
-      "title": null,
-      "sourceLine": 2,
-      "nodes": [
-        { "type": "set", "sourceLine": 2, "decision": "Clues", "value": "Key" },
-        { "type": "page", "sourceLine": 3, "kind": "narration", "speaker": null, "text": "She took the key.", "directivesBefore": [], "inlineDirectives": [] },
-        { "type": "unset", "sourceLine": 4, "decision": "Clues", "value": "Key" },
-        { "type": "page", "sourceLine": 5, "kind": "narration", "speaker": null, "text": "The key fell into the well.", "directivesBefore": [], "inlineDirectives": [] },
-        { "type": "unset", "sourceLine": 6, "decision": "Clues", "value": null },
-        { "type": "page", "sourceLine": 7, "kind": "narration", "speaker": null, "text": "She forgot everything.", "directivesBefore": [], "inlineDirectives": [] }
-      ]
+      "sourceLine": 1,
+      "name": "Clues",
+      "values": [
+        "Letter",
+        "Key"
+      ],
+      "multiple": true
     }
   ],
   "styles": [],
+  "chapters": [
+    {
+      "title": null,
+      "sourceLine": 1,
+      "nodes": [
+        {
+          "type": "definition",
+          "sourceLine": 1,
+          "kind": "decision",
+          "name": "Clues"
+        },
+        {
+          "type": "set",
+          "sourceLine": 2,
+          "decision": "Clues",
+          "value": "Key"
+        },
+        {
+          "type": "page",
+          "sourceLine": 3,
+          "kind": "narration",
+          "speaker": null,
+          "text": "She took the key.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "unset",
+          "sourceLine": 4,
+          "decision": "Clues",
+          "value": "Key"
+        },
+        {
+          "type": "page",
+          "sourceLine": 5,
+          "kind": "narration",
+          "speaker": null,
+          "text": "The key fell into the well.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
+        {
+          "type": "unset",
+          "sourceLine": 6,
+          "decision": "Clues",
+          "value": null
+        },
+        {
+          "type": "page",
+          "sourceLine": 7,
+          "kind": "narration",
+          "speaker": null,
+          "text": "She forgot everything.",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        }
+      ]
+    }
+  ],
   "scenes": [],
   "problems": [
-    { "severity": "error", "code": "invalidUnset", "line": 8, "subject": "Clues =" },
-    { "severity": "error", "code": "invalidUnset", "line": 9, "subject": "" }
+    {
+      "severity": "error",
+      "code": "invalidUnset",
+      "line": 8,
+      "subject": "Clues ="
+    },
+    {
+      "severity": "error",
+      "code": "invalidUnset",
+      "line": 9,
+      "subject": ""
+    }
   ]
 }

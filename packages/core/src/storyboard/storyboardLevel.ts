@@ -1,4 +1,5 @@
 import { alwaysStops } from '../format/readingFlow'
+import { ENGLISH_STORY_WORDS } from './storyWords'
 import { flattenStoredNodes, innerListsOf, type ChapterDocument, type ProjectDocument, type StoredConditionNode, type StoredLoop, type StoredNode } from '../format/storyFormat'
 import { moveNodes, storyboardEntries, type DropSlot, type StoryboardEntry, type StoryboardOptions } from './storyboard'
 
@@ -60,7 +61,7 @@ export interface StoryboardLevel {
   lanes: LevelLane[]
 }
 
-export interface LevelOptions extends Pick<StoryboardOptions, 'sceneNames'> {
+export interface LevelOptions extends Pick<StoryboardOptions, 'sceneNames' | 'words'> {
   /** Blocks holding more pages than this show as one card. */
   blockPageLimit: number
   /** Nodes never reached, and loops nothing leaves: `readingFlow` over the story's chapters in playing order. */
@@ -72,7 +73,8 @@ export interface LevelOptions extends Pick<StoryboardOptions, 'sceneNames'> {
 
 /** The level inside the block `blockId`, or the chapter's own when null; null when the block no longer exists. */
 export function storyboardLevel(chapter: ChapterDocument, project: ProjectDocument, blockId: string | null, options: LevelOptions): StoryboardLevel | null {
-  const entries = storyboardEntries(chapter, project, options.sceneNames === undefined ? {} : { sceneNames: options.sceneNames })
+  const entries = storyboardEntries(chapter, project, options)
+  const words = options.words ?? ENGLISH_STORY_WORDS
   const entriesById = new Map(entries.map(entry => [entry.id, entry]))
   const isUnreachable = (nodeId: string) => options.unreachableIds?.has(nodeId) ?? false
 
@@ -90,7 +92,7 @@ export function storyboardLevel(chapter: ChapterDocument, project: ProjectDocume
   const lanesOf = (block: StoredConditionNode | StoredLoop, showElements: boolean): LevelLane[] => block.type === 'loop'
     ? [{
         containerId: block.id,
-        text: 'repeats until a break',
+        text: words.repeatsUntilBreak,
         branch: entriesById.get(block.id)?.branch ?? '',
         stops: alwaysStops(block.nodes, options.playStops),
         elements: showElements ? elementsOf(block.nodes, block.id) : [],
@@ -140,7 +142,7 @@ export function storyboardLevel(chapter: ChapterDocument, project: ProjectDocume
   }
   return {
     path: ancestors.map(ancestor => ancestor.type === 'loop'
-      ? { id: ancestor.id, kind: 'loop', text: 'loop' }
+      ? { id: ancestor.id, kind: 'loop', text: words.loop }
       : { id: ancestor.id, kind: 'condition', text: branchText(ancestor, 0) }),
     lanes: lanesOf(block, true),
   }

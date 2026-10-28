@@ -40,7 +40,7 @@ export default async function check(page, { url }) {
   await exportStoryText()
   page.check('the whole story is offered as text', await page.evaluate(`${lastDownload}?.getAttribute('download')`), 'Letters.txt')
   const storyText = await downloadedText()
-  page.check('it declares the decisions', storyText.includes('[decision: Answer = Truth | Dodge]'), true)
+  page.check('a decision made by its choice is not declared: the choice makes it again', [storyText.includes('[decision: Answer'), storyText.includes('[choice: Answer]')], [false, true])
   page.check('no content security violation', await page.violations(), '[]')
 
   await createProject(page, url, 'Letters again')

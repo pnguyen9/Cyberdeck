@@ -1,4 +1,6 @@
 import { effectText } from '../storyboard/describeNodes'
+import { flattenStoredNodes } from '../format/storyFormat'
+import { isPropertyAlone } from '../format/textStyles'
 import type {
   AnimationSpec,
   ChapterDocument,
@@ -33,12 +35,9 @@ export function exportText(project: ProjectDocument, chapters: readonly ChapterD
   const writer = new TextWriter(project, [...(options.allScenes ?? []), ...(options.scenes ?? [])])
   if (options.declareDecisions) {
     writer.line('[import: story]')
-    for (const decision of project.decisions) {
-      writer.line(`[decision${decision.multiple ? ' multi' : ''}: ${decision.name} = ${decision.values.map(value => value.name).join(' | ')}]`)
-    }
-    // A style named after its single property needs no declaration.
-    for (const style of project.styles.filter(candidate => !(candidate.properties.length === 1 && candidate.properties[0] === candidate.name))) {
-      writer.line(`[style: ${style.name} = ${style.properties.join(', ')}]`)
+    // Those of no chapter, above the first heading; those of a chapter are written where they are in it.
+    for (const line of definitionLinesOfStory(project, [...chapters, ...(options.scenes ?? []), ...(options.allScenes ?? [])])) {
+      writer.line(line)
     }
   } else {
     writer.line(chapters.length === 1 ? '[import: chapter]' : '[import: story]')
@@ -55,6 +54,39 @@ export function exportText(project: ProjectDocument, chapters: readonly ChapterD
     writer.nodes(scene.nodes)
   }
   return writer.text()
+}
+
+/** The declaration of a decision or a style, as written; null for one the project no longer has. */
+export function definitionLine(project: ProjectDocument, kind: 'decision' | 'style', definedId: string): string | null {
+  if (kind === 'decision') {
+    const decision = project.decisions.find(candidate => candidate.id === definedId)
+    return decision === undefined ? null : `[decision${decision.multiple ? ' multi' : ''}: ${decision.name} = ${decision.values.map(value => value.name).join(' | ')}]`
+  }
+  const style = project.styles.find(candidate => candidate.id === definedId)
+  return style === undefined ? null : `[style: ${style.name} = ${style.properties.length === 0 ? 'plain' : style.properties.join(', ')}]`
+}
+
+/**
+ * The declarations of the project's own definitions: those of no chapter, and not made by use alone
+ * (a decision by its choices, a style named after a property).
+ */
+export function globalDefinitionLines(project: ProjectDocument, documents: readonly ChapterDocument[]): string[] {
+  const nodes = documents.flatMap(document => flattenStoredNodes(document.nodes))
+  const homed = new Set(nodes.flatMap(node => node.type === 'definition' ? [node.definedId] : []))
+  const chosen = new Set(nodes.flatMap(node => node.type === 'choice' ? [node.decisionId] : []))
+  return [
+    ...project.decisions.filter(decision => !homed.has(decision.id) && !(decision.implicit === true && chosen.has(decision.id))).map(decision => definitionLine(project, 'decision', decision.id)!),
+    ...project.styles.filter(style => style.implicit !== true && !homed.has(style.id) && !isPropertyAlone(style)).map(style => definitionLine(project, 'style', style.id)!),
+  ]
+}
+
+/**
+ * The declarations a text needs to become a project again: the project's own, those decisions made by
+ * choices no longer there, and the styles drawn by the CSS alone, as `plain` (the CSS stays in the project).
+ */
+function definitionLinesOfStory(project: ProjectDocument, documents: readonly ChapterDocument[]): string[] {
+  const drawnByCss = project.styles.filter(style => style.implicit === true && style.properties.length === 0)
+  return [...globalDefinitionLines(project, documents), ...drawnByCss.map(style => `[style: ${style.name} = plain]`)]
 }
 
 /** Nodes as the lines that import back into them: what the storyboard shows for editing a page or a marker. */
@@ -146,6 +178,13 @@ class TextWriter {
         case 'remember':
           this.line(`[remember: ${this.project.memories.find(memory => memory.id === node.memoryId)?.name ?? '?'}]`)
           break
+        case 'definition': {
+          const line = definitionLine(this.project, node.kind, node.definedId)
+          if (line !== null) {
+            this.line(line)
+          }
+          break
+        }
       }
     }
   }

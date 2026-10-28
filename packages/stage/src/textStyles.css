@@ -1,4 +1,16 @@
-/* Properties of named styles: the only presentation a game may ask for. Shared by the text box and full-screen text. */
+/*
+ * Properties of named styles, drawn by the player itself; a game's own CSS adds `author-` classes.
+ * Shared by the text box, full-screen text, the log and title cards.
+ */
+
+/*
+ * Text not typed yet waits: its animations start as it shows, not while hidden. Over any style's
+ * animation, whose shorthand would set it running again; a game's CSS cannot say !important.
+ */
+.not-yet-shown,
+.not-yet-shown * {
+  animation-play-state: paused !important;
+}
 .style-italic {
   font-style: italic;
 }
@@ -48,5 +60,40 @@
 
   75% {
     transform: translate(-1px, 1px);
+  }
+}
+
+/* Appears softly as it is typed. */
+.style-fade-in {
+  animation: style-fade-in 0.9s ease both;
+}
+
+@keyframes style-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Rises into place. */
+.style-rise {
+  display: inline-block;
+  animation: style-rise 0.7s ease-out both;
+}
+
+@keyframes style-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.4em);
+  }
+}
+
+/* Glows softly, again and again. */
+.style-glow {
+  animation: style-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes style-glow {
+  50% {
+    text-shadow: 0 0 0.35em currentColor;
   }
 }

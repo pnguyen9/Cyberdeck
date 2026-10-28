@@ -7,6 +7,7 @@ export type AssetTarget =
   | { type: 'music'; musicId: string }
   | { type: 'sound'; soundId: string }
   | { type: 'illustration'; illustrationId: string }
+  | { type: 'font'; fontId: string }
 
 /** Expression a file named after a character alone is meant for: `marie.png`. */
 const DEFAULT_EXPRESSION = 'normal'
@@ -30,6 +31,11 @@ function withoutExtension(fileName: string): string {
  */
 export function matchAssetFile(fileName: string, mediaType: string, project: ProjectDocument): AssetTarget | null {
   const fileKey = matchingKey(withoutExtension(fileName))
+
+  if (mediaType.startsWith('font/')) {
+    const font = project.fonts.find(candidate => matchingKey(candidate.name) === fileKey)
+    return font === undefined ? null : { type: 'font', fontId: font.id }
+  }
 
   if (mediaType.startsWith('audio/')) {
     const track = project.music.find(candidate => matchingKey(candidate.name) === fileKey)
@@ -93,6 +99,11 @@ export function assignAsset(project: ProjectDocument, target: AssetTarget, asset
         ...withAsset,
         sounds: project.sounds.map(sound => sound.id === target.soundId ? { ...sound, assetId: asset.id } : sound),
       }
+    case 'font':
+      return {
+        ...withAsset,
+        fonts: project.fonts.map(font => font.id === target.fontId ? { ...font, assetId: asset.id } : font),
+      }
     case 'expression':
       return {
         ...withAsset,
@@ -102,4 +113,24 @@ export function assignAsset(project: ProjectDocument, target: AssetTarget, asset
         }),
       }
   }
+}
+
+const FONT_MEDIA_TYPES: Readonly<Record<string, string>> = { woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf', otf: 'font/otf' }
+
+/** The media type of a font file, by its extension: browsers and systems name font files many ways, or not at all. */
+export function fontMediaTypeOf(fileName: string): string | null {
+  return FONT_MEDIA_TYPES[fileName.split('.').pop()?.toLowerCase() ?? ''] ?? null
+}
+
+/**
+ * Adds a font file: to the font named like it, or to a new one named after it, with how much wider
+ * than the text box's font it draws text. Returns a new project and the font.
+ */
+export function addFontFile(project: ProjectDocument, fileName: string, asset: Asset, widthScale: number, createId: () => string): { project: ProjectDocument; fontId: string } {
+  const target = matchAssetFile(fileName, asset.mediaType, project)
+  const fontId = target?.type === 'font' ? target.fontId : createId()
+  const withFont = target?.type === 'font'
+    ? { ...project, fonts: project.fonts.map(font => font.id === fontId ? { ...font, widthScale } : font) }
+    : { ...project, fonts: [...project.fonts, { id: fontId, name: withoutExtension(fileName), assetId: null, widthScale }] }
+  return { project: assignAsset(withFont, { type: 'font', fontId }, asset), fontId }
 }

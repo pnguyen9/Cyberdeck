@@ -19,6 +19,9 @@ export interface ProfileList {
   lastUsedId: string | null
 }
 
+/** The languages of the player page, which the dialogs the shell opens for it speak too. */
+export type DialogLanguage = 'en' | 'fr'
+
 export interface SaveFolderChange {
   moved: number
   /** Saves already in the new folder for the same game and slot, kept instead of the moved ones. */
@@ -28,8 +31,8 @@ export interface SaveFolderChange {
 export interface DesktopChannels {
   'profiles:list': () => ProfileList
   'profiles:defaultSaveFolder': (name: string) => string
-  /** Opens the system folder picker; null when the player cancels. */
-  'profiles:chooseFolder': () => string | null
+  /** Opens the system folder picker, titled in the page's language; null when the player cancels. */
+  'profiles:chooseFolder': (language: DialogLanguage) => string | null
   /** A null folder means the default one for the name. */
   'profiles:create': (name: string, saveFolder: string | null) => ProfileRecord
   'profiles:rename': (profileId: string, name: string) => void

@@ -33,6 +33,6 @@ export default async function check(page, { url }) {
   page.check('a property alone is a style of its own', (await runs()).find(([text]) => text === 'very')?.[1], 'style-bold')
   await page.clickButton('Log', '.quick-button')
   await pause(300)
-  page.check('the log keeps the styles of what was read', await page.evaluate(`[...document.querySelectorAll('.overlay .line .text span')].filter(run => run.className !== '').map(run => [run.textContent, run.className])`), [["Don't tell anyone.", 'style-italic style-small style-grey']])
+  page.check('the log keeps the styles of what was read', await page.evaluate(`[...document.querySelectorAll('.overlay .line .text span')].filter(run => run.className !== '').map(run => [run.textContent, run.className])`), [["Don't tell anyone.", 'style-italic style-small style-grey author-whisper']])
   await page.screenshot('log')
 }

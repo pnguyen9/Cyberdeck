@@ -37,6 +37,12 @@ export interface SecureAppOptions {
 }
 
 /** Images and sounds dropped in the page are `blob:` addresses, read back when exported. */
+/** The system's own dialog before closing on changes not saved, in the system's language. */
+const UNSAVED_CHANGES_DIALOG = {
+  en: { keepEditing: 'Keep editing', close: 'Close without saving', message: 'Changes are not saved', detail: 'Closing now loses them.' },
+  fr: { keepEditing: 'Continuer la modification', close: 'Fermer sans enregistrer', message: 'Des modifications ne sont pas enregistrées', detail: 'Fermer maintenant les perd.' },
+}
+
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self'",
@@ -71,6 +77,23 @@ export function startSecureApp(options: SecureAppOptions) {
     contents.on('will-navigate', event => event.preventDefault())
     contents.on('will-attach-webview', event => event.preventDefault())
     contents.setWindowOpenHandler(() => ({ action: 'deny' }))
+    // The page has changes not saved: the window closes only if the user says so.
+    contents.on('will-prevent-unload', event => {
+      const window = BrowserWindow.fromWebContents(contents)
+      const words = UNSAVED_CHANGES_DIALOG[app.getLocale().toLowerCase().startsWith('fr') ? 'fr' : 'en']
+      const options: Electron.MessageBoxSyncOptions = {
+        type: 'question',
+        buttons: [words.keepEditing, words.close],
+        defaultId: 0,
+        cancelId: 0,
+        message: words.message,
+        detail: words.detail,
+      }
+      const choice = window === null ? dialog.showMessageBoxSync(options) : dialog.showMessageBoxSync(window, options)
+      if (choice === 1) {
+        event.preventDefault()
+      }
+    })
   })
 
   void app.whenReady().then(() => {

@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { describeCondition, flattenStoredNodes, normalizeName, playsOf, type ChapterDocument } from '@cyberdeck/core'
+import { definitionsOf, describeCondition, flattenStoredNodes, normalizeName, playsOf, type ChapterDocument } from '@cyberdeck/core'
+import { useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, ref } from 'vue'
+import { chaptersMessages } from '../i18n/chaptersMessages'
+import { commonMessages } from '../i18n/commonMessages'
 import { useEditor } from './editorContext'
 import { safeFileName, usePreparedDownload } from './preparedDownload'
 
 const emit = defineEmits<{ import: [] }>()
-const { open, project, chapters, scenes, act, preview, openStoryboard } = useEditor()
+const { open, project, chapters, scenes, act, preview, openStoryboard, startEmptyDocument } = useEditor()
+const locale = useLocale()
+const text = useMessages(chaptersMessages)
+const common = useMessages(commonMessages)
 
 const renaming = ref<{ id: string; title: string } | null>(null)
 const removingId = ref<string | null>(null)
@@ -14,7 +20,7 @@ const textChapterId = ref<string | null>(null)
 
 function exportChapterText(chapter: ChapterDocument) {
   textChapterId.value = chapter.id
-  textDownload.offer(`${safeFileName(titleOf(chapter))}.txt`, open.exportText([chapter.id]))
+  textDownload.offer(`${safeFileName(titleOf(chapter), locale.value)}.txt`, open.exportText([chapter.id]))
 }
 
 const rows = computed(() => chapters.value.map((chapter, index) => ({
@@ -23,8 +29,8 @@ const rows = computed(() => chapters.value.map((chapter, index) => ({
   pageCount: flattenStoredNodes(chapter.nodes).filter(node => node.type === 'page').length,
   onlyIf: chapter.condition === undefined ? null : describeCondition(chapter.condition, project.value),
   origin: chapter.importedFrom === undefined
-    ? 'Written in Cyberdeck'
-    : `Imported${chapter.importedFrom.fileName === null ? '' : ` from ${chapter.importedFrom.fileName}`} on ${formatDate(chapter.importedFrom.importedAt)}`,
+    ? text.value.writtenHere
+    : text.value.importedFrom(chapter.importedFrom.fileName, formatDate(chapter.importedFrom.importedAt)),
 })))
 
 /** Scenes, with the chapters and scenes that play each: removing one leaves those plays with nothing to play. */
@@ -40,15 +46,15 @@ const renameProblem = computed(() => {
     return null
   }
   if (target.title.trim() === '') {
-    return 'A scene needs a name.'
+    return text.value.sceneNeedsName
   }
   return scenes.value.some(scene => scene.id !== target.id && normalizeName(scene.title ?? '') === normalizeName(target.title))
-    ? 'Another scene already has this name.'
+    ? text.value.sceneNameTaken
     : null
 })
 
-const titleOf = (chapter: ChapterDocument) => chapter.title ?? 'Untitled chapter'
-const formatDate = (date: string) => new Date(date).toLocaleDateString(undefined, { dateStyle: 'medium' })
+const titleOf = (chapter: ChapterDocument) => chapter.title ?? common.value.untitledChapter
+const formatDate = (date: string) => new Date(date).toLocaleDateString(locale.value, { dateStyle: 'medium' })
 
 async function confirmRename() {
   const target = renaming.value
@@ -57,8 +63,12 @@ async function confirmRename() {
   }
 }
 
+/** What a chapter declares stays declared, in the project's definitions. */
+const movedDefinitions = (chapter: ChapterDocument) => definitionsOf(chapter, project.value)
+
 async function confirmRemove(chapter: ChapterDocument) {
-  if (await act(() => open.removeChapter(chapter.id), `${titleOf(chapter)} was removed.`)) {
+  const removedMessage = text.value.removed(titleOf(chapter), movedDefinitions(chapter))
+  if (await act(() => open.removeChapter(chapter.id), removedMessage)) {
     removingId.value = null
   }
 }
@@ -67,85 +77,92 @@ async function confirmRemove(chapter: ChapterDocument) {
 <template>
   <section>
     <p v-if="rows.length === 0" class="muted">
-      No chapters yet. <button class="link-button" @click="emit('import')">Import a text</button> to create them.
+      {{ text.noChaptersBefore }} <button class="link-button" @click="emit('import')">{{ text.importText }}</button> {{ text.noChaptersAfter }}
+      {{ text.orStartWithout }} <button class="link-button" @click="startEmptyDocument('chapter')">{{ text.newChapter }}</button>.
     </p>
     <ol class="chapters">
       <li v-for="row in rows" :key="row.chapter.id" class="chapter">
         <span class="number">{{ row.index + 1 }}</span>
         <div class="body">
           <form v-if="renaming?.id === row.chapter.id" class="rename" @submit.prevent="confirmRename">
-            <input v-model="renaming.title" class="text-input" aria-label="Chapter title" autocomplete="off">
-            <button class="button primary small" type="submit">Rename</button>
-            <button class="button small" type="button" @click="renaming = null">Cancel</button>
+            <input v-model="renaming.title" class="text-input" :aria-label="text.chapterTitle" autocomplete="off">
+            <button class="button primary small" type="submit">{{ common.rename }}</button>
+            <button class="button small" type="button" @click="renaming = null">{{ common.cancel }}</button>
           </form>
           <template v-else>
             <span class="title">{{ titleOf(row.chapter) }}</span>
-            <span class="muted details">{{ row.pageCount }} {{ row.pageCount === 1 ? 'page' : 'pages' }} · {{ row.origin }}</span>
-            <span v-if="row.onlyIf !== null" class="only-if">Played only if {{ row.onlyIf }}</span>
+            <span class="muted details">{{ common.pageCount(row.pageCount) }} · {{ row.origin }}</span>
+            <span v-if="row.onlyIf !== null" class="only-if">{{ text.playedOnlyIf(row.onlyIf) }}</span>
           </template>
 
           <div v-if="removingId === row.chapter.id" class="confirmation">
-            <p>Remove {{ titleOf(row.chapter) }}? The text you imported it from is not touched.</p>
+            <p>{{ text.confirmRemoveChapter(titleOf(row.chapter)) }}</p>
+            <p v-if="movedDefinitions(row.chapter).length > 0" class="muted">{{ text.declarationsMove(movedDefinitions(row.chapter).join(', ')) }}</p>
             <div class="actions">
-              <button class="button danger small" @click="confirmRemove(row.chapter)">Remove</button>
-              <button class="button small" @click="removingId = null">Cancel</button>
+              <button class="button danger small" @click="confirmRemove(row.chapter)">{{ common.remove }}</button>
+              <button class="button small" @click="removingId = null">{{ common.cancel }}</button>
             </div>
           </div>
           <p v-if="textChapterId === row.chapter.id && textDownload.prepared.value !== null" class="text-download">
-            <a class="download" :href="textDownload.prepared.value.url" :download="textDownload.prepared.value.fileName">Download {{ textDownload.prepared.value.fileName }}</a>
-            <span class="muted"> · edit it, then import it with “Replace a chapter”.</span>
+            <a class="download" :href="textDownload.prepared.value.url" :download="textDownload.prepared.value.fileName">{{ common.download(textDownload.prepared.value.fileName) }}</a>
+            <span class="muted"> {{ text.chapterTextHelp }}</span>
           </p>
           <div v-if="removingId !== row.chapter.id && renaming?.id !== row.chapter.id" class="actions">
-            <button class="link-button" @click="openStoryboard(row.chapter.id)">Storyboard</button>
-            <button class="link-button" @click="preview(row.chapter.id)">Preview from here ▶</button>
-            <button class="link-button" :disabled="row.index === 0" @click="act(() => open.moveChapter(row.chapter.id, row.index - 1))">Move up</button>
-            <button class="link-button" :disabled="row.index === rows.length - 1" @click="act(() => open.moveChapter(row.chapter.id, row.index + 1))">Move down</button>
-            <button class="link-button" @click="exportChapterText(row.chapter)">Export as text</button>
-            <button class="link-button" @click="renaming = { id: row.chapter.id, title: row.chapter.title ?? '' }">Rename</button>
-            <button class="link-button" @click="removingId = row.chapter.id">Remove</button>
+            <button class="link-button" @click="openStoryboard(row.chapter.id)">{{ text.storyboard }}</button>
+            <button class="link-button" @click="preview(row.chapter.id)">{{ text.previewFromHere }}</button>
+            <button class="link-button" :disabled="row.index === 0" @click="act(() => open.moveChapter(row.chapter.id, row.index - 1))">{{ text.moveUp }}</button>
+            <button class="link-button" :disabled="row.index === rows.length - 1" @click="act(() => open.moveChapter(row.chapter.id, row.index + 1))">{{ text.moveDown }}</button>
+            <button class="link-button" @click="exportChapterText(row.chapter)">{{ text.exportAsText }}</button>
+            <button class="link-button" @click="renaming = { id: row.chapter.id, title: row.chapter.title ?? '' }">{{ common.rename }}</button>
+            <button class="link-button" @click="removingId = row.chapter.id">{{ common.remove }}</button>
           </div>
         </div>
       </li>
     </ol>
+    <div v-if="rows.length > 0" class="add-actions">
+      <button class="button small" @click="startEmptyDocument('chapter')">{{ text.newChapter }}</button>
+      <button class="button small" @click="startEmptyDocument('scene')">{{ text.newScene }}</button>
+    </div>
 
     <template v-if="sceneRows.length > 0">
-      <h3 class="scenes-heading">Scenes</h3>
-      <p class="muted">Pages of no chapter, played wherever a <code>[play: …]</code> names them.</p>
+      <h3 class="scenes-heading">{{ text.scenes }}</h3>
+      <p class="muted">{{ text.scenesIntroBefore }} <code>[play: …]</code> {{ text.scenesIntroAfter }}</p>
       <ul class="chapters">
         <li v-for="row in sceneRows" :key="row.scene.id" class="chapter scene">
           <span class="number">▷</span>
           <div class="body">
             <form v-if="renaming?.id === row.scene.id" class="rename" @submit.prevent="confirmRename">
-              <input v-model="renaming.title" class="text-input" aria-label="Scene name" autocomplete="off">
-              <button class="button primary small" type="submit" :disabled="renameProblem !== null">Rename</button>
-              <button class="button small" type="button" @click="renaming = null">Cancel</button>
+              <input v-model="renaming.title" class="text-input" :aria-label="text.sceneName" autocomplete="off">
+              <button class="button primary small" type="submit" :disabled="renameProblem !== null">{{ common.rename }}</button>
+              <button class="button small" type="button" @click="renaming = null">{{ common.cancel }}</button>
               <span v-if="renameProblem !== null" class="error">{{ renameProblem }}</span>
             </form>
             <template v-else>
               <span class="title">{{ row.scene.title }}</span>
               <span class="muted details">
-                {{ row.pageCount }} {{ row.pageCount === 1 ? 'page' : 'pages' }} ·
-                {{ row.playedBy.length === 0 ? 'played nowhere yet' : `played by ${row.playedBy.join(', ')}` }}
+                {{ common.pageCount(row.pageCount) }} ·
+                {{ row.playedBy.length === 0 ? text.playedNowhere : text.playedBy(row.playedBy.join(', ')) }}
               </span>
             </template>
 
             <div v-if="removingId === row.scene.id" class="confirmation">
-              <p>Remove the scene {{ row.scene.title }}? The text you imported it from is not touched.</p>
-              <p v-if="row.playedBy.length > 0" class="error">{{ row.playedBy.join(', ') }} {{ row.playedBy.length === 1 ? 'plays' : 'play' }} it: those plays would play nothing.</p>
+              <p>{{ text.confirmRemoveScene(row.scene.title ?? '') }}</p>
+              <p v-if="movedDefinitions(row.scene).length > 0" class="muted">{{ text.declarationsMove(movedDefinitions(row.scene).join(', ')) }}</p>
+              <p v-if="row.playedBy.length > 0" class="error">{{ text.scenePlayedBy(row.playedBy.join(', '), row.playedBy.length) }}</p>
               <div class="actions">
-                <button class="button danger small" @click="confirmRemove(row.scene)">Remove</button>
-                <button class="button small" @click="removingId = null">Cancel</button>
+                <button class="button danger small" @click="confirmRemove(row.scene)">{{ common.remove }}</button>
+                <button class="button small" @click="removingId = null">{{ common.cancel }}</button>
               </div>
             </div>
             <p v-if="textChapterId === row.scene.id && textDownload.prepared.value !== null" class="text-download">
-              <a class="download" :href="textDownload.prepared.value.url" :download="textDownload.prepared.value.fileName">Download {{ textDownload.prepared.value.fileName }}</a>
-              <span class="muted"> · edit it, then import it: it replaces the scene of the same name.</span>
+              <a class="download" :href="textDownload.prepared.value.url" :download="textDownload.prepared.value.fileName">{{ common.download(textDownload.prepared.value.fileName) }}</a>
+              <span class="muted"> {{ text.sceneTextHelp }}</span>
             </p>
             <div v-if="removingId !== row.scene.id && renaming?.id !== row.scene.id" class="actions">
-              <button class="link-button" @click="openStoryboard(row.scene.id)">Storyboard</button>
-              <button class="link-button" @click="exportChapterText(row.scene)">Export as text</button>
-              <button class="link-button" @click="renaming = { id: row.scene.id, title: row.scene.title ?? '' }">Rename</button>
-              <button class="link-button" @click="removingId = row.scene.id">Remove</button>
+              <button class="link-button" @click="openStoryboard(row.scene.id)">{{ text.storyboard }}</button>
+              <button class="link-button" @click="exportChapterText(row.scene)">{{ text.exportAsText }}</button>
+              <button class="link-button" @click="renaming = { id: row.scene.id, title: row.scene.title ?? '' }">{{ common.rename }}</button>
+              <button class="link-button" @click="removingId = row.scene.id">{{ common.remove }}</button>
             </div>
           </div>
         </li>
@@ -163,6 +180,12 @@ async function confirmRemove(chapter: ChapterDocument) {
 .scenes-heading {
   margin: 24px 0 4px;
   font-size: 16px;
+}
+
+.add-actions {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 0;
 }
 
 .chapters {

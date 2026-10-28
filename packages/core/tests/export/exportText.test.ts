@@ -101,11 +101,11 @@ describe('exportText', () => {
     const { project, chapters } = projectFrom(EVERYTHING)
     const lines = exportText(project, chapters, { declareDecisions: true }).split('\n')
 
-    expect(lines.slice(0, 14)).toEqual([
+    // Answer is made by its choice: declared nowhere, it is not written as a declaration.
+    expect(lines.slice(0, 13)).toEqual([
       '[import: story]',
       '[decision: Mood = Calm | Angry]',
       '[decision multi: Clues = Letter | Key]',
-      '[decision: Answer = Truth | B]',
       '[style: Whisper = italic, small, grey]',
       '# Chapter 1 — The Letter',
       '[bg: classroom]',

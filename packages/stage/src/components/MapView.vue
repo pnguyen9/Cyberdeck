@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { layOutProgressMap, type MapNode, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
 import { computed } from 'vue'
+import { useMessages } from '../i18n/locale'
+import { mapMessages } from '../i18n/mapMessages'
 
 const props = defineProps<{ story: PlayableStory; progress: ProgressData; closeLabel: string }>()
 const emit = defineEmits<{ play: [save: SaveData]; close: [] }>()
+const text = useMessages(mapMessages)
 
 const CARD_WIDTH = 260
 const COLUMN_GAP = 90
@@ -50,11 +53,11 @@ const curves = computed(() => {
   <div class="map-screen">
     <header class="map-header">
       <button class="close-button" @click="emit('close')">← {{ closeLabel }}</button>
-      <h1>{{ story.project.name }} <span class="subtitle">routes explored</span></h1>
-      <p v-if="map.endingsTotal > 0" class="endings">Endings reached: {{ map.endingsReached }} of {{ map.endingsTotal }}</p>
+      <h1>{{ story.project.name }} <span class="subtitle">{{ text.routesExplored }}</span></h1>
+      <p v-if="map.endingsTotal > 0" class="endings">{{ text.endingsReached(map.endingsReached, map.endingsTotal) }}</p>
     </header>
 
-    <p v-if="map.nodes.length === 0" class="empty">Nothing explored yet: the map fills in as you reach choices.</p>
+    <p v-if="map.nodes.length === 0" class="empty">{{ text.nothingExplored }}</p>
     <div v-else class="map-scroll">
       <div class="map" :style="{ width: `${width}px`, height: `${height}px` }">
         <svg class="curves" :width="width" :height="height" aria-hidden="true">
@@ -69,7 +72,7 @@ const curves = computed(() => {
         >
           <template v-if="node.type === 'point'">
             <div class="point-header" :style="{ height: `${HEADER_HEIGHT - CARD_PADDING_TOP}px` }">
-              <p class="chapter">{{ node.chapterTitle ?? 'Untitled chapter' }}</p>
+              <p class="chapter">{{ node.chapterTitle ?? text.untitledChapter }}</p>
               <h2>{{ node.decisionName }}</h2>
             </div>
             <ul class="options">
@@ -77,9 +80,9 @@ const curves = computed(() => {
                 <span>{{ option.isTaken ? '›' : '?' }}</span> {{ option.text }}
               </li>
             </ul>
-            <button class="play-button" @click="emit('play', node.point.save)">Play from here</button>
+            <button class="play-button" @click="emit('play', node.point.save)">{{ text.playFromHere }}</button>
           </template>
-          <p v-else class="ending">{{ node.endingName === null ? 'The end' : `★ ${node.endingName}` }}</p>
+          <p v-else class="ending">{{ node.endingName === null ? text.theEnd : `★ ${node.endingName}` }}</p>
         </section>
       </div>
     </div>

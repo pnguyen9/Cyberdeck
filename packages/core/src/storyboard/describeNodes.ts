@@ -1,4 +1,5 @@
 import type { AnimationSpec, Placement, ProjectDocument, StageCommand, StoredCondition } from '../format/storyFormat'
+import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
 
 /** Short descriptions of what nodes do, in the words of the writing syntax, for the storyboard. */
 
@@ -84,12 +85,22 @@ export function describeAssignment(decisionId: string, valueId: string, project:
   return `${decision?.name ?? '?'} = ${decision?.values.find(value => value.id === valueId)?.name ?? '?'}`
 }
 
+/** `Confession: Accept | Refuse`, `Clues (several): Letter | Key`, `Whisper: italic, small`. */
+export function describeDefinition(kind: 'decision' | 'style', definedId: string, project: ProjectDocument, words: StoryWords = ENGLISH_STORY_WORDS): string {
+  if (kind === 'decision') {
+    const decision = project.decisions.find(candidate => candidate.id === definedId)
+    return decision === undefined ? '?' : `${decision.name}${decision.multiple ? ` (${words.several})` : ''}${words.colon}${decision.values.map(value => value.name).join(' | ')}`
+  }
+  const style = project.styles.find(candidate => candidate.id === definedId)
+  return style === undefined ? '?' : `${style.name}${words.colon}${style.properties.join(', ') || words.fromTheCss}`
+}
+
 /** `Clues: no more Key`, or `Clues: none` when every value is taken away. */
-export function describeUnset(decisionId: string, valueId: string | null, project: ProjectDocument): string {
+export function describeUnset(decisionId: string, valueId: string | null, project: ProjectDocument, words: StoryWords = ENGLISH_STORY_WORDS): string {
   const decision = project.decisions.find(candidate => candidate.id === decisionId)
   return valueId === null
-    ? `${decision?.name ?? '?'}: none`
-    : `${decision?.name ?? '?'}: no more ${decision?.values.find(value => value.id === valueId)?.name ?? '?'}`
+    ? `${decision?.name ?? '?'}${words.colon}${words.none}`
+    : `${decision?.name ?? '?'}${words.colon}${words.noMore(decision?.values.find(value => value.id === valueId)?.name ?? '?')}`
 }
 
 function placementWords(placement: Placement, project: ProjectDocument): string {

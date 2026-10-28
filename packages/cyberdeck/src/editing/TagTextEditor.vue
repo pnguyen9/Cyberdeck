@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { PageLayout } from '@cyberdeck/core'
+import { useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, nextTick, ref, useTemplateRef } from 'vue'
+import { tagTextMessages, type TagTextMessages } from '../i18n/tagTextMessages'
 import { useShortcuts } from '../shortcuts/shortcutStore'
 import { actionFor } from '../shortcuts/shortcuts'
 import { completionAt, tagEndingAt, tagKind, tagProblem, tagsIn, tagStartingAt, type Completion, type TagVocabulary } from './tagText'
@@ -15,42 +17,45 @@ const props = defineProps<{ vocabulary: TagVocabulary; layout: PageLayout; label
 const text = defineModel<string>({ required: true })
 const emit = defineEmits<{ submit: []; cancel: [] }>()
 const { shortcuts } = useShortcuts()
+const locale = useLocale()
+const messages = useMessages(tagTextMessages)
 
-/** Templates to insert; a `|` marks where the caret goes, at the end otherwise. */
-const TAG_TEMPLATES: { label: string; text: string; group: string }[] = [
-  { label: 'Background', text: '[bg: ', group: 'Stage' },
-  { label: 'Transition', text: '[transition: fade]', group: 'Stage' },
-  { label: 'Music', text: '[music: ', group: 'Stage' },
-  { label: 'Sound', text: '[sound: ', group: 'Stage' },
-  { label: 'Illustration', text: '[illustration: ', group: 'Stage' },
-  { label: 'Shake', text: '[shake]', group: 'Screen' },
-  { label: 'Flash', text: '[flash]', group: 'Screen' },
-  { label: 'Fade out', text: '[fade out: 1s]', group: 'Screen' },
-  { label: 'Fade in', text: '[fade in: 1s]', group: 'Screen' },
-  { label: 'Tint', text: '[tint: ', group: 'Screen' },
-  { label: 'Style', text: '[style: ', group: 'Screen' },
-  { label: 'Full-screen text', text: '[text: full]', group: 'Screen' },
-  { label: 'Text in a box', text: '[text: box]', group: 'Screen' },
-  { label: 'New screen of text', text: '[clear]', group: 'Screen' },
-  { label: 'Character enters', text: '[enter: ', group: 'Characters' },
-  { label: 'Character leaves', text: '[exit: ', group: 'Characters' },
-  { label: 'Character moves', text: '[move: ', group: 'Characters' },
-  { label: 'Expression', text: '[', group: 'Characters' },
-  { label: 'Pause', text: '[wait: 1]', group: 'Characters' },
-  { label: 'Choice', text: '[choice: |]\n> \n> ', group: 'Story' },
-  { label: 'If … end', text: '[if: |]\n\n[end]', group: 'Story' },
-  { label: 'Else if', text: '[else if: |]', group: 'Story' },
-  { label: 'Else', text: '[else]', group: 'Story' },
-  { label: 'Decision', text: '[decision: | = ]', group: 'Story' },
-  { label: 'Set a decision', text: '[set: ', group: 'Story' },
-  { label: 'Take a value away', text: '[unset: ', group: 'Story' },
-  { label: 'Loop … end', text: '[loop]\n|\n[end]', group: 'Story' },
-  { label: 'Leave the loop', text: '[break]', group: 'Story' },
-  { label: 'Play a scene', text: '[play: ', group: 'Story' },
-  { label: 'Chapter only if', text: '[only if: |]', group: 'Story' },
-  { label: 'Remember', text: '[remember: ', group: 'Story' },
-  { label: 'Ending', text: '[ending: ', group: 'Story' },
+/** Templates to insert, by group; a `|` marks where the caret goes, at the end otherwise. */
+const TAG_TEMPLATES: { id: keyof TagTextMessages['templates']; text: string; group: keyof TagTextMessages['templateGroups'] }[] = [
+  { id: 'background', text: '[bg: ', group: 'stage' },
+  { id: 'transition', text: '[transition: fade]', group: 'stage' },
+  { id: 'music', text: '[music: ', group: 'stage' },
+  { id: 'sound', text: '[sound: ', group: 'stage' },
+  { id: 'illustration', text: '[illustration: ', group: 'stage' },
+  { id: 'shake', text: '[shake]', group: 'screen' },
+  { id: 'flash', text: '[flash]', group: 'screen' },
+  { id: 'fadeOut', text: '[fade out: 1s]', group: 'screen' },
+  { id: 'fadeIn', text: '[fade in: 1s]', group: 'screen' },
+  { id: 'tint', text: '[tint: ', group: 'screen' },
+  { id: 'style', text: '[style: ', group: 'screen' },
+  { id: 'fullScreenText', text: '[text: full]', group: 'screen' },
+  { id: 'boxText', text: '[text: box]', group: 'screen' },
+  { id: 'clear', text: '[clear]', group: 'screen' },
+  { id: 'enter', text: '[enter: ', group: 'characters' },
+  { id: 'exit', text: '[exit: ', group: 'characters' },
+  { id: 'move', text: '[move: ', group: 'characters' },
+  { id: 'expression', text: '[', group: 'characters' },
+  { id: 'pause', text: '[wait: 1]', group: 'characters' },
+  { id: 'choice', text: '[choice: |]\n> \n> ', group: 'story' },
+  { id: 'ifEnd', text: '[if: |]\n\n[end]', group: 'story' },
+  { id: 'elseIf', text: '[else if: |]', group: 'story' },
+  { id: 'else', text: '[else]', group: 'story' },
+  { id: 'decision', text: '[decision: | = ]', group: 'story' },
+  { id: 'set', text: '[set: ', group: 'story' },
+  { id: 'unset', text: '[unset: ', group: 'story' },
+  { id: 'loopEnd', text: '[loop]\n|\n[end]', group: 'story' },
+  { id: 'break', text: '[break]', group: 'story' },
+  { id: 'play', text: '[play: ', group: 'story' },
+  { id: 'onlyIf', text: '[only if: |]', group: 'story' },
+  { id: 'remember', text: '[remember: ', group: 'story' },
+  { id: 'ending', text: '[ending: ', group: 'story' },
 ]
+const TEMPLATE_GROUPS = ['stage', 'screen', 'characters', 'story'] as const
 
 const field = useTemplateRef<HTMLTextAreaElement>('field')
 const mirror = useTemplateRef<HTMLDivElement>('mirror')
@@ -62,12 +67,12 @@ const chosenIndex = ref(0)
 const completionPosition = ref({ left: 0, top: 0 })
 const isMenuOpen = ref(false)
 /** Problems of tags, kept by content so that the import runs once per distinct tag; each vocabulary has its own. */
-const problemCache = computed(() => ({ vocabulary: props.vocabulary, problems: new Map<string, string | null>() }))
+const problemCache = computed(() => ({ vocabulary: props.vocabulary, locale: locale.value, problems: new Map<string, string | null>() }))
 
 const problemOf = (content: string) => {
-  const { vocabulary, problems } = problemCache.value
+  const { vocabulary, locale: problemLocale, problems } = problemCache.value
   if (!problems.has(content)) {
-    problems.set(content, tagProblem(content, vocabulary, props.layout))
+    problems.set(content, tagProblem(content, vocabulary, props.layout, problemLocale))
   }
   return problems.get(content) ?? null
 }
@@ -142,7 +147,7 @@ async function refreshCaret() {
   // The field holds the text as typed; the model catches up only once the parent has re-rendered.
   caret.value = element.selectionStart
   selectionEnd = element.selectionEnd
-  completion.value = element.selectionStart === element.selectionEnd ? completionAt(element.value, caret.value, props.vocabulary) : null
+  completion.value = element.selectionStart === element.selectionEnd ? completionAt(element.value, caret.value, props.vocabulary, locale.value) : null
   chosenIndex.value = 0
   await nextTick()
   syncScroll()
@@ -269,25 +274,25 @@ defineExpose({ focus: () => field.value?.focus() })
   <div class="tag-editor">
     <div class="toolbar">
       <div class="insert">
-        <button class="button small" type="button" :aria-expanded="isMenuOpen" @click="isMenuOpen = !isMenuOpen">Insert tag ▾</button>
+        <button class="button small" type="button" :aria-expanded="isMenuOpen" @click="isMenuOpen = !isMenuOpen">{{ messages.insertTag }}</button>
         <div v-if="isMenuOpen" class="menu" role="menu">
-          <template v-for="group in ['Stage', 'Screen', 'Characters', 'Story']" :key="group">
-            <p class="menu-group">{{ group }}</p>
+          <template v-for="group in TEMPLATE_GROUPS" :key="group">
+            <p class="menu-group">{{ messages.templateGroups[group] }}</p>
             <button
               v-for="template in TAG_TEMPLATES.filter(candidate => candidate.group === group)"
-              :key="template.label"
+              :key="template.id"
               class="menu-item"
               type="button"
               role="menuitem"
               @mousedown.prevent
               @click="insertTemplate(template.text)"
             >
-              {{ template.label }}
+              {{ messages.templates[template.id] }}
             </button>
           </template>
         </div>
       </div>
-      <span class="muted hint">or type <kbd>[</kbd></span>
+      <span class="muted hint">{{ messages.orType }} <kbd>[</kbd></span>
     </div>
 
     <div class="area">

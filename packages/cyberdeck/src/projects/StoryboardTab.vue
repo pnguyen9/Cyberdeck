@@ -12,9 +12,10 @@ import {
   removeNodes,
   stepNodes,
   storyboardEntries,
+  indexNames,
+  knownNamesForEdit,
   storyboardLevel,
-  alwaysStops,
-  readingFlow,
+  storyFlow,
   type ChapterDocument,
   type DropSlot,
   type LevelElement,
@@ -23,24 +24,37 @@ import {
   type StoredNode,
   type StoryboardEntry,
 } from '@cyberdeck/core'
-import { createTextboxLayout } from '@cyberdeck/stage'
-import { computed, nextTick, ref, watch } from 'vue'
+import { createTextboxLayout, useLocale, useMessages } from '@cyberdeck/stage'
+import { storyWords } from '../i18n/storyWords'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { commonMessages } from '../i18n/commonMessages'
+import { indexMessages } from '../i18n/indexMessages'
+import { storyboardMessages } from '../i18n/storyboardMessages'
 import { vocabularyOf } from '../editing/tagText'
 import { useEditorSettings } from '../settings/editorSettings'
 import { useShortcuts } from '../shortcuts/shortcutStore'
-import { actionFor, describeChord, type ShortcutId } from '../shortcuts/shortcuts'
+import { actionFor, chordDescriber, type ShortcutId } from '../shortcuts/shortcuts'
 import TagTextEditor from '../editing/TagTextEditor.vue'
 import { problemMessage } from '../importing/problemMessages'
-import { useEditor } from './editorContext'
+import { answeredStoryboardRequests, useEditor } from './editorContext'
+import { summariseUses } from './nameUses'
 import { emptyLaneId, NO_SELECTION, only, rangeTo, toggle, type GridSelection, type PlacedElement } from './gridSelection'
 import StoryboardGrid from './StoryboardGrid.vue'
+import UnsavedQuestion from './UnsavedQuestion.vue'
+import { useUnsavedChanges } from './unsavedChanges'
 import StoryTree from './StoryTree.vue'
 
-const { open, project, chapters, scenes, act, storyboardChapterId, previewFrom } = useEditor()
+const { open, project, chapters, scenes, act, storyboardChapterId, previewFrom, storyboardRequest, openIndex, startEmptyDocument } = useEditor()
 const { shortcuts, isPanelOpen } = useShortcuts()
 const settings = useEditorSettings()
+const locale = useLocale()
+const text = useMessages(storyboardMessages)
+const words = computed(() => storyWords[locale.value])
+const common = useMessages(commonMessages)
+const indexText = useMessages(indexMessages)
+const describeChord = computed(() => chordDescriber(locale.value))
 /** The first keys of an action, as shown on buttons; empty when the author removed them all. */
-const keysOf = (actionId: ShortcutId) => shortcuts.value[actionId].map(describeChord)[0] ?? ''
+const keysOf = (actionId: ShortcutId) => shortcuts.value[actionId].map(describeChord.value)[0] ?? ''
 
 const BRANCH_COLORS = ['#5eead4', '#fbbf24', '#c4b5fd', '#fda4af', '#bef264', '#93c5fd']
 
@@ -62,37 +76,19 @@ const view = ref<'grid' | 'tree'>('grid')
 
 /** The block whose branches the grid shows; null for the chapter's own level. */
 const blockId = ref<string | null>(null)
-/** Whether a play never comes back, its scene always ending. */
-const playStops = computed(() => {
-  const scenesById = new Map(scenes.value.map(scene => [scene.id, scene]))
-  const stopsById = new Map<string, boolean>()
-  const stops = (play: StoredNode): boolean => {
-    const sceneId = play.type === 'play' ? play.sceneId : ''
-    if (!stopsById.has(sceneId)) {
-      // The import refuses scenes playing themselves; were one there, it is taken to come back.
-      stopsById.set(sceneId, false)
-      const scene = scenesById.get(sceneId)
-      stopsById.set(sceneId, scene !== undefined && alwaysStops(scene.nodes, stops))
-    }
-    return stopsById.get(sceneId)!
-  }
-  return stops
-})
 /** Over the whole story: an ending in one chapter can leave the next one unread, a scene that ends what follows its plays. */
-const flow = computed(() => readingFlow(chapters.value.map(candidate => candidate.nodes), {
-  scenes: scenes.value.map(scene => scene.nodes),
-  playStops: playStops.value,
-  conditionalChapters: new Set(chapters.value.flatMap((candidate, index) => candidate.condition === undefined ? [] : [index])),
-}))
+const flow = computed(() => storyFlow(chapters.value, scenes.value))
+const playStops = computed(() => flow.value.playStops)
 /** Nodes no path reaches. */
-const unreachableIds = computed(() => new Set([...flow.value.unreachable].map(node => node.id)))
-const endlessLoopIds = computed(() => new Set([...flow.value.endlessLoops].map(node => node.id)))
+const unreachableIds = computed(() => flow.value.unreachableIds)
+const endlessLoopIds = computed(() => flow.value.endlessLoopIds)
 const chapterUnreachableCount = computed(() => chapter.value === null
   ? 0
   : flattenStoredNodes(chapter.value.nodes).filter(node => (node.type === 'page' || node.type === 'choice') && unreachableIds.value.has(node.id)).length)
 const level = computed(() => chapter.value === null
   ? null
   : storyboardLevel(chapter.value, project.value, blockId.value, {
+    words: words.value,
     blockPageLimit: settings.value.blockPageLimit,
     sceneNames: sceneNames.value,
     playStops: playStops.value,
@@ -103,7 +99,7 @@ const gridItems = computed<GridItem[]>(() => (level.value?.lanes ?? []).flatMap(
   ? [{ id: emptyLaneId(lane.containerId), containerId: lane.containerId, index: 0, element: null }]
   : lane.elements.map(element => ({ id: element.id, containerId: lane.containerId, index: element.index, element }))))
 const itemsById = computed(() => new Map(gridItems.value.map(item => [item.id, item])))
-const treeEntries = computed(() => chapter.value === null ? [] : storyboardEntries(chapter.value, project.value, { sceneNames: sceneNames.value }))
+const treeEntries = computed(() => chapter.value === null ? [] : storyboardEntries(chapter.value, project.value, { sceneNames: sceneNames.value, words: words.value }))
 const entriesById = computed(() => new Map(treeEntries.value.map(entry => [entry.id, entry])))
 
 /** Where the keyboard is: hovering an element does not select it. */
@@ -141,13 +137,24 @@ const focusedEntry = computed((): EditableEntry | null => {
 const focusedBlock = computed((): BlockElement | null => focusedItem.value?.element?.kind === 'block' ? focusedItem.value.element : null)
 
 const layout = createTextboxLayout()
-/** A page or marker being edited as text, or new pages being written at a slot. */
-const editing = ref<{ target: NodeEditTarget; text: string } | null>(null)
+/**
+ * A page or marker being edited as text, or new pages being written at a slot, in the chapter it was
+ * opened in, whatever the board shows meanwhile; `original` tells whether it changed.
+ */
+const editing = ref<{ chapterId: string; target: NodeEditTarget; text: string; original: string } | null>(null)
+const isEditChanged = computed(() => editing.value !== null && editing.value.text !== editing.value.original)
+const editingId = computed(() => editing.value?.target.type === 'replace' ? editing.value.target.nodeId : null)
+/** What waits for the author to save or drop the changes of the edit open: nothing written is ever thrown away unasked. */
+const pending = ref<{ question: string; run: () => void } | null>(null)
+/** In a narrow window, the panel slides over the board from the right; wide, it is always beside it. */
+const isPanelShown = ref(false)
 const editor = ref<{ focus: () => void } | null>(null)
 const vocabulary = computed(() => vocabularyOf(project.value, scenes.value))
-const editPreview = computed(() => editing.value === null || chapter.value === null
+/** The project's names as the edit may use them: worked out once for each edit, not on every key typed. */
+const editKnownNames = computed(() => editing.value === null ? null : knownNamesForEdit(project.value, documents.value, editing.value.chapterId, editing.value.target, words.value))
+const editPreview = computed(() => editing.value === null || editKnownNames.value === null
   ? null
-  : previewNodeEdit(editing.value.text, project.value, documents.value, chapter.value.id, editing.value.target, layout))
+  : previewNodeEdit(editing.value.text, project.value, documents.value, editing.value.chapterId, editing.value.target, layout, editKnownNames.value))
 const editPageCount = computed(() => editPreview.value?.result.chapters.flatMap(written => flattenNodes(written.nodes)).filter(node => node.type === 'page').length ?? 0)
 const canSaveEdit = computed(() => editPreview.value !== null && !editPreview.value.hasErrors && (editing.value?.target.type === 'replace' || editing.value?.text.trim() !== ''))
 
@@ -167,9 +174,33 @@ watch(level, current => {
   }
 })
 
-function startEditing(entry: EditableEntry) {
-  editing.value = { target: { type: 'replace', nodeId: entry.node.id }, text: nodesText(project.value, [entry.node], scenes.value) }
+/** Runs at once when the edit open has no changes; otherwise asks first, the answer coming from the panel. */
+function settleEdit(question: string, run: () => void) {
+  if (!isEditChanged.value) {
+    run()
+    return
+  }
+  pending.value = { question, run }
+  isPanelShown.value = true
+}
+
+function openEdit(target: NodeEditTarget, text: string) {
+  const current = chapter.value
+  if (current === null) {
+    return
+  }
+  pending.value = null
+  editing.value = { chapterId: current.id, target, text, original: text }
+  isPanelShown.value = true
   void nextTick(() => editor.value?.focus())
+}
+
+function startEditing(entry: EditableEntry) {
+  if (editingId.value === entry.node.id) {
+    void nextTick(() => editor.value?.focus())
+    return
+  }
+  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'replace', nodeId: entry.node.id }, nodesText(project.value, [entry.node], scenes.value)))
 }
 
 /** Right after the focused element; in an empty branch, its start; with no focus, at the end of the level's first list. */
@@ -183,34 +214,170 @@ function slotAfterFocus(): DropSlot {
 }
 
 function startAdding() {
-  editing.value = { target: { type: 'insert', slot: slotAfterFocus() }, text: '' }
-  void nextTick(() => editor.value?.focus())
+  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'insert', slot: slotAfterFocus() }, ''))
 }
 
-async function saveEdit() {
+async function saveEdit(): Promise<boolean> {
   const current = editing.value
   const preview = editPreview.value
-  if (current === null || preview === null || chapter.value === null || !canSaveEdit.value) {
-    return
+  if (current === null || preview === null || !canSaveEdit.value) {
+    return false
   }
-  const chapterId = chapter.value.id
+  const { chapterId } = current
   let nodeIds: string[] = []
-  const message = current.target.type === 'insert'
-    ? `${editPageCount.value} ${editPageCount.value === 1 ? 'page' : 'pages'} added. Ctrl+Z takes ${editPageCount.value === 1 ? 'it' : 'them'} out.`
-    : 'Saved. Ctrl+Z puts the old text back.'
+  const message = current.target.type === 'insert' ? text.value.pagesAdded(editPageCount.value) : text.value.pageSaved
   if (await act(async () => {
     nodeIds = await open.editNodes(chapterId, preview, current.target)
   }, message)) {
-    editing.value = null
+    closeEdit()
     follow(nodeIds)
-    board.value?.focus()
+    return true
+  }
+  return false
+}
+
+/** Closes the edit, back on the board, on the card that was edited. */
+function closeEdit(editedId = editingId.value) {
+  editing.value = null
+  pending.value = null
+  isPanelShown.value = false
+  board.value?.focus()
+  if (editedId !== null) {
+    reveal(editedId)
   }
 }
 
 function cancelEdit() {
-  editing.value = null
-  board.value?.focus()
+  const editedId = editingId.value
+  settleEdit(text.value.closeWithoutSaving, () => closeEdit(editedId))
 }
+
+async function answerSave() {
+  const waiting = pending.value
+  if (waiting !== null && await saveEdit()) {
+    waiting.run()
+  }
+}
+
+function answerDiscard() {
+  const waiting = pending.value
+  editing.value = null
+  pending.value = null
+  waiting?.run()
+  if (editing.value === null) {
+    board.value?.focus()
+  }
+}
+
+function answerKeepEditing() {
+  pending.value = null
+  void nextTick(() => editor.value?.focus())
+}
+
+/** Shows a card wherever it is, inside the blocks holding it, and puts the focus on it without changing the selection. */
+function reveal(nodeId: string) {
+  const current = chapter.value
+  const place = current === null ? null : locateNode(current, nodeId)
+  if (current === null || place === null) {
+    return
+  }
+  if (view.value === 'grid') {
+    blockId.value = blockOfContainer(current, place.containerId)
+  }
+  focusedId.value = nodeId
+  scrollToFocus()
+}
+
+/**
+ * From elsewhere, to the board on the selection, or on the first element selected when there is none;
+ * from the page edited, to its card; from the board, back into the page edited.
+ */
+function goToBoard() {
+  const active = document.activeElement
+  const isInEditor = editing.value !== null && active instanceof HTMLElement && active.closest('.edit') !== null
+  if (editing.value !== null && active === board.value) {
+    isPanelShown.value = true
+    void nextTick(() => editor.value?.focus())
+    return
+  }
+  board.value?.focus()
+  if (isInEditor) {
+    if (editingId.value !== null) {
+      reveal(editingId.value)
+    } else {
+      scrollToFocus()
+    }
+    return
+  }
+  const selectedId = shownSelection.value.ids[0]
+  if (selectedId !== undefined) {
+    focusedId.value = selectedId
+    scrollToFocus()
+    return
+  }
+  if (view.value === 'tree') {
+    focusedId.value = treeEntries.value.find(entry => entry.type === 'card' || entry.type === 'marker')?.id ?? null
+  } else {
+    const first = gridItems.value.find(item => item.element !== null) ?? gridItems.value[0]
+    focusedId.value = first?.id ?? null
+    if (first !== undefined && first.element !== null) {
+      selection.value = only(first)
+      anchorId.value = first.id
+    }
+  }
+  scrollToFocus()
+}
+
+// A request made from another tab is already there when the storyboard appears: it is answered then, and only once.
+/** An edit without changes closes when its card is gone, removed or undone; one with changes keeps them, to be saved as new pages. */
+watch(documents, current => {
+  const edited = editing.value
+  if (edited === null || edited.target.type !== 'replace') {
+    return
+  }
+  const nodeId = edited.target.nodeId
+  const document = current.find(candidate => candidate.id === edited.chapterId)
+  if (document === undefined || !flattenStoredNodes(document.nodes).some(node => node.id === nodeId)) {
+    if (isEditChanged.value) {
+      hint.value = text.value.cardGone
+      editing.value = { ...edited, chapterId: chapter.value?.id ?? edited.chapterId, target: { type: 'insert', slot: slotAfterFocus() } }
+    } else {
+      editing.value = null
+    }
+  }
+})
+
+watch(storyboardRequest, request => {
+  if (request === null || answeredStoryboardRequests.has(request)) {
+    return
+  }
+  answeredStoryboardRequests.add(request)
+  // Answered once the board is drawn.
+  void nextTick(() => {
+    if (request.kind === 'goToBoard') {
+      goToBoard()
+    } else if (request.kind === 'togglePanel') {
+      isPanelShown.value = !isPanelShown.value
+    } else if (request.nodeId !== undefined) {
+      board.value?.focus()
+      reveal(request.nodeId)
+    }
+  })
+}, { immediate: true })
+
+function onChapterPicked(event: Event) {
+  const select = event.target as HTMLSelectElement
+  const chosenId = select.value
+  // The picker shows the chapter of the board until the author has answered.
+  select.value = chapter.value?.id ?? ''
+  settleEdit(text.value.unsavedPage, () => {
+    editing.value = null
+    storyboardChapterId.value = chosenId
+  })
+}
+
+useUnsavedChanges(() => isEditChanged.value, proceed => settleEdit(text.value.unsavedPage, proceed))
+onMounted(() => board.value?.focus())
 
 /** Pages and choices can be played from; the preview finds a way there. */
 function previewFocused() {
@@ -368,7 +535,7 @@ function openTarget() {
   }
   const ids = shownSelection.value.ids
   if (ids.length > 1) {
-    hint.value = `${ids.length} selected: Enter opens one at a time.`
+    hint.value = text.value.severalSelected(ids.length)
     return
   }
   openElement(focusedId.value ?? ids[0])
@@ -439,6 +606,10 @@ async function applyMove(nodeIds: readonly string[], transform: (current: Chapte
   if (current === null || nodeIds.length === 0) {
     return false
   }
+  if (isEditChanged.value) {
+    settleEdit(text.value.unsavedBeforeMoving, () => void applyMove(nodeIds, transform, successMessage))
+    return false
+  }
   const moved = transform(current, new Date().toISOString())
   if (moved === current) {
     return false
@@ -478,7 +649,7 @@ function cutSelection() {
   }
   cutIds.value = ids
   selection.value = NO_SELECTION
-  hint.value = `${ids.length} cut: focus where ${ids.length === 1 ? 'it goes' : 'they go'}, in this level or another, then ${keysOf('paste')}.`
+  hint.value = text.value.cut(ids.length, keysOf('paste'))
 }
 
 async function paste() {
@@ -489,11 +660,15 @@ async function paste() {
   if (await moveTo(ids, slotAfterFocus())) {
     cutIds.value = []
   } else {
-    hint.value = 'Nothing moved: a block cannot go inside itself.'
+    hint.value = text.value.nothingMoved
   }
 }
 
 async function removeSelected() {
+  if (isEditChanged.value) {
+    settleEdit(text.value.unsavedBeforeRemoving, () => void removeSelected())
+    return
+  }
   const { ids } = shownSelection.value
   const first = itemsById.value.get(ids[0] ?? '')
   const count = ids.length
@@ -501,24 +676,38 @@ async function removeSelected() {
   if (first === undefined || current === null) {
     return
   }
-  await act(() => open.replaceChapter(removeNodes(current, ids, new Date().toISOString())), `${count} ${count === 1 ? 'entry' : 'entries'} removed. Ctrl+Z puts ${count === 1 ? 'it' : 'them'} back.`)
+  // Definitions removed stay declared, in the project's definitions.
+  const definitionCount = flattenStoredNodes(flattenStoredNodes(current.nodes).filter(node => ids.includes(node.id))).filter(node => node.type === 'definition').length
+  await act(() => open.replaceChapter(removeNodes(current, ids, new Date().toISOString())), text.value.removed(count, definitionCount))
   selection.value = NO_SELECTION
   const lane = gridItems.value.filter(item => item.containerId === first.containerId)
   focusedId.value = (lane.find(item => item.element === null || item.index >= first.index) ?? lane.at(-1))?.id ?? null
   scrollToFocus()
 }
 
+async function moveToDefinitions(nodeId: string) {
+  const current = chapter.value
+  if (current !== null) {
+    await act(() => open.moveToDefinitions(current.id, nodeId), text.value.movedToDefinitions)
+  }
+}
+
 async function undo() {
+  if (isEditChanged.value) {
+    settleEdit(text.value.unsavedBeforeUndoing, () => void undo())
+    return
+  }
   await act(async () => {
     const chapterId = await open.undo()
     if (chapterId !== null) {
       storyboardChapterId.value = chapterId
     }
-  }, open.canUndo ? 'Undone.' : 'Undone. Nothing more to undo.')
+  }, open.canUndo ? text.value.undone : text.value.undoneLast)
 }
 
 function onPick(elementId: string, event: MouseEvent) {
   board.value?.focus()
+  isPanelShown.value = true
   hint.value = null
   focusedId.value = elementId
   const item = itemsById.value.get(elementId)
@@ -544,7 +733,7 @@ function startDrag(elementId: string, event: DragEvent) {
   }
   focusedId.value = elementId
   isDragging.value = true
-  event.dataTransfer?.setData('text/plain', `${shownSelection.value.ids.length} storyboard entries`)
+  event.dataTransfer?.setData('text/plain', text.value.draggedEntries(shownSelection.value.ids.length))
   if (event.dataTransfer !== null) {
     event.dataTransfer.effectAllowed = 'move'
   }
@@ -604,9 +793,27 @@ function stagingOf(entry: EditableEntry): string[] {
   const page = entry.node
   return [
     ...page.commandsBefore.map(command => describeStageCommand(command, project.value)),
-    ...page.inlineCommands.map(command => `${describeStageCommand(command, project.value)}, after “…${page.text.slice(Math.max(0, command.offset - 24), command.offset)}”`),
+    ...page.inlineCommands.map(command => text.value.inlineStaging(describeStageCommand(command, project.value), page.text.slice(Math.max(0, command.offset - 24), command.offset))),
   ]
 }
+
+/**
+ * The decisions and memories the cards on screen use: the whole chapter's, or in the grid, those
+ * inside the block opened; a chapter's own `[only if]` counts at its level.
+ */
+const namesInView = computed(() => {
+  const current = chapter.value
+  if (current === null) {
+    return []
+  }
+  const block = view.value === 'grid' && blockId.value !== null ? flattenStoredNodes(current.nodes).find(node => node.id === blockId.value) : undefined
+  const nodeIds = new Set(flattenStoredNodes(block === undefined ? current.nodes : [block]).map(node => node.id))
+  return indexNames(project.value, [current])
+    .filter(name => name.kind === 'decision' || name.kind === 'memory')
+    .map(name => ({ name, uses: name.uses.filter(entry => entry.nodeId === null ? block === undefined : nodeIds.has(entry.nodeId)) }))
+    .filter(entry => entry.uses.length > 0)
+})
+const isInViewOpen = ref(true)
 
 /** Names by identifier, looked up for every card the grid draws. */
 const characterNames = computed(() => new Map(project.value.characters.map(character => [character.id, character.name])))
@@ -615,7 +822,7 @@ const speakerName = (speakerId: string | null) => speakerId === null ? null : ch
 const conditionText = (condition: StoredCondition) => describeCondition(condition, project.value)
 const decisionName = (decisionId: string) => decisionsById.value.get(decisionId)?.name ?? '?'
 const valueName = (decisionId: string, valueId: string) => decisionsById.value.get(decisionId)?.values.find(value => value.id === valueId)?.name ?? '?'
-const pagesWord = (count: number) => `${count} ${count === 1 ? 'page' : 'pages'}`
+const pagesWord = (count: number) => common.value.pageCount(count)
 const branchPageCount = (lane: BlockElement['branches'][number], block: BlockElement) => {
   const branch = block.node.type === 'condition' ? block.node.branches.find(candidate => candidate.id === lane.containerId) : block.node
   return branch === undefined ? 0 : flattenStoredNodes(branch.nodes).filter(node => node.type === 'page' || node.type === 'choice').length
@@ -624,43 +831,52 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
 
 <template>
   <section class="storyboard">
-    <p v-if="chapter === null" class="muted">No chapters yet: import a text first.</p>
+    <p v-if="chapter === null" class="muted">
+      {{ text.noChapters }}
+      <button class="button small" @click="startEmptyDocument('chapter')">{{ text.startChapter }}</button>
+    </p>
     <template v-else>
       <div class="toolbar">
         <label class="field chapter-picker">
-          <span>{{ isScene ? 'Scene' : 'Chapter' }}</span>
-          <select class="text-input" :value="chapter.id" @change="storyboardChapterId = ($event.target as HTMLSelectElement).value">
-            <optgroup label="Chapters">
-              <option v-for="candidate in chapters" :key="candidate.id" :value="candidate.id">{{ candidate.title ?? 'Untitled chapter' }}</option>
+          <span>{{ isScene ? text.scene : text.chapter }}</span>
+          <select class="text-input" :value="chapter.id" @change="onChapterPicked">
+            <optgroup :label="text.chapters">
+              <option v-for="candidate in chapters" :key="candidate.id" :value="candidate.id">{{ candidate.title ?? common.untitledChapter }}</option>
             </optgroup>
-            <optgroup v-if="scenes.length > 0" label="Scenes">
+            <optgroup v-if="scenes.length > 0" :label="text.scenes">
               <option v-for="candidate in scenes" :key="candidate.id" :value="candidate.id">{{ candidate.title }}</option>
             </optgroup>
           </select>
         </label>
-        <div class="view-switch" role="group" aria-label="View">
-          <button class="button small" :class="{ primary: view === 'grid' }" :aria-pressed="view === 'grid'" @click="view = 'grid'">Grid</button>
-          <button class="button small" :class="{ primary: view === 'tree' }" :aria-pressed="view === 'tree'" @click="view = 'tree'">Tree</button>
+        <div class="view-switch" role="group" :aria-label="text.view">
+          <button class="button small" :class="{ primary: view === 'grid' }" :aria-pressed="view === 'grid'" @click="view = 'grid'">{{ text.grid }}</button>
+          <button class="button small" :class="{ primary: view === 'tree' }" :aria-pressed="view === 'tree'" @click="view = 'tree'">{{ text.tree }}</button>
         </div>
-        <label class="field block-limit" :class="{ unused: view !== 'grid' }" :inert="view !== 'grid'" title="Blocks with more pages show as one card; Enter opens them">
-          <span>Block as one card above</span>
-          <input v-model.number="settings.blockPageLimit" class="text-input" type="number" min="1" max="99" step="1" aria-label="Pages above which a block shows as one card">
+        <label class="field block-limit" :class="{ unused: view !== 'grid' }" :inert="view !== 'grid'" :title="text.blockLimitTitle">
+          <span>{{ text.blockLimit }}</span>
+          <input v-model.number="settings.blockPageLimit" class="text-input" type="number" min="1" max="99" step="1" :aria-label="text.blockLimitLabel">
         </label>
         <p class="muted keys">
           <template v-if="view === 'grid'">
-            {{ keysOf('toggleSelected') }} selects · drag, or {{ keysOf('moveSelectionBack') }} / {{ keysOf('moveSelectionForward') }}, moves ·
-            {{ keysOf('cut') }} / {{ keysOf('paste') }} move between levels · {{ keysOf('edit') }} edits or opens a block · {{ keysOf('leave') }} leaves it ·
+            {{ text.gridKeys({
+              select: keysOf('toggleSelected'),
+              back: keysOf('moveSelectionBack'),
+              forward: keysOf('moveSelectionForward'),
+              cut: keysOf('cut'),
+              paste: keysOf('paste'),
+              edit: keysOf('edit'),
+              leave: keysOf('leave'),
+            }) }}
           </template>
-          <template v-else>{{ keysOf('edit') }} edits ·</template>
-          {{ keysOf('addPage') }} adds a page · {{ keysOf('previewFromHere') }} previews ·
-          <button class="link-button" @click="isPanelOpen = true">All shortcuts <kbd>{{ keysOf('showShortcuts') }}</kbd></button>
+          <template v-else>{{ text.treeKeys(keysOf('edit')) }}</template>
+          {{ text.addAndPreviewKeys(keysOf('addPage'), keysOf('previewFromHere')) }}
+          <button class="link-button" @click="isPanelOpen = true">{{ text.allShortcuts }} <kbd>{{ keysOf('showShortcuts') }}</kbd></button>
         </p>
       </div>
 
-      <p v-if="chapter.condition !== undefined" class="only-if">Played only if {{ conditionText(chapter.condition) }}; passed by otherwise.</p>
+      <p v-if="chapter.condition !== undefined" class="only-if">{{ text.playedOnlyIf(conditionText(chapter.condition)) }}</p>
       <p v-if="chapterUnreachableCount > 0" class="warning" role="note">
-        ⚠ {{ chapterUnreachableCount }} {{ chapterUnreachableCount === 1 ? 'page of this chapter is' : 'pages of this chapter are' }} never reached:
-        shown faded, and counted on the blocks that hold them. Move them before the ending, or into a branch.
+        {{ text.chapterUnreached(chapterUnreachableCount) }}
       </p>
       <div class="layout">
         <div
@@ -669,7 +885,7 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
           :class="{ tree: view === 'tree' }"
           tabindex="0"
           role="listbox"
-          aria-label="Storyboard"
+          :aria-label="text.storyboard"
           aria-multiselectable="true"
           :aria-activedescendant="focusedId === null ? undefined : `${view === 'grid' ? 'element' : 'entry'}-${focusedId}`"
           @keydown="onKeydown"
@@ -682,6 +898,7 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
             :entries-by-id="entriesById"
             :focused-id="focusedId"
             :selected-ids="selectedIds"
+            :editing-id="editingId"
             :unreachable-ids="unreachableIds"
             :register="registerElement"
             :speaker-name="speakerName"
@@ -693,9 +910,10 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
           <StoryboardGrid
             v-else-if="level !== null"
             :level="level"
-            :chapter-title="isScene ? `Scene: ${chapter.title}` : chapter.title ?? 'Untitled chapter'"
+            :chapter-title="isScene ? common.sceneLabel(`${chapter.title}`) : chapter.title ?? common.untitledChapter"
             :focused-id="focusedId"
             :selected-ids="selectedIds"
+            :editing-id="editingId"
             :cut-ids="cutIdSet"
             :drop-target="dropTarget"
             :register="registerElement"
@@ -714,76 +932,108 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
           />
         </div>
 
-        <aside class="inspector" aria-live="polite">
+        <button
+          class="panel-handle"
+          :class="{ shown: isPanelShown }"
+          :aria-expanded="isPanelShown"
+          :title="text.togglePanel(isPanelShown, keysOf('togglePanel'))"
+          @click="isPanelShown = !isPanelShown"
+        >
+          {{ isPanelShown ? '▸' : '◂' }}<span v-if="editing !== null" class="handle-mark" :aria-label="text.pageBeingEdited">✎</span>
+        </button>
+        <aside class="inspector" :class="{ shown: isPanelShown }" aria-live="polite">
+          <UnsavedQuestion
+            v-if="pending !== null"
+            :question="pending.question"
+            :can-save="canSaveEdit"
+            :cannot-save-reason="text.cannotSaveEdit"
+            @save="answerSave"
+            @discard="answerDiscard"
+            @keep="answerKeepEditing"
+          />
           <div v-if="editing !== null" class="edit">
-            <h3>{{ editing.target.type === 'insert' ? 'New pages' : 'Edit' }}</h3>
+            <h3>{{ editing.target.type === 'insert' ? text.newPages : text.edit }}<span v-if="isEditChanged" class="changed" :title="text.notSavedYet"> ●</span></h3>
             <TagTextEditor
               ref="editor"
               v-model="editing.text"
               :vocabulary="vocabulary"
               :layout="layout"
-              label="Text of the page"
-              :placeholder="'— Marie: A new line.\n[bg: rooftop]\nNarration.'"
+              :label="text.pageText"
+              :placeholder="text.pagePlaceholder"
               @submit="saveEdit"
               @cancel="cancelEdit"
             />
             <ul v-if="editPreview !== null && editPreview.problems.length > 0" class="problems">
-              <li v-for="(problem, index) in editPreview.problems" :key="index" :class="problem.severity">{{ problemMessage(problem) }}</li>
+              <li v-for="(problem, index) in editPreview.problems" :key="index" :class="problem.severity">{{ problemMessage(problem, locale) }}</li>
             </ul>
-            <p v-else-if="editPageCount > 1" class="muted">Becomes {{ editPageCount }} pages.</p>
+            <p v-else-if="editPageCount > 1" class="muted">{{ text.becomesPages(editPageCount) }}</p>
             <div class="edit-actions">
-              <button class="button primary small" :disabled="!canSaveEdit" @click="saveEdit">Save <kbd>{{ keysOf('save') }}</kbd></button>
-              <button class="button small" @click="cancelEdit">Cancel <kbd>{{ keysOf('cancel') }}</kbd></button>
+              <button class="button primary small" :disabled="!canSaveEdit" @click="saveEdit">{{ common.save }} <kbd>{{ keysOf('save') }}</kbd></button>
+              <button class="button small" @click="cancelEdit">{{ common.cancel }} <kbd>{{ keysOf('cancel') }}</kbd></button>
             </div>
           </div>
           <template v-else-if="focusedEntry?.type === 'card' && focusedEntry.node.type === 'page'">
-            <h3>Page {{ focusedEntry.number }} · {{ focusedEntry.node.kind }}</h3>
+            <h3>{{ text.pageHeading(focusedEntry.number, focusedEntry.node.kind) }}</h3>
             <p v-if="speakerName(focusedEntry.node.speakerId) !== null" class="speaker">{{ speakerName(focusedEntry.node.speakerId) }}</p>
             <p class="full-text">{{ focusedEntry.node.text }}</p>
             <template v-if="stagingOf(focusedEntry).length > 0">
-              <h4>Staging</h4>
+              <h4>{{ text.staging }}</h4>
               <ul>
                 <li v-for="line in stagingOf(focusedEntry)" :key="line">{{ line }}</li>
               </ul>
             </template>
           </template>
           <template v-else-if="focusedEntry?.type === 'card' && focusedEntry.node.type === 'choice'">
-            <h3>Choice {{ focusedEntry.number }} · {{ decisionName(focusedEntry.node.decisionId) }}</h3>
+            <h3>{{ text.choiceHeading(focusedEntry.number, decisionName(focusedEntry.node.decisionId)) }}</h3>
             <ul>
               <li v-for="option in focusedEntry.node.options" :key="option.id">
-                {{ option.text }} → {{ valueName(focusedEntry.node.decisionId, option.valueId) }}<span v-if="option.condition !== null" class="muted">, offered only if {{ conditionText(option.condition) }}</span>
+                {{ option.text }} → {{ valueName(focusedEntry.node.decisionId, option.valueId) }}<span v-if="option.condition !== null" class="muted">{{ text.offeredOnlyIf(conditionText(option.condition)) }}</span>
               </li>
             </ul>
           </template>
-          <p v-else-if="focusedEntry?.type === 'marker'" class="muted">{{ focusedEntry.node.type }}: {{ focusedEntry.text }}</p>
+          <template v-else-if="focusedEntry?.type === 'marker' && focusedEntry.node.type === 'definition'">
+            <h3>{{ text.declaredHere }}</h3>
+            <p class="full-text">{{ focusedEntry.text }}</p>
+            <p class="muted">{{ text.definitionHelp }}</p>
+            <button class="button small" @click="moveToDefinitions(focusedEntry.node.id)">{{ text.moveToDefinitions }}</button>
+          </template>
+          <p v-else-if="focusedEntry?.type === 'marker'" class="muted">{{ text.marker(text.markerKinds[focusedEntry.node.type], focusedEntry.text) }}</p>
           <template v-else-if="focusedBlock?.node.type === 'loop'">
-            <h3>Loop {{ focusedBlock.numbers }} · {{ pagesWord(focusedBlock.pageCount) }}</h3>
-            <p class="muted">Its pages play again and again, until a [break] inside leaves the loop.</p>
-            <p v-if="focusedBlock.isEndless" class="warning">⚠ Nothing inside leaves it: the player would be stuck. Add a [break] in a branch the player can reach, or an [ending].</p>
-            <p class="muted">It moves as one piece. Open it to work on its pages.</p>
+            <h3>{{ text.loopHeading(focusedBlock.numbers, pagesWord(focusedBlock.pageCount)) }}</h3>
+            <p class="muted">{{ text.loopHelp }}</p>
+            <p v-if="focusedBlock.isEndless" class="warning">{{ text.endlessLoop }}</p>
+            <p class="muted">{{ text.loopMovesAsOne }}</p>
           </template>
           <template v-else-if="focusedBlock !== null && focusedBlock.node.type === 'condition'">
-            <h3>Block {{ focusedBlock.numbers }} · {{ pagesWord(focusedBlock.pageCount) }}</h3>
+            <h3>{{ text.blockHeading(focusedBlock.numbers, pagesWord(focusedBlock.pageCount)) }}</h3>
             <ul>
-              <li v-for="lane in focusedBlock.branches" :key="lane.containerId ?? ''">{{ lane.text }}: {{ pagesWord(branchPageCount(lane, focusedBlock)) }}</li>
+              <li v-for="lane in focusedBlock.branches" :key="lane.containerId ?? ''">{{ text.branchPages(lane.text ?? '', pagesWord(branchPageCount(lane, focusedBlock))) }}</li>
             </ul>
-            <p v-if="focusedBlock.allRoutesEnd" class="muted">★ Every route ends inside: nothing after it is reached from here.</p>
-            <p v-else-if="focusedBlock.endingRouteCount > 0" class="muted">★ {{ focusedBlock.endingRouteCount }} of {{ focusedBlock.branches.length }} routes end inside; the others go on after it.</p>
-            <p class="muted">It moves as one piece. Open it to work on its pages.</p>
+            <p v-if="focusedBlock.allRoutesEnd" class="muted">{{ text.everyRouteEndsInside }}</p>
+            <p v-else-if="focusedBlock.endingRouteCount > 0" class="muted">{{ text.someRoutesEndInside(focusedBlock.endingRouteCount, focusedBlock.branches.length) }}</p>
+            <p class="muted">{{ text.blockMovesAsOne }}</p>
           </template>
-          <p v-else-if="focusedItem?.element === null" class="muted">This branch has no page yet.</p>
-          <p v-else class="muted">Select a card to see it in full.</p>
+          <p v-else-if="focusedItem?.element === null" class="muted">{{ text.emptyBranch }}</p>
+          <p v-else class="muted">{{ text.selectACard }}</p>
           <p v-if="editing === null && focusedId !== null && unreachableIds.has(focusedId)" class="warning">
-            Never reached: every path before it ends, at an ending or in a block whose branches, else included, all end.
-            Move it before that, or into a branch.
+            {{ text.cardUnreached }}
           </p>
-          <p v-if="editing === null && shownSelection.ids.length > 1" class="muted">{{ shownSelection.ids.length }} selected</p>
-          <p v-if="editing === null && hint !== null" class="hint" role="status">{{ hint }}</p>
+          <p v-if="shownSelection.ids.length > 1" class="muted">{{ text.selectedCount(shownSelection.ids.length) }}</p>
+          <p v-if="hint !== null" class="hint" role="status">{{ hint }}</p>
+          <details v-if="namesInView.length > 0" class="in-view" :open="isInViewOpen" @toggle="isInViewOpen = ($event.target as HTMLDetailsElement).open">
+            <summary>{{ text.inThisView(namesInView.length) }}</summary>
+            <ul>
+              <li v-for="entry in namesInView" :key="`${entry.name.kind}:${entry.name.id}`">
+                <button class="link-button name-link" :title="text.everyPlaceInIndex(indexText.kindLabels[entry.name.kind])" @click="openIndex(entry.name.kind, entry.name.id)">{{ entry.name.name }}</button>
+                <span class="muted uses-text">{{ entry.name.kind === 'memory' ? text.memoryPrefix : '' }}{{ summariseUses(entry.name, entry.uses, project, locale) }}</span>
+              </li>
+            </ul>
+          </details>
           <div v-if="editing === null" class="inspector-actions">
-            <button v-if="focusedEntry !== null" class="button small" @click="startEditing(focusedEntry)">Edit <kbd>{{ keysOf('edit') }}</kbd></button>
-            <button v-if="focusedBlock !== null" class="button small" @click="openElement(focusedBlock.id)">Open the block <kbd>{{ keysOf('edit') }}</kbd></button>
-            <button v-if="focusedEntry?.type === 'card'" class="button small" @click="previewFocused">Preview from here ▶ <kbd>{{ keysOf('previewFromHere') }}</kbd></button>
-            <button class="button small" @click="startAdding">{{ chapter.nodes.length === 0 ? 'Write the first page' : focusedItem?.element === null ? 'Write a page here' : 'Add a page after' }} <kbd>{{ keysOf('addPage') }}</kbd></button>
+            <button v-if="focusedEntry !== null" class="button small" @click="startEditing(focusedEntry)">{{ text.editCard }} <kbd>{{ keysOf('edit') }}</kbd></button>
+            <button v-if="focusedBlock !== null" class="button small" @click="openElement(focusedBlock.id)">{{ text.openBlock }} <kbd>{{ keysOf('edit') }}</kbd></button>
+            <button v-if="focusedEntry?.type === 'card'" class="button small" @click="previewFocused">{{ text.previewFromHere }} <kbd>{{ keysOf('previewFromHere') }}</kbd></button>
+            <button class="button small" @click="startAdding">{{ chapter.nodes.length === 0 ? text.writeFirstPage : focusedItem?.element === null ? text.writePageHere : text.addPageAfter }} <kbd>{{ keysOf('addPage') }}</kbd></button>
           </div>
         </aside>
       </div>
@@ -862,6 +1112,113 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
   overflow-wrap: anywhere;
 }
 
+/* Wide, the panel stays beside the board and follows the scroll; its handle is not needed. */
+@media (min-width: 1000px) {
+  .inspector {
+    position: sticky;
+    top: 12px;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+  }
+
+  .panel-handle {
+    display: none;
+  }
+}
+
+/* Narrow, the panel slides over the board from the right edge of the window, the same panel. */
+@media (max-width: 999px) {
+  /* Stretched between the edges: aligned at the start, a fixed box would shrink to its content. */
+  .inspector {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-self: stretch;
+    z-index: 20;
+    box-sizing: border-box;
+    width: min(380px, calc(100vw - 48px));
+    overflow-y: auto;
+    border-left: 1px solid #2c3442;
+    border-radius: 0;
+    box-shadow: -8px 0 24px rgb(0 0 0 / 0.45);
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform 0.2s ease, visibility 0s linear 0.2s;
+  }
+
+  .inspector.shown {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.2s ease;
+  }
+
+  .panel-handle {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    z-index: 21;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 6px;
+    border: 1px solid #2c3442;
+    border-right: 0;
+    border-radius: 8px 0 0 8px;
+    background: #11151d;
+    font: inherit;
+    color: #9eeaff;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: right 0.2s ease;
+  }
+
+  .panel-handle.shown {
+    right: min(380px, calc(100vw - 48px));
+  }
+}
+
+.in-view {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid #2c3442;
+  font-size: 14px;
+}
+
+.in-view summary {
+  font-weight: 600;
+  color: #a3acbb;
+  cursor: pointer;
+}
+
+.in-view ul {
+  margin-top: 6px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.in-view li {
+  margin: 4px 0;
+}
+
+.name-link {
+  font-size: 14px;
+  color: #9eeaff;
+}
+
+.uses-text {
+  margin-left: 0.4em;
+}
+
+.handle-mark {
+  color: #f5c451;
+}
+
+.changed {
+  color: #f5c451;
+}
+
 .inspector h3 {
   margin: 0 0 8px;
   font-size: 15px;
@@ -916,13 +1273,6 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
   font-size: 13px;
 }
 
-.problems .error {
-  color: #f28b82;
-}
-
-.problems .warning {
-  color: #f6c177;
-}
 
 kbd {
   margin-left: 4px;

@@ -4,6 +4,7 @@
  * the archive declares before anything is inflated, an entry inflating past its declared size is
  * stopped, checksums are verified, and paths that could leave their folder are refused.
  */
+import { ArchiveError } from './archiveError'
 
 export interface ZipEntryToWrite {
   path: string
@@ -114,7 +115,7 @@ export function readZip(bytes: Uint8Array<ArrayBuffer>, limits: ZipLimits = DEFA
   const entryCount = view.getUint16(endOffset + 10, true)
   const centralOffset = view.getUint32(endOffset + 16, true)
   if (entryCount > limits.maximumEntries) {
-    throw new Error(`The archive holds too many files (${entryCount})`)
+    throw new ArchiveError({ code: 'tooManyFiles', fileCount: entryCount })
   }
 
   const entries: ZipEntry[] = []
@@ -123,7 +124,7 @@ export function readZip(bytes: Uint8Array<ArrayBuffer>, limits: ZipLimits = DEFA
   let position = centralOffset
   for (let index = 0; index < entryCount; index++) {
     if (position + CENTRAL_HEADER_LENGTH > bytes.length || view.getUint32(position, true) !== CENTRAL_HEADER_SIGNATURE) {
-      throw new Error('The archive is damaged: its file list is cut short')
+      throw new ArchiveError({ code: 'fileListCutShort' })
     }
     const flags = view.getUint16(position + 8, true)
     const method = view.getUint16(position + 10, true)
@@ -142,28 +143,28 @@ export function readZip(bytes: Uint8Array<ArrayBuffer>, limits: ZipLimits = DEFA
     }
     checkPath(path)
     if (paths.has(path)) {
-      throw new Error(`The archive holds ${path} twice`)
+      throw new ArchiveError({ code: 'duplicateFile', path })
     }
     paths.add(path)
     if ((flags & ENCRYPTED_FLAG) !== 0) {
-      throw new Error(`${path} is encrypted`)
+      throw new ArchiveError({ code: 'encryptedFile', path })
     }
     if (method !== STORED && method !== DEFLATED) {
-      throw new Error(`${path} uses a compression method Datajack does not read`)
+      throw new ArchiveError({ code: 'unknownCompression', path })
     }
     if (compressedSize === ZIP64_MARKER || size === ZIP64_MARKER || localOffset === ZIP64_MARKER) {
-      throw new Error(`${path} is too large`)
+      throw new ArchiveError({ code: 'fileTooLarge', path })
     }
     totalSize += size
     if (size > limits.maximumEntrySize || totalSize > limits.maximumTotalSize) {
-      throw new Error(`${path} is too large`)
+      throw new ArchiveError({ code: 'fileTooLarge', path })
     }
     if (localOffset + LOCAL_HEADER_LENGTH > bytes.length || view.getUint32(localOffset, true) !== LOCAL_HEADER_SIGNATURE) {
-      throw new Error(`The archive is damaged at ${path}`)
+      throw new ArchiveError({ code: 'damagedFile', path })
     }
     const dataOffset = localOffset + LOCAL_HEADER_LENGTH + view.getUint16(localOffset + 26, true) + view.getUint16(localOffset + 28, true)
     if (dataOffset + compressedSize > bytes.length) {
-      throw new Error(`The archive is damaged at ${path}`)
+      throw new ArchiveError({ code: 'damagedFile', path })
     }
     const data = bytes.subarray(dataOffset, dataOffset + compressedSize)
 
@@ -173,7 +174,7 @@ export function readZip(bytes: Uint8Array<ArrayBuffer>, limits: ZipLimits = DEFA
       read: async () => {
         const content = method === STORED ? data.slice() : await inflate(data, size, path)
         if (content.length !== size || crc32(content) !== checksum) {
-          throw new Error(`The archive is damaged at ${path}`)
+          throw new ArchiveError({ code: 'damagedFile', path })
         }
         return content
       },
@@ -191,7 +192,7 @@ export function isSafeArchivePath(path: string): boolean {
 
 function checkPath(path: string) {
   if (!isSafeArchivePath(path)) {
-    throw new Error(`Invalid path in archive: ${JSON.stringify(path)}`)
+    throw new ArchiveError({ code: 'invalidPath', path })
   }
 }
 
@@ -199,7 +200,7 @@ function decodeName(bytes: Uint8Array<ArrayBuffer>): string {
   try {
     return decoder.decode(bytes)
   } catch {
-    throw new Error('Invalid path in archive: not UTF-8')
+    throw new ArchiveError({ code: 'invalidPath', path: null })
   }
 }
 
@@ -210,7 +211,7 @@ function findEndOfCentralDirectory(view: DataView): number {
       return offset
     }
   }
-  throw new Error('This file is not a ZIP archive')
+  throw new ArchiveError({ code: 'notZip' })
 }
 
 /** Inflates chunk by chunk, giving up as soon as the output exceeds what the entry declares. */
@@ -226,13 +227,13 @@ async function inflate(data: Uint8Array<ArrayBuffer>, declaredSize: number, path
       }
       length += value.length
       if (length > declaredSize) {
-        throw new Error(`${path} is larger than it declares`)
+        throw new ArchiveError({ code: 'largerThanDeclared', path })
       }
       chunks.push(value)
     }
   } catch (error) {
     await reader.cancel().catch(() => undefined)
-    throw error instanceof Error && error.message.includes(path) ? error : new Error(`The archive is damaged at ${path}`)
+    throw error instanceof ArchiveError ? error : new ArchiveError({ code: 'damagedFile', path })
   }
   return concatenate(chunks)
 }

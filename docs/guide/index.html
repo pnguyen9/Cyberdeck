@@ -219,6 +219,7 @@ turns it into pages, characters and choices. Your players play it in Datajack.</
     <li><a href="#problems">When the import finds a problem</a></li>
     <li><a href="#endings">Endings, and what players remember</a></li>
     <li><a href="#decisions">More about decisions</a></li>
+    <li><a href="#tracking">Keeping track of decisions</a></li>
     <li><a href="#loops">Places to come back to</a></li>
     <li><a href="#scenes">Scenes: write once, play anywhere</a></li>
     <li><a href="#routes">Chapters of a route</a></li>
@@ -242,11 +243,17 @@ the name of your game and choose the language it is written in, then press <stro
   <figcaption>The projects screen. Your projects are listed above the form once you have some.</figcaption>
 </figure>
 <p>Cyberdeck saves everything as you go: there is no Save button to remember.</p>
+<div class="tip"><p>Cyberdeck speaks English and French. It follows your computer's language; the
+<strong>Language</strong> menu, on this screen or at the top of a project, changes it. Your players choose
+theirs in Datajack.</p></div>
 
 <h2 id="writing">2. Write or paste your story</h2>
 <p>A new project opens on the <strong>Import</strong> tab. Paste your text there, or press
 <strong>Open a document…</strong> to read a Word (<code>.docx</code>) or text file. To see how it works
 first, press <strong>Use the sample story</strong>.</p>
+<div class="tip"><p>No text yet? <strong>Start without a text</strong> opens an empty chapter in the storyboard,
+where you write it page by page. More chapters and scenes come from <strong>New chapter</strong> and
+<strong>New scene</strong>, in the <strong>Chapters</strong> tab.</p></div>
 <figure>
   <a href="images/import.png"><img src="images/import.png" alt="The Import tab with the sample story pasted in; below it, “1 chapter (Chapter 1 — The Letter), 14 pages” and the Import button." loading="lazy"></a>
   <figcaption>As you type, Cyberdeck says what it understood: here one chapter of 14 pages.</figcaption>
@@ -262,6 +269,10 @@ first, press <strong>Use the sample story</strong>.</p>
 </table>
 <p>You don't have to cut your text into pages. A page holds two lines, and Cyberdeck cuts long paragraphs
 by itself, between sentences when it can.</p>
+<p><strong>Import as</strong>, under the text, says where it goes: <strong>New chapters</strong> after those
+you have, <strong>Pages at the end of a chapter</strong> to continue one, or <strong>In place of a chapter</strong>
+to replace one with a new version. Cyberdeck picks the right one by itself most of the time; you only
+change it to continue a chapter.</p>
 <p>Press <strong>Import</strong>. Your chapter appears in the <strong>Chapters</strong> tab, where chapters
 can be moved, renamed, removed, or played from.</p>
 <figure>
@@ -344,7 +355,14 @@ card is a page; the small ◧ and its number say how many stage notes come with 
   <figcaption>While editing, notes in brackets are drawn as chips, and typing <code>[</code> suggests what can go there.</figcaption>
 </figure>
 <p>While editing, <strong>Insert tag</strong> lists every kind of note, if you'd rather pick than type.
-<kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels.</p>
+<kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels. The card you are editing is marked ✎, and
+nothing you wrote is lost by accident: opening another card, another chapter or another tab first asks
+whether to <strong>Save</strong>, <strong>Discard</strong> or <strong>Keep editing</strong>.</p>
+<div class="tip"><p>Typing on the keyboard after clicking elsewhere? <kbd>Alt</kbd>+<kbd>G</kbd> brings you back to the
+cards, on what you had selected. While editing a page, it jumps between the text and its card.
+<kbd>Alt</kbd>+<kbd>Page Down</kbd> and <kbd>Alt</kbd>+<kbd>Page Up</kbd> go from tab to tab.</p></div>
+<p>In a narrow window, the panel slides in from the right edge when you click a card or edit one;
+its handle, or <kbd>Alt</kbd>+<kbd>P</kbd>, puts it away.</p>
 
 <h2 id="choices">7. Choices and branches</h2>
 <p>A choice gives a <strong>decision</strong> a value. Later, the story can depend on it:</p>
@@ -423,7 +441,26 @@ found or places visited, declare it with <code>multi</code>:</p>
 <p><code>[set]</code> gives a value without asking the player. <code>[unset]</code> takes it away (the key
 was lost), and <code>[unset: Clues]</code> takes them all away.</p>
 
-<h2 id="loops">12. Places to come back to</h2>
+<h2 id="tracking">12. Keeping track of decisions</h2>
+<p>A decision or a style can be declared anywhere, and used everywhere. Two tabs keep them from getting
+lost.</p>
+<p><strong>Definitions</strong> holds the declarations that belong to no chapter in particular, as text. A
+declaration written in a chapter stays there, as a ◇ card in the storyboard; Definitions lists it with its
+place, and <strong>Move to Definitions</strong> brings it over. A decision made only by its choices is
+listed too.</p>
+<figure>
+  <a href="images/definitions.png"><img src="images/definitions.png" alt="The Definitions tab: the project's declarations as text, then the CSS of the styles, title cards, and the declarations kept in chapters with their places." loading="lazy"></a>
+</figure>
+<p><strong>Index</strong> lists every decision and memory, with every place it is given a value or
+tested. Click a place to see the card. At the top, it points out what looks forgotten: a value tested
+but never given, so that condition can never hold; an ending no path reaches; a memory nobody checks.</p>
+<figure>
+  <a href="images/index.png"><img src="images/index.png" alt="The Index: “To look at” finds nothing forgotten; below, each decision with where it is declared, how it is used, and its values: Answer, made by its choices; Visited, declared in Chapter 2." loading="lazy"></a>
+</figure>
+<p>In the storyboard, <strong>In this view</strong>, under the panel, lists the decisions and memories
+the cards on screen use. Inside an opened block, it's only that block's.</p>
+
+<h2 id="loops">13. Places to come back to</h2>
 <p>For a hub the player returns to until they choose to leave, use a <code>[loop]</code>. It plays again and
 again until a <code>[break]</code>:</p>
 <pre>[decision multi: Visited = Wheel | Stand]
@@ -445,7 +482,7 @@ The candy floss stuck to her fingers.
 <p>An option followed by <code>[if: …]</code> is offered only while that holds: here, each place disappears
 once visited.</p>
 
-<h2 id="scenes">13. Scenes: write once, play anywhere</h2>
+<h2 id="scenes">14. Scenes: write once, play anywhere</h2>
 <p>A bad end that can happen in chapter 2 and again in chapter 5 is written once, as a scene, and played
 wherever you need it. After a scene, the story goes on where it was, unless the scene ended it.</p>
 <pre># Chapter 2
@@ -458,12 +495,12 @@ The guard lets you pass.
 — Guard: Stop right there.
 [ending: Caught]</pre>
 
-<h2 id="routes">14. Chapters of a route</h2>
+<h2 id="routes">15. Chapters of a route</h2>
 <p>A chapter that belongs to one route only says so right under its title. Other players pass it by:</p>
 <pre># Chapter 3 — Marie's route
 [only if: Route is Marie]</pre>
 
-<h2 id="staging">15. Characters on stage</h2>
+<h2 id="staging">16. Characters on stage</h2>
 <table>
   <tr><th>You write</th><th>What happens</th></tr>
   <tr><td><code>[enter: marie right smile]</code></td><td>Where she stands and how she looks. Places: <code>far-left</code>, <code>left</code>, <code>center</code>, <code>right</code>, <code>far-right</code>, or <code>35%</code> of the width.</td></tr>
@@ -476,7 +513,7 @@ The guard lets you pass.
 <p>In <strong>Cast &amp; files</strong>, tell Cyberdeck which way each character was drawn looking, and it
 turns them the right way.</p>
 
-<h2 id="effects">16. Sounds and screen effects</h2>
+<h2 id="effects">17. Sounds and screen effects</h2>
 <table>
   <tr><th>You write</th><th>What happens</th></tr>
   <tr><td><code>[sound: door]</code></td><td>A sound plays once. Its file is named after it: <code>door.ogg</code>.</td></tr>
@@ -488,32 +525,51 @@ turns them the right way.</p>
 </table>
 <p>Inside a sentence, a sound, shake or flash plays when the text reaches it.</p>
 
-<h2 id="text">17. How the text looks</h2>
+<h2 id="text">18. How the text looks</h2>
 <p>Give a style a name and what it looks like, then use it inside the text:</p>
 <pre>[style: Whisper = italic, small, grey]
 — Marie: [style: whisper]Don't tell anyone.[style: none] Promise?</pre>
 <p>The looks to pick from: <code>italic</code>, <code>bold</code>, <code>small</code>, <code>large</code>,
 <code>grey</code>, <code>red</code>, <code>blue</code>, <code>green</code>, <code>gold</code>,
-<code>shaking</code>. One alone needs no name: <code>[style: italic]</code>. Italics in a Word document
+<code>shaking</code>, and three that appear as the text is typed: <code>fade-in</code>, <code>rise</code>,
+<code>glow</code>. One alone needs no name: <code>[style: italic]</code>. Italics in a Word document
 are kept.</p>
+<p>For anything else, <strong>Definitions</strong> takes CSS. Each class is a style:</p>
+<pre>.ghost {
+  color: #8af;
+  text-shadow: 0 0 6px #8af;
+}</pre>
+<p>…and <code>[style: ghost]</code> draws it. For a font of your own, drop its file (<code>.woff2</code>,
+<code>.ttf</code>…) in <strong>Cast &amp; files</strong>, then name it: <code>font-family: "Cinzel"</code>.
+The game carries it to your players. Only how text looks is kept. Anything that would load a file,
+or touch the player's own buttons, is left out, and the tab says what and why. Text in a larger style
+is cut into shorter pages, so it always fits the box.</p>
+<p><strong>Title cards</strong>, in Definitions, show each chapter's title over the stage as it starts. Give
+them a look with a style named <code>chapter title</code>, and the ending's name with one named
+<code>ending</code>.</p>
+<figure>
+  <a href="images/title-card.png"><img src="images/title-card.png" alt="A title card: “Chapter 1 — The Letter” in gold, large, over a darkened stage." loading="lazy"></a>
+</figure>
 <p>For long narration, <code>[text: full]</code> writes over the whole screen, as in a book, the pages
 piling up until <code>[clear]</code>. <code>[text: box]</code> brings the text box back.</p>
 
-<h2 id="illustrations">18. Illustrations and the gallery</h2>
+<h2 id="illustrations">19. Illustrations and the gallery</h2>
 <pre>[illustration: Sunrise]
 …
 [illustration: none]</pre>
 <p>A full-screen picture of a key moment. Players find the ones they have seen in the game's
 <strong>Gallery</strong>, in their library; the others stay locked.</p>
 
-<h2 id="word">19. Working in Word</h2>
+<h2 id="word">20. Working in Word</h2>
 <p>You can write your whole story in Word and open the <code>.docx</code> in the Import tab. Titles in
 the “Heading 1” style become chapters. A dialogue line that Word turned into a bulleted list is still dialogue.</p>
 <p>To edit in Word again later, <strong>Export as text</strong> (in Chapters, for one chapter) writes the
-story back with every change you made in Cyberdeck. Import it again, and Cyberdeck offers to replace the
-chapter of the same title. Players' saves inside it keep working.</p>
+story back with every change you made in Cyberdeck. Import it again, and Cyberdeck chooses
+<strong>In place of a chapter</strong> by itself, for the chapter of the same title: its first line,
+<code>[import: chapter]</code>, says it is one. The chapter keeps its place, and players' saves inside it
+keep working.</p>
 
-<h2 id="tools">20. Tree view, shortcuts and backups</h2>
+<h2 id="tools">21. Tree view, shortcuts and backups</h2>
 <p>The grid keeps each block folded, to see the whole chapter at a glance and move things around. The
 storyboard's <strong>Tree</strong> view unfolds everything instead: one card per line, the branches of each
 block side by side, to follow how the story goes. Here is the fair of chapter 2 in both views.</p>
@@ -529,7 +585,7 @@ block side by side, to follow how the story goes. Here is the fair of chapter 2 
 <p><strong>Back up</strong> downloads your whole project as one file. <strong>Restore a backup…</strong>, on
 the projects screen, brings it back, on this computer or another. Do it now and then.</p>
 
-<h2 id="players">21. What your players see</h2>
+<h2 id="players">22. What your players see</h2>
 <p>Players have their own <strong>Settings</strong>: text speed, volumes, full screen, and their own keys.</p>
 <figure>
   <a href="images/settings.png"><img src="images/settings.png" alt="The Settings screen: text speed, music and sound volumes, full screen on the left; on the right, each action with its keys and an “Add a key” button." loading="lazy"></a>

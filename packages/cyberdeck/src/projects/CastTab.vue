@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import type { Facing } from '@cyberdeck/core'
+import { useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, ref, shallowRef, watch } from 'vue'
+import { castMessages } from '../i18n/castMessages'
 import { readGivenFiles, useEditor } from './editorContext'
+import { measureFontWidth } from './fontWidth'
 
 const { open, project, act } = useEditor()
+const locale = useLocale()
+const text = useMessages(castMessages)
 const isDraggingOver = ref(false)
 /** Addresses of the image files, for thumbnails. */
 const imageUrls = shallowRef<ReadonlyMap<string, string>>(new Map())
@@ -29,6 +34,7 @@ const backgrounds = computed(() => project.value.backgrounds.map(background => e
 const music = computed(() => project.value.music.map(track => entry(track.id, track.name, track.assetId)))
 const sounds = computed(() => project.value.sounds.map(sound => entry(sound.id, sound.name, sound.assetId)))
 const illustrations = computed(() => project.value.illustrations.map(illustration => entry(illustration.id, illustration.name, illustration.assetId)))
+const fonts = computed(() => project.value.fonts.map(font => ({ ...entry(font.id, font.name, font.assetId), widthScale: font.widthScale })))
 const missingCount = computed(() => [...characters.value.flatMap(character => character.expressions), ...backgrounds.value, ...illustrations.value, ...music.value, ...sounds.value]
   .filter(candidate => candidate.file === null).length)
 
@@ -39,12 +45,12 @@ async function addFiles(fileList: FileList | null | undefined) {
   }
   let report = ''
   await act(async () => {
-    const matches = await open.addFiles(files)
+    const matches = await open.addFiles(files, measureFontWidth, locale.value)
     const used = matches.filter(match => match.entry !== null)
     const unused = matches.filter(match => match.entry === null).map(match => match.fileName)
     report = [
-      used.length === 0 ? '' : `${used.length} ${used.length === 1 ? 'file' : 'files'} added: ${used.map(match => `${match.fileName} → ${match.entry}`).join(', ')}.`,
-      unused.length === 0 ? '' : `Not used, no entry of that name: ${unused.join(', ')}.`,
+      used.length === 0 ? '' : text.value.filesAdded(used.length, used.map(match => `${match.fileName} → ${match.entry}`).join(', ')),
+      unused.length === 0 ? '' : text.value.filesUnused(unused.join(', ')),
     ].filter(sentence => sentence !== '').join(' ')
   }, () => report)
 }
@@ -69,73 +75,82 @@ function setDrawnFacing(characterId: string, value: string) {
       @dragleave="isDraggingOver = false"
       @drop.prevent="onDrop"
     >
-      <input class="file-input" type="file" multiple accept="image/*,audio/*" @change="addFiles(($event.target as HTMLInputElement).files)">
-      <strong>Drop images, music and sounds here</strong>
-      <span class="muted">or click to choose them. Each file goes to the entry it is named after: <code>rooftop.jpg</code>, <code>marie-smile.png</code>, <code>calm.ogg</code>, <code>door.ogg</code>; a new file replaces the old one.</span>
+      <input class="file-input" type="file" multiple accept="image/*,audio/*,.woff2,.woff,.ttf,.otf" @change="addFiles(($event.target as HTMLInputElement).files)">
+      <strong>{{ text.dropTitle }}</strong>
+      <span class="muted">{{ text.dropHelpStart }} <code>rooftop.jpg</code>, <code>marie-smile.png</code>, <code>calm.ogg</code>, <code>door.ogg</code>{{ text.dropHelpMiddle }}<code>.woff2</code>, <code>.woff</code>, <code>.ttf</code>, <code>.otf</code>{{ text.dropHelpEnd }}</span>
     </label>
 
     <p v-if="characters.length + backgrounds.length + illustrations.length + music.length + sounds.length === 0" class="muted">
-      Characters, backgrounds, illustrations, music and sounds appear here once a text naming them is imported.
+      {{ text.nothingYet }}
     </p>
-    <p v-else-if="missingCount > 0" class="muted">{{ missingCount }} {{ missingCount === 1 ? 'entry has' : 'entries have' }} no file yet: players will see a placeholder.</p>
+    <p v-else-if="missingCount > 0" class="muted">{{ text.missingFiles(missingCount) }}</p>
 
     <template v-if="characters.length > 0">
-      <h2 class="section-title">Characters</h2>
+      <h2 class="section-title">{{ text.characters }}</h2>
       <div v-for="character in characters" :key="character.id" class="group">
         <div class="group-name">
           {{ character.name }}
           <label class="drawn-facing muted">
-            drawn looking
+            {{ text.drawnFacing }}
             <select :value="character.drawnFacing" @change="setDrawnFacing(character.id, ($event.target as HTMLSelectElement).value)">
-              <option value="viewer">at the viewer</option>
-              <option value="left">left</option>
-              <option value="right">right</option>
+              <option value="viewer">{{ text.facingViewer }}</option>
+              <option value="left">{{ text.facingLeft }}</option>
+              <option value="right">{{ text.facingRight }}</option>
             </select>
           </label>
         </div>
-        <p v-if="character.expressions.length === 0" class="muted entry">Speaks only, never on stage</p>
+        <p v-if="character.expressions.length === 0" class="muted entry">{{ text.speaksOnly }}</p>
         <div v-for="expression in character.expressions" :key="expression.id" class="entry">
           <img v-if="expression.imageUrl !== null" class="thumbnail" :src="expression.imageUrl" alt="">
           <span v-else class="thumbnail empty" />
           <span>{{ expression.name }}</span>
-          <span :class="expression.file === null ? 'missing' : 'present'">{{ expression.file?.fileName ?? 'no file' }}</span>
+          <span :class="expression.file === null ? 'missing' : 'present'">{{ expression.file?.fileName ?? text.noFile }}</span>
         </div>
       </div>
     </template>
 
     <template v-if="backgrounds.length > 0">
-      <h2 class="section-title">Backgrounds</h2>
+      <h2 class="section-title">{{ text.backgrounds }}</h2>
       <div v-for="background in backgrounds" :key="background.id" class="entry">
         <img v-if="background.imageUrl !== null" class="thumbnail wide" :src="background.imageUrl" alt="">
         <span v-else class="thumbnail wide empty" />
         <span>{{ background.name }}</span>
-        <span :class="background.file === null ? 'missing' : 'present'">{{ background.file?.fileName ?? 'no file' }}</span>
+        <span :class="background.file === null ? 'missing' : 'present'">{{ background.file?.fileName ?? text.noFile }}</span>
       </div>
     </template>
 
     <template v-if="illustrations.length > 0">
-      <h2 class="section-title">Illustrations</h2>
+      <h2 class="section-title">{{ text.illustrations }}</h2>
       <div v-for="illustration in illustrations" :key="illustration.id" class="entry">
         <img v-if="illustration.imageUrl !== null" class="thumbnail wide" :src="illustration.imageUrl" alt="">
         <span v-else class="thumbnail wide empty" />
         <span>{{ illustration.name }}</span>
-        <span :class="illustration.file === null ? 'missing' : 'present'">{{ illustration.file?.fileName ?? 'no file' }}</span>
+        <span :class="illustration.file === null ? 'missing' : 'present'">{{ illustration.file?.fileName ?? text.noFile }}</span>
       </div>
     </template>
 
     <template v-if="music.length > 0">
-      <h2 class="section-title">Music</h2>
+      <h2 class="section-title">{{ text.music }}</h2>
       <div v-for="track in music" :key="track.id" class="entry">
         <span>{{ track.name }}</span>
-        <span :class="track.file === null ? 'missing' : 'present'">{{ track.file?.fileName ?? 'no file' }}</span>
+        <span :class="track.file === null ? 'missing' : 'present'">{{ track.file?.fileName ?? text.noFile }}</span>
       </div>
     </template>
 
     <template v-if="sounds.length > 0">
-      <h2 class="section-title">Sounds</h2>
+      <h2 class="section-title">{{ text.sounds }}</h2>
       <div v-for="sound in sounds" :key="sound.id" class="entry">
         <span>{{ sound.name }}</span>
-        <span :class="sound.file === null ? 'missing' : 'present'">{{ sound.file?.fileName ?? 'no file' }}</span>
+        <span :class="sound.file === null ? 'missing' : 'present'">{{ sound.file?.fileName ?? text.noFile }}</span>
+      </div>
+    </template>
+
+    <template v-if="fonts.length > 0">
+      <h2 class="section-title">{{ text.fonts }}</h2>
+      <p class="muted">{{ text.fontsHelp }}</p>
+      <div v-for="font in fonts" :key="font.id" class="entry">
+        <code>font-family: "{{ font.name }}"</code>
+        <span :class="font.file === null ? 'missing' : 'present'">{{ font.file?.fileName ?? text.noFile }} · {{ text.fontWidth(Math.round(font.widthScale * 100)) }}</span>
       </div>
     </template>
   </section>

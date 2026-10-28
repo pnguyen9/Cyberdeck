@@ -40,6 +40,8 @@ const runs = computed(() => textRuns(props.text, props.visibleLength, props.styl
 const textWidth = `${TEXTBOX_TEXT_WIDTH}px`
 const fontSize = `${TEXTBOX_FONT_SIZE}px`
 const textHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT * TEXTBOX_MAX_LINES}px`
+/** In pixels, inherited as such: a larger style draws larger letters without making its line taller. */
+const lineHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT}px`
 </script>
 
 <template>
@@ -80,12 +82,14 @@ const textHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT * TEXTBOX_MAX_LINE
   color: #9eeaff;
 }
 
+/* A game's CSS draws within the text's two lines, never over the menu or the stage around them. */
 .text {
+  contain: paint;
   height: v-bind(textHeight);
   margin: 0;
   font-family: v-bind(TEXTBOX_FONT_FAMILY);
   font-size: v-bind(fontSize);
-  line-height: v-bind(TEXTBOX_LINE_HEIGHT);
+  line-height: v-bind(lineHeight);
   color: #f2f4f8;
   overflow-wrap: normal;
 }
@@ -111,4 +115,3 @@ const textHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT * TEXTBOX_MAX_LINE
 }
 </style>
 
-<style src="../textStyles.css"></style>

@@ -144,6 +144,26 @@ so a Windows folder only takes Electron's Windows runtime, downloaded once into
 to confirm (*More info → Run anyway*), macOS too (right-click → *Open*). From VS Code's terminal,
 start them as `ELECTRON_RUN_AS_NODE= ./cyberdeck` (see Development).
 
+### A release
+
+```sh
+npm run release   # → release/v<version>/
+```
+
+builds every download in one go: both applications for Windows and, on Linux, for Linux, both as
+files for a browser, and `Cyberdeck-<version>-documentation.zip`, with the guide and its images, this
+README, the changes and the licence; then `SHA256SUMS`, the checksum of each. It needs the `zip`
+command, which keeps the executable bit the Linux builds need.
+
+## Languages
+
+Cyberdeck and Datajack speak English and French: each follows the system's language unless another
+is chosen (Cyberdeck: the projects screen and a project's header; Datajack: the profiles screen,
+the library and the game's Settings), and keeps the choice in the browser. A game's own words, such
+as « Fin. » on its end screen, follow the language the story is written in, its project's language.
+The story syntax itself is the same in every language. Each package keeps its messages in tables,
+one per language, of the same shape: another language is one more table each.
+
 ## Writing syntax (so far)
 
 | You write | It becomes |
@@ -163,8 +183,8 @@ start them as `ELECTRON_RUN_AS_NODE= ./cyberdeck` (see Development).
 | `[shake]`, `[shake: strong 0.4s]` | The stage trembles, lightly by default, for half a second. Played once, like a sound, also inside a sentence. |
 | `[flash]`, `[flash: red 0.2s]` | A colour flashes over the stage: `white` (default), `red`, `black`. |
 | `[fade out: 1s]`, `[fade out: white]` … `[fade in: 2s]` | The screen fades to black (or white) and stays so, text showing over it, until a fade in; the text waits for each fade (1 s by default). Saves keep it. |
-| `[style: Whisper = italic, small, grey]` | Declares a style, alone on its line: `italic`, `bold`, `small`, `large`, `grey`, `red`, `blue`, `green`, `gold`, `shaking`. Games never carry CSS: the player draws these properties itself. |
-| `[style: Whisper]Don't tell anyone.[style: none]` | The words after it in that style, until `[style: none]`, another style, or the end of the paragraph. A property alone is a style without declaring it: `[style: italic]`. |
+| `[style: Whisper = italic, small, grey]` | Declares a style, alone on its line: `italic`, `bold`, `small`, `large`, `grey`, `red`, `blue`, `green`, `gold`, `shaking`, and, appearing as they are typed, `fade-in`, `rise` and `glow` (which needs Datajack 1.1). The project's CSS adds whatever else a style looks like (see Styles and CSS). |
+| `[style: Whisper]Don't tell anyone.[style: none]` | The words after it in that style, until `[style: none]`, another style, or the end of the paragraph. A property alone is a style without declaring it, `[style: italic]`, and so is a class of the project's CSS, `[style: ghost]`; `[style: Ghost = plain]` declares one with no property of its own, drawn by the CSS alone. |
 | `[text: full]` … `[clear]` … `[text: box]` | Text over the whole screen, as in a book: pages pile up one under the other until `[clear]`, or a new screen after five; `[text: box]` brings the box back. Suits long narration. Going back and loading a save show each screen as it was. |
 | `[tint: sepia]`, `night`, `grey`, `[tint: none]` | Colours the whole stage, for a memory or a night scene, until changed. Saves keep it. |
 | `[music: calm]`, `[music: stop]` | Plays a track in a loop, or stops it. |
@@ -201,6 +221,33 @@ suits what the player found, met or visited: `Clues is Letter` holds once the le
 whatever else is. `[unset]` takes a value away when the story needs it gone, a key lost or a
 promise broken. Decisions belong to the playthrough: a new game starts without any, a save keeps
 them, and going back undoes them. What must outlast the playthrough is a `[remember]`.
+
+**Definitions.** Decisions and styles belong to the whole story, wherever they are declared: any
+chapter may use them. A declaration written among a chapter's pages stays there, a card of the
+storyboard and a line of the chapter's text export; one written above the first heading of a text
+that has headings, as the whole story's export writes them, belongs to no chapter and lives in the
+project's **Definitions** tab. A decision a choice makes without any declaration is made by use:
+later choices may add values to it. A definition is declared once: another declaration of it is
+refused, unless it replaces the first in place (editing its card, importing its chapter again).
+A declaration may change the values of a decision, but never drop one still used elsewhere.
+
+**Styles and CSS.** The Definitions tab also holds the project's CSS. Each class is a style:
+`.ghost` draws `[style: ghost]`, and a declared style takes the class of its name too, spaces as
+hyphens (`.whisper` for Whisper, `.chapter-title` for the style `chapter title`). Only how text
+looks is kept: colours, fonts (the project's own, or those on the player's computer), sizes up to
+1.5 times the text's, spacing, shadows, borders and padding up to a quarter of the text's size,
+transforms, filters, transitions and animations with their `@keyframes`. Rules on anything but class names, positions, anything that loads or computes
+(`url()`, `var()`, `attr()`, `@import`) and escapes are left out, and the tab lists what was left
+out and why. The classes are renamed `author-<name>`, so that they reach the story's text and title
+cards and never the player's own buttons and panels; players check a game's CSS again, and the
+content security policy refuses anything from outside whatever happens. A paragraph holding a style
+that draws text larger is cut into pages as if all of it were that large, so that its pages always
+fit; pages cut before their style grew are listed in the tab, and editing one cuts it again.
+
+**Title cards.** With *Show each chapter's title* on (Definitions), each chapter's title comes over
+the stage as the chapter starts, before its text; moving on passes it, or it goes by itself. The
+title takes the style `chapter title`, and the ending's name on the end screen the style `ending`:
+declared like any style (`[style: Chapter title = gold, large, fade-in]`), or a class of the CSS.
 
 **Branching.** A story is made of blocks, which keeps it readable however many routes it has. A
 branch that reaches an `[ending]` stops there; one that does not
@@ -295,10 +342,13 @@ A **project** holds the whole game. Its screens:
 - **Chapters**: in playing order, with their page count and where they were imported from;
   move, rename, remove, or preview from one. Scenes follow, with the chapters and scenes playing
   each, which removing one warns about; a scene exported as text and imported again replaces itself.
+  **New chapter** and **New scene** begin one with no page yet (`Chapter 2`, `Scene 1`, renamed at
+  will), opened in the storyboard to be written page by page: a story needs no text to start from.
+  **Start without a text**, in the Import tab of a new project, does the same for its first chapter.
 - **Storyboard**: the chapter, or scene, as a grid of cards, read left to right and top to bottom, like a
   slide sorter. Pages and choices are numbered; pages inside branches carry the branch letters and
   colour (12a, 12b, 12ab when nested), the main line resuming after the longest branch. Endings,
-  memories, breaks, plays of a scene (▷), assignments and
+  memories, breaks, plays of a scene (▷), assignments, definitions (◇) and
   staging are chips between cards, each opening for editing like a page. Each condition, and each loop (↻, its
   pages numbered on the main line), is **one block**, which
   selects, drags and moves as a whole: small, it shows its branches inside its frame; holding more
@@ -318,7 +368,13 @@ A **project** holds the whole game. Its screens:
   block. **Ctrl+X** then **Ctrl+V** moves it anywhere in the chapter, after the focused element, at
   any level. With the mouse: click selects, Ctrl+click and Shift+click add, dragging moves (onto
   the path above, out of the block). Delete removes the selection; Ctrl+Z undoes. The panel beside
-  the board shows the focused card in full, with its staging, or what a block holds. The
+  the board shows the focused card in full, with its staging, or what a block holds, and **In
+  this view** lists the decisions and memories the cards shown use: declared, given, emptied,
+  tested, remembered; a name there opens it in the Index. In a window narrower than 1000 pixels,
+  the panel slides over the board from the right edge, opened by a click on a card, an edit or
+  **Alt+P**, and put away by its handle. **Alt+G** comes to the board from anywhere in the project,
+  on the selection, or on the first card selected when there is none; from a page being edited,
+  it goes to its card, and back. The
   **Tree** view shows each condition's branches side by side, to read the progression; its cards
   are edited, not moved.
   **Enter** on a card edits it, page or assignment, staging, ending, memory, break, as the text
@@ -334,17 +390,44 @@ A **project** holds the whole game. Its screens:
   (from the start of its chapter, then of the story, trying options at each choice), so that the
   preview opens with the stage and decisions of that path, as a save made there would. A page only
   reached through memories or endings of earlier playthroughs is previewed taking them as known.
-  Ctrl+Enter saves, Esc cancels, Ctrl+Z undoes.
+  Ctrl+Enter saves, Esc cancels, Ctrl+Z undoes. The card being edited is marked (✎), the panel's
+  title too while changes are not saved (●). Nothing written is thrown away unasked: opening
+  another card, Esc, another chapter, another tab or leaving the project first asks to **Save**,
+  **Discard** or **Keep editing**, and the browser asks before the page is closed.
+- **Definitions**: the project's own decisions and styles, edited as their declarations; those
+  declared in chapters, each with where it is, to show or to **Move to Definitions**; those made
+  by use, to declare here. Then the CSS of the styles, and title cards.
+- **Index**: every decision and memory, each with its values and every place that declares, gives,
+  empties or tests it (`Chapter 2 · page 7a`, `after 5`), a click away. Above them, what looks
+  forgotten across the whole story, as an IDE would point it out: a decision or value tested but
+  never given (that condition never holds), a memory tested but never remembered, an ending no
+  path reaches, a scene never played; and, less pressing, what is declared or given but never used.
 - **Shortcuts** (the header button, or `?`): every shortcut by screen; click one and press the new
   keys to change it, Cyberdeck asking before taking keys another action uses. Changes are kept in
-  the browser; *Default* and *Reset every shortcut* bring the defaults back.
+  the browser; *Default* and *Reset every shortcut* bring the defaults back. **Alt+PageUp** and
+  **Alt+PageDown** go to the previous and next tab; each tab may be given keys of its own there.
+  Alt is left out of the defaults for single tabs: browsers keep Alt+digits for their own tabs.
 - **Import**: paste text, or open a `.txt` or Word (`.docx`) document. Problems are listed as you type, against what the
-  project already has: its characters, positions, decisions, endings, memories, scenes and styles
-  are known names. The text becomes new chapters, pages at the end of a chapter, or replaces a chapter;
-  `[import: …]` chooses by default.
+  project already has: its characters, positions, decisions, endings, memories, scenes, styles and
+  the classes of its CSS are known names, and where each decision and style is declared.
+  **Import as** says where the text goes:
+  - *New chapters*: each `# Title` becomes a chapter, after those of the project.
+  - *Pages at the end of a chapter*, the chapter chosen in **Chapter**: the text continues it, its
+    `# Title` lines ignored.
+  - *In place of a chapter*: the text replaces the one chosen, which keeps its place and identifier,
+    so that saves inside it resume at its start; the way back from an edit in Word.
+
+  The text's first line chooses by default: `[import: chapter]` with the `# Title` of a chapter of
+  the project replaces it, `[import: pages]` goes at the end of the last chapter, anything else
+  makes new chapters. Scenes (`# Scene: Name`) go in whatever the choice, one named like a scene of
+  the project replacing it.
 - **Cast & files**: drop images, music and sounds (illustrations included); each file goes to the entry it is named after,
   replacing the file it had (the old one is deleted). Characters say which way their sprites were
-  drawn looking.
+  drawn looking. A font file (`.woff2`, `.woff`, `.ttf`, `.otf`) becomes a font of its name, which
+  the CSS names: `font-family: "Cinzel"` for `Cinzel.woff2`. It is measured as it is added, how
+  much wider or narrower than the text box's font it draws text, and pages in it are cut by that.
+  Every game archive carries all the project's fonts; the player loads them from the archive, as
+  bytes, never from elsewhere.
 - **Details**: description, credits and cover, shown in players' libraries.
 - **Export**: the release label and the chapters to include; and the whole story **as text**.
 
@@ -377,9 +460,10 @@ merges it.
 
 ```
 game.json                      the project: decisions, characters, backgrounds, music, sounds,
-                               illustrations, positions, styles, the order of scenes, dates,
-                               description, credits; the release; every chapter of the game with
-                               whether this archive includes it; each asset file and its SHA-256
+                               illustrations, positions, styles and their CSS, title cards, the
+                               order of scenes, dates, description, credits; the release; every
+                               chapter of the game with whether this archive includes it; each
+                               asset file and its SHA-256
 chapters/<id>/chapter.json     each included chapter
 scenes/<id>/scene.json         every scene, in every archive: any chapter may play it
 assets/cover.png               the cover, in every archive of the game
@@ -395,7 +479,13 @@ treats archives as untrusted: sizes are limited before anything is inflated, dec
 when an entry grows past the size it declares, checksums and SHA-256 are verified, paths that could
 leave their folder are refused, and every field of every document is type-checked (unknown fields
 are dropped, nesting is bounded). What only the editor needs, such as the file a chapter was
-imported from, is not exported.
+imported from, or where definitions are written, is not exported.
+
+Each document says the format it is written in. An archive takes the oldest format that holds the
+game, so that players who have not updated Datajack still play it: format 1.1, which Datajack 1.0
+reads, unless a style uses `fade-in`, `rise` or `glow`, or the project has fonts, which Datajack 1.0
+would refuse; it then shows a game's text without the CSS and title cards it does not know of. Projects are written in
+the current format, 1.2.
 
 When an archive is installed, the newer export (by date) brings the project, the release, the
 chapter list and the scenes; an older archive only adds chapters still missing. Asset files go first and
@@ -434,7 +524,8 @@ The **Settings** screen sets the text speed (or each page shown at once), the mu
 effect volumes and full screen, and the inputs of every action: *Add a key* then press a key or a
 mouse button, which leaves the action that had it; × removes one; *Default keys* restores them.
 Keys are bound by their place on the keyboard (`KeyboardEvent.code`), so a binding means the same
-key on AZERTY and QWERTY; they are named as on an English keyboard. Datajack keeps the settings per
+key on AZERTY and QWERTY; they are named as on a US keyboard, so on another layout a name may
+differ from the letter printed on the key. Datajack keeps the settings per
 profile; Cyberdeck keeps the author's for its previews.
 
 ### Inputs
@@ -488,7 +579,8 @@ chapter, or of the story, keeping the decisions. Save files are checked field by
 ### Security
 
 The page runs only its own scripts and loads nothing from elsewhere (content security policy, as a
-header on the desktop and a meta tag on the web).
+header on the desktop and a meta tag on the web). A game's CSS is checked before use and reaches
+only the story's text (see Styles and CSS).
 
 On the desktop it runs sandboxed, without Node, served from a private `datajack://` scheme;
 navigation, new windows, web views and permission requests are refused. It reaches the disk only

@@ -1,5 +1,10 @@
 import {
   FORMAT_VERSION,
+  MAXIMUM_CSS_LENGTH,
+  refersOnlyToKnownDefinitions,
+  addEmptyDocument,
+  addFontFile,
+  applyDefinitions,
   applyImport,
   applyNodeEdit,
   assignAsset,
@@ -9,6 +14,7 @@ import {
   createProject,
   exportText,
   findPathTo,
+  fontMediaTypeOf,
   createProjectBackup,
   defaultEnvironment,
   isSupportedAssetMediaType,
@@ -16,6 +22,7 @@ import {
   moveChapter,
   readProjectBackup,
   removeChapter,
+  removeNodes,
   renameChapter,
   renameProject,
   setDrawnFacing,
@@ -25,6 +32,7 @@ import {
   withoutAssets,
   type AssetTarget,
   type ChapterDocument,
+  type DefinitionsPreview,
   type Environment,
   type Facing,
   type GameDetails,
@@ -35,6 +43,9 @@ import {
   type ProjectDocument,
   type SaveData,
 } from '@cyberdeck/core'
+import type { Locale } from '@cyberdeck/stage'
+import { castMessages } from '../i18n/castMessages'
+import { AuthorError } from '../i18n/errorMessages'
 import type { ProjectStore } from './projectStore'
 
 /** A file the author gave: dropped, or picked in a file dialog. */
@@ -43,6 +54,9 @@ export interface GivenFile {
   mediaType: string
   bytes: Uint8Array<ArrayBuffer>
 }
+
+/** Why a preview does not start where asked as a player would reach it, if it does not. */
+export type PreviewNote = 'reachedWithEarlierPlaythroughs' | 'unreached'
 
 export interface FileMatch {
   fileName: string
@@ -66,7 +80,7 @@ export async function listProjects(store: ProjectStore): Promise<ProjectDocument
 export async function createNewProject(store: ProjectStore, name: string, locale: string, environment: Environment = defaultEnvironment): Promise<ProjectDocument> {
   const trimmedName = name.trim()
   if (trimmedName === '') {
-    throw new Error('A project needs a name')
+    throw new AuthorError(text => text.projectWithoutName)
   }
   const project = createProject({ name: trimmedName, locale }, environment)
   await store.writeProject(project)
@@ -141,10 +155,31 @@ export class OpenProject {
   }
 
   /** Gives each file to the entry named like it, replacing the file it had; files of no entry are reported. */
-  async addFiles(files: readonly GivenFile[]): Promise<FileMatch[]> {
+  /**
+   * Gives each file to the entry it is named after; a font file makes a font of its name, measured
+   * by `measureFont` (how much wider than the text box's font it draws), for pages in it to fit.
+   * Entries are described in `locale`.
+   */
+  async addFiles(files: readonly GivenFile[], measureFont: (bytes: Uint8Array<ArrayBuffer>) => Promise<number> = async () => 1, locale: Locale = 'en'): Promise<FileMatch[]> {
     let project = this.currentProject
     const matches: FileMatch[] = []
     for (const file of files) {
+      const fontMediaType = fontMediaTypeOf(file.name)
+      if (fontMediaType !== null) {
+        let widthScale: number
+        try {
+          widthScale = await measureFont(file.bytes)
+        } catch {
+          matches.push({ fileName: file.name, entry: null })
+          continue
+        }
+        const assetId = this.environment.createId()
+        await this.store.writeAsset(project.id, assetId, file.bytes, fontMediaType)
+        const added = addFontFile(project, file.name, { id: assetId, fileName: file.name, mediaType: fontMediaType, byteSize: file.bytes.length }, widthScale, () => this.environment.createId())
+        project = added.project
+        matches.push({ fileName: file.name, entry: describeTarget(project, { type: 'font', fontId: added.fontId }, locale) })
+        continue
+      }
       const target = isSupportedAssetMediaType(file.mediaType) ? matchAssetFile(file.name, file.mediaType, project) : null
       if (target === null) {
         matches.push({ fileName: file.name, entry: null })
@@ -153,7 +188,7 @@ export class OpenProject {
       const assetId = this.environment.createId()
       await this.store.writeAsset(project.id, assetId, file.bytes, file.mediaType)
       project = assignAsset(project, target, { id: assetId, fileName: file.name, mediaType: file.mediaType, byteSize: file.bytes.length })
-      matches.push({ fileName: file.name, entry: describeTarget(project, target) })
+      matches.push({ fileName: file.name, entry: describeTarget(project, target, locale) })
     }
     await this.saveWithoutUnusedFiles(project)
     return matches
@@ -164,7 +199,7 @@ export class OpenProject {
     let project = this.currentProject
     if (file !== null) {
       if (!file.mediaType.startsWith('image/') || !isSupportedAssetMediaType(file.mediaType)) {
-        throw new Error(`${file.name}: a cover must be a PNG, JPEG, WebP, AVIF, GIF or SVG image`)
+        throw new AuthorError(text => text.coverNotAnImage(file.name))
       }
       const assetId = this.environment.createId()
       await this.store.writeAsset(project.id, assetId, file.bytes, file.mediaType)
@@ -211,6 +246,49 @@ export class OpenProject {
     await this.writeChapter({ ...previous, updatedAt: this.now() })
     this.undoSteps = this.undoSteps.slice(0, -1)
     return previous.id
+  }
+
+  /** A chapter or a scene with no page yet, to write in the storyboard; returns its identifier. */
+  async addEmptyDocument(kind: 'chapter' | 'scene', title: string): Promise<string> {
+    const added = addEmptyDocument(this.currentProject, kind, title, this.environment)
+    await this.store.writeChapter(this.currentProject.id, added.document)
+    this.storedChapters = [...this.storedChapters, added.document]
+    await this.saveProject(added.project)
+    return added.document.id
+  }
+
+  /** Saves the project's own definitions, edited as text in the Definitions tab. */
+  saveDefinitions(preview: DefinitionsPreview) {
+    return this.saveProject(applyDefinitions(preview, this.currentProject, this.environment))
+  }
+
+  /** Whether each chapter's title shows over the stage as it starts. */
+  setChapterTitleCards(isShown: boolean) {
+    return this.saveProject({ ...this.currentProject, chapterTitleCards: isShown, updatedAt: this.now() })
+  }
+
+  /** Saves the CSS of the project's styles, as written: players check it again before using it. */
+  saveCss(css: string) {
+    if (css.length > MAXIMUM_CSS_LENGTH) {
+      throw new AuthorError(text => text.cssTooLong(MAXIMUM_CSS_LENGTH))
+    }
+    return this.saveProject({ ...this.currentProject, css, updatedAt: this.now() })
+  }
+
+  /** Takes out a decision or style nothing uses any more, made by choices since removed for instance. */
+  removeUnusedDefinition(kind: 'decision' | 'style', id: string) {
+    const project = this.currentProject
+    return this.saveProject(kind === 'decision'
+      ? { ...project, decisions: project.decisions.filter(decision => decision.id !== id), updatedAt: this.now() }
+      : { ...project, styles: project.styles.filter(style => style.id !== id), updatedAt: this.now() })
+  }
+
+  /** Takes a definition out of its chapter: it then lives in the project's definitions. Undone like any change to a chapter. */
+  async moveToDefinitions(documentId: string, nodeId: string) {
+    const document = this.storedChapters.find(candidate => candidate.id === documentId)
+    if (document !== undefined) {
+      await this.replaceChapter(removeNodes(document, [nodeId], this.now()))
+    }
   }
 
   rename(name: string) {
@@ -280,14 +358,14 @@ export class OpenProject {
    * it is searched from the start of its chapter, then of the story, then with every memory and
    * ending taken as known. `note` says when the path is only possible that way, or not at all.
    */
-  async previewFrom(chapterId: string, nodeId: string, now: Date): Promise<{ story: PlayableStory; resumeFrom: SaveData | null; note: string | null }> {
+  async previewFrom(chapterId: string, nodeId: string, now: Date): Promise<{ story: PlayableStory; resumeFrom: SaveData | null; note: PreviewNote | null }> {
     const fromChapter = await this.playable(chapterId)
     const whole = await this.playable(null)
     const everythingKnown = { memoryIds: this.currentProject.memories.map(memory => memory.id), endingIds: this.currentProject.endings.map(ending => ending.id) }
-    const attempts = [
+    const attempts: { story: PlayableStory; found: () => ReturnType<typeof findPathTo>; note: PreviewNote | null }[] = [
       { story: fromChapter, found: () => findPathTo(fromChapter, nodeId), note: null },
       { story: whole, found: () => findPathTo(whole, nodeId), note: null },
-      { story: whole, found: () => findPathTo(whole, nodeId, everythingKnown), note: 'This page is only reached with memories or endings of earlier playthroughs: the preview takes them all as known.' },
+      { story: whole, found: () => findPathTo(whole, nodeId, everythingKnown), note: 'reachedWithEarlierPlaythroughs' },
     ]
     for (const attempt of attempts) {
       const found = attempt.found()
@@ -295,7 +373,7 @@ export class OpenProject {
         return { story: attempt.story, resumeFrom: toSave(attempt.story, found.state, now.toISOString()), note: attempt.note }
       }
     }
-    return { story: fromChapter, resumeFrom: null, note: 'No way of playing reaches this page: the preview starts at its chapter.' }
+    return { story: fromChapter, resumeFrom: null, note: 'unreached' }
   }
 
   /** The story as Datajack plays it, from the start or from a chapter. */
@@ -330,6 +408,8 @@ export class OpenProject {
     const project = { ...edited, formatVersion: FORMAT_VERSION }
     await this.store.writeProject(project)
     this.currentProject = project
+    // An older chapter using a decision, a value or a style removed since can no longer be undone to.
+    this.undoSteps = this.undoSteps.filter(step => refersOnlyToKnownDefinitions(step, project))
   }
 
   private now() {
@@ -337,16 +417,19 @@ export class OpenProject {
   }
 }
 
-function describeTarget(project: ProjectDocument, target: AssetTarget): string {
+function describeTarget(project: ProjectDocument, target: AssetTarget, locale: Locale): string {
+  const text = castMessages[locale]
   switch (target.type) {
     case 'background':
-      return `Background ${project.backgrounds.find(background => background.id === target.backgroundId)?.name}`
+      return text.backgroundTarget(`${project.backgrounds.find(background => background.id === target.backgroundId)?.name}`)
     case 'music':
-      return `Music ${project.music.find(track => track.id === target.musicId)?.name}`
+      return text.musicTarget(`${project.music.find(track => track.id === target.musicId)?.name}`)
     case 'sound':
-      return `Sound ${project.sounds.find(sound => sound.id === target.soundId)?.name}`
+      return text.soundTarget(`${project.sounds.find(sound => sound.id === target.soundId)?.name}`)
     case 'illustration':
-      return `Illustration ${project.illustrations.find(illustration => illustration.id === target.illustrationId)?.name}`
+      return text.illustrationTarget(`${project.illustrations.find(illustration => illustration.id === target.illustrationId)?.name}`)
+    case 'font':
+      return text.fontTarget(`${project.fonts.find(font => font.id === target.fontId)?.name}`)
     case 'expression': {
       const character = project.characters.find(candidate => candidate.id === target.characterId)
       return `${character?.name}, ${character?.expressions.find(expression => expression.id === target.expressionId)?.name}`

@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { emptyProgress, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
-import { AUTOSAVE_SLOT, createStorageSettingsStore, DEFAULT_PLAYER_SETTINGS, MapView, PlayerView, type PlayerSettings } from '@cyberdeck/stage'
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import {
+  AUTOSAVE_SLOT,
+  createStorageSettingsStore,
+  DEFAULT_PLAYER_SETTINGS,
+  localeOfChoice,
+  MapView,
+  PlayerView,
+  provideLocale,
+  type PlayerSettings,
+} from '@cyberdeck/stage'
+import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
+import { appMessages } from './i18n/appMessages'
+import { createLanguageChoice } from './i18n/languageChoice'
 import { createDesktopLibraryStorage } from './library/desktopLibraryStorage'
 import { GameLibrary } from './library/gameLibrary'
 import { createIndexedDbLibraryStorage } from './library/indexedDbLibraryStorage'
@@ -12,6 +23,14 @@ import { createBrowserProfileStore, type Profile, type ProfileStore } from './pr
 import ProfilesView from './profiles/ProfilesView.vue'
 
 const desktop = window.datajackDesktop
+/** Every screen below speaks the player's language, the game's settings included. */
+const languageChoice = createLanguageChoice(() => window.localStorage)
+const locale = computed(() => localeOfChoice(languageChoice.value))
+provideLocale(locale)
+watchEffect(() => {
+  document.documentElement.lang = locale.value
+})
+const text = computed(() => appMessages[locale.value])
 const profileStore: ProfileStore = desktop === undefined
   ? createBrowserProfileStore(() => window.localStorage, () => crypto.randomUUID(), () => new Date().toISOString())
   : createDesktopProfileStore(desktop)
@@ -75,12 +94,12 @@ onMounted(async () => {
 
 <template>
   <template v-if="!isLoading">
-    <ProfilesView v-if="profile === null || saveStore === null" :store="profileStore" @chosen="chosen => profile = chosen" />
+    <ProfilesView v-if="profile === null || saveStore === null" v-model:language-choice="languageChoice" :store="profileStore" @chosen="chosen => profile = chosen" />
     <MapView
       v-else-if="mapShown !== null"
       :story="mapShown.story"
       :progress="mapShown.progress"
-      :close-label="mapShown.returnTo === 'game' ? 'Game' : 'Library'"
+      :close-label="mapShown.returnTo === 'game' ? text.game : text.library"
       @play="playFrom"
       @close="closeMap"
     />
@@ -90,14 +109,16 @@ onMounted(async () => {
       :story="playing.story"
       :save-store="saveStore"
       v-model:settings="settings"
+      v-model:language-choice="languageChoice"
       :resume-from="playing.resumeFrom"
-      leave-label="Library"
+      :leave-label="text.library"
       can-open-map
       @leave="playing = null"
       @map="showMap(playing.story, 'game')"
     />
     <LibraryView
       v-else
+      v-model:language-choice="languageChoice"
       :library="library"
       :save-store="saveStore"
       :profile-name="profile.name"

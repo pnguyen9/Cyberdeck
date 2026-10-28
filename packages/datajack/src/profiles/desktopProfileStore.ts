@@ -12,7 +12,7 @@ export function createDesktopProfileStore(bridge: DesktopBridge): ProfileStore {
     choosesSaveFolder: true,
     list: () => invoke('profiles:list'),
     defaultSaveFolder: name => invoke('profiles:defaultSaveFolder', name),
-    chooseFolder: () => invoke('profiles:chooseFolder'),
+    chooseFolder: locale => invoke('profiles:chooseFolder', locale),
     create: (name, saveFolder) => invoke('profiles:create', name, saveFolder),
     rename: (profileId, name) => invoke('profiles:rename', profileId, name),
     remove: profileId => invoke('profiles:remove', profileId),

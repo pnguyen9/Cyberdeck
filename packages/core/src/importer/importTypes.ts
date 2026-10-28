@@ -105,6 +105,18 @@ export interface SetNode {
   value: string
 }
 
+/**
+ * Where a `[decision: …]` or `[style: X = …]` is written, among the pages of a chapter: its
+ * declaration lives there. Written before the first heading of a text that has headings, it is
+ * none of its chapters', and no node marks it.
+ */
+export interface DefinitionNode {
+  type: 'definition'
+  sourceLine: number
+  kind: 'decision' | 'style'
+  name: string
+}
+
 /** `[unset: Clues = Key]` takes a value away; `[unset: Clues]` leaves the decision with none. */
 export interface UnsetNode {
   type: 'unset'
@@ -146,7 +158,7 @@ export interface PlayNode {
   scene: string
 }
 
-export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | UnsetNode | EndingNode | RememberNode
+export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
 
 /** `[decision: Confession = Accept | Refuse]`, or `[decision multi: …]` when several values can hold at once. */
 export interface DecisionDeclaration {
@@ -183,6 +195,9 @@ export type ImportProblemCode =
   | 'unclosedIf'
   | 'invalidSet'
   | 'invalidUnset'
+  | 'decisionValueStillUsed'
+  | 'definitionStillUsed'
+  | 'notADefinition'
   | 'noJumps'
   | 'everyOptionConditional'
   | 'missingSceneName'

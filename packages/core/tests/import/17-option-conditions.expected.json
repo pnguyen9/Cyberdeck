@@ -11,11 +11,18 @@
       "multiple": true
     }
   ],
+  "styles": [],
   "chapters": [
     {
       "title": null,
-      "sourceLine": 2,
+      "sourceLine": 1,
       "nodes": [
+        {
+          "type": "definition",
+          "sourceLine": 1,
+          "kind": "decision",
+          "name": "Visited"
+        },
         {
           "type": "choice",
           "sourceLine": 2,
@@ -80,7 +87,6 @@
       ]
     }
   ],
-  "styles": [],
   "scenes": [],
   "problems": [
     {

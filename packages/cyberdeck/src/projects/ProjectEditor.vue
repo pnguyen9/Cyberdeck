@@ -1,29 +1,35 @@
 <script setup lang="ts">
-import type { ChapterDocument, PlayableStory, ProjectDocument, SaveData } from '@cyberdeck/core'
-import { provide, ref, shallowRef } from 'vue'
+import type { ChapterDocument, NameKind, PlayableStory, ProjectDocument, SaveData } from '@cyberdeck/core'
+import { useLocale, useMessages } from '@cyberdeck/stage'
+import { onMounted, onUnmounted, provide, ref, shallowRef } from 'vue'
+import { commonMessages } from '../i18n/commonMessages'
+import { editorMessages } from '../i18n/editorMessages'
+import { errorText } from '../i18n/errorMessages'
+import { projectsMessages } from '../i18n/projectsMessages'
+import LanguageSelect from '../settings/LanguageSelect.vue'
 import CastTab from './CastTab.vue'
 import ChaptersTab from './ChaptersTab.vue'
+import DefinitionsTab from './DefinitionsTab.vue'
 import DetailsTab from './DetailsTab.vue'
 import { EDITOR } from './editorContext'
 import ExportTab from './ExportTab.vue'
 import ImportTab from './ImportTab.vue'
+import IndexTab from './IndexTab.vue'
 import StoryboardTab from './StoryboardTab.vue'
-import type { OpenProject } from './openProject'
+import type { OpenProject, PreviewNote } from './openProject'
 import { useShortcuts } from '../shortcuts/shortcutStore'
+import { actionFor, type ShortcutId } from '../shortcuts/shortcuts'
 import { formatSize, safeFileName, usePreparedDownload } from './preparedDownload'
 
 const props = defineProps<{ open: OpenProject }>()
 const emit = defineEmits<{ close: []; preview: [story: PlayableStory, resumeFrom: SaveData | null] }>()
 
-const TABS = [
-  { id: 'chapters', label: 'Chapters' },
-  { id: 'storyboard', label: 'Storyboard' },
-  { id: 'import', label: 'Import' },
-  { id: 'cast', label: 'Cast & files' },
-  { id: 'details', label: 'Details' },
-  { id: 'export', label: 'Export' },
-] as const
-type TabId = typeof TABS[number]['id']
+const TABS = ['chapters', 'storyboard', 'import', 'cast', 'definitions', 'index', 'details', 'export'] as const
+type TabId = typeof TABS[number]
+const locale = useLocale()
+const text = useMessages(editorMessages)
+const common = useMessages(commonMessages)
+const projectsText = useMessages(projectsMessages)
 
 const project = shallowRef<ProjectDocument>(props.open.project)
 const chapters = shallowRef<ChapterDocument[]>(props.open.chapters)
@@ -33,7 +39,7 @@ const renaming = ref<string | null>(null)
 const message = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
 const backupDownload = usePreparedDownload()
-const { isPanelOpen } = useShortcuts()
+const { shortcuts, isPanelOpen } = useShortcuts()
 
 function showStored() {
   project.value = props.open.project
@@ -49,7 +55,7 @@ async function act(change: () => Promise<unknown>, successMessage?: string | (()
     message.value = typeof successMessage === 'function' ? successMessage() : successMessage ?? null
     return true
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : String(error)
+    errorMessage.value = errorText(error, locale.value)
     return false
   } finally {
     showStored()
@@ -61,12 +67,12 @@ async function preview(fromChapterId: string | null) {
 }
 
 async function previewFrom(chapterId: string, nodeId: string) {
-  let note: string | null = null
+  let note: PreviewNote | null = null
   await act(async () => {
     const prepared = await props.open.previewFrom(chapterId, nodeId, new Date())
     note = prepared.note
     emit('preview', prepared.story, prepared.resumeFrom)
-  }, () => note ?? '')
+  }, () => note === null ? '' : text.value.previewNotes[note])
 }
 
 async function confirmRename() {
@@ -77,62 +83,167 @@ async function confirmRename() {
 }
 
 async function backUp() {
-  await act(async () => backupDownload.offer(`${safeFileName(props.open.project.name)} backup.zip`, await props.open.backup(new Date())))
+  await act(async () => backupDownload.offer(text.value.backupFileName(safeFileName(props.open.project.name, locale.value)), await props.open.backup(new Date())))
 }
 
+let leaveGuard: ((proceed: () => void) => boolean) | null = null
+
+/** Runs what would leave the tab shown once nothing would be lost: the tab may ask the author first. */
+function whenFree(proceed: () => void) {
+  if (leaveGuard === null || leaveGuard(proceed)) {
+    proceed()
+  }
+}
+
+/** Shows a tab, once the tab shown has nothing to lose. */
 const switchTab = (id: TabId) => {
+  if (id !== tab.value) {
+    whenFree(() => showTab(id))
+  }
+}
+
+function showTab(id: TabId) {
   tab.value = id
   message.value = null
   errorMessage.value = null
 }
 
+const storyboardRequest = ref<{ kind: 'goToBoard' | 'togglePanel' | 'reveal'; nodeId?: string; count: number } | null>(null)
+function requestStoryboard(kind: 'goToBoard' | 'togglePanel' | 'reveal', nodeId?: string) {
+  storyboardRequest.value = { kind, ...(nodeId === undefined ? {} : { nodeId }), count: (storyboardRequest.value?.count ?? 0) + 1 }
+}
+
+const TAB_SHORTCUTS: Partial<Record<ShortcutId, TabId>> = {
+  tabChapters: 'chapters',
+  tabStoryboard: 'storyboard',
+  tabImport: 'import',
+  tabCast: 'cast',
+  tabDefinitions: 'definitions',
+  tabIndex: 'index',
+  tabDetails: 'details',
+  tabExport: 'export',
+}
+
+/** Shortcuts of the whole project, which work while typing too: they all take Alt by default. */
+function onKeydown(event: KeyboardEvent) {
+  if (isPanelOpen.value || !event.altKey && !event.ctrlKey && !event.metaKey) {
+    return
+  }
+  const action = actionFor(shortcuts.value, event, 'Everywhere')
+  const index = TABS.indexOf(tab.value)
+  const target = action === 'previousTab' ? TABS[(index - 1 + TABS.length) % TABS.length]
+    : action === 'nextTab' ? TABS[(index + 1) % TABS.length]
+      : action === null ? undefined : TAB_SHORTCUTS[action]
+  if (target !== undefined) {
+    event.preventDefault()
+    switchTab(target)
+  } else if (action === 'togglePanel' && tab.value === 'storyboard') {
+    event.preventDefault()
+    requestStoryboard(action)
+  } else if (action === 'goToBoard') {
+    event.preventDefault()
+    // From another tab, asked only once the storyboard is shown: an author keeping on editing there asked nothing of it.
+    if (tab.value === 'storyboard') {
+      requestStoryboard(action)
+    } else {
+      whenFree(() => {
+        showTab('storyboard')
+        requestStoryboard(action)
+      })
+    }
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
+
 const importDraft = ref<{ text: string; fileName: string | null }>({ text: '', fileName: null })
 const storyboardChapterId = ref<string | null>(null)
-function openStoryboard(chapterId: string) {
-  storyboardChapterId.value = chapterId
-  switchTab('storyboard')
+/** Shows a chapter or scene in the storyboard; with a node, the card itself, inside the blocks holding it. */
+function openStoryboard(chapterId: string, nodeId?: string) {
+  whenFree(() => {
+    storyboardChapterId.value = chapterId
+    showTab('storyboard')
+    if (nodeId !== undefined) {
+      requestStoryboard('reveal', nodeId)
+    }
+  })
 }
-provide(EDITOR, { open: props.open, project, chapters, scenes, act, preview, previewFrom, importDraft, storyboardChapterId, openStoryboard })
+const setLeaveGuard = (guard: ((proceed: () => void) => boolean) | null) => {
+  leaveGuard = guard
+}
+/** The first `Chapter N` or `Scene N` free, in the author's language: renamed at will in Chapters. */
+function freeTitle(kind: 'chapter' | 'scene'): string {
+  const taken = new Set([...chapters.value, ...scenes.value].map(document => document.title))
+  const titleOf = (number: number) => kind === 'chapter' ? text.value.newChapterTitle(number) : text.value.newSceneTitle(number)
+  let number = (kind === 'chapter' ? chapters.value.length : scenes.value.length) + 1
+  while (taken.has(titleOf(number))) {
+    number++
+  }
+  return titleOf(number)
+}
+
+async function startEmptyDocument(kind: 'chapter' | 'scene') {
+  const title = freeTitle(kind)
+  let documentId: string | null = null
+  if (await act(async () => {
+    documentId = await props.open.addEmptyDocument(kind, title)
+  }) && documentId !== null) {
+    openStoryboard(documentId)
+    // Said once there: showing a tab clears the message of the one left.
+    message.value = text.value.documentStarted(title)
+  }
+}
+
+const indexFocus = ref<{ kind: NameKind; id: string } | null>(null)
+function openIndex(kind: NameKind, id: string) {
+  whenFree(() => {
+    indexFocus.value = { kind, id }
+    showTab('index')
+  })
+}
+provide(EDITOR, { open: props.open, project, chapters, scenes, act, preview, previewFrom, importDraft, storyboardChapterId, openStoryboard, setLeaveGuard, storyboardRequest, indexFocus, openIndex, startEmptyDocument })
 </script>
 
 <template>
   <main class="editor-page">
     <header class="header">
-      <button class="link-button" @click="emit('close')">← Projects</button>
+      <button class="link-button" @click="whenFree(() => emit('close'))">{{ projectsText.backToProjects }}</button>
       <div class="title-row">
         <form v-if="renaming !== null" class="rename" @submit.prevent="confirmRename">
-          <input v-model="renaming" class="text-input" aria-label="Project name" autocomplete="off">
-          <button class="button primary small" type="submit">Rename</button>
-          <button class="button small" type="button" @click="renaming = null">Cancel</button>
+          <input v-model="renaming" class="text-input" :aria-label="text.projectName" autocomplete="off">
+          <button class="button primary small" type="submit">{{ common.rename }}</button>
+          <button class="button small" type="button" @click="renaming = null">{{ common.cancel }}</button>
         </form>
         <h1 v-else>
           {{ project.name }}
-          <button class="link-button" @click="renaming = project.name">Rename</button>
+          <button class="link-button" @click="renaming = project.name">{{ common.rename }}</button>
         </h1>
         <div class="header-actions">
-          <button class="button" title="Keyboard shortcuts" @click="isPanelOpen = true">Shortcuts</button>
-          <button class="button" @click="backUp">Back up</button>
-          <button class="button primary" :disabled="chapters.length === 0" @click="preview(null)">Preview ▶</button>
+          <LanguageSelect />
+          <button class="button" :title="text.keyboardShortcuts" @click="isPanelOpen = true">{{ text.shortcuts }}</button>
+          <button class="button" @click="backUp">{{ text.backUp }}</button>
+          <button class="button primary" :disabled="chapters.length === 0" @click="preview(null)">{{ text.preview }}</button>
         </div>
       </div>
       <p v-if="backupDownload.prepared.value !== null" class="backup">
         <a class="download" :href="backupDownload.prepared.value.url" :download="backupDownload.prepared.value.fileName">
-          Download {{ backupDownload.prepared.value.fileName }}
+          {{ common.download(backupDownload.prepared.value.fileName) }}
         </a>
-        <span class="muted"> ({{ formatSize(backupDownload.prepared.value.byteSize) }}): the project folder, to restore here or on another computer.</span>
+        <span class="muted"> {{ text.backupHelp(formatSize(backupDownload.prepared.value.byteSize, locale)) }}</span>
       </p>
     </header>
 
-    <nav class="tabs" aria-label="Project">
+    <nav class="tabs" :aria-label="text.tabsLabel">
       <button
-        v-for="entry in TABS"
-        :key="entry.id"
+        v-for="tabId in TABS"
+        :key="tabId"
         class="tab"
-        :class="{ current: tab === entry.id }"
-        :aria-current="tab === entry.id ? 'page' : undefined"
-        @click="switchTab(entry.id)"
+        :class="{ current: tab === tabId }"
+        :aria-current="tab === tabId ? 'page' : undefined"
+        @click="switchTab(tabId)"
       >
-        {{ entry.label }}
+        {{ text.tabs[tabId] }}
       </button>
     </nav>
 
@@ -141,8 +252,11 @@ provide(EDITOR, { open: props.open, project, chapters, scenes, act, preview, pre
 
     <ChaptersTab v-if="tab === 'chapters'" @import="switchTab('import')" />
     <StoryboardTab v-else-if="tab === 'storyboard'" />
+    <!-- Straight to the chapters, keeping the message that says what was imported. -->
     <ImportTab v-else-if="tab === 'import'" @imported="tab = 'chapters'" />
     <CastTab v-else-if="tab === 'cast'" />
+    <DefinitionsTab v-else-if="tab === 'definitions'" />
+    <IndexTab v-else-if="tab === 'index'" />
     <DetailsTab v-else-if="tab === 'details'" />
     <ExportTab v-else />
   </main>
@@ -185,6 +299,8 @@ h1 .link-button {
 
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 

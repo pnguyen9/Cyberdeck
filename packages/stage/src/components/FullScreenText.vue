@@ -40,7 +40,8 @@ const paragraphs = computed(() => props.pages.map((page, index) => ({
   box-sizing: border-box;
   padding: 70px 260px 150px;
   background: rgb(5 7 12 / 0.82);
-  font: 34px/1.45 Georgia, serif;
+  /* The line height in pixels, inherited as such: a larger style keeps the lines where they are. */
+  font: 34px/49px Georgia, serif;
   color: #f2f4f8;
 }
 
@@ -84,4 +85,3 @@ const paragraphs = computed(() => props.pages.map((page, index) => ({
 }
 </style>
 
-<style src="../textStyles.css"></style>

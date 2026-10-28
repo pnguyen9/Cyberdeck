@@ -1,30 +1,85 @@
 {
   "kind": null,
   "decisions": [
-    { "sourceLine": 1, "name": "Confession", "values": ["Accept", "Refuse", "Ignore"], "multiple": false },
-    { "sourceLine": 2, "name": "Clues", "values": ["Letter", "Key", "Photo"], "multiple": true }
+    {
+      "sourceLine": 1,
+      "name": "Confession",
+      "values": [
+        "Accept",
+        "Refuse",
+        "Ignore"
+      ],
+      "multiple": false
+    },
+    {
+      "sourceLine": 2,
+      "name": "Clues",
+      "values": [
+        "Letter",
+        "Key",
+        "Photo"
+      ],
+      "multiple": true
+    }
   ],
+  "styles": [],
   "chapters": [
     {
       "title": null,
-      "sourceLine": 3,
+      "sourceLine": 1,
       "nodes": [
-        { "type": "page", "sourceLine": 3, "kind": "dialogue", "speaker": "Marie", "text": "So... what's your answer?", "directivesBefore": [], "inlineDirectives": [] },
+        {
+          "type": "definition",
+          "sourceLine": 1,
+          "kind": "decision",
+          "name": "Confession"
+        },
+        {
+          "type": "definition",
+          "sourceLine": 2,
+          "kind": "decision",
+          "name": "Clues"
+        },
+        {
+          "type": "page",
+          "sourceLine": 3,
+          "kind": "dialogue",
+          "speaker": "Marie",
+          "text": "So... what's your answer?",
+          "directivesBefore": [],
+          "inlineDirectives": []
+        },
         {
           "type": "choice",
           "sourceLine": 4,
           "decision": "Confession",
           "options": [
-            { "sourceLine": 5, "text": "Yes, I'll go out with you.", "value": "Accept" },
-            { "sourceLine": 6, "text": "I'm sorry...", "value": "Refuse" },
-            { "sourceLine": 8, "text": "(Say nothing)", "value": "Ignore" }
+            {
+              "sourceLine": 5,
+              "text": "Yes, I'll go out with you.",
+              "value": "Accept"
+            },
+            {
+              "sourceLine": 6,
+              "text": "I'm sorry...",
+              "value": "Refuse"
+            },
+            {
+              "sourceLine": 8,
+              "text": "(Say nothing)",
+              "value": "Ignore"
+            }
           ]
         },
-        { "type": "set", "sourceLine": 9, "decision": "Clues", "value": "Letter" }
+        {
+          "type": "set",
+          "sourceLine": 9,
+          "decision": "Clues",
+          "value": "Letter"
+        }
       ]
     }
   ],
-  "styles": [],
   "scenes": [],
   "problems": []
 }

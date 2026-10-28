@@ -1,17 +1,16 @@
 <script setup lang="ts">
+import { useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
+import { shortcutMessages } from '../i18n/shortcutMessages'
 import { useShortcuts } from './shortcutStore'
-import { chordOf, conflictsOf, describeChord, SHORTCUT_ACTIONS, type KeyChord, type ShortcutId, type ShortcutScreen } from './shortcuts'
+import { chordDescriber, chordOf, conflictsOf, SHORTCUT_ACTIONS, type KeyChord, type ShortcutId, type ShortcutScreen } from './shortcuts'
 
 const { shortcuts, isPanelOpen, change, reset, resetAll } = useShortcuts()
 
 const SCREENS: ShortcutScreen[] = ['Storyboard', 'Editing a page', 'Everywhere']
-/** Keys that change how others work, or belong to typing: shown, not changed. */
-const FIXED: Record<ShortcutScreen, string[]> = {
-  Storyboard: ['Shift with a move extends the selection', 'Ctrl with a move leaves the selection as it is', 'Click, Ctrl+click and Shift+click select'],
-  'Editing a page': ['[ suggests a tag', '↑ ↓ choose a suggestion, Enter or Tab takes it', 'Backspace and Delete remove a tag whole, ← → step over it'],
-  Everywhere: [],
-}
+const locale = useLocale()
+const text = useMessages(shortcutMessages)
+const describeChord = computed(() => chordDescriber(locale.value))
 const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'AltGraph', 'CapsLock'])
 
 /** The action waiting for its new keys, then, when they belong to others, waiting for confirmation. */
@@ -21,10 +20,10 @@ const dialog = useTemplateRef<HTMLElement>('dialog')
 
 const groups = computed(() => SCREENS.map(screen => ({
   screen,
-  actions: SHORTCUT_ACTIONS.filter(action => action.screen === screen).map(action => ({ ...action, keys: shortcuts.value[action.id].map(describeChord) })),
-  fixed: FIXED[screen],
+  actions: SHORTCUT_ACTIONS.filter(action => action.screen === screen).map(action => ({ ...action, keys: shortcuts.value[action.id].map(describeChord.value) })),
+  fixed: text.value.fixedKeys[screen],
 })))
-const labelOf = (actionId: ShortcutId) => SHORTCUT_ACTIONS.find(action => action.id === actionId)?.label ?? actionId
+const labelOf = (actionId: ShortcutId) => text.value.actions[actionId]
 
 /** While capturing, the next keys pressed are the new shortcut; Escape gives up. */
 function onKeydown(event: KeyboardEvent) {
@@ -70,35 +69,35 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown, true))
 
 <template>
   <div class="backdrop" @click.self="isPanelOpen = false">
-    <section ref="dialog" class="dialog" role="dialog" aria-label="Keyboard shortcuts" tabindex="-1">
+    <section ref="dialog" class="dialog" role="dialog" :aria-label="text.keyboardShortcuts" tabindex="-1">
       <header class="dialog-header">
-        <h2>Keyboard shortcuts</h2>
-        <button class="button small" @click="isPanelOpen = false">Close <kbd>Esc</kbd></button>
+        <h2>{{ text.keyboardShortcuts }}</h2>
+        <button class="button small" @click="isPanelOpen = false">{{ text.close }} <kbd>{{ text.keyNames.Escape }}</kbd></button>
       </header>
-      <p class="muted">Click keys to change them, then press the new ones.</p>
+      <p class="muted">{{ text.changeHelp }}</p>
 
       <p v-if="pending !== null" class="pending" role="alert">
-        {{ describeChord(pending.chord) }} already does “{{ pending.conflicts.map(labelOf).join('”, “') }}”.
-        <button class="button small primary" @click="confirm">Use it for “{{ labelOf(pending.actionId) }}”</button>
-        <button class="button small" @click="pending = null">Keep as it was</button>
+        {{ text.alreadyUsed(describeChord(pending.chord), pending.conflicts.map(labelOf)) }}
+        <button class="button small primary" @click="confirm">{{ text.useFor(labelOf(pending.actionId)) }}</button>
+        <button class="button small" @click="pending = null">{{ text.keepAsItWas }}</button>
       </p>
 
       <section v-for="group in groups" :key="group.screen" class="group">
-        <h3 class="section-title">{{ group.screen }}</h3>
+        <h3 class="section-title">{{ text.screens[group.screen] }}</h3>
         <div v-for="action in group.actions" :key="action.id" class="row">
-          <span>{{ action.label }}</span>
+          <span>{{ labelOf(action.id) }}</span>
           <span class="keys">
             <button class="keys-button" :class="{ capturing: capturing === action.id }" @click="capturing = action.id">
-              <template v-if="capturing === action.id">Press the new keys…</template>
-              <template v-else-if="action.keys.length === 0">none</template>
+              <template v-if="capturing === action.id">{{ text.pressNewKeys }}</template>
+              <template v-else-if="action.keys.length === 0">{{ text.noKeys }}</template>
               <kbd v-for="key in action.keys" v-else :key="key">{{ key }}</kbd>
             </button>
-            <button class="link-button" @click="reset(action.id)">Default</button>
+            <button class="link-button" @click="reset(action.id)">{{ text.default }}</button>
           </span>
         </div>
         <p v-for="fixed in group.fixed" :key="fixed" class="fixed muted">{{ fixed }}</p>
       </section>
-      <button class="link-button" @click="resetAll">Reset every shortcut</button>
+      <button class="link-button" @click="resetAll">{{ text.resetAll }}</button>
     </section>
   </div>
 </template>

@@ -1,0 +1,66 @@
+/** The profiles screen, where the player says who is playing. */
+const en = {
+  language: 'Language',
+  whoIsPlaying: 'Who is playing?',
+  newName: 'New name',
+  rename: 'Rename',
+  cancel: 'Cancel',
+  remove: 'Remove',
+  confirmRemove: (profileName: string) => `Remove ${profileName}?`,
+  savesStayIn: (folder: string) => `Its saves stay in ${folder}.`,
+  savesDeleted: 'Its saves are deleted with it.',
+  changeSaveFolder: 'Change save folder',
+  createYourProfile: 'Create your profile',
+  newProfile: 'New profile',
+  profileKeepsSaves: 'Your profile keeps your saves',
+  inFolderOfYourChoice: ' in a folder of your choice',
+  opensDirectly: 'Datajack opens it directly next time.',
+  name: 'Name',
+  savesGoTo: 'Saves go to',
+  change: 'Change…',
+  useDefault: 'Use the default',
+  createAndPlay: 'Create and play',
+  nowSavesIn: (profileName: string, folder: string) => `${profileName} now saves in ${folder}.`,
+  savesMoved: (count: number) => `${count} ${count === 1 ? 'save' : 'saves'} moved there.`,
+  savesKept: (count: number) => `${count} ${count === 1 ? 'save was' : 'saves were'} already there and kept instead.`,
+  removed: (profileName: string) => `${profileName} was removed.`,
+  nameLength: (maximumLength: number) => `A profile name needs 1 to ${maximumLength} characters.`,
+  nameTaken: (name: string) => `Another profile is already named ${name}.`,
+  folderTaken: 'Another profile already saves in this folder.',
+}
+
+type ProfileMessages = typeof en
+
+const fr: ProfileMessages = {
+  language: 'Langue',
+  whoIsPlaying: 'Qui joue ?',
+  newName: 'Nouveau nom',
+  rename: 'Renommer',
+  cancel: 'Annuler',
+  remove: 'Supprimer',
+  confirmRemove: profileName => `Supprimer ${profileName} ?`,
+  savesStayIn: folder => `Ses sauvegardes restent dans ${folder}.`,
+  savesDeleted: 'Ses sauvegardes sont supprimées avec lui.',
+  changeSaveFolder: 'Changer le dossier de sauvegarde',
+  createYourProfile: 'Créez votre profil',
+  newProfile: 'Nouveau profil',
+  profileKeepsSaves: 'Votre profil conserve vos sauvegardes',
+  inFolderOfYourChoice: ' dans le dossier de votre choix',
+  opensDirectly: 'Datajack l’ouvrira directement la prochaine fois.',
+  name: 'Nom',
+  savesGoTo: 'Dossier des sauvegardes',
+  change: 'Changer…',
+  useDefault: 'Utiliser le dossier par défaut',
+  createAndPlay: 'Créer et jouer',
+  nowSavesIn: (profileName, folder) => `Les sauvegardes de ${profileName} vont désormais dans ${folder}.`,
+  savesMoved: count => count <= 1 ? `${count} sauvegarde y a été déplacée.` : `${count} sauvegardes y ont été déplacées.`,
+  savesKept: count => count <= 1
+    ? 'Une sauvegarde s’y trouvait déjà : c’est elle qui a été conservée.'
+    : `${count} sauvegardes s’y trouvaient déjà : ce sont elles qui ont été conservées.`,
+  removed: profileName => `Le profil ${profileName} a été supprimé.`,
+  nameLength: maximumLength => `Un nom de profil doit compter de 1 à ${maximumLength} caractères.`,
+  nameTaken: name => `Un autre profil s’appelle déjà ${name}.`,
+  folderTaken: 'Un autre profil sauvegarde déjà dans ce dossier.',
+}
+
+export const profileMessages = { en, fr }

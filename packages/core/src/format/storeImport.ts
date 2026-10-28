@@ -1,6 +1,7 @@
 import type { Condition, Directive, ImportResult, StoryNode, StyleDeclaration } from '../importer/importTypes'
 import { flattenNodes, normalizeName } from '../importer/storyNodes'
 import { interpretStageDirective } from '../stage/stageDirectives'
+import { checkAuthorCss, styleClassName } from './authorCss'
 import { StageRegistry, type RegistryCreations } from './stageRegistry'
 import {
   defaultEnvironment,
@@ -53,7 +54,7 @@ export function storeImport(
   const importedNodes = [...result.chapters, ...result.scenes].flatMap(chapter => flattenNodes(chapter.nodes))
   for (const node of importedNodes) {
     if (node.type === 'choice') {
-      decisions.declare(node.decision, node.options.map(option => option.value), false)
+      decisions.offer(node.decision, node.options.map(option => option.value))
     }
   }
 
@@ -81,7 +82,7 @@ export function storeImport(
   const endings = new NameRegistry(project.endings, environment)
   const memories = new NameRegistry(project.memories, environment)
   const toCondition = (condition: Condition) => storeCondition(condition, decisions, endings, memories)
-  const styles = new StyleRegistry(project.styles, result.styles, environment)
+  const styles = new StyleRegistry(project.styles, result.styles, environment, new Set(checkAuthorCss(project.css).classes))
   // Plays may name scenes written further down: every scene has its identifier before any node is stored.
   const sceneIds = new Map(knownScenes.map(scene => [normalizeName(scene.name), scene.id]))
   const importedSceneIds = result.scenes.map(scene => {
@@ -150,6 +151,8 @@ export function storeImport(
         const decision = decisions.find(node.decision)
         return { type: 'unset', id, decisionId: decision.id, valueId: node.value === null ? null : decisions.findValue(decision, node.value).id }
       }
+      case 'definition':
+        return { type: 'definition', id, kind: node.kind, definedId: node.kind === 'decision' ? decisions.find(node.name).id : styles.idOf(node.name) }
       case 'ending':
         return { type: 'ending', id, endingId: endings.idOf(node.name) }
       case 'remember':
@@ -207,10 +210,17 @@ export function storeImport(
 class StyleRegistry {
   private readonly styles: TextStyle[]
 
-  constructor(existing: readonly TextStyle[], declared: readonly StyleDeclaration[], private readonly environment: Environment) {
+  constructor(existing: readonly TextStyle[], declared: readonly StyleDeclaration[], private readonly environment: Environment, private readonly cssClasses: ReadonlySet<string> = new Set()) {
     this.styles = [...existing]
     for (const declaration of declared) {
-      this.styles.push({ id: environment.createId(), name: declaration.name, properties: declaration.properties as StyleProperty[] })
+      const properties = declaration.properties as StyleProperty[]
+      const index = this.styles.findIndex(style => normalizeName(style.name) === normalizeName(declaration.name))
+      // Declared again where it may be (the project's definitions, the text it is replaced from): same identifier, new properties.
+      if (index === -1) {
+        this.styles.push({ id: environment.createId(), name: declaration.name, properties })
+      } else {
+        this.styles[index] = { id: this.styles[index]!.id, name: declaration.name, properties }
+      }
     }
   }
 
@@ -221,9 +231,15 @@ class StyleRegistry {
     }
     const property = readStyleProperty(name)
     if (property === null) {
+      // A class of the project's CSS is a style of its own, drawn by the CSS alone.
+      if (this.cssClasses.has(styleClassName(name))) {
+        const drawnByCss: TextStyle = { id: this.environment.createId(), name, properties: [], implicit: true }
+        this.styles.push(drawnByCss)
+        return drawnByCss.id
+      }
       throw new Error(`Unknown style "${name}": check the import with checkReferences before storing it`)
     }
-    const created: TextStyle = { id: this.environment.createId(), name: property, properties: [property] }
+    const created: TextStyle = { id: this.environment.createId(), name: property, properties: [property], implicit: true }
     this.styles.push(created)
     return created.id
   }
@@ -241,11 +257,29 @@ class DecisionRegistry {
     this.decisions = existingDecisions.map(decision => ({ ...decision, values: [...decision.values] }))
   }
 
-  /** Creates the decision, or adds the values it lacks. */
+  /**
+   * A declaration: creates the decision, or gives one declared again its values, those it already
+   * had keeping their identifiers. `checkReferences` made sure no value dropped is still used.
+   */
   declare(name: string, valueNames: string[], multiple: boolean) {
+    const index = this.decisions.findIndex(candidate => normalizeName(candidate.name) === normalizeName(name))
+    const existing = this.decisions[index]
+    // A value written twice, whatever its case, is one value.
+    const distinctNames = valueNames.filter((valueName, valueIndex) => valueNames.findIndex(other => normalizeName(other) === normalizeName(valueName)) === valueIndex)
+    const values = distinctNames.map(valueName => existing?.values.find(value => normalizeName(value.name) === normalizeName(valueName)) ?? { id: this.environment.createId(), name: valueName })
+    const decision: Decision = { id: existing?.id ?? this.environment.createId(), name, multiple, values }
+    if (existing === undefined) {
+      this.decisions.push(decision)
+    } else {
+      this.decisions[index] = decision
+    }
+  }
+
+  /** A choice: makes the decision it names when nobody declared it, or adds the values it lacks to one made by choices. */
+  offer(name: string, valueNames: string[]) {
     let decision = this.decisions.find(candidate => normalizeName(candidate.name) === normalizeName(name))
     if (decision === undefined) {
-      decision = { id: this.environment.createId(), name, multiple, values: [] }
+      decision = { id: this.environment.createId(), name, multiple: false, values: [], implicit: true }
       this.decisions.push(decision)
     }
     for (const valueName of valueNames) {

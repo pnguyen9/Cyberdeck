@@ -17,6 +17,10 @@ export const MEDIA_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
   flac: 'audio/flac',
   m4a: 'audio/mp4',
   weba: 'audio/webm',
+  woff2: 'font/woff2',
+  woff: 'font/woff',
+  ttf: 'font/ttf',
+  otf: 'font/otf',
 }
 
 /** `<sha-256>.<extension>`: installed assets are named by their content, shared by every game. */

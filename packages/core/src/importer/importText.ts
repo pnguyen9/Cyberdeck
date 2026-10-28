@@ -1,6 +1,7 @@
 import { DEFAULT_POSITION_PRESETS } from '../format/storyFormat'
 import { alwaysStops, readingFlow } from '../format/readingFlow'
-import { readStyleProperty } from '../format/textStyles'
+import { styleClassName } from '../format/authorCss'
+import { LARGE_WIDTH_SCALE, readStyleProperty } from '../format/textStyles'
 import { paginate, type PageLayout } from '../pagination/paginate'
 import type { TextRange } from '../pagination/textRange'
 import {
@@ -38,9 +39,15 @@ export interface ImportOptions {
   knownPositionNames?: readonly string[]
   /** The text goes inside a loop, a page edited there for instance: `[break]` belongs. */
   isInsideLoop?: boolean
+  /**
+   * How much wider than normal the project's styles draw text, by class name (`styleClassName`):
+   * a paragraph holding one is cut as if all of it were that wide, so that its pages always fit.
+   */
+  styleWidthScales?: ReadonlyMap<string, number>
 }
 
 const CHAPTER_HEADING = /^#+\s*(.*)$/
+const PLAIN_STYLE = 'plain'
 /** `# Scene: Caught` opens a scene rather than a chapter. */
 const SCENE_TITLE = /^scene\s*:(.*)$/i
 
@@ -76,6 +83,10 @@ export function importText(input: string, options: ImportOptions): ImportResult 
 class TextImporter {
   private readonly result: ImportResult = { kind: null, decisions: [], styles: [], chapters: [], scenes: [], problems: [] }
   private currentChapter: ImportedChapter | null = null
+  /** Names of the styles the text declares `large`. */
+  private readonly largeStyles = new Set<string>()
+  /** The chapter opened by content before any heading, rather than by one. */
+  private untitledChapter: ImportedChapter | null = null
   /** Innermost last: nodes go into the last branch of the innermost open condition. */
   /** Conditions and loops not closed yet, the innermost last: `[end]` closes it. */
   private readonly openBlocks: (ConditionNode | LoopNode)[] = []
@@ -90,10 +101,17 @@ class TextImporter {
   constructor(private readonly options: ImportOptions) {}
 
   run(input: string): ImportResult {
+    // Styles declared large anywhere in the text, above their first use or below: pages are cut before declarations are all read.
+    for (const declaration of input.matchAll(/\[\s*style\s*:([^=\]]+)=([^\]]*)\]/gi)) {
+      if (/(^|[\s,])large($|[\s,])/i.test(declaration[2]!)) {
+        this.largeStyles.add(normalizeName(declaration[1]!))
+      }
+    }
     input.replace(/\r\n?/g, '\n').split('\n').forEach((rawLine, lineIndex) => {
       this.readLine(rawLine.replace(/\t/g, ' ').trim(), lineIndex + 1)
     })
     this.finishChapter()
+    this.dropPreamble()
     this.checkStageDirectives()
     this.checkReadingFlow()
 
@@ -269,13 +287,16 @@ class TextImporter {
       return
     }
     const assignment = readAssignment(text)
-    const words = assignment?.value.split(/[\s,]+/).filter(word => word !== '') ?? []
+    // `plain`: a style of no property of its own, drawn by the project's CSS alone.
+    const words = assignment?.value.split(/[\s,]+/).filter(word => word !== '' && word.toLowerCase() !== PLAIN_STYLE) ?? []
+    const isPlain = assignment !== null && words.length === 0 && assignment.value.trim().toLowerCase() === PLAIN_STYLE
     const invalidWord = assignment === null ? text : words.find(word => readStyleProperty(word) === null)
-    if (invalidWord !== undefined || words.length === 0) {
+    if (invalidWord !== undefined || (words.length === 0 && !isPlain)) {
       this.addProblem('error', 'invalidStyle', lineNumber, invalidWord ?? text)
       return
     }
     this.result.styles.push({ sourceLine: lineNumber, name: assignment!.name, properties: words.map(word => readStyleProperty(word)!) })
+    this.addNode({ type: 'definition', sourceLine: lineNumber, kind: 'style', name: assignment!.name })
   }
 
   private readOption(optionLine: string, lineNumber: number) {
@@ -315,6 +336,7 @@ class TextImporter {
           this.addProblem('error', 'invalidDecision', lineNumber, text)
         } else {
           this.result.decisions.push({ sourceLine: lineNumber, ...declaration, multiple: directive.name === 'decision multi' })
+          this.addNode({ type: 'definition', sourceLine: lineNumber, kind: 'decision', name: declaration.name })
         }
         return
       }
@@ -367,9 +389,9 @@ class TextImporter {
         return
       }
       case 'only if': {
-        // Only first in a chapter: a scene is played when asked, and a chapter cannot stop half way.
+        // Only first in a chapter, definitions apart: a scene is played when asked, and a chapter cannot stop half way.
         const chapter = this.ensureChapter(lineNumber)
-        if (this.result.scenes.includes(chapter) || chapter.nodes.length > 0 || chapter.condition !== undefined || this.openChoice !== null) {
+        if (this.result.scenes.includes(chapter) || chapter.nodes.some(node => node.type !== 'definition') || chapter.condition !== undefined || this.openChoice !== null) {
           this.addProblem('error', 'onlyIfMisplaced', lineNumber)
           return
         }
@@ -447,11 +469,20 @@ class TextImporter {
     this.pendingDirectives = []
     this.pendingDirectivesLine = null
 
-    const pageRanges = paginate(parsedLine.text, this.options.layout, this.options.locale)
+    const scale = Math.max(1, ...styleSpans.map(span => this.widthScaleOf(span.style)))
+    const layout = scale === 1 ? this.options.layout : { ...this.options.layout, measureText: (text: string) => this.options.layout.measureText(text) * scale }
+    const pageRanges = paginate(parsedLine.text, layout, this.options.locale)
     pageRanges.forEach((pageRange, pageIndex) => {
       const isLastPage = pageIndex === pageRanges.length - 1
       this.addNode(buildPage(parsedLine, pageRange, isLastPage, lineNumber, pageIndex === 0 ? directivesBefore : [], styleSpans))
     })
+  }
+
+  /** A style of the project, one declared above in the text, or a property alone: `large` draws text a little wider. */
+  private widthScaleOf(styleName: string): number {
+    const properties = this.largeStyles.has(normalizeName(styleName)) ? ['large'] : [readStyleProperty(styleName)]
+    const fromProperties = properties.includes('large') ? LARGE_WIDTH_SCALE : 1
+    return Math.max(fromProperties, this.options.styleWidthScales?.get(styleClassName(styleName)) ?? 1)
   }
 
   private addPendingDirective(directive: Directive, lineNumber: number) {
@@ -504,9 +535,22 @@ class TextImporter {
   private ensureChapter(sourceLine: number): ImportedChapter {
     if (this.currentChapter === null) {
       this.currentChapter = { title: null, sourceLine, nodes: [] }
+      this.untitledChapter = this.currentChapter
       this.result.chapters.push(this.currentChapter)
     }
     return this.currentChapter
+  }
+
+  /**
+   * Definitions written above the first heading of a text with headings belong to none of its
+   * chapters: the whole story's, as an export writes them. They stay declared; only their place goes.
+   */
+  private dropPreamble() {
+    const preamble = this.untitledChapter
+    const hasHeadings = this.result.chapters.length + this.result.scenes.length > (preamble === null ? 0 : 1)
+    if (preamble !== null && hasHeadings && preamble.condition === undefined && preamble.nodes.every(node => node.type === 'definition')) {
+      this.result.chapters.splice(this.result.chapters.indexOf(preamble), 1)
+    }
   }
 
   /** `[import: …]` declares the kind of import; it is not a stage directive. */

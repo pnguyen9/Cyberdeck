@@ -3,7 +3,9 @@ import { storeImport } from '../format/storeImport'
 import type { ImportProblem } from '../importer/importTypes'
 import type { PageLayout } from '../pagination/paginate'
 import { insertNodes, removeNodes, replaceNode, type DropSlot } from '../storyboard/storyboard'
-import { previewImport, type ImportPreview } from './projectEdits'
+import type { KnownNames } from '../importer/checkReferences'
+import type { StoryWords } from '../storyboard/storyWords'
+import { knownNamesFor, previewImport, type ImportPreview } from './projectEdits'
 
 /**
  * Editing in the storyboard: a page (or a marker) is edited as the text that imports into it, and
@@ -43,9 +45,14 @@ export function previewNodeEdit(
   chapterId: string,
   target: NodeEditTarget,
   layout: PageLayout,
+  knownNames?: KnownNames,
 ): ImportPreview {
   const chapter = chapters.find(candidate => candidate.id === chapterId)
-  const preview = previewImport(text, project, layout, { isInsideLoop: chapter !== undefined && editsInsideLoop(chapter, target), scenes: chapters })
+  const preview = previewImport(text, project, layout, {
+    isInsideLoop: chapter !== undefined && editsInsideLoop(chapter, target),
+    scenes: chapters,
+    knownNames: knownNames ?? knownNamesForEdit(project, chapters, chapterId, target),
+  })
   // A page edited lies inside a chapter: a heading or a condition on the whole chapter has no place there.
   const onlyIfLine = preview.result.chapters.some(edited => edited.condition !== undefined)
     ? text.split('\n').findIndex(line => /\[\s*only if\s*:/i.test(line))
@@ -60,6 +67,11 @@ export function previewNodeEdit(
   }
   const heading: ImportProblem = { severity: 'error', code: 'chapterHeadingInEdit', line: headingLine + 1 }
   return { ...preview, problems: [...preview.problems, heading].sort((first, second) => first.line - second.line), hasErrors: true }
+}
+
+/** The project's names as an edit at this place may use them: worked out once for an edit, not on every key typed. */
+export function knownNamesForEdit(project: ProjectDocument, chapters: readonly ChapterDocument[], chapterId: string, target: NodeEditTarget, words?: StoryWords): KnownNames {
+  return knownNamesFor(project, chapters, target.type === 'replace' ? { documentId: chapterId, nodeId: target.nodeId } : undefined, words)
 }
 
 /**
@@ -88,6 +100,9 @@ export function applyNodeEdit(
   let edited: ChapterDocument
   if (target.type === 'replace') {
     const replaced = flattenStoredNodes(chapter.nodes).find(node => node.id === target.nodeId)
+    if (replaced === undefined) {
+      throw new Error('The card edited is no longer in its chapter: copy your text, then write it as a new page.')
+    }
     const [first, ...others] = nodes
     if (first !== undefined && first.type === replaced?.type) {
       nodes = [{ ...first, id: replaced.id }, ...others]

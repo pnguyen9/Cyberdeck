@@ -14,9 +14,11 @@ import {
   type StoredRemember,
   type StoredSet,
   type StoredUnset,
+  type StoredDefinition,
   type StoredStage,
 } from '../format/storyFormat'
-import { describeAssignment, describeCondition, describeStageCommand, describeUnset } from './describeNodes'
+import { describeAssignment, describeCondition, describeDefinition, describeStageCommand, describeUnset } from './describeNodes'
+import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
 
 /**
  * A chapter laid out as the storyboard shows it: one entry after another, read left to right and
@@ -29,7 +31,7 @@ import { describeAssignment, describeCondition, describeStageCommand, describeUn
  */
 export type StoryboardEntry =
   | { type: 'card'; id: string; node: StoredPage | StoredChoice; number: string; branch: string; slot: DropSlot }
-  | { type: 'marker'; id: string; node: StoredStage | StoredSet | StoredUnset | StoredEnding | StoredRemember | StoredBreak | StoredPlay; text: string; branch: string; slot: DropSlot }
+  | { type: 'marker'; id: string; node: StoredStage | StoredSet | StoredUnset | StoredDefinition | StoredEnding | StoredRemember | StoredBreak | StoredPlay; text: string; branch: string; slot: DropSlot }
   | { type: 'conditionStart'; id: string; node: StoredConditionNode; text: string; branch: string; slot: DropSlot }
   | { type: 'branchStart'; id: string; node: StoredConditionNode; branchIndex: number; text: string; branch: string; slot: DropSlot }
   | { type: 'conditionEnd'; id: string; node: StoredConditionNode; branch: string; slot: DropSlot }
@@ -47,10 +49,13 @@ export const CHAPTER_START: DropSlot = { containerId: null, index: 0 }
 export interface StoryboardOptions {
   /** Names of the project's scenes by identifier, for the plays. */
   sceneNames?: ReadonlyMap<string, string>
+  /** The words around names, in the editor's language. */
+  words?: StoryWords
 }
 
 export function storyboardEntries(chapter: ChapterDocument, project: ProjectDocument, options: StoryboardOptions = {}): StoryboardEntry[] {
   const entries: StoryboardEntry[] = []
+  const words = options.words ?? ENGLISH_STORY_WORDS
 
   /** Lays out a list of nodes; returns the number of the last card. */
   const layOut = (nodes: readonly StoredNode[], containerId: string | null, branch: string, previousNumber: number): number => {
@@ -70,7 +75,7 @@ export function storyboardEntries(chapter: ChapterDocument, project: ProjectDocu
           entries.push({ type: 'marker', id: node.id, node, text: describeAssignment(node.decisionId, node.valueId, project), branch, slot })
           break
         case 'unset':
-          entries.push({ type: 'marker', id: node.id, node, text: describeUnset(node.decisionId, node.valueId, project), branch, slot })
+          entries.push({ type: 'marker', id: node.id, node, text: describeUnset(node.decisionId, node.valueId, project, words), branch, slot })
           break
         case 'ending':
           entries.push({ type: 'marker', id: node.id, node, text: project.endings.find(ending => ending.id === node.endingId)?.name ?? '?', branch, slot })
@@ -78,8 +83,11 @@ export function storyboardEntries(chapter: ChapterDocument, project: ProjectDocu
         case 'remember':
           entries.push({ type: 'marker', id: node.id, node, text: project.memories.find(memory => memory.id === node.memoryId)?.name ?? '?', branch, slot })
           break
+        case 'definition':
+          entries.push({ type: 'marker', id: node.id, node, text: describeDefinition(node.kind, node.definedId, project, words), branch, slot })
+          break
         case 'break':
-          entries.push({ type: 'marker', id: node.id, node, text: 'out of the loop', branch, slot })
+          entries.push({ type: 'marker', id: node.id, node, text: words.outOfTheLoop, branch, slot })
           break
         case 'play':
           entries.push({ type: 'marker', id: node.id, node, text: options.sceneNames?.get(node.sceneId) ?? '?', branch, slot })

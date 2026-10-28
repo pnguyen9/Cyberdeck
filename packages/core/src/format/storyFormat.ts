@@ -5,7 +5,7 @@ import type { StyleProperty } from './textStyles'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '1.1'
+export const FORMAT_VERSION = '1.2'
 
 /** True when this version of the code can read a document written in `version`. */
 export function isSupportedFormatVersion(version: string): boolean {
@@ -35,6 +35,12 @@ export interface Decision {
   /** Several values can hold at once (clues found), instead of exactly one (an answer). */
   multiple: boolean
   values: DecisionValue[]
+  /**
+   * Declared nowhere: a choice made it, with the values of its options, which later choices may
+   * extend. A declared decision lives where its declaration is, a `definition` node of a chapter,
+   * or in the project's definitions when no node declares it. Since 1.2.
+   */
+  implicit?: true
 }
 
 /** A file of the project: an image or a sound, stored as `assets/<id>` whatever its original name. */
@@ -137,6 +143,18 @@ export interface Illustration {
   assetId: string | null
 }
 
+/**
+ * A font the project's CSS may name, `font-family: "Cinzel"`: named after its file, created when the
+ * file is added. `widthScale` is how much wider than the text box's font it draws text, measured
+ * when added, so that pages in it are cut to fit. Since 1.2.
+ */
+export interface FontEntry {
+  id: string
+  name: string
+  assetId: string | null
+  widthScale: number
+}
+
 /** A sound effect, played once where it is named: a door, a phone, footsteps. Since 1.1. */
 export interface SoundEffect {
   id: string
@@ -161,6 +179,8 @@ export interface TextStyle {
   id: string
   name: string
   properties: StyleProperty[]
+  /** Declared nowhere: named after a single property (`italic`), or after a class of the project's CSS. Since 1.2. */
+  implicit?: true
 }
 
 /** What players see of the game before playing it: on its library card, its title screen, its credits. */
@@ -191,10 +211,16 @@ export interface ProjectDocument extends Audited {
   music: MusicTrack[]
   sounds: SoundEffect[]
   illustrations: Illustration[]
+  /** Since 1.2. */
+  fonts: FontEntry[]
   assets: Asset[]
   positions: PositionPreset[]
   stageDefaults: StageDefaults
   details: GameDetails
+  /** The author's CSS for the styles: checked by `checkAuthorCss` wherever it is used. Since 1.2. */
+  css: string
+  /** Each chapter's title shown over the stage as it starts. Since 1.2. */
+  chapterTitleCards: boolean
 }
 
 /** How close to the player a character stands: nearer is larger and in front. Since 1.1. */
@@ -323,6 +349,18 @@ export interface StoredEnding {
   endingId: string
 }
 
+/**
+ * Where a decision or a style is declared, when the author keeps its declaration in a chapter: the
+ * declaration is written there on export, and the storyboard shows it there. It plays nothing, and
+ * games leave it out. Since 1.2.
+ */
+export interface StoredDefinition {
+  type: 'definition'
+  id: string
+  kind: 'decision' | 'style'
+  definedId: string
+}
+
 /** The profile remembers this from now on, in every playthrough. */
 export interface StoredRemember {
   type: 'remember'
@@ -350,7 +388,7 @@ export interface StoredBreak {
   id: string
 }
 
-export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredEnding | StoredRemember
+export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredDefinition | StoredEnding | StoredRemember
 
 /** A list of nodes inside a block: a branch of a condition, or the body of a loop, which bears the loop's identifier. */
 export interface InnerList {
@@ -408,10 +446,13 @@ export function createProject(settings: { name: string; locale: string }, enviro
     music: [],
     sounds: [],
     illustrations: [],
+    fonts: [],
     assets: [],
     positions: [...DEFAULT_POSITION_PRESETS],
     stageDefaults: DEFAULT_STAGE_DEFAULTS,
     details: { description: '', credits: '', coverAssetId: null },
+    css: '',
+    chapterTitleCards: false,
     createdAt: now,
     updatedAt: now,
   }

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { parseSave, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
-import { AUTOSAVE_SLOT, type SaveStore } from '@cyberdeck/stage'
+import { AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
-import type { GameLibrary, InstallOutcome, LibraryEntry } from './gameLibrary'
+import { describeError } from '../i18n/errorMessages'
+import { describeInstall, libraryMessages } from '../i18n/libraryMessages'
+import type { GameLibrary, LibraryEntry } from './gameLibrary'
 
 const props = defineProps<{ library: GameLibrary; saveStore: SaveStore; profileName: string }>()
+const languageChoice = defineModel<LanguageChoice>('languageChoice', { required: true })
 const emit = defineEmits<{ play: [story: PlayableStory, resumeFrom: SaveData | null]; map: [story: PlayableStory]; gallery: [story: PlayableStory]; switchProfile: [] }>()
 
 const entries = shallowRef<LibraryEntry[]>([])
@@ -18,10 +21,13 @@ const errorMessage = ref<string | null>(null)
 /** The game whose removal, or whose restart over an autosave, waits for confirmation. */
 const confirming = ref<{ gameId: string; action: 'remove' | 'restart' } | null>(null)
 const shownCredits = ref<string | null>(null)
+const locale = useLocale()
+const text = useMessages(libraryMessages)
+const errorText = (error: unknown) => describeError(error, locale.value)
 
 const cards = computed(() => entries.value.map(entry => {
   const installed = entry.chapters.filter(chapter => chapter.included)
-  const missing = entry.chapters.filter(chapter => !chapter.included).map(chapter => chapter.title ?? 'Untitled chapter')
+  const missing = entry.chapters.filter(chapter => !chapter.included).map(chapter => chapter.title ?? text.value.untitledChapter)
   const progress = progressByGame.value.get(entry.id) ?? null
   return {
     entry,
@@ -45,7 +51,7 @@ async function refresh() {
     const progress = await Promise.all(entries.value.map(async entry => [entry.id, await props.saveStore.readProgress(entry.id)] as const))
     progressByGame.value = new Map(progress.filter((pair): pair is readonly [string, ProgressData] => pair[1] !== null))
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : String(error)
+    errorMessage.value = errorText(error)
   } finally {
     isLoaded.value = true
   }
@@ -62,9 +68,9 @@ async function install(fileList: FileList | null) {
   const reports: string[] = []
   for (const file of files) {
     try {
-      reports.push(describe(await props.library.install(new Uint8Array(await file.arrayBuffer()))))
+      reports.push(describeInstall(await props.library.install(new Uint8Array(await file.arrayBuffer())), text.value))
     } catch (error) {
-      errorMessage.value = `${file.name}: ${error instanceof Error ? error.message : String(error)}`
+      errorMessage.value = text.value.fileError(file.name, errorText(error))
     }
   }
   message.value = reports.length === 0 ? null : reports.join(' ')
@@ -72,30 +78,12 @@ async function install(fileList: FileList | null) {
   await refresh()
 }
 
-function describe(outcome: InstallOutcome): string {
-  const name = `${outcome.gameName} ${outcome.release}`
-  const list = (titles: string[]) => titles.join(', ')
-  if (outcome.isNewGame) {
-    return `${name} installed.`
-  }
-  const changes = [
-    outcome.addedChapters.length === 0 ? '' : `added ${list(outcome.addedChapters)}`,
-    outcome.updatedChapters.length === 0 ? '' : `updated ${list(outcome.updatedChapters)}`,
-  ].filter(change => change !== '').join('; ')
-  if (outcome.wasOlder) {
-    return changes === ''
-      ? `This archive of ${outcome.gameName} is older than ${outcome.release}, installed already: nothing to add.`
-      : `This archive of ${outcome.gameName} is older than ${outcome.release}, installed already: ${changes}.`
-  }
-  return changes === '' ? `${name}: nothing new.` : `${name}: ${changes}.`
-}
-
 async function play(entry: LibraryEntry, resumeFrom: SaveData | null) {
   confirming.value = null
   try {
     emit('play', await props.library.open(entry.id), resumeFrom)
   } catch (error) {
-    errorMessage.value = `${entry.name} cannot be opened: ${error instanceof Error ? error.message : String(error)}`
+    errorMessage.value = text.value.cannotOpen(entry.name, errorText(error))
   }
 }
 
@@ -108,7 +96,7 @@ async function openMap(entry: LibraryEntry, view: 'map' | 'gallery' = 'map') {
       emit('gallery', story)
     }
   } catch (error) {
-    errorMessage.value = `${entry.name} cannot be opened: ${error instanceof Error ? error.message : String(error)}`
+    errorMessage.value = text.value.cannotOpen(entry.name, errorText(error))
   }
 }
 
@@ -123,7 +111,7 @@ function startOver(entry: LibraryEntry, hasAutosave: boolean) {
 async function remove(entry: LibraryEntry) {
   confirming.value = null
   await props.library.remove(entry.id)
-  message.value = `${entry.name} was removed.`
+  message.value = text.value.removed(entry.name)
   await refresh()
 }
 
@@ -136,12 +124,12 @@ async function loadSave(file: File | undefined) {
   errorMessage.value = null
   const save = await readSave(file)
   if (save === null) {
-    errorMessage.value = `${file.name} is not a save.`
+    errorMessage.value = text.value.notASave(file.name)
     return
   }
   const entry = entries.value.find(candidate => candidate.id === save.game.id)
   if (entry === undefined) {
-    errorMessage.value = `${file.name} is a save of ${save.game.name}, which is not installed: add the game first.`
+    errorMessage.value = text.value.gameNotInstalled(file.name, save.game.name)
     return
   }
   await play(entry, save)
@@ -184,25 +172,31 @@ function onDrop(event: DragEvent) {
   >
     <header class="header">
       <h1>Datajack</h1>
-      <button class="profile-button" @click="emit('switchProfile')">{{ profileName }} <span class="switch">· Switch profile</span></button>
+      <div class="header-actions">
+        <label class="language">
+          <span>{{ text.language }}</span>
+          <LanguageSelect v-model="languageChoice" />
+        </label>
+        <button class="profile-button" @click="emit('switchProfile')">{{ profileName }} <span class="switch">· {{ text.switchProfile }}</span></button>
+      </div>
     </header>
 
     <div class="toolbar">
       <label class="add-button" :class="{ busy: isInstalling }">
         <input class="file-input" type="file" accept=".zip,application/zip" multiple :disabled="isInstalling" @change="install(($event.target as HTMLInputElement).files)">
-        {{ isInstalling ? 'Installing…' : 'Add a game…' }}
+        {{ isInstalling ? text.installing : text.addGame }}
       </label>
       <label class="load-button">
         <input class="file-input" type="file" accept=".json,application/json" @change="onSaveChosen($event.target as HTMLInputElement)">
-        Load a save…
+        {{ text.loadSave }}
       </label>
-      <span class="hint">or drop a game's <code>.zip</code> or a save's <code>.json</code> anywhere on this page</span>
+      <span class="hint">{{ text.dropHint.beforeGame }}<code>.zip</code>{{ text.dropHint.beforeSave }}<code>.json</code>{{ text.dropHint.after }}</span>
     </div>
     <p v-if="message !== null" class="message" role="status">{{ message }}</p>
     <p v-if="errorMessage !== null" class="error" role="alert">{{ errorMessage }}</p>
 
     <p v-if="isLoaded && cards.length === 0" class="empty">
-      No games yet. Add a game you downloaded: its <code>.zip</code> file.
+      {{ text.noGames.before }}<code>.zip</code>{{ text.noGames.after }}
     </p>
 
     <ul class="games">
@@ -215,37 +209,37 @@ function onDrop(event: DragEvent) {
           <h2>{{ card.entry.name }} <span class="release">{{ card.entry.release }}</span></h2>
           <p v-if="card.entry.description !== ''" class="description">{{ card.entry.description }}</p>
           <p class="chapters">
-            <template v-if="card.missing.length === 0">{{ card.installedCount }} {{ card.installedCount === 1 ? 'chapter' : 'chapters' }}</template>
-            <template v-else>{{ card.installedCount }} of {{ card.entry.chapters.length }} chapters · not installed: {{ card.missing.join(', ') }}</template>
-            <template v-if="card.entry.endingCount > 0"> · endings reached: {{ card.endingsReached }} of {{ card.entry.endingCount }}</template>
-            <template v-if="card.entry.illustrationCount > 0"> · illustrations seen: {{ card.illustrationsSeen }} of {{ card.entry.illustrationCount }}</template>
+            <template v-if="card.missing.length === 0">{{ text.chapterCount(card.installedCount) }}</template>
+            <template v-else>{{ text.someChapters(card.installedCount, card.entry.chapters.length, card.missing) }}</template>
+            <template v-if="card.entry.endingCount > 0"> · {{ text.endingsReached(card.endingsReached, card.entry.endingCount) }}</template>
+            <template v-if="card.entry.illustrationCount > 0"> · {{ text.illustrationsSeen(card.illustrationsSeen, card.entry.illustrationCount) }}</template>
           </p>
 
           <div v-if="confirming?.gameId === card.entry.id" class="confirmation">
             <template v-if="confirming.action === 'remove'">
-              <p>Remove {{ card.entry.name }}? Your saves are kept, for when you install it again.</p>
+              <p>{{ text.confirmRemove(card.entry.name) }}</p>
               <div class="actions">
-                <button class="button danger" @click="remove(card.entry)">Remove</button>
-                <button class="button" @click="confirming = null">Cancel</button>
+                <button class="button danger" @click="remove(card.entry)">{{ text.remove }}</button>
+                <button class="button" @click="confirming = null">{{ text.cancel }}</button>
               </div>
             </template>
             <template v-else>
-              <p>Start over? Your autosave will be replaced; your saved slots are kept.</p>
+              <p>{{ text.confirmStartOver }}</p>
               <div class="actions">
-                <button class="button primary" @click="play(card.entry, null)">Start over</button>
-                <button class="button" @click="confirming = null">Cancel</button>
+                <button class="button primary" @click="play(card.entry, null)">{{ text.startOver }}</button>
+                <button class="button" @click="confirming = null">{{ text.cancel }}</button>
               </div>
             </template>
           </div>
           <div v-else class="actions">
-            <button v-if="card.autosave !== null" class="button primary" @click="play(card.entry, card.autosave)">Continue</button>
+            <button v-if="card.autosave !== null" class="button primary" @click="play(card.entry, card.autosave)">{{ text.continue }}</button>
             <button class="button" :class="{ primary: card.autosave === null }" @click="startOver(card.entry, card.autosave !== null)">
-              {{ card.autosave === null ? 'Play' : 'New game' }}
+              {{ card.autosave === null ? text.play : text.newGame }}
             </button>
-            <button v-if="card.hasMap" class="button" @click="openMap(card.entry)">Map</button>
-            <button v-if="card.entry.illustrationCount > 0" class="button" @click="openMap(card.entry, 'gallery')">Gallery</button>
-            <button v-if="card.entry.credits !== ''" class="link-button" @click="shownCredits = shownCredits === card.entry.id ? null : card.entry.id">Credits</button>
-            <button class="link-button" @click="confirming = { gameId: card.entry.id, action: 'remove' }">Remove</button>
+            <button v-if="card.hasMap" class="button" @click="openMap(card.entry)">{{ text.map }}</button>
+            <button v-if="card.entry.illustrationCount > 0" class="button" @click="openMap(card.entry, 'gallery')">{{ text.gallery }}</button>
+            <button v-if="card.entry.credits !== ''" class="link-button" @click="shownCredits = shownCredits === card.entry.id ? null : card.entry.id">{{ text.credits }}</button>
+            <button class="link-button" @click="confirming = { gameId: card.entry.id, action: 'remove' }">{{ text.remove }}</button>
           </div>
           <p v-if="shownCredits === card.entry.id" class="credits">{{ card.entry.credits }}</p>
         </div>
@@ -282,6 +276,21 @@ h1 {
   margin: 0;
   font-size: 28px;
   color: #9eeaff;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 24px;
+}
+
+.language {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 14px;
+  color: #7b8597;
 }
 
 .profile-button {

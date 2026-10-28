@@ -14,6 +14,8 @@ export interface StageCatalog {
   soundUrl: (soundId: string) => string | null
   illustrationName: (illustrationId: string) => string
   illustrationUrl: (illustrationId: string) => string | null
+  /** The game's fonts that have a file, for the player to load before the CSS names them. */
+  fonts: readonly { name: string; url: string }[]
 }
 
 export function createStageCatalog(story: PlayableStory): StageCatalog {
@@ -39,5 +41,9 @@ export function createStageCatalog(story: PlayableStory): StageCatalog {
     soundUrl: soundId => urlOf(sounds.get(soundId)?.assetId),
     illustrationName: illustrationId => illustrations.get(illustrationId)?.name ?? '',
     illustrationUrl: illustrationId => urlOf(illustrations.get(illustrationId)?.assetId),
+    fonts: project.fonts.flatMap(font => {
+      const url = urlOf(font.assetId)
+      return url === null ? [] : [{ name: font.name, url }]
+    }),
   }
 }

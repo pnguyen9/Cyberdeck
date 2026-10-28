@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import type { PlayableStory, ProgressData } from '@cyberdeck/core'
+import { describeInput, useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { galleryMessages } from '../i18n/galleryMessages'
 
 /** The illustrations of a game this profile has seen, in any playthrough; the others stay locked. */
 const props = defineProps<{ story: PlayableStory; progress: ProgressData }>()
 const emit = defineEmits<{ close: [] }>()
+const locale = useLocale()
+const text = useMessages(galleryMessages)
 
 const tiles = computed(() => props.story.project.illustrations.map(illustration => ({
   id: illustration.id,
@@ -33,9 +37,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 <template>
   <section class="gallery">
     <header class="gallery-header">
-      <h1>{{ story.project.name }} · gallery</h1>
-      <span class="count">{{ seenCount }} of {{ tiles.length }} seen</span>
-      <button class="button" @click="emit('close')">← Library <kbd>Esc</kbd></button>
+      <h1>{{ story.project.name }} · {{ text.gallery }}</h1>
+      <span class="count">{{ text.seenCount(seenCount, tiles.length) }}</span>
+      <button class="button" @click="emit('close')">← {{ text.library }} <kbd>{{ describeInput({ type: 'key', code: 'Escape' }, locale) }}</kbd></button>
     </header>
     <ul class="tiles">
       <li v-for="tile in tiles" :key="tile.id">
@@ -43,7 +47,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           <img v-if="tile.url !== null" :src="tile.url" alt="">
           <span v-else class="tile-name">{{ tile.name }}</span>
         </button>
-        <div v-else class="tile locked" aria-label="Not seen yet">?</div>
+        <div v-else class="tile locked" :aria-label="text.notSeenYet">?</div>
       </li>
     </ul>
     <div v-if="shown !== null" class="shown" role="dialog" :aria-label="shown.name" @click="shown = null">

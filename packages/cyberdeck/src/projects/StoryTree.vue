@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { MARKER_SYMBOLS } from './markerSymbols'
 import type { StoredCondition, StoredNode, StoryboardEntry } from '@cyberdeck/core'
+import { useMessages } from '@cyberdeck/stage'
+import { storyboardMessages } from '../i18n/storyboardMessages'
 
 /**
  * A chapter read top to bottom, each condition opening one column per branch that join again at
@@ -12,6 +14,8 @@ const props = defineProps<{
   entriesById: ReadonlyMap<string, StoryboardEntry>
   focusedId: string | null
   selectedIds: ReadonlySet<string>
+  /** The card whose text is open in the panel. */
+  editingId: string | null
   unreachableIds: ReadonlySet<string>
   register: (entryId: string, element: unknown) => void
   speakerName: (speakerId: string | null) => string | null
@@ -20,6 +24,7 @@ const props = defineProps<{
   branchColor: (branch: string) => string | undefined
 }>()
 const emit = defineEmits<{ pick: [entryId: string, event: MouseEvent] }>()
+const text = useMessages(storyboardMessages)
 
 
 const entryOf = (entryId: string) => props.entriesById.get(entryId)
@@ -35,6 +40,7 @@ const branchEntryId = (nodeId: string, branchIndex: number, branchId: string) =>
 const stateClasses = (entryId: string) => ({
   focused: entryId === props.focusedId,
   selected: props.selectedIds.has(entryId),
+  editing: entryId === props.editingId,
   unreachable: props.unreachableIds.has(entryId),
 })
 </script>
@@ -53,7 +59,7 @@ const stateClasses = (entryId: string) => ({
             :aria-selected="selectedIds.has(node.id)"
             @click="emit('pick', node.id, $event)"
           >
-            ↻ loop, until a break
+            {{ text.loopUntilBreak }}
           </header>
           <StoryTree
             v-if="node.nodes.length > 0"
@@ -61,7 +67,7 @@ const stateClasses = (entryId: string) => ({
             :nodes="node.nodes"
             @pick="(entryId, event) => emit('pick', entryId, event)"
           />
-          <p v-else class="nothing">nothing</p>
+          <p v-else class="nothing">{{ text.nothing }}</p>
         </section>
         <div
           :id="`entry-${node.id}/end`"
@@ -70,7 +76,7 @@ const stateClasses = (entryId: string) => ({
           :class="stateClasses(`${node.id}/end`)"
           @click="emit('pick', `${node.id}/end`, $event)"
         >
-          ↻ back to the start
+          {{ text.backToStart }}
         </div>
       </div>
       <div v-else-if="node.type === 'condition'" class="condition">
@@ -99,7 +105,7 @@ const stateClasses = (entryId: string) => ({
               :nodes="branch.nodes"
               @pick="(entryId, event) => emit('pick', entryId, event)"
               />
-            <p v-else class="nothing">nothing</p>
+            <p v-else class="nothing">{{ text.nothing }}</p>
           </section>
         </div>
         <div
@@ -133,7 +139,7 @@ const stateClasses = (entryId: string) => ({
         </template>
         <template v-else-if="node.type === 'choice'">
           <span class="number">{{ numberOf(node.id) }}</span>
-          <span class="line"><strong class="speaker">Choice: {{ decisionName(node.decisionId) }}</strong>{{ node.options.map(option => option.condition === null ? option.text : `${option.text} (if ${conditionText(option.condition)})`).join(' / ') }}</span>
+          <span class="line"><strong class="speaker">{{ text.choiceOf(decisionName(node.decisionId)) }}</strong>{{ node.options.map(option => option.condition === null ? option.text : `${option.text} (if ${conditionText(option.condition)})`).join(' / ') }}</span>
         </template>
         <template v-else>
           <span class="symbol">{{ MARKER_SYMBOLS[node.type] }}</span>
@@ -260,6 +266,11 @@ const stateClasses = (entryId: string) => ({
 .focused {
   outline: 2px solid #9eeaff;
   outline-offset: 2px;
+}
+
+.item.editing {
+  border-color: #f5c451;
+  box-shadow: inset 3px 0 0 #f5c451;
 }
 
 .item.selected {

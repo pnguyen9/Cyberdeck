@@ -60,7 +60,8 @@ function playThrough(nodes: readonly FlowNode[], isReached: boolean, flow: Readi
   let isReachedHere = isReached
   let breaks = false
   for (const node of nodes) {
-    if (!isReachedHere) {
+    // A definition plays nothing: wherever it stands, nothing is lost.
+    if (!isReachedHere && node.type !== 'definition') {
       flow.unreachable.add(node)
     }
     if (node.branches !== undefined) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assignAsset, DEFAULT_POSITION_PRESETS, DEFAULT_STAGE_DEFAULTS, matchAssetFile, type ProjectDocument } from '../src/index'
+import { addFontFile, assignAsset, DEFAULT_POSITION_PRESETS, DEFAULT_STAGE_DEFAULTS, fontMediaTypeOf, matchAssetFile, type ProjectDocument } from '../src/index'
 
 const project: ProjectDocument = {
   formatVersion: '1.0',
@@ -27,6 +27,9 @@ const project: ProjectDocument = {
   memories: [],
   stageDefaults: DEFAULT_STAGE_DEFAULTS,
   details: { description: '', credits: '', coverAssetId: null },
+  fonts: [],
+  css: '',
+  chapterTitleCards: false,
   createdAt: '2026-10-26T10:00:00.000Z',
   updatedAt: '2026-10-26T10:00:00.000Z',
 }
@@ -74,5 +77,17 @@ describe('assignAsset', () => {
     expect(updated.characters[0]?.expressions[1]?.assetId).toBe('asset-1')
     expect(project.characters[0]?.expressions[1]?.assetId).toBeNull()
     expect(project.assets).toEqual([])
+  })
+})
+
+describe('fonts', () => {
+  it('makes a font of each font file, named after it, and gives a file named like a font to it', () => {
+    let nextId = 1
+    const asset = (fileName: string) => ({ id: `asset-${nextId}`, fileName, mediaType: fontMediaTypeOf(fileName)!, byteSize: 1 })
+    const first = addFontFile(project, 'Cinzel-Regular.woff2', asset('Cinzel-Regular.woff2'), 1.2, () => `font-${nextId++}`)
+    expect(first.project.fonts).toEqual([{ id: 'font-1', name: 'Cinzel-Regular', assetId: 'asset-1', widthScale: 1.2 }])
+    const again = addFontFile(first.project, 'cinzel_regular.TTF', asset('cinzel_regular.TTF'), 1.25, () => `font-${nextId++}`)
+    expect(again.project.fonts).toEqual([{ id: 'font-1', name: 'Cinzel-Regular', assetId: 'asset-2', widthScale: 1.25 }])
+    expect(fontMediaTypeOf('song.ogg')).toBeNull()
   })
 })

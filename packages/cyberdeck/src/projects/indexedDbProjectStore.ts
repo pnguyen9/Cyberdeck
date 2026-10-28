@@ -1,3 +1,4 @@
+import { AuthorError } from '../i18n/errorMessages'
 import type { ProjectStore } from './projectStore'
 
 const DATABASE_NAME = 'cyberdeck-projects'
@@ -22,7 +23,7 @@ export function createIndexedDbProjectStore(): ProjectStore {
       }
     }
     request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error ?? new Error('The browser refused to store projects'))
+    request.onerror = () => reject(request.error ?? new AuthorError(text => text.storageRefused))
   })
   /** Runs requests in one transaction, resolving with the last request's result once the transaction is done. */
   const run = async <Result>(stores: string[], mode: IDBTransactionMode, makeRequest: (transaction: IDBTransaction) => IDBRequest<Result> | void): Promise<Result | undefined> => {
@@ -30,8 +31,8 @@ export function createIndexedDbProjectStore(): ProjectStore {
     const request = makeRequest(transaction)
     return new Promise((resolve, reject) => {
       transaction.oncomplete = () => resolve(request?.result)
-      transaction.onerror = () => reject(transaction.error ?? new Error('The browser could not save the project'))
-      transaction.onabort = () => reject(transaction.error ?? new Error('The browser could not save the project'))
+      transaction.onerror = () => reject(transaction.error ?? new AuthorError(text => text.saveFailed))
+      transaction.onabort = () => reject(transaction.error ?? new AuthorError(text => text.saveFailed))
     })
   }
   const rangeOf = (projectId: string) => IDBKeyRange.bound(`${projectId}/`, `${projectId}/￿`)
@@ -46,7 +47,7 @@ export function createIndexedDbProjectStore(): ProjectStore {
   const readBlob = async (projectId: string, assetId: string): Promise<Blob> => {
     const blob: unknown = await run([ASSETS], 'readonly', transaction => transaction.objectStore(ASSETS).get(`${projectId}/${assetId}`))
     if (!(blob instanceof Blob)) {
-      throw new Error(`The file ${assetId} is missing`)
+      throw new AuthorError(text => text.fileMissing(assetId))
     }
     return blob
   }

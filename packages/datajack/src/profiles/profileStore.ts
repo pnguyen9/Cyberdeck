@@ -1,6 +1,6 @@
 import type { SaveFolderChange } from '../../electron/bridge'
 import { checkedProfileName } from '../../electron/profileNames'
-import { createStorageSaveStore, type SaveStore } from '@cyberdeck/stage'
+import { createStorageSaveStore, type Locale, type SaveStore } from '@cyberdeck/stage'
 
 /** Who is playing, and where their saves go. */
 export interface Profile {
@@ -23,8 +23,8 @@ export interface ProfileStore {
   list: () => Promise<ProfileList>
   /** Where a new profile of that name saves unless the player chooses; null in the browser. */
   defaultSaveFolder: (name: string) => Promise<string | null>
-  /** Asks the player for a folder; null when cancelled, and always in the browser. */
-  chooseFolder: () => Promise<string | null>
+  /** Asks the player for a folder, in their language; null when cancelled, and always in the browser. */
+  chooseFolder: (locale: Locale) => Promise<string | null>
   /** Throws an error worded for the player when the name is blank or taken. */
   create: (name: string, saveFolder: string | null) => Promise<Profile>
   rename: (profileId: string, name: string) => Promise<void>

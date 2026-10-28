@@ -1,0 +1,33 @@
+{
+  "kind": "story",
+  "decisions": [
+    { "sourceLine": 2, "name": "Route", "values": ["Marie", "Jules"], "multiple": false },
+    { "sourceLine": 5, "name": "Clues", "values": ["Letter", "Key"], "multiple": true },
+    { "sourceLine": 9, "name": "Route", "values": ["Marie"], "multiple": false }
+  ],
+  "styles": [
+    { "sourceLine": 3, "name": "Whisper", "properties": ["italic", "grey"] },
+    { "sourceLine": 7, "name": "Shout", "properties": ["bold", "large"] }
+  ],
+  "chapters": [
+    {
+      "title": "Chapter 1",
+      "sourceLine": 4,
+      "nodes": [
+        { "type": "definition", "sourceLine": 5, "kind": "decision", "name": "Clues" },
+        { "type": "page", "sourceLine": 6, "kind": "narration", "speaker": null, "text": "The station was empty.", "directivesBefore": [], "inlineDirectives": [] },
+        { "type": "definition", "sourceLine": 7, "kind": "style", "name": "Shout" }
+      ]
+    },
+    {
+      "title": "Chapter 2",
+      "sourceLine": 8,
+      "nodes": [
+        { "type": "definition", "sourceLine": 9, "kind": "decision", "name": "Route" },
+        { "type": "page", "sourceLine": 10, "kind": "narration", "speaker": null, "text": "Rain.", "directivesBefore": [], "inlineDirectives": [] }
+      ]
+    }
+  ],
+  "scenes": [],
+  "problems": []
+}

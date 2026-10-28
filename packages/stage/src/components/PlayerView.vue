@@ -4,9 +4,13 @@ import {
   actionForKey,
   actionForMouseButton,
   actionForWheel,
+  describeInput,
   MOUSE_BUTTON,
   type PlayerAction,
 } from '../input/bindings'
+import { useLocale, useMessages, type LanguageChoice } from '../i18n/locale'
+import { playerMessages } from '../i18n/playerMessages'
+import { storyLocale, storyMessages } from '../i18n/storyMessages'
 import { DEFAULT_PLAYER_SETTINGS, type PlayerSettings } from '../settings/playerSettings'
 import {
   createStageCatalog,
@@ -16,8 +20,12 @@ import {
   recordIllustrationSeen,
   recordMemories,
   recordPageRead,
+  checkAuthorCss,
+  normalizeName,
+  RESERVED_STYLE_NAMES,
   safeFileName,
   stateFromSave,
+  styleClassName,
   StoryRuntime,
   toSave,
   waitMillisecondsOf,
@@ -56,6 +64,14 @@ const props = defineProps<{
 const emit = defineEmits<{ leave: []; map: [] }>()
 /** The player's choices: text speed, volumes, inputs. The application keeps them. */
 const settings = defineModel<PlayerSettings>('settings', { default: () => DEFAULT_PLAYER_SETTINGS })
+/** The application's language, which the Settings panel offers when the application gives it. */
+const languageChoice = defineModel<LanguageChoice>('languageChoice')
+
+const locale = useLocale()
+const text = useMessages(playerMessages)
+/** The end screen speaks the game's language, whoever plays it. */
+const storyText = computed(() => storyMessages[storyLocale(props.story.project)])
+const escapeKey = computed(() => describeInput({ type: 'key', code: 'Escape' }, locale.value))
 
 /** While skipping, each page already read stays this long. */
 const SKIP_INTERVAL_MILLISECONDS = 70
@@ -75,7 +91,7 @@ const openPanel = ref<'none' | 'log' | 'save' | 'load' | 'settings'>('none')
 /** The text box and the menu hidden, to look at the picture; any input shows them again. */
 const isTextHidden = ref(false)
 /** The text, choices and menu: hidden by the player, and under a panel or the end screen, which have their own buttons. */
-const isHudShown = computed(() => !isTextHidden.value && openPanel.value === 'none' && snapshot.value.step.type !== 'end' && errorMessage.value === null)
+const isHudShown = computed(() => !isTextHidden.value && openPanel.value === 'none' && snapshot.value.step.type !== 'end' && errorMessage.value === null && titleCard.value === null)
 const isFullscreen = ref(document.fullscreenElement !== null)
 const notice = ref<string | null>(null)
 let noticeTimer: ReturnType<typeof setTimeout> | undefined
@@ -98,12 +114,48 @@ const page = computed(() => snapshot.value.step.type === 'page' ? snapshot.value
 const choice = computed(() => snapshot.value.step.type === 'choice' ? snapshot.value.step.choice : null)
 /** The styled parts of a page, with the properties of their styles. */
 function stylesOf(shownPage: StoredPage): StyledPart[] {
-  return (shownPage.styles ?? []).map(span => ({
-    start: span.start,
-    end: span.end,
-    properties: props.story.project.styles.find(style => style.id === span.styleId)?.properties ?? [],
-  }))
+  return (shownPage.styles ?? []).map(span => {
+    const style = stylesById.value.get(span.styleId)
+    return {
+      start: span.start,
+      end: span.end,
+      properties: style?.properties ?? [],
+      ...(style === undefined ? {} : { authorClass: `author-${styleClassName(style.name)}` }),
+    }
+  })
 }
+const stylesById = computed(() => new Map(props.story.project.styles.map(style => [style.id, style])))
+
+/**
+ * The game's own CSS, checked again here since games are downloaded: added to the page while the
+ * story plays, as a stylesheet of its own, and taken away after.
+ */
+const authorSheet = new CSSStyleSheet()
+document.adoptedStyleSheets = [...document.adoptedStyleSheets, authorSheet]
+watch(() => props.story.project.css, css => authorSheet.replaceSync(checkAuthorCss(css ?? '').css), { immediate: true })
+
+/**
+ * The game's fonts, which its CSS names: read as bytes and given to the page, nothing loaded from
+ * elsewhere; taken away with the story. A font that cannot be read leaves its text in another font.
+ */
+const loadedFonts: FontFace[] = []
+let isLeaving = false
+async function loadFonts() {
+  for (const font of catalog.fonts) {
+    try {
+      const face = new FontFace(font.name, await (await fetch(font.url)).arrayBuffer())
+      await face.load()
+      if (isLeaving) {
+        return
+      }
+      document.fonts.add(face)
+      loadedFonts.push(face)
+    } catch {
+      // The text shows in the next font of the CSS, or the text box's.
+    }
+  }
+}
+void loadFonts()
 const pageStyles = computed(() => page.value === null ? [] : stylesOf(page.value))
 /** In full-screen text, the pages of the screen, up to the one shown; null in a text box. */
 const screenful = shallowRef<StoredPage[]>([])
@@ -126,6 +178,45 @@ const endingName = computed(() => {
 })
 /** The map, once a choice has been reached: before, it would have nothing to show. */
 const isMapOffered = computed(() => props.canOpenMap === true && progress.value.points.length > 0)
+/** The title of a chapter just started, over the stage before its text: each time one starts, if the game shows them. */
+const titleCard = ref<{ chapterId: string; title: string } | null>(null)
+let titleCardTimer: ReturnType<typeof setTimeout> | undefined
+const TITLE_CARD_MILLISECONDS = 2800
+
+/** The looks of a reserved style, `chapter title` or `ending`: its properties, and its class in the game's CSS. */
+function reservedStyleClasses(styleName: string): string[] {
+  const style = props.story.project.styles.find(candidate => normalizeName(candidate.name) === styleName)
+  return [...(style?.properties ?? []).map(property => `style-${property}`), `author-${styleClassName(styleName)}`]
+}
+
+/** Plays forward, then shows the title of a chapter just started; its text starts typing once the title is gone. */
+function playForward(action: () => void) {
+  const chapterBefore = runtime.currentChapter
+  act(action)
+  const chapter = runtime.currentChapter
+  if (props.story.project.chapterTitleCards === true && chapter !== null && chapter !== chapterBefore && chapter.title !== null && !isSkipping.value) {
+    titleCard.value = { chapterId: chapter.id, title: chapter.title }
+    clearTimeout(titleCardTimer)
+    titleCardTimer = setTimeout(dismissTitleCard, TITLE_CARD_MILLISECONDS)
+    return
+  }
+  startTyping()
+}
+
+/** Going back or loading leaves the chapter's start behind: its title goes, and nothing waits for it. */
+function forgetTitleCard() {
+  clearTimeout(titleCardTimer)
+  titleCard.value = null
+}
+
+function dismissTitleCard() {
+  clearTimeout(titleCardTimer)
+  if (titleCard.value !== null) {
+    titleCard.value = null
+    startTyping()
+  }
+}
+
 const endingsReached = computed(() => props.story.project.endings.filter(ending => progress.value.endingIds.includes(ending.id)).length)
 
 /**
@@ -201,7 +292,7 @@ function act(action: () => void) {
     void props.saveStore.write(props.story.project.id, AUTOSAVE_SLOT, toSave(props.story, runtime.exportState(), new Date().toISOString()))
       .then(isWritten => {
         if (!isWritten) {
-          showNotice('Could not autosave.')
+          showNotice(text.value.autosaveFailed)
         }
       })
   }
@@ -239,20 +330,15 @@ function showNotice(message: string) {
   }, NOTICE_MILLISECONDS)
 }
 
-const RESTORE_NOTICES: Record<RestoreOutcome, string> = {
-  exact: 'Loaded.',
-  chapterStart: 'This page no longer exists in the story: resumed at the start of its chapter.',
-  storyStart: 'This chapter no longer exists in the story: resumed at the start, with your decisions.',
-}
-
 function resume(save: SaveData) {
+  forgetTitleCard()
   let outcome: RestoreOutcome = 'exact'
   act(() => {
     outcome = runtime.restoreState(stateFromSave(props.story, save))
   })
   errorMessage.value = null
   startTyping()
-  showNotice(RESTORE_NOTICES[outcome])
+  showNotice(text.value.restored[outcome])
 }
 
 const backlogLines = ref<BacklogLine[]>([])
@@ -293,8 +379,8 @@ async function openSlots(mode: 'save' | 'load') {
     }
   }
   const slots = [
-    ...(mode === 'load' ? [{ slot: AUTOSAVE_SLOT, label: 'Autosave' }] : []),
-    ...MANUAL_SLOTS.map(slot => ({ slot, label: `Slot ${slot}` })),
+    ...(mode === 'load' ? [{ slot: AUTOSAVE_SLOT, label: text.value.autosaveSlot }] : []),
+    ...MANUAL_SLOTS.map(slot => ({ slot, label: text.value.slot(slot) })),
   ]
   slotSummaries.value = await Promise.all(slots.map(async summary => ({ ...summary, save: await props.saveStore.read(gameId, summary.slot) })))
   openPanel.value = mode
@@ -306,7 +392,7 @@ async function pickSlot(slot: string) {
   openPanel.value = 'none'
   if (mode === 'save') {
     const isWritten = await props.saveStore.write(gameId, slot, toSave(props.story, runtime.exportState(), new Date().toISOString()))
-    showNotice(isWritten ? `Saved in slot ${slot}.` : 'Could not save.')
+    showNotice(isWritten ? text.value.savedInSlot(slot) : text.value.saveFailed)
   } else {
     const save = await props.saveStore.read(gameId, slot)
     if (save !== null) {
@@ -319,6 +405,7 @@ function goBackTo(stopIndex: number) {
   openPanel.value = 'none'
   errorMessage.value = null
   pendingOption = null
+  forgetTitleCard()
   act(() => runtime.backTo(stopIndex))
   showWholePage()
 }
@@ -351,8 +438,7 @@ function continueSkipping() {
   skipTimer = setTimeout(() => {
     if (isSkipping.value && page.value === shownPage) {
       showWholePage()
-      act(() => runtime.next())
-      startTyping()
+      playForward(() => runtime.next())
     }
   }, SKIP_INTERVAL_MILLISECONDS)
 }
@@ -365,7 +451,7 @@ function toggleSkipping() {
     isSkipping.value = true
     continueSkipping()
   } else {
-    showNotice('Skipping passes only text already read.')
+    showNotice(text.value.skipsReadTextOnly)
   }
 }
 
@@ -408,8 +494,7 @@ function advance() {
     showWholePage()
     return
   }
-  act(() => runtime.next())
-  startTyping()
+  playForward(() => runtime.next())
 }
 
 /** The previous page comes back complete: it was already read. */
@@ -419,24 +504,31 @@ function goBack() {
   }
   errorMessage.value = null
   pendingOption = null
+  forgetTitleCard()
   act(() => runtime.back())
   showWholePage()
 }
 
 function choose(optionId: string) {
   pendingOption = currentPointKey === null ? null : { pointKey: currentPointKey, optionId }
-  act(() => runtime.choose(optionId))
-  startTyping()
+  playForward(() => runtime.choose(optionId))
 }
 
 function toggleFullscreen() {
   const change = document.fullscreenElement === null ? document.documentElement.requestFullscreen() : document.exitFullscreen()
-  change.catch(() => showNotice('Full screen is not available here.'))
+  change.catch(() => showNotice(text.value.fullscreenUnavailable))
 }
 
 function perform(action: PlayerAction) {
   if (isTextHidden.value && action !== 'fullscreen') {
     isTextHidden.value = false
+    return
+  }
+  // A title card is passed by moving on: the text after it starts, nothing more. Skipping waits for the text.
+  if (titleCard.value !== null && (action === 'advance' || action === 'skip')) {
+    if (action === 'advance') {
+      dismissTitleCard()
+    }
     return
   }
   if (action !== 'skip' && isSkipping.value) {
@@ -581,8 +673,7 @@ onMounted(async () => {
   progress.value = await props.saveStore.readProgress(props.story.project.id) ?? progress.value
   runtime.useMemory(progress.value)
   if (props.resumeFrom === null) {
-    act(() => runtime.start())
-    startTyping()
+    playForward(() => runtime.start())
   } else {
     resume(props.resumeFrom)
   }
@@ -597,7 +688,11 @@ onUnmounted(() => {
   resizeObserver.disconnect()
   clearTimeout(typingTimer)
   clearTimeout(noticeTimer)
+  clearTimeout(titleCardTimer)
   forgetSaveFile()
+  document.adoptedStyleSheets = document.adoptedStyleSheets.filter(sheet => sheet !== authorSheet)
+  isLeaving = true
+  loadedFonts.forEach(face => document.fonts.delete(face))
   clearTimeout(skipTimer)
 })
 </script>
@@ -641,18 +736,19 @@ onUnmounted(() => {
       />
       <ChoiceMenu v-if="choice !== null && isHudShown" :key="choice.id" :choice="choice" @choose="choose" />
       <div v-if="isHudShown" class="quick-menu" :class="{ low: fullScreenPages !== null }">
-        <button class="quick-button" :disabled="!canGoBack" @click.stop="goBack">◀ Back</button>
-        <button class="quick-button" @click.stop="openLog">Log</button>
-        <button class="quick-button" @click.stop="openSlots('save')">Save</button>
-        <button class="quick-button" @click.stop="openSlots('load')">Load</button>
-        <button class="quick-button" :class="{ active: isSkipping }" :aria-pressed="isSkipping" @click.stop="toggleSkipping">Skip ⏩</button>
-        <button v-if="isMapOffered" class="quick-button" @click.stop="emit('map')">Map</button>
-        <button class="quick-button" @click.stop="openPanel = 'settings'">Settings</button>
+        <button class="quick-button" :disabled="!canGoBack" @click.stop="goBack">{{ text.back }}</button>
+        <button class="quick-button" @click.stop="openLog">{{ text.log }}</button>
+        <button class="quick-button" @click.stop="openSlots('save')">{{ text.save }}</button>
+        <button class="quick-button" @click.stop="openSlots('load')">{{ text.load }}</button>
+        <button class="quick-button" :class="{ active: isSkipping }" :aria-pressed="isSkipping" @click.stop="toggleSkipping">{{ text.skip }}</button>
+        <button v-if="isMapOffered" class="quick-button" @click.stop="emit('map')">{{ text.map }}</button>
+        <button class="quick-button" @click.stop="openPanel = 'settings'">{{ text.settings }}</button>
       </div>
       <BacklogPanel v-if="openPanel === 'log'" :lines="backlogLines" @close="openPanel = 'none'" @go-back="goBackTo" />
       <SettingsPanel
         v-if="openPanel === 'settings'"
         v-model="settings"
+        v-model:language-choice="languageChoice"
         :is-fullscreen="isFullscreen"
         @close="openPanel = 'none'"
         @toggle-fullscreen="toggleFullscreen"
@@ -668,19 +764,24 @@ onUnmounted(() => {
       <Transition name="notice">
         <div v-if="notice !== null" class="notice" role="status">{{ notice }}</div>
       </Transition>
+      <Transition name="title-card">
+        <div v-if="titleCard !== null" :key="titleCard.chapterId" class="title-card" aria-live="polite">
+          <p class="title-card-text" :class="reservedStyleClasses(RESERVED_STYLE_NAMES.chapterTitle)">{{ titleCard.title }}</p>
+        </div>
+      </Transition>
       <div v-if="snapshot.step.type === 'end' || errorMessage !== null" class="end-screen" @click.stop>
-        <p>{{ errorMessage ?? endingName ?? 'The end.' }}</p>
+        <p :class="errorMessage === null ? ['ending-name', ...reservedStyleClasses(RESERVED_STYLE_NAMES.ending)] : []">{{ errorMessage ?? endingName ?? storyText.theEnd }}</p>
         <p v-if="errorMessage === null && story.project.endings.length > 0" class="endings-count">
-          Endings reached: {{ endingsReached }} of {{ story.project.endings.length }}
+          {{ storyText.endingsReached(endingsReached, story.project.endings.length) }}
         </p>
         <div class="end-actions">
-          <button v-if="canGoBack" class="end-button" @click="goBack">◀ Back</button>
-          <button v-if="isMapOffered && errorMessage === null" class="end-button" @click="emit('map')">Map</button>
+          <button v-if="canGoBack" class="end-button" @click="goBack">{{ text.back }}</button>
+          <button v-if="isMapOffered && errorMessage === null" class="end-button" @click="emit('map')">{{ text.map }}</button>
           <button class="end-button" @click="emit('leave')">← {{ leaveLabel }}</button>
         </div>
       </div>
     </div>
-    <button class="leave-button" @click="emit('leave')">← {{ leaveLabel }} <kbd>Esc</kbd></button>
+    <button class="leave-button" @click="emit('leave')">← {{ leaveLabel }} <kbd>{{ escapeKey }}</kbd></button>
   </div>
 </template>
 
@@ -804,6 +905,37 @@ onUnmounted(() => {
 
 .end-screen p {
   margin: 0;
+}
+
+/* A chapter's title over the stage, before its text; the style `chapter title` and the game's CSS give it its looks. */
+/* The default looks sit on the card and are inherited: a style's class on the title itself wins over them. */
+.title-card {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.55);
+  font: 72px/1.25 Georgia, serif;
+  letter-spacing: 0.04em;
+  color: #f2f4f8;
+  text-shadow: 0 4px 24px rgb(0 0 0 / 0.6);
+  pointer-events: none;
+}
+
+.title-card-text {
+  max-width: 80%;
+  margin: 0;
+  text-align: center;
+}
+
+.title-card-enter-active,
+.title-card-leave-active {
+  transition: opacity 0.6s ease;
+}
+
+.title-card-enter-from,
+.title-card-leave-to {
+  opacity: 0;
 }
 
 .endings-count {

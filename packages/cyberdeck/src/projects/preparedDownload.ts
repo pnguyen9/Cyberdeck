@@ -1,5 +1,7 @@
 import { safeFileName as fileNameFor } from '@cyberdeck/core'
+import type { Locale } from '@cyberdeck/stage'
 import { onUnmounted, shallowRef } from 'vue'
+import { commonMessages } from '../i18n/commonMessages'
 
 /** Word and Notepad recognise UTF-8 text by this mark; the import ignores it. */
 const BYTE_ORDER_MARK = '\uFEFF'
@@ -28,11 +30,12 @@ export function usePreparedDownload() {
   return { prepared, offer, forget }
 }
 
-export function formatSize(byteSize: number): string {
-  return byteSize < 1024 * 1024 ? `${Math.max(1, Math.round(byteSize / 1024))} KB` : `${(byteSize / 1024 / 1024).toFixed(1)} MB`
+export function formatSize(byteSize: number, locale: Locale): string {
+  const text = commonMessages[locale]
+  return byteSize < 1024 * 1024 ? text.kilobytes(Math.max(1, Math.round(byteSize / 1024))) : text.megabytes(byteSize / 1024 / 1024)
 }
 
 /** A name every system accepts for a downloaded file. */
-export function safeFileName(name: string): string {
-  return fileNameFor(name, 'Untitled')
+export function safeFileName(name: string, locale: Locale): string {
+  return fileNameFor(name, commonMessages[locale].untitled)
 }

@@ -1,0 +1,10 @@
+[import: story]
+[decision: Route = Marie | Jules]
+[style: Whisper = italic, grey]
+# Chapter 1
+[decision multi: Clues = Letter | Key]
+The station was empty.
+[style: Shout = bold, large]
+# Chapter 2
+[decision: Route = Marie]
+Rain.

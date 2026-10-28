@@ -1,14 +1,34 @@
+import { styleClassName } from '../format/authorCss'
 import { readStyleProperty } from '../format/textStyles'
 import type { Condition, ImportedChapter, ImportProblem, ImportResult, StoryNode } from './importTypes'
 import { flattenNodes, normalizeName } from './storyNodes'
 
+/**
+ * A decision or style the project has. Declared somewhere else (`declaredIn` names where), it cannot
+ * be declared again; in the project's definitions or in the text replaced (`declaredIn` null), a
+ * declaration gives it its new values, which must keep those still used elsewhere (`usedValues`).
+ * An implicit one was made by choices: later choices add values to it.
+ */
+export interface KnownDefinition {
+  name: string
+  declaredIn?: string | null
+  implicit?: boolean
+}
+
+export interface KnownDecision extends KnownDefinition {
+  values: string[]
+  usedValues?: string[]
+}
+
 /** Names the project already has, which an import may use without declaring them. */
 export interface KnownNames {
-  decisions: { name: string; values: string[] }[]
+  decisions: KnownDecision[]
   endings?: string[]
   memories?: string[]
-  /** Names of the project's styles. */
-  styles?: string[]
+  /** The project's styles; a name alone is declared elsewhere. */
+  styles?: (string | KnownDefinition)[]
+  /** Classes of the project's CSS: each is a style the text may use without declaring it. */
+  styleClasses?: string[]
   /** The project's scenes, with the scenes each one plays: a scene playing itself, even through others, never ends. */
   scenes?: { name: string; plays: string[] }[]
 }
@@ -35,20 +55,35 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     decisionValues.set(normalizeName(name), new Set(values.map(normalizeName)))
     declaredDecisions.add(normalizeName(name))
   }
+  const knownByName = new Map(knownNames.decisions.map(decision => [normalizeName(decision.name), decision]))
   for (const decision of knownNames.decisions) {
-    declare(decision.name, decision.values)
-  }
-  for (const decision of result.decisions) {
-    if (declaredDecisions.has(normalizeName(decision.name))) {
-      problems.push({ severity: 'error', code: 'duplicateDecision', line: decision.sourceLine, subject: decision.name })
+    if (decision.implicit === true) {
+      decisionValues.set(normalizeName(decision.name), new Set(decision.values.map(normalizeName)))
     } else {
       declare(decision.name, decision.values)
+    }
+  }
+  const declaredHere = new Set<string>()
+  for (const decision of result.decisions) {
+    const name = normalizeName(decision.name)
+    const known = knownByName.get(name)
+    if (declaredHere.has(name) || (known !== undefined && typeof known.declaredIn === 'string')) {
+      problems.push({ severity: 'error', code: 'duplicateDecision', line: decision.sourceLine, subject: decision.name, ...(declaredHere.has(name) ? {} : { suggestion: known!.declaredIn! }) })
+      continue
+    }
+    declaredHere.add(name)
+    declare(decision.name, decision.values)
+    const values = new Set(decision.values.map(normalizeName))
+    for (const used of known?.usedValues ?? []) {
+      if (!values.has(normalizeName(used))) {
+        problems.push({ severity: 'error', code: 'decisionValueStillUsed', line: decision.sourceLine, subject: `${decision.name}: ${used}` })
+      }
     }
   }
 
   const allNodes = [...result.chapters, ...result.scenes].flatMap(chapter => flattenNodes(chapter.nodes))
   problems.push(...checkScenes(result, knownNames.scenes ?? []))
-  problems.push(...checkStyles(result, allNodes, knownNames.styles ?? []))
+  problems.push(...checkStyles(result, allNodes, knownNames.styles ?? [], knownNames.styleClasses ?? []))
 
   for (const node of allNodes) {
     if (node.type === 'choice') {
@@ -120,18 +155,25 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
 }
 
 /** Styles declared twice, and styles used that are neither declared nor a property alone (`italic`). */
-function checkStyles(result: ImportResult, allNodes: readonly StoryNode[], knownStyles: readonly string[]): ImportProblem[] {
+function checkStyles(result: ImportResult, allNodes: readonly StoryNode[], knownStyles: readonly (string | KnownDefinition)[], styleClasses: readonly string[]): ImportProblem[] {
+  const classes = new Set(styleClasses)
   const problems: ImportProblem[] = []
-  const declared = new Set(knownStyles.map(normalizeName))
+  const known = knownStyles.map(style => typeof style === 'string' ? { name: style, declaredIn: '' } : style)
+  const declared = new Set(known.map(style => normalizeName(style.name)))
+  const placeOf = new Map(known.flatMap(style => typeof style.declaredIn === 'string' ? [[normalizeName(style.name), style.declaredIn] as const] : []))
+  const declaredHere = new Set<string>()
   for (const declaration of result.styles) {
-    if (declared.has(normalizeName(declaration.name))) {
-      problems.push({ severity: 'error', code: 'duplicateStyle', line: declaration.sourceLine, subject: declaration.name })
+    const name = normalizeName(declaration.name)
+    if (declaredHere.has(name) || placeOf.has(name)) {
+      const place = declaredHere.has(name) ? '' : placeOf.get(name) ?? ''
+      problems.push({ severity: 'error', code: 'duplicateStyle', line: declaration.sourceLine, subject: declaration.name, ...(place === '' ? {} : { suggestion: place }) })
     }
-    declared.add(normalizeName(declaration.name))
+    declaredHere.add(name)
+    declared.add(name)
   }
   for (const node of allNodes) {
     for (const span of node.type === 'page' ? node.styles ?? [] : []) {
-      if (!declared.has(normalizeName(span.style)) && readStyleProperty(span.style) === null) {
+      if (!declared.has(normalizeName(span.style)) && readStyleProperty(span.style) === null && !classes.has(styleClassName(span.style))) {
         problems.push({ severity: 'error', code: 'unknownStyle', line: node.sourceLine, subject: span.style })
       }
     }

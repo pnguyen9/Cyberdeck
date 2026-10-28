@@ -48,6 +48,7 @@ describe('tags in the text', () => {
     expect(tagProblem('tint: purple', VOCABULARY, layout)).toContain('sepia, night, grey or none')
     expect(['style: italic', 'shake', 'text: full'].map(tagKind)).toEqual(['stage', 'stage', 'stage'])
     expect(tagProblem('if: Nothing is checked here', VOCABULARY, layout)).toBeNull()
+    expect(tagProblem('tint: purple', VOCABULARY, layout, 'fr')).toBe('[tint: …] n’est pas compris\u00a0: il attend sepia, night, grey ou none.')
   })
 })
 
@@ -78,6 +79,12 @@ describe('suggestions', () => {
     expect(suggest('[if: Answer is not D|')?.labels).toEqual(['Dodge'])
     expect(suggest('[if: seen ending |')?.labels).toEqual(['Gone', 'Home'])
     expect(suggest('[set: Answer = T|')?.labels).toEqual(['Truth'])
+  })
+
+  it('describe what they offer in the author\'s language, the words of the syntax staying as they are', () => {
+    const completion = completionAt('[bg: r', 6, VOCABULARY, 'fr')
+    expect(completion?.items.map(item => [item.label, item.detail])).toEqual([['rooftop', 'décor']])
+    expect(completionAt('[e', 2, VOCABULARY, 'fr')?.items[0]).toEqual({ label: 'enter', insert: 'enter: ', detail: 'un personnage entre en scène' })
   })
 
   it('stop once the tag is closed, or outside any tag', () => {

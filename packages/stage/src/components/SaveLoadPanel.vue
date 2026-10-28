@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import type { SaveData } from '@cyberdeck/core'
+import { computed } from 'vue'
+import { describeInput } from '../input/bindings'
+import { useLocale, useMessages } from '../i18n/locale'
+import { saveLoadMessages } from '../i18n/saveLoadMessages'
 
 export interface SlotSummary {
   slot: string
@@ -11,7 +15,10 @@ export interface SlotSummary {
 const props = defineProps<{ mode: 'save' | 'load'; slots: SlotSummary[]; file?: { url: string; name: string } | null }>()
 const emit = defineEmits<{ close: []; pick: [slot: string] }>()
 
-const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+const locale = useLocale()
+const text = useMessages(saveLoadMessages)
+const escapeKey = computed(() => describeInput({ type: 'key', code: 'Escape' }, locale.value))
+const dateFormat = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }))
 
 /** Saving goes into any manual slot; loading needs a save, and never writes the autosave. */
 function isEnabled(summary: SlotSummary): boolean {
@@ -20,10 +27,10 @@ function isEnabled(summary: SlotSummary): boolean {
 </script>
 
 <template>
-  <div class="overlay" role="dialog" :aria-label="mode === 'save' ? 'Save' : 'Load'" @click.stop @wheel.stop>
+  <div class="overlay" role="dialog" :aria-label="mode === 'save' ? text.save : text.load" @click.stop @wheel.stop>
     <header class="overlay-header">
-      <h2>{{ mode === 'save' ? 'Save' : 'Load' }}</h2>
-      <button class="close-button" @click="emit('close')">Close <kbd>Esc</kbd></button>
+      <h2>{{ mode === 'save' ? text.save : text.load }}</h2>
+      <button class="close-button" @click="emit('close')">{{ text.close }} <kbd>{{ escapeKey }}</kbd></button>
     </header>
     <div class="slots">
       <button
@@ -35,16 +42,16 @@ function isEnabled(summary: SlotSummary): boolean {
       >
         <span class="slot-label">{{ summary.label }}</span>
         <template v-if="summary.save !== null">
-          <span class="slot-chapter">{{ summary.save.chapter ?? 'Untitled chapter' }}</span>
+          <span class="slot-chapter">{{ summary.save.chapter ?? text.untitledChapter }}</span>
           <span class="slot-excerpt">{{ summary.save.excerpt }}</span>
           <span class="slot-date">{{ dateFormat.format(new Date(summary.save.savedAt)) }}</span>
         </template>
-        <span v-else class="slot-empty">Empty</span>
+        <span v-else class="slot-empty">{{ text.empty }}</span>
       </button>
     </div>
     <p v-if="mode === 'save' && file != null" class="to-file">
-      <a class="file-link" :href="file.url" :download="file.name" @click="emit('close')">Save to a file</a>
-      to keep it, or to go on playing on another computer.
+      <a class="file-link" :href="file.url" :download="file.name" @click="emit('close')">{{ text.saveToFile }}</a>
+      {{ text.saveToFileReason }}
     </p>
   </div>
 </template>

@@ -1,6 +1,6 @@
 {
   "name": "cyberdeck-workspace",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "license": "Unlicense",
   "description": "Cyberdeck (visual novel engine) and Datajack (player)",
@@ -12,7 +12,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "checks": "node checks/run.mjs",
     "checks:desktop": "node checks/run.mjs --desktop",
-    "guide:images": "node checks/run.mjs guide-images && node checks/copy-guide-images.mjs"
+    "guide:images": "node checks/run.mjs guide-images && node checks/copy-guide-images.mjs",
+    "release": "node scripts/packageRelease.mjs"
   },
   "engines": {
     "node": ">=22.12.0"

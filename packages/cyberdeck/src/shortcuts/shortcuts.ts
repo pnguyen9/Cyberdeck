@@ -1,3 +1,6 @@
+import type { Locale } from '@cyberdeck/stage'
+import { shortcutMessages } from '../i18n/shortcutMessages'
+
 /**
  * The editor's keyboard shortcuts: what each action is, where it applies, and its keys. Authors
  * may change the keys; their choices are kept in the browser, over the defaults.
@@ -11,6 +14,7 @@ export interface KeyChord {
   shift: boolean
 }
 
+/** Where shortcuts apply, named in English: `shortcutMessages` says them in each language. */
 export type ShortcutScreen = 'Storyboard' | 'Editing a page' | 'Everywhere'
 
 export type ShortcutId =
@@ -37,10 +41,21 @@ export type ShortcutId =
   | 'save'
   | 'cancel'
   | 'showShortcuts'
+  | 'goToBoard'
+  | 'togglePanel'
+  | 'previousTab'
+  | 'nextTab'
+  | 'tabChapters'
+  | 'tabStoryboard'
+  | 'tabImport'
+  | 'tabCast'
+  | 'tabDetails'
+  | 'tabDefinitions'
+  | 'tabIndex'
+  | 'tabExport'
 
 export interface ShortcutAction {
   id: ShortcutId
-  label: string
   screen: ShortcutScreen
   defaults: readonly KeyChord[]
   /** Moving the focus: Shift extends the selection, whatever the key. */
@@ -52,29 +67,42 @@ export type ShortcutMap = Readonly<Record<ShortcutId, readonly KeyChord[]>>
 const chord = (key: string, modifiers: Partial<Omit<KeyChord, 'key'>> = {}): KeyChord => ({ key, ctrl: false, alt: false, shift: false, ...modifiers })
 
 export const SHORTCUT_ACTIONS: readonly ShortcutAction[] = [
-  { id: 'focusPrevious', label: 'Previous card', screen: 'Storyboard', defaults: [chord('ArrowLeft')], isFocusMove: true },
-  { id: 'focusNext', label: 'Next card', screen: 'Storyboard', defaults: [chord('ArrowRight')], isFocusMove: true },
-  { id: 'focusAbove', label: 'Card above', screen: 'Storyboard', defaults: [chord('ArrowUp')], isFocusMove: true },
-  { id: 'focusBelow', label: 'Card below', screen: 'Storyboard', defaults: [chord('ArrowDown')], isFocusMove: true },
-  { id: 'focusFirst', label: 'First card', screen: 'Storyboard', defaults: [chord('Home')], isFocusMove: true },
-  { id: 'focusLast', label: 'Last card', screen: 'Storyboard', defaults: [chord('End')], isFocusMove: true },
-  { id: 'toggleSelected', label: 'Select the card, or let it go', screen: 'Storyboard', defaults: [chord(' ')] },
-  { id: 'selectAll', label: 'Select its whole list', screen: 'Storyboard', defaults: [chord('a', { ctrl: true })] },
-  { id: 'moveSelectionBack', label: 'Move the selection back', screen: 'Storyboard', defaults: [chord('ArrowLeft', { ctrl: true, shift: true })] },
-  { id: 'moveSelectionForward', label: 'Move the selection forward', screen: 'Storyboard', defaults: [chord('ArrowRight', { ctrl: true, shift: true })] },
-  { id: 'moveSelectionUp', label: 'Move the selection up a row', screen: 'Storyboard', defaults: [chord('ArrowUp', { ctrl: true, shift: true })] },
-  { id: 'moveSelectionDown', label: 'Move the selection down a row', screen: 'Storyboard', defaults: [chord('ArrowDown', { ctrl: true, shift: true })] },
-  { id: 'cut', label: 'Cut the selection, to move it elsewhere', screen: 'Storyboard', defaults: [chord('x', { ctrl: true })] },
-  { id: 'paste', label: 'Put what was cut after the card', screen: 'Storyboard', defaults: [chord('v', { ctrl: true })] },
-  { id: 'edit', label: 'Edit the card, or open the block', screen: 'Storyboard', defaults: [chord('Enter')] },
-  { id: 'leave', label: 'Let go of the selection, or leave the block', screen: 'Storyboard', defaults: [chord('Escape')] },
-  { id: 'addPage', label: 'Add a page after', screen: 'Storyboard', defaults: [chord('n')] },
-  { id: 'previewFromHere', label: 'Preview from the card', screen: 'Storyboard', defaults: [chord('p')] },
-  { id: 'remove', label: 'Remove the selection', screen: 'Storyboard', defaults: [chord('Delete'), chord('Backspace')] },
-  { id: 'undo', label: 'Undo', screen: 'Storyboard', defaults: [chord('z', { ctrl: true })] },
-  { id: 'save', label: 'Save the page', screen: 'Editing a page', defaults: [chord('Enter', { ctrl: true })] },
-  { id: 'cancel', label: 'Cancel the edit', screen: 'Editing a page', defaults: [chord('Escape')] },
-  { id: 'showShortcuts', label: 'Show the shortcuts', screen: 'Everywhere', defaults: [chord('?')] },
+  { id: 'focusPrevious', screen: 'Storyboard', defaults: [chord('ArrowLeft')], isFocusMove: true },
+  { id: 'focusNext', screen: 'Storyboard', defaults: [chord('ArrowRight')], isFocusMove: true },
+  { id: 'focusAbove', screen: 'Storyboard', defaults: [chord('ArrowUp')], isFocusMove: true },
+  { id: 'focusBelow', screen: 'Storyboard', defaults: [chord('ArrowDown')], isFocusMove: true },
+  { id: 'focusFirst', screen: 'Storyboard', defaults: [chord('Home')], isFocusMove: true },
+  { id: 'focusLast', screen: 'Storyboard', defaults: [chord('End')], isFocusMove: true },
+  { id: 'toggleSelected', screen: 'Storyboard', defaults: [chord(' ')] },
+  { id: 'selectAll', screen: 'Storyboard', defaults: [chord('a', { ctrl: true })] },
+  { id: 'moveSelectionBack', screen: 'Storyboard', defaults: [chord('ArrowLeft', { ctrl: true, shift: true })] },
+  { id: 'moveSelectionForward', screen: 'Storyboard', defaults: [chord('ArrowRight', { ctrl: true, shift: true })] },
+  { id: 'moveSelectionUp', screen: 'Storyboard', defaults: [chord('ArrowUp', { ctrl: true, shift: true })] },
+  { id: 'moveSelectionDown', screen: 'Storyboard', defaults: [chord('ArrowDown', { ctrl: true, shift: true })] },
+  { id: 'cut', screen: 'Storyboard', defaults: [chord('x', { ctrl: true })] },
+  { id: 'paste', screen: 'Storyboard', defaults: [chord('v', { ctrl: true })] },
+  { id: 'edit', screen: 'Storyboard', defaults: [chord('Enter')] },
+  { id: 'leave', screen: 'Storyboard', defaults: [chord('Escape')] },
+  { id: 'addPage', screen: 'Storyboard', defaults: [chord('n')] },
+  { id: 'previewFromHere', screen: 'Storyboard', defaults: [chord('p')] },
+  { id: 'remove', screen: 'Storyboard', defaults: [chord('Delete'), chord('Backspace')] },
+  { id: 'undo', screen: 'Storyboard', defaults: [chord('z', { ctrl: true })] },
+  { id: 'save', screen: 'Editing a page', defaults: [chord('Enter', { ctrl: true })] },
+  { id: 'cancel', screen: 'Editing a page', defaults: [chord('Escape')] },
+  { id: 'showShortcuts', screen: 'Everywhere', defaults: [chord('?')] },
+  // With Alt, so that they work while typing a page too; Alt+digits are the browsers' own.
+  { id: 'goToBoard', screen: 'Everywhere', defaults: [chord('g', { alt: true })] },
+  { id: 'togglePanel', screen: 'Everywhere', defaults: [chord('p', { alt: true })] },
+  { id: 'previousTab', screen: 'Everywhere', defaults: [chord('PageUp', { alt: true })] },
+  { id: 'nextTab', screen: 'Everywhere', defaults: [chord('PageDown', { alt: true })] },
+  { id: 'tabChapters', screen: 'Everywhere', defaults: [] },
+  { id: 'tabStoryboard', screen: 'Everywhere', defaults: [] },
+  { id: 'tabImport', screen: 'Everywhere', defaults: [] },
+  { id: 'tabCast', screen: 'Everywhere', defaults: [] },
+  { id: 'tabDetails', screen: 'Everywhere', defaults: [] },
+  { id: 'tabDefinitions', screen: 'Everywhere', defaults: [] },
+  { id: 'tabIndex', screen: 'Everywhere', defaults: [] },
+  { id: 'tabExport', screen: 'Everywhere', defaults: [] },
 ]
 
 export const DEFAULT_SHORTCUTS: ShortcutMap = Object.fromEntries(SHORTCUT_ACTIONS.map(action => [action.id, action.defaults])) as ShortcutMap
@@ -98,20 +126,16 @@ export function actionFor(map: ShortcutMap, event: Pick<KeyboardEvent, 'key' | '
   return action?.id ?? null
 }
 
-const KEY_NAMES: Readonly<Record<string, string>> = {
-  ' ': 'Space',
-  ArrowLeft: '←',
-  ArrowRight: '→',
-  ArrowUp: '↑',
-  ArrowDown: '↓',
-  Escape: 'Esc',
-  Delete: 'Del',
+/** Keys described as the keyboards of `locale` name them: `Ctrl+Maj+←` in French. */
+export function chordDescriber(locale: Locale): (chord: KeyChord) => string {
+  const text = shortcutMessages[locale]
+  return chord => {
+    const key = text.keyNames[chord.key] ?? (chord.key.length === 1 ? chord.key.toUpperCase() : chord.key)
+    return [chord.ctrl ? text.ctrl : '', chord.alt ? text.alt : '', chord.shift ? text.shift : '', key].filter(part => part !== '').join('+')
+  }
 }
 
-export function describeChord(chord: KeyChord): string {
-  const key = KEY_NAMES[chord.key] ?? (chord.key.length === 1 ? chord.key.toUpperCase() : chord.key)
-  return [chord.ctrl ? 'Ctrl' : '', chord.alt ? 'Alt' : '', chord.shift ? 'Shift' : '', key].filter(part => part !== '').join('+')
-}
+export const describeChord = chordDescriber('en')
 
 /** Actions already using the keys where the action applies: they would both answer. */
 export function conflictsOf(map: ShortcutMap, actionId: ShortcutId, chord: KeyChord): ShortcutId[] {

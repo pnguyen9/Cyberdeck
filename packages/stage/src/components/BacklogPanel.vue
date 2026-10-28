@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, useTemplateRef } from 'vue'
+import { describeInput } from '../input/bindings'
+import { backlogMessages } from '../i18n/backlogMessages'
+import { useLocale, useMessages } from '../i18n/locale'
 import { textRuns, type StyledPart } from '../textRuns'
 
 export interface BacklogLine {
@@ -20,6 +23,9 @@ const shownLines = computed(() => props.lines.map(line => ({
 const emit = defineEmits<{ close: []; goBack: [stopIndex: number] }>()
 
 const list = useTemplateRef<HTMLElement>('list')
+const locale = useLocale()
+const text = useMessages(backlogMessages)
+const escapeKey = computed(() => describeInput({ type: 'key', code: 'Escape' }, locale.value))
 
 /** The most recent lines are at the bottom, where the reader's eye already is. */
 onMounted(() => {
@@ -30,14 +36,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="overlay" role="dialog" aria-label="Log" @click.stop @wheel.stop>
+  <div class="overlay" role="dialog" :aria-label="text.log" @click.stop @wheel.stop>
     <header class="overlay-header">
-      <h2>Log</h2>
-      <span class="hint">Click a line to go back to it</span>
-      <button class="close-button" @click="emit('close')">Close <kbd>Esc</kbd></button>
+      <h2>{{ text.log }}</h2>
+      <span class="hint">{{ text.hint }}</span>
+      <button class="close-button" @click="emit('close')">{{ text.close }} <kbd>{{ escapeKey }}</kbd></button>
     </header>
     <ol ref="list" class="lines">
-      <li v-if="lines.length === 0" class="empty">Nothing read yet.</li>
+      <li v-if="lines.length === 0" class="empty">{{ text.nothingRead }}</li>
       <li v-for="line in shownLines" :key="line.stopIndex">
         <button class="line" :class="{ choice: line.isChoice }" @click="emit('goBack', line.stopIndex)">
           <span v-if="line.speaker !== null" class="speaker">{{ line.speaker }}</span>
@@ -142,4 +148,3 @@ kbd {
 }
 </style>
 
-<style src="../textStyles.css"></style>

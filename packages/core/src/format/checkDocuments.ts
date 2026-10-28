@@ -67,6 +67,15 @@ function object<Shape extends object>(shape: { [Key in keyof Shape]: Check<Shape
   }
 }
 
+/** The shape's fields, plus `implicit` when it is true: the mark of a name declared nowhere, kept apart from the shape. */
+function withImplicit<Shape extends object>(check: Check<Shape>): Check<Shape & { implicit?: true }> {
+  return (value, path) => record(value, path).implicit === true ? { ...check(value, path), implicit: true } : check(value, path)
+}
+
+/** Properties this version draws; those a newer version adds are dropped, the text shown without them. */
+const styleProperties: Check<(typeof STYLE_PROPERTIES)[number][]> = (value, path) =>
+  array(string)(value, path).filter((property): property is (typeof STYLE_PROPERTIES)[number] => (STYLE_PROPERTIES as readonly string[]).includes(property))
+
 const formatVersion: Check<string> = (value, path) => isSupportedFormatVersion(string(value, path)) ? value as string : fail(path, 'a format version this player reads')
 
 const animationKind = oneOf('instant', 'fade', 'slide-from-left', 'slide-from-right', 'slide-to-left', 'slide-to-right')
@@ -180,6 +189,8 @@ function node(value: unknown, path: string, depth: number): StoredNode {
       return object({ type: oneOf('ending'), id: string, endingId: string })(value, path)
     case 'remember':
       return object({ type: oneOf('remember'), id: string, memoryId: string })(value, path)
+    case 'definition':
+      return object({ type: oneOf('definition'), id: string, kind: oneOf('decision', 'style'), definedId: string })(value, path)
     case 'break':
       return object({ type: oneOf('break'), id: string })(value, path)
     case 'play':
@@ -221,13 +232,21 @@ const withAssetId = object({ id: string, name: string, assetId: nullable(string)
 /** Fields added to projects after documents were first written: absent from those, they take these values. */
 const LATER_PROJECT_FIELDS = {
   illustrations: [],
+  fonts: [],
   styles: [],
   sounds: [],
   sceneOrder: [],
   endings: [],
   memories: [],
   details: { description: '', credits: '', coverAssetId: null },
+  css: '',
+  chapterTitleCards: false,
 }
+
+/** Far beyond any project's styles; low enough that checking it stays quick. */
+export const MAXIMUM_CSS_LENGTH = 200_000
+/** Longer, the CSS is left out rather than the whole project or game refused: the story still plays, plainer. */
+const css: Check<string> = (value, path) => string(value, path).length <= MAXIMUM_CSS_LENGTH ? value as string : ''
 
 export const checkProjectDocument: Check<ProjectDocument> = (value, path) =>
   checkProjectFields(typeof value === 'object' && value !== null && !Array.isArray(value) ? { ...LATER_PROJECT_FIELDS, ...value } : value, path)
@@ -239,15 +258,16 @@ const checkProjectFields: Check<ProjectDocument> = object({
   locale: string,
   chapterOrder: array(string),
   sceneOrder: array(string),
-  decisions: array(object({ id: string, name: string, multiple: boolean, values: array(object({ id: string, name: string })) })),
+  decisions: array(withImplicit(object({ id: string, name: string, multiple: boolean, values: array(object({ id: string, name: string })) }))),
   endings: array(object({ id: string, name: string })),
   memories: array(object({ id: string, name: string })),
-  styles: array(object({ id: string, name: string, properties: array(oneOf(...STYLE_PROPERTIES)) })),
+  styles: array(withImplicit(object({ id: string, name: string, properties: styleProperties }))),
   characters: array(object({ id: string, name: string, expressions: array(withAssetId), drawnFacing: nullable(facing) })),
   backgrounds: array(withAssetId),
   music: array(withAssetId),
   sounds: array(withAssetId),
   illustrations: array(withAssetId),
+  fonts: array(object({ id: string, name: string, assetId: nullable(string), widthScale: (value, path) => finiteNumber(value, path) > 0 && (value as number) <= 4 ? value as number : fail(path, 'a width scale') })),
   assets: array(object({ id: string, fileName: string, mediaType: string, byteSize: finiteNumber })),
   positions: array(object({ id: string, name: string, x: percentage })),
   stageDefaults: object({
@@ -256,6 +276,8 @@ const checkProjectFields: Check<ProjectDocument> = object({
     move: object({ durationMs: duration }),
   }),
   details: object({ description: string, credits: string, coverAssetId: nullable(string) }),
+  css,
+  chapterTitleCards: boolean,
   createdAt: string,
   updatedAt: string,
 })

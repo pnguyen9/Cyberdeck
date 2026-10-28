@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { MARKER_SYMBOLS } from './markerSymbols'
 import type { LevelElement, StoredCondition, StoredPage, StoryboardLevel } from '@cyberdeck/core'
+import { useMessages } from '@cyberdeck/stage'
+import { commonMessages } from '../i18n/commonMessages'
+import { storyboardMessages } from '../i18n/storyboardMessages'
 import { emptyLaneId } from './gridSelection'
 
 /**
@@ -14,6 +17,8 @@ const props = defineProps<{
   chapterTitle: string
   focusedId: string | null
   selectedIds: ReadonlySet<string>
+  /** The card whose text is open in the panel. */
+  editingId: string | null
   cutIds: ReadonlySet<string>
   dropTarget: { elementId: string; side: 'before' | 'after' } | null
   register: (elementId: string, element: unknown) => void
@@ -39,26 +44,29 @@ const emit = defineEmits<{
 const stateClasses = (elementId: string) => ({
   focused: elementId === props.focusedId,
   selected: props.selectedIds.has(elementId),
+  editing: elementId === props.editingId,
   cut: props.cutIds.has(elementId),
   'drop-before': props.dropTarget?.elementId === elementId && props.dropTarget.side === 'before',
   'drop-after': props.dropTarget?.elementId === elementId && props.dropTarget.side === 'after',
 })
+const text = useMessages(storyboardMessages)
+const common = useMessages(commonMessages)
 /** How many routes of a block end inside it, as its mark says. */
 const endingMark = (element: Extract<LevelElement, { kind: 'block' }>) => element.allRoutesEnd
-  ? '★ every route ends'
-  : element.endingRouteCount === 0 ? null : `★ ${element.endingRouteCount} ${element.endingRouteCount === 1 ? 'route ends' : 'routes end'}`
-const UNREACHABLE_TITLE = 'Never reached: every path before it ends'
+  ? text.value.everyRouteEnds
+  : element.endingRouteCount === 0 ? null : text.value.routesEnd(element.endingRouteCount)
 /** Pages inside a block that no path reaches; a block itself unreached is already shown faded. */
 const unreachableMark = (element: Extract<LevelElement, { kind: 'block' }>) => element.isUnreachable || element.unreachablePageCount === 0
   ? null
-  : `⚠ ${element.unreachablePageCount} never reached`
+  : text.value.neverReached(element.unreachablePageCount)
+/** Inside a loop, its one lane: what it does, said here rather than as the storyboard words it. */
 const stagingCount = (page: StoredPage) => page.commandsBefore.length + page.inlineCommands.length
 const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => element.branches.length
 </script>
 
 <template>
   <div class="grid">
-    <nav v-if="level.path.length > 0" class="path" aria-label="Blocks entered">
+    <nav v-if="level.path.length > 0" class="path" :aria-label="text.blocksEntered">
       <button class="path-entry" @click="emit('goTo', null)" @dragover.prevent.stop @drop.prevent.stop="emit('dropOnPath', 0)">{{ chapterTitle }}</button>
       <template v-for="(entry, index) in level.path" :key="entry.id">
         <span class="separator">›</span>
@@ -69,13 +77,13 @@ const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => elemen
           @dragover.prevent.stop
           @drop.prevent.stop="index < level.path.length - 1 && emit('dropOnPath', index + 1)"
         >
-          {{ entry.kind === 'loop' ? '↻' : '◆' }} {{ entry.text }}
+          {{ entry.kind === 'loop' ? text.loop : `◆ ${entry.text}` }}
         </button>
       </template>
     </nav>
 
     <section v-for="(lane, laneIndex) in level.lanes" :key="lane.containerId ?? 'chapter'" :data-lane="laneIndex" class="lane" :class="{ titled: lane.text !== null }" :style="{ '--branch-color': branchColor(lane.branch) }">
-      <h3 v-if="lane.text !== null" class="lane-title">{{ lane.text }}<span v-if="lane.stops" class="ending-mark"> · ★ ends</span></h3>
+      <h3 v-if="lane.text !== null" class="lane-title">{{ lane.text }}<span v-if="lane.stops" class="ending-mark">{{ ` ${text.laneEnds}` }}</span></h3>
       <div class="elements">
         <div
           v-if="lane.elements.length === 0"
@@ -88,7 +96,7 @@ const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => elemen
           @dragover.prevent.stop="emit('dragOver', emptyLaneId(lane.containerId), $event)"
           @drop.prevent.stop="emit('drop')"
         >
-          Nothing here yet
+          {{ text.nothingHereYet }}
         </div>
         <div
           v-for="element in lane.elements"
@@ -97,7 +105,7 @@ const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => elemen
           :ref="domElement => register(element.id, domElement)"
           class="element"
           :class="[element.kind === 'block' ? ['block', { collapsed: element.isCollapsed }] : element.entry.type, stateClasses(element.id), { unreachable: element.isUnreachable }]"
-          :title="element.isUnreachable ? UNREACHABLE_TITLE : undefined"
+          :title="element.isUnreachable ? text.unreachedTitle : undefined"
           :style="{ '--branch-color': branchColor(element.kind === 'entry' ? element.entry.branch : lane.branch) }"
           role="option"
           :aria-selected="selectedIds.has(element.id)"
@@ -117,12 +125,12 @@ const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => elemen
           </template>
           <template v-else-if="element.kind === 'entry' && element.entry.type === 'card' && element.entry.node.type === 'choice'">
             <span class="number">{{ element.entry.number }}</span>
-            <span class="speaker">Choice: {{ decisionName(element.entry.node.decisionId) }}</span>
+            <span class="speaker">{{ text.choiceOf(decisionName(element.entry.node.decisionId)) }}</span>
             <span
               v-for="option in element.entry.node.options"
               :key="option.id"
               class="option"
-              :title="option.condition === null ? undefined : `Offered only if ${conditionText(option.condition)}`"
+              :title="option.condition === null ? undefined : text.optionOfferedOnlyIf(conditionText(option.condition))"
             >› {{ option.text }}<span v-if="option.condition !== null" class="option-condition"> · if {{ conditionText(option.condition) }}</span></span>
           </template>
           <template v-else-if="element.kind === 'entry'">
@@ -132,25 +140,25 @@ const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => elemen
 
           <template v-else-if="element.isCollapsed">
             <span class="number">{{ element.numbers }}</span>
-            <span class="speaker">{{ element.node.type === 'loop' ? '↻ Loop' : '◆ Branches' }}</span>
+            <span class="speaker">{{ element.node.type === 'loop' ? text.collapsedLoop : text.collapsedBranches }}</span>
             <span class="text">{{ element.branches[0]?.text }}</span>
             <span class="summary">
-              <template v-if="element.node.type === 'condition'">{{ routeCount(element) }} routes · </template>{{ element.pageCount }} {{ element.pageCount === 1 ? 'page' : 'pages' }}
-              <span v-if="element.isEndless" class="unreachable-mark">⚠ never stops</span>
+              <template v-if="element.node.type === 'condition'">{{ text.routes(routeCount(element)) }} · </template>{{ common.pageCount(element.pageCount) }}
+              <span v-if="element.isEndless" class="unreachable-mark">{{ text.neverStops }}</span>
               <span v-if="endingMark(element) !== null" class="ending-mark">{{ endingMark(element) }}</span>
               <span v-if="unreachableMark(element) !== null" class="unreachable-mark">{{ unreachableMark(element) }}</span>
             </span>
           </template>
           <template v-else>
             <span class="block-title">
-              {{ element.node.type === 'loop' ? '↻ loop' : `◆ ${element.branches[0]?.text}` }} <span class="block-numbers">{{ element.numbers }}</span>
-              <span v-if="element.isEndless" class="unreachable-mark">⚠ never stops</span>
+              {{ element.node.type === 'loop' ? text.loop : `◆ ${element.branches[0]?.text}` }} <span class="block-numbers">{{ element.numbers }}</span>
+              <span v-if="element.isEndless" class="unreachable-mark">{{ text.neverStops }}</span>
               <span v-if="endingMark(element) !== null" class="ending-mark">{{ endingMark(element) }}</span>
               <span v-if="unreachableMark(element) !== null" class="unreachable-mark">{{ unreachableMark(element) }}</span>
             </span>
             <span v-for="branch in element.branches" :key="branch.containerId ?? ''" class="route" :style="{ '--branch-color': branchColor(branch.branch) }">
               <span v-if="element.node.type === 'condition'" class="route-name">{{ branch.text }}<template v-if="branch.stops"> ★</template></span>
-              <span v-if="branch.elements.length === 0" class="mini empty">nothing</span>
+              <span v-if="branch.elements.length === 0" class="mini empty">{{ text.nothing }}</span>
               <span
                 v-for="inner in branch.elements"
                 :key="inner.id"
@@ -158,7 +166,7 @@ const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => elemen
                 :class="[inner.kind === 'block' ? 'nested' : inner.entry.type, { unreachable: inner.isUnreachable }]"
               >
                 <template v-if="inner.kind === 'block'">◆ {{ inner.pageCount }}</template>
-                <template v-else-if="inner.entry.type === 'card'"><strong>{{ inner.entry.number }}</strong> {{ inner.entry.node.type === 'page' ? inner.entry.node.text : 'choice' }}</template>
+                <template v-else-if="inner.entry.type === 'card'"><strong>{{ inner.entry.number }}</strong> {{ inner.entry.node.type === 'page' ? inner.entry.node.text : text.choice }}</template>
                 <template v-else>{{ MARKER_SYMBOLS[inner.entry.node.type] }} {{ inner.entry.text }}</template>
               </span>
             </span>
@@ -367,6 +375,26 @@ const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => elemen
 .element.focused {
   outline: 2px solid #9eeaff;
   outline-offset: 2px;
+}
+
+/* The card being edited, wherever the focus goes meanwhile: marked in its corner, inside it. */
+.element.editing::after {
+  content: '✎';
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f5c451;
+  font-size: 12px;
+  color: #11151d;
+}
+
+.element.editing {
+  border-color: #f5c451;
 }
 
 .element.selected {

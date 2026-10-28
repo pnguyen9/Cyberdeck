@@ -1,5 +1,7 @@
 import { checkChapterDocument, checkProjectDocument, DocumentError, isPlainIdentifier } from '../format/checkDocuments'
-import { flattenStoredNodes, type Asset, type ChapterDocument, type ProjectDocument, type StageCommand } from '../format/storyFormat'
+import { flattenStoredNodes, mapInnerLists, type Asset, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredNode } from '../format/storyFormat'
+import { STYLE_PROPERTIES_OF_1_1 } from '../format/textStyles'
+import { ArchiveError } from './archiveError'
 import { isSafeArchivePath, readZip, writeZip, type ZipEntryToWrite } from './zip'
 
 /**
@@ -82,6 +84,10 @@ const EXTENSIONS_BY_MEDIA_TYPE: Readonly<Record<string, string>> = {
   'audio/flac': 'flac',
   'audio/mp4': 'm4a',
   'audio/webm': 'weba',
+  'font/woff2': 'woff2',
+  'font/woff': 'woff',
+  'font/ttf': 'ttf',
+  'font/otf': 'otf',
 }
 
 export const MEDIA_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
@@ -97,10 +103,14 @@ export const MEDIA_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
   flac: 'audio/flac',
   m4a: 'audio/mp4',
   weba: 'audio/webm',
+  woff2: 'font/woff2',
+  woff: 'font/woff',
+  ttf: 'font/ttf',
+  otf: 'font/otf',
 }
 
 /** The cover, or a file of one of the asset folders, with an extension Datajack plays. */
-export const ASSET_FILE_PATH = new RegExp(`^assets/(cover|(backgrounds|illustrations|music|sounds|characters/[^/]+)/[^/]+)\\.(${Object.keys(MEDIA_TYPES_BY_EXTENSION).join('|')})$`)
+export const ASSET_FILE_PATH = new RegExp(`^assets/(cover|(backgrounds|illustrations|music|sounds|fonts|characters/[^/]+)/[^/]+)\\.(${Object.keys(MEDIA_TYPES_BY_EXTENSION).join('|')})$`)
 
 const SHA_256 = /^[0-9a-f]{64}$/
 const MAXIMUM_RELEASE_LENGTH = 40
@@ -157,11 +167,12 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
     assetFiles[asset.id] = { path, sha256: hash }
   }
 
+  const formatVersion = playerFormatVersion(project)
   const manifest: GameManifest = {
     archiveFormat: ARCHIVE_FORMAT,
     release,
     exportedAt: source.exportedAt.toISOString(),
-    project,
+    project: { ...project, formatVersion },
     chapters: project.chapterOrder.map(chapterId => ({
       id: chapterId,
       title: chaptersById.get(chapterId)?.title ?? null,
@@ -171,10 +182,30 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
   }
   return writeZip([
     jsonEntry(MANIFEST_PATH, manifest),
-    ...included.map(({ importedFrom: _editorHistory, ...chapter }) => jsonEntry(chapterPath(chapter.id), chapter)),
-    ...scenes.map(({ importedFrom: _editorHistory, ...scene }) => jsonEntry(scenePath(scene.id), scene)),
+    ...included.map(chapter => jsonEntry(chapterPath(chapter.id), forPlayers(chapter, formatVersion))),
+    ...scenes.map(scene => jsonEntry(scenePath(scene.id), forPlayers(scene, formatVersion))),
     ...assetEntries,
   ], source.exportedAt)
+}
+
+/**
+ * The oldest format that holds the game, so that players who have not updated Datajack can still
+ * play what it draws: 1.1 unless a style uses a property 1.0 does not know, which it would refuse.
+ * What 1.0 does not know besides, the CSS and title cards, it leaves out.
+ */
+export function playerFormatVersion(project: ProjectDocument): string {
+  // Datajack 1.0 refuses a style word it does not know, and a font file, which it takes for a misplaced file.
+  const needsNewer = project.fonts.some(font => font.assetId !== null)
+    || project.styles.some(style => style.properties.some(property => !STYLE_PROPERTIES_OF_1_1.includes(property)))
+  return needsNewer ? '1.2' : '1.1'
+}
+
+/** A chapter as players get it: without where it was imported from, nor where definitions are written, which play nothing. */
+function forPlayers({ importedFrom: _editorHistory, ...chapter }: ChapterDocument, formatVersion: string): ChapterDocument {
+  const withoutDefinitions = (nodes: readonly StoredNode[]): StoredNode[] => nodes
+    .filter(node => node.type !== 'definition')
+    .map(node => mapInnerLists(node, list => withoutDefinitions(list.nodes)))
+  return { ...chapter, formatVersion, nodes: withoutDefinitions(chapter.nodes) }
 }
 
 /** Reads and checks a downloaded archive; throws an error worded for the player when it cannot be played. */
@@ -183,12 +214,12 @@ export async function readGameArchive(bytes: Uint8Array<ArrayBuffer>): Promise<G
   const readJson = async (path: string) => {
     const entry = entries.get(path)
     if (entry === undefined) {
-      throw new Error(`This archive has no ${path}: it is not a Datajack game`)
+      throw new ArchiveError({ code: 'notAGame', path })
     }
     try {
       return JSON.parse(new TextDecoder().decode(await entry.read())) as unknown
     } catch (error) {
-      throw error instanceof SyntaxError ? new Error(`${path} is not valid JSON`) : error
+      throw error instanceof SyntaxError ? new ArchiveError({ code: 'invalidJson', path }) : error
     }
   }
 
@@ -199,7 +230,7 @@ export async function readGameArchive(bytes: Uint8Array<ArrayBuffer>): Promise<G
     const value = await readJson(path)
     const chapter = withDocumentPath(path, () => checkChapterDocument(value, 'chapter'))
     if (chapter.id !== archived.id) {
-      throw new Error(`${path} holds another chapter`)
+      throw new ArchiveError({ code: 'otherChapter', path })
     }
     chapters.push(chapter)
   }
@@ -209,7 +240,7 @@ export async function readGameArchive(bytes: Uint8Array<ArrayBuffer>): Promise<G
     const value = await readJson(path)
     const scene = withDocumentPath(path, () => checkChapterDocument(value, 'scene'))
     if (scene.id !== sceneId) {
-      throw new Error(`${path} holds another scene`)
+      throw new ArchiveError({ code: 'otherScene', path })
     }
     scenes.push(scene)
   }
@@ -221,11 +252,11 @@ export async function readGameArchive(bytes: Uint8Array<ArrayBuffer>): Promise<G
     }
     const entry = entries.get(path)
     if (entry === undefined) {
-      throw new Error(`This archive has no ${path}`)
+      throw new ArchiveError({ code: 'missingFile', path })
     }
     const content = await entry.read()
     if (await sha256(content) !== expectedHash) {
-      throw new Error(`${path} is not the file the game was exported with: the archive was altered or damaged`)
+      throw new ArchiveError({ code: 'alteredFile', path })
     }
     assetFiles.set(path, content)
   }
@@ -234,7 +265,8 @@ export async function readGameArchive(bytes: Uint8Array<ArrayBuffer>): Promise<G
 
 /** Assets shown or played by the chapters: what an archive of these chapters must carry. */
 export function assetsUsedBy(project: ProjectDocument, chapters: readonly ChapterDocument[]): Set<string> {
-  const used = new Set<string>()
+  // Fonts are named by the CSS, which any chapter's styles may use: every archive carries them all.
+  const used = new Set<string>(project.fonts.flatMap(font => font.assetId === null ? [] : [font.assetId]))
   const add = (assetId: string | null | undefined) => {
     if (assetId != null) {
       used.add(assetId)
@@ -293,6 +325,10 @@ function assetFolderAndName(project: ProjectDocument, assetId: string): { folder
   if (sound !== undefined) {
     return { folder: 'assets/sounds', name: sound.name }
   }
+  const font = project.fonts.find(candidate => candidate.assetId === assetId)
+  if (font !== undefined) {
+    return { folder: 'assets/fonts', name: font.name }
+  }
   for (const character of project.characters) {
     const expression = character.expressions.find(candidate => candidate.assetId === assetId)
     if (expression !== undefined) {
@@ -336,7 +372,7 @@ export function checkGameManifest(value: unknown): GameManifest {
     }
     const fields = value as Record<string, unknown>
     if (fields.archiveFormat !== ARCHIVE_FORMAT) {
-      throw new Error('This game was made for a newer Datajack: download the latest one')
+      throw new ArchiveError({ code: 'newerPlayer' })
     }
     if (typeof fields.release !== 'string' || fields.release.trim() === '' || fields.release.length > MAXIMUM_RELEASE_LENGTH) {
       throw new DocumentError('game.release', `1 to ${MAXIMUM_RELEASE_LENGTH} characters`)
@@ -403,7 +439,11 @@ function withDocumentPath<Result>(fileName: string, check: () => Result): Result
   try {
     return check()
   } catch (error) {
-    throw error instanceof DocumentError ? new Error(`${fileName} is invalid: ${error.message}`) : error
+    if (!(error instanceof DocumentError)) {
+      throw error
+    }
+    const code = error.path.endsWith('.formatVersion') ? 'newerFormat' : 'invalidDocument'
+    throw new ArchiveError({ code, path: fileName, detail: error.message })
   }
 }
 

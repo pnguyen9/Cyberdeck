@@ -130,6 +130,11 @@ export class StoryRuntime {
     return this.history.length > 1
   }
 
+  /** The chapter being played, a scene it plays included; null before the start. */
+  get currentChapter(): ChapterDocument | null {
+    return this.chapters[this.chapterIndex] ?? null
+  }
+
   /** Gives the runtime what the profile already remembers and the endings it has reached, from its progress. */
   useMemory(memory: { memoryIds: readonly string[]; endingIds: readonly string[] }) {
     memory.memoryIds.forEach(memoryId => this.rememberedIds.add(memoryId))

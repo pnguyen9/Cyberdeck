@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, ref } from 'vue'
+import { commonMessages } from '../i18n/commonMessages'
+import { detailsMessages } from '../i18n/detailsMessages'
 import { useEditor } from './editorContext'
 import { formatSize, safeFileName, usePreparedDownload } from './preparedDownload'
 
@@ -8,6 +11,9 @@ const release = ref('1.0')
 const excludedChapterIds = ref<string[]>([])
 const download = usePreparedDownload()
 const textDownload = usePreparedDownload()
+const locale = useLocale()
+const text = useMessages(detailsMessages)
+const common = useMessages(commonMessages)
 
 const included = computed(() => chapters.value.filter(chapter => !excludedChapterIds.value.includes(chapter.id)))
 const canExport = computed(() => included.value.length > 0 && release.value.trim() !== '')
@@ -19,16 +25,16 @@ function setIncluded(chapterId: string, isIncluded: boolean) {
 }
 
 function exportStoryText() {
-  textDownload.offer(`${safeFileName(project.value.name)}.txt`, open.exportText(null))
+  textDownload.offer(`${safeFileName(project.value.name, locale.value)}.txt`, open.exportText(null))
 }
 
 function exportGame() {
   const releaseLabel = release.value.trim()
   const wholeGame = included.value.length === chapters.value.length
-  const suffix = wholeGame ? '' : ` - ${included.value.map(chapter => chapter.title ?? 'Untitled').join(', ')}`
+  const suffix = wholeGame ? '' : ` - ${included.value.map(chapter => chapter.title ?? common.value.untitled).join(', ')}`
   return act(async () => {
     const bytes = await open.exportGame(releaseLabel, included.value.map(chapter => chapter.id), new Date())
-    download.offer(`${safeFileName(`${project.value.name} ${releaseLabel}${suffix}`)}.zip`, bytes)
+    download.offer(`${safeFileName(`${project.value.name} ${releaseLabel}${suffix}`, locale.value)}.zip`, bytes)
   })
 }
 </script>
@@ -36,40 +42,38 @@ function exportGame() {
 <template>
   <section class="export">
     <p class="muted">
-      The archive players add to Datajack. Export the whole game, or only some chapters for an update:
-      each archive carries the files its chapters use, the cover and the details.
+      {{ text.exportIntro }}
     </p>
     <label class="field release">
-      <span>Release, as players will see it</span>
+      <span>{{ text.release }}</span>
       <input v-model="release" class="text-input" maxlength="40" @input="download.forget()">
     </label>
     <fieldset class="chapters">
-      <legend>Chapters</legend>
-      <p v-if="chapters.length === 0" class="muted">No chapters yet.</p>
+      <legend>{{ text.chapters }}</legend>
+      <p v-if="chapters.length === 0" class="muted">{{ text.noChapters }}</p>
       <label v-for="chapter in chapters" :key="chapter.id" class="chapter">
         <input type="checkbox" :checked="!excludedChapterIds.includes(chapter.id)" @change="setIncluded(chapter.id, ($event.target as HTMLInputElement).checked)">
-        {{ chapter.title ?? 'Untitled chapter' }}
+        {{ chapter.title ?? common.untitledChapter }}
       </label>
       <p v-if="scenes.length > 0" class="muted">
-        Every archive carries the {{ scenes.length === 1 ? 'scene' : `${scenes.length} scenes` }} too ({{ scenes.map(scene => scene.title).join(', ') }}): any chapter may play them.
+        {{ text.scenesToo(scenes.length, scenes.map(scene => scene.title).join(', ')) }}
       </p>
     </fieldset>
     <div class="actions">
-      <button class="button primary" :disabled="!canExport" @click="exportGame">Export</button>
+      <button class="button primary" :disabled="!canExport" @click="exportGame">{{ text.export }}</button>
       <a v-if="download.prepared.value !== null" class="download" :href="download.prepared.value.url" :download="download.prepared.value.fileName">
-        Download {{ download.prepared.value.fileName }} <span class="muted">({{ formatSize(download.prepared.value.byteSize) }})</span>
+        {{ common.download(download.prepared.value.fileName) }} <span class="muted">({{ formatSize(download.prepared.value.byteSize, locale) }})</span>
       </a>
     </div>
 
-    <h2 class="section-title">As text</h2>
+    <h2 class="section-title">{{ text.asText }}</h2>
     <p class="muted">
-      The story in the syntax it was written in, with every change made here: to edit it in Word or
-      any text editor, then import it again, as a new project or chapter by chapter.
+      {{ text.asTextIntro }}
     </p>
     <div class="actions">
-      <button class="button" :disabled="chapters.length === 0" @click="exportStoryText">Export the story as text</button>
+      <button class="button" :disabled="chapters.length === 0" @click="exportStoryText">{{ text.exportStoryText }}</button>
       <a v-if="textDownload.prepared.value !== null" class="download" :href="textDownload.prepared.value.url" :download="textDownload.prepared.value.fileName">
-        Download {{ textDownload.prepared.value.fileName }}
+        {{ common.download(textDownload.prepared.value.fileName) }}
       </a>
     </div>
   </section>

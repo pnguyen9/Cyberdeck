@@ -61,6 +61,9 @@ describe('createProject', () => {
       styles: [],
       stageDefaults: DEFAULT_STAGE_DEFAULTS,
       details: { description: '', credits: '', coverAssetId: null },
+      fonts: [],
+      css: '',
+      chapterTitleCards: false,
       createdAt: '2026-10-26T10:00:00.000Z',
       updatedAt: '2026-10-26T10:00:00.000Z',
     })

@@ -37,8 +37,10 @@ export default async function check(page, { url }) {
   await page.clickButton('Storyboard', '.tab')
   await page.waitFor('.grid')
 
+  // The declaration written in the chapter is its first card; the loop comes next.
   await page.evaluate(`document.querySelector('.board').focus()`)
   await page.press('Home')
+  await page.press('ArrowRight')
   await page.press('Enter')
   const optionTexts = () => page.evaluate(`[...document.querySelectorAll('.grid .element.card .option')].map(option => option.textContent.replace(/\\s+/g, ' ').trim())`)
   page.check('the choice card says which options have a condition', await optionTexts(), [

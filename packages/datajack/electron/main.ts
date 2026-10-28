@@ -4,7 +4,7 @@ import { app } from 'electron'
 import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { INSTALLED_ASSETS_PATH, type DesktopChannel, type DesktopChannels } from './bridge.js'
+import { INSTALLED_ASSETS_PATH, type DesktopChannel, type DesktopChannels, type DialogLanguage } from './bridge.js'
 import { LibraryFiles, mediaTypeOfAsset } from './libraryFiles.js'
 import { ProfileFiles } from './profileFiles.js'
 
@@ -42,12 +42,24 @@ startSecureApp({
   },
 })
 
+const FOLDER_DIALOG_TITLES: Readonly<Record<DialogLanguage, string>> = {
+  en: 'Where to keep the saves',
+  fr: 'Où conserver les sauvegardes',
+}
+
+/** The title of the folder picker in the page's language; English for a language the shell does not know. */
+function folderDialogTitle(language: unknown): string {
+  return typeof language === 'string' && Object.hasOwn(FOLDER_DIALOG_TITLES, language)
+    ? FOLDER_DIALOG_TITLES[language as DialogLanguage]
+    : FOLDER_DIALOG_TITLES.en
+}
+
 /** The player's channels: profiles and their saves, and the library of installed games; save folders only as picked. */
 function channelsOf(profileFiles: ProfileFiles, libraryFiles: LibraryFiles, { chooseFolder, pickedFolder }: ChannelContext): Handlers {
   return {
     'profiles:list': async _event => profileFiles.list(),
     'profiles:defaultSaveFolder': async (_event, name) => profileFiles.defaultSaveFolder(name),
-    'profiles:chooseFolder': async event => chooseFolder(event, 'Where to keep the saves'),
+    'profiles:chooseFolder': async (event, language) => chooseFolder(event, folderDialogTitle(language)),
     'profiles:create': async (_event, name, saveFolder) =>
       profileFiles.create(name, saveFolder === null ? null : pickedFolder(saveFolder)),
     'profiles:rename': async (_event, profileId, name) => profileFiles.rename(profileId, name),

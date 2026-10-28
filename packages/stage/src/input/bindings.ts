@@ -1,3 +1,6 @@
+import type { Locale } from '../i18n/locale'
+import { inputMessages } from '../i18n/inputMessages'
+
 /** What the player can do with an input. */
 export type PlayerAction = 'advance' | 'back' | 'log' | 'skip' | 'hideText' | 'settings' | 'fullscreen' | 'leave'
 
@@ -98,38 +101,25 @@ export function actionOf(bindings: Bindings, input: InputBinding): PlayerAction 
   return findAction(bindings, binding => isSameInput(binding, input))
 }
 
-const KEY_NAMES: Readonly<Record<string, string>> = {
-  Space: 'Space',
-  Enter: 'Enter',
-  NumpadEnter: 'Keypad Enter',
-  Escape: 'Esc',
-  Backspace: 'Backspace',
-  ArrowLeft: '←',
-  ArrowRight: '→',
-  ArrowUp: '↑',
-  ArrowDown: '↓',
-  PageUp: 'Page Up',
-  PageDown: 'Page Down',
-}
-const MOUSE_BUTTON_NAMES: Readonly<Record<number, string>> = {
-  [MOUSE_BUTTON.main]: 'Left click',
-  [MOUSE_BUTTON.middle]: 'Middle click',
-  [MOUSE_BUTTON.secondary]: 'Right click',
-  [MOUSE_BUTTON.back]: 'Mouse back button',
-  [MOUSE_BUTTON.forward]: 'Mouse forward button',
-}
+const MOUSE_BUTTON_NAMES = Object.fromEntries(Object.entries(MOUSE_BUTTON).map(([name, button]) => [button, name])) as Readonly<Record<number, keyof typeof MOUSE_BUTTON>>
 
 /**
- * An input as players call it. Keys are named after the US layout, which `code` follows: on
- * another layout the key is the one at that place.
+ * An input as players call it, in their language. Keys are named after the US layout, which `code`
+ * follows: on another layout the key is the one at that place.
  */
-export function describeInput(input: InputBinding): string {
+export function describeInput(input: InputBinding, locale: Locale = 'en'): string {
+  const names = inputMessages[locale]
   switch (input.type) {
-    case 'key':
-      return KEY_NAMES[input.code] ?? input.code.replace(/^(Key|Digit)/, '').replace(/^Numpad/, 'Keypad ')
-    case 'mouseButton':
-      return MOUSE_BUTTON_NAMES[input.button] ?? `Mouse button ${input.button + 1}`
+    case 'key': {
+      const keypadKey = /^Numpad(.+)$/.exec(input.code)
+      return names.keys[input.code]
+        ?? (keypadKey === null ? input.code.replace(/^(Key|Digit)/, '') : names.keypadKey(names.keypadSymbols[keypadKey[1]!] ?? keypadKey[1]!))
+    }
+    case 'mouseButton': {
+      const buttonName = MOUSE_BUTTON_NAMES[input.button]
+      return buttonName === undefined ? names.mouseButton(input.button + 1) : names.mouseButtons[buttonName]
+    }
     case 'wheel':
-      return input.direction === 'up' ? 'Wheel up' : 'Wheel down'
+      return input.direction === 'up' ? names.wheelUp : names.wheelDown
   }
 }

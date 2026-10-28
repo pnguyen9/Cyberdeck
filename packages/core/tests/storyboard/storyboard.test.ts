@@ -100,6 +100,8 @@ describe('storyboardEntries', () => {
       '> Shout = Angry',
     ])
     expect(shown(storyboardEntries(chapter, project))).toEqual([
+      '[definition: Mood: Calm | Angry]',
+      '[definition: Weather: Sun | Rain]',
       'if Mood is Calm',
       '[set: Weather = Rain]',
       'if Weather is Rain or Mood is not Angry',

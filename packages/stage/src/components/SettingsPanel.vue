@@ -1,23 +1,22 @@
 <script setup lang="ts">
 import { onUnmounted, ref } from 'vue'
-import { actionOf, DEFAULT_BINDINGS, describeInput, rebind, unbind, type InputBinding, type PlayerAction } from '../input/bindings'
+import { actionOf, DEFAULT_BINDINGS, describeInput as describeInputIn, rebind, unbind, type InputBinding, type PlayerAction } from '../input/bindings'
+import { useLocale, useMessages, type LanguageChoice } from '../i18n/locale'
+import { settingsMessages } from '../i18n/settingsMessages'
 import { DEFAULT_PLAYER_SETTINGS, TEXT_SPEED_RANGE, type PlayerSettings } from '../settings/playerSettings'
+import LanguageSelect from './LanguageSelect.vue'
 
 /** The player's settings: text speed, volumes, full screen and the inputs of each action. */
 const settings = defineModel<PlayerSettings>({ required: true })
+/** The language of the application, offered when it is given: an application may choose it elsewhere. */
+const languageChoice = defineModel<LanguageChoice | undefined>('languageChoice')
 defineProps<{ isFullscreen: boolean }>()
 const emit = defineEmits<{ close: []; toggleFullscreen: [] }>()
 
-const ACTION_LABELS: Record<PlayerAction, string> = {
-  advance: 'Next',
-  back: 'Back',
-  log: 'Log',
-  skip: 'Skip read text',
-  hideText: 'Hide the text',
-  settings: 'Settings',
-  fullscreen: 'Full screen',
-  leave: 'Leave the game',
-}
+const locale = useLocale()
+const text = useMessages(settingsMessages)
+const describeInput = (input: InputBinding) => describeInputIn(input, locale.value)
+const actionLabel = (action: PlayerAction) => text.value.actions[action]
 const actions = Object.keys(DEFAULT_BINDINGS) as PlayerAction[]
 
 /** The action waiting for an input to be given to it; the next key or mouse button pressed is taken. */
@@ -36,7 +35,7 @@ function setInstant(isOn: boolean) {
 
 function listen(action: PlayerAction) {
   listeningFor.value = action
-  notice.value = `Press a key or a mouse button for “${ACTION_LABELS[action]}”. Esc cancels.`
+  notice.value = text.value.pressInputFor(actionLabel(action), describeInput({ type: 'key', code: 'Escape' }))
   window.addEventListener('keydown', takeKey, { capture: true })
   window.addEventListener('mousedown', takeMouseButton, { capture: true })
 }
@@ -74,79 +73,83 @@ function give(input: InputBinding) {
   const previous = actionOf(settings.value.bindings, input)
   update({ bindings: rebind(settings.value.bindings, action, input) })
   notice.value = previous !== null && previous !== action
-    ? `${describeInput(input)} now does “${ACTION_LABELS[action]}”, no longer “${ACTION_LABELS[previous]}”.`
-    : `${describeInput(input)} now does “${ACTION_LABELS[action]}”.`
+    ? text.value.inputMovedFrom(describeInput(input), actionLabel(action), actionLabel(previous))
+    : text.value.inputNowDoes(describeInput(input), actionLabel(action))
 }
 
 function remove(action: PlayerAction, input: InputBinding) {
   update({ bindings: unbind(settings.value.bindings, action, input) })
-  notice.value = settings.value.bindings[action].length === 0 ? `Nothing does “${ACTION_LABELS[action]}” any more, apart from its button.` : null
+  notice.value = settings.value.bindings[action].length === 0 ? text.value.nothingDoes(actionLabel(action)) : null
 }
 
 function resetKeys() {
   update({ bindings: DEFAULT_BINDINGS })
-  notice.value = 'Every action has its default keys again.'
+  notice.value = text.value.defaultKeysBack
 }
 
 onUnmounted(stopListening)
 </script>
 
 <template>
-  <div class="overlay" role="dialog" aria-label="Settings" @click.stop @wheel.stop @contextmenu.stop.prevent>
+  <div class="overlay" role="dialog" :aria-label="text.settings" @click.stop @wheel.stop @contextmenu.stop.prevent>
     <header class="overlay-header">
-      <h2>Settings</h2>
-      <button class="close-button" @click="emit('close')">Close <kbd>Esc</kbd></button>
+      <h2>{{ text.settings }}</h2>
+      <button class="close-button" @click="emit('close')">{{ text.close }} <kbd>{{ describeInput({ type: 'key', code: 'Escape' }) }}</kbd></button>
     </header>
 
     <div class="columns">
       <section class="column">
         <label class="setting">
-          <span class="setting-name">Text speed</span>
+          <span class="setting-name">{{ text.textSpeed }}</span>
           <input
             type="range"
             :min="TEXT_SPEED_RANGE.slowest"
             :max="TEXT_SPEED_RANGE.fastest"
             :value="isInstant() ? TEXT_SPEED_RANGE.fastest : settings.textSpeed"
             :disabled="isInstant()"
-            aria-label="Characters per second"
+            :aria-label="text.charactersPerSecond"
             @input="update({ textSpeed: Number(($event.target as HTMLInputElement).value) })"
           >
-          <span class="setting-value">{{ isInstant() ? 'instant' : `${settings.textSpeed} characters a second` }}</span>
+          <span class="setting-value">{{ isInstant() ? text.instant : text.speed(settings.textSpeed) }}</span>
         </label>
         <label class="check">
           <input type="checkbox" :checked="isInstant()" @change="setInstant(($event.target as HTMLInputElement).checked)">
-          Show each page at once
+          {{ text.showPagesAtOnce }}
         </label>
         <label class="setting">
-          <span class="setting-name">Music</span>
-          <input type="range" min="0" max="100" :value="Math.round(settings.musicVolume * 100)" aria-label="Music volume" @input="update({ musicVolume: Number(($event.target as HTMLInputElement).value) / 100 })">
-          <span class="setting-value">{{ Math.round(settings.musicVolume * 100) }} %</span>
+          <span class="setting-name">{{ text.music }}</span>
+          <input type="range" min="0" max="100" :value="Math.round(settings.musicVolume * 100)" :aria-label="text.musicVolume" @input="update({ musicVolume: Number(($event.target as HTMLInputElement).value) / 100 })">
+          <span class="setting-value">{{ text.percent(Math.round(settings.musicVolume * 100)) }}</span>
         </label>
         <label class="setting">
-          <span class="setting-name">Sound effects</span>
-          <input type="range" min="0" max="100" :value="Math.round(settings.soundVolume * 100)" aria-label="Sound effects volume" @input="update({ soundVolume: Number(($event.target as HTMLInputElement).value) / 100 })">
-          <span class="setting-value">{{ Math.round(settings.soundVolume * 100) }} %</span>
+          <span class="setting-name">{{ text.soundEffects }}</span>
+          <input type="range" min="0" max="100" :value="Math.round(settings.soundVolume * 100)" :aria-label="text.soundEffectsVolume" @input="update({ soundVolume: Number(($event.target as HTMLInputElement).value) / 100 })">
+          <span class="setting-value">{{ text.percent(Math.round(settings.soundVolume * 100)) }}</span>
         </label>
-        <button class="wide-button" @click="emit('toggleFullscreen')">{{ isFullscreen ? 'Leave full screen' : 'Full screen' }}</button>
-        <button class="wide-button" @click="settings = { ...DEFAULT_PLAYER_SETTINGS, bindings: settings.bindings }">Default speed and volumes</button>
+        <button class="wide-button" @click="emit('toggleFullscreen')">{{ isFullscreen ? text.leaveFullscreen : text.fullscreen }}</button>
+        <button class="wide-button" @click="settings = { ...DEFAULT_PLAYER_SETTINGS, bindings: settings.bindings }">{{ text.defaultSpeedAndVolumes }}</button>
+        <label v-if="languageChoice !== undefined" class="setting">
+          <span class="setting-name">{{ text.language }}</span>
+          <LanguageSelect v-model="languageChoice" class="language" />
+        </label>
       </section>
 
-      <section class="column keys" aria-label="Keys">
+      <section class="column keys" :aria-label="text.keys">
         <div v-for="action in actions" :key="action" class="key-row" :class="{ listening: listeningFor === action }">
-          <span class="setting-name">{{ ACTION_LABELS[action] }}</span>
+          <span class="setting-name">{{ actionLabel(action) }}</span>
           <span class="inputs">
             <span v-for="input in settings.bindings[action]" :key="JSON.stringify(input)" class="input">
               {{ describeInput(input) }}
-              <button class="remove" :aria-label="`Remove ${describeInput(input)}`" @click="remove(action, input)">×</button>
+              <button class="remove" :aria-label="text.removeInput(describeInput(input))" @click="remove(action, input)">×</button>
             </span>
-            <span v-if="settings.bindings[action].length === 0" class="none">none</span>
+            <span v-if="settings.bindings[action].length === 0" class="none">{{ text.noInput }}</span>
           </span>
-          <button class="add" @click="listen(action)">{{ listeningFor === action ? 'Press…' : 'Add a key' }}</button>
+          <button class="add" @click="listen(action)">{{ listeningFor === action ? text.pressInput : text.addKey }}</button>
         </div>
-        <button class="wide-button" @click="resetKeys">Default keys</button>
+        <button class="wide-button" @click="resetKeys">{{ text.defaultKeys }}</button>
       </section>
     </div>
-    <p class="notice" role="status">{{ notice ?? 'Keys are named as on an English keyboard: on others, the key at the same place.' }}</p>
+    <p class="notice" role="status">{{ notice ?? text.keyPositions }}</p>
   </div>
 </template>
 
@@ -240,6 +243,10 @@ input[type='range'] {
 }
 
 .wide-button {
+  align-self: flex-start;
+}
+
+.language {
   align-self: flex-start;
 }
 

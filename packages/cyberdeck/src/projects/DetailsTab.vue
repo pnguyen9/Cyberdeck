@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { useMessages } from '@cyberdeck/stage'
 import { ref, shallowRef, watch } from 'vue'
+import { detailsMessages } from '../i18n/detailsMessages'
 import { readGivenFiles, useEditor } from './editorContext'
 
 const { open, project, act } = useEditor()
+const text = useMessages(detailsMessages)
 const description = ref(project.value.details.description)
 const credits = ref(project.value.details.credits)
 const coverUrl = shallowRef<string | null>(null)
@@ -14,44 +17,44 @@ watch(() => project.value.details.coverAssetId, async coverAssetId => {
 /** Saved when the field is left, so that typing is not interrupted. */
 function save(field: 'description' | 'credits', value: string) {
   if (value !== project.value.details[field]) {
-    void act(() => open.updateDetails({ [field]: value }), 'Saved.')
+    void act(() => open.updateDetails({ [field]: value }), text.value.saved)
   }
 }
 
 async function chooseCover(fileList: FileList | null) {
   const [file] = await readGivenFiles(fileList)
   if (file !== undefined) {
-    await act(() => open.setCover(file), 'The cover was changed.')
+    await act(() => open.setCover(file), text.value.coverChanged)
   }
 }
 </script>
 
 <template>
   <section class="details">
-    <p class="muted">What players see of the game in their library, before playing it.</p>
+    <p class="muted">{{ text.intro }}</p>
     <label class="field">
-      <span>Description</span>
+      <span>{{ text.description }}</span>
       <textarea v-model="description" class="text-input" rows="4" @change="save('description', description)" />
     </label>
     <label class="field">
-      <span>Credits: who wrote, drew and composed, and the licences of borrowed music or art</span>
+      <span>{{ text.credits }}</span>
       <textarea v-model="credits" class="text-input" rows="6" @change="save('credits', credits)" />
     </label>
 
     <div class="field">
-      <span>Cover</span>
+      <span>{{ text.cover }}</span>
       <div class="cover-row">
         <div class="cover" :class="{ empty: coverUrl === null }">
-          <img v-if="coverUrl !== null" :src="coverUrl" alt="The cover">
-          <span v-else class="muted">No cover</span>
+          <img v-if="coverUrl !== null" :src="coverUrl" :alt="text.coverAlt">
+          <span v-else class="muted">{{ text.noCover }}</span>
         </div>
         <div class="cover-actions">
           <label class="button file-button">
-            Choose a cover…
+            {{ text.chooseCover }}
             <input type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif,image/svg+xml" @change="chooseCover(($event.target as HTMLInputElement).files)">
           </label>
-          <button v-if="coverUrl !== null" class="link-button" @click="act(() => open.setCover(null), 'The cover was removed.')">Remove the cover</button>
-          <span class="muted">Shown at 16:9 in the library.</span>
+          <button v-if="coverUrl !== null" class="link-button" @click="act(() => open.setCover(null), text.coverRemoved)">{{ text.removeCover }}</button>
+          <span class="muted">{{ text.coverRatio }}</span>
         </div>
       </div>
     </div>
