@@ -1,11 +1,11 @@
 const en = {
   filesAdded: (count: number, matches: string) => `${count} ${count === 1 ? 'file' : 'files'} added: ${matches}.`,
   filesUnused: (fileNames: string) => `Not used, no entry of that name: ${fileNames}.`,
-  dropTitle: 'Drop images, music, sounds and fonts here',
+  dropTitle: 'Drop images, music, sounds, videos and fonts here',
   dropHelpStart: 'or click to choose them. Each file goes to the entry it is named after:',
   dropHelpMiddle: '; a new file replaces the old one. A font file (',
   dropHelpEnd: ') becomes a font of its name, for the CSS.',
-  nothingYet: 'Characters, backgrounds, illustrations, music and sounds appear here once a text naming them is imported.',
+  nothingYet: 'Characters, backgrounds, illustrations, music, sounds and videos appear here once a text naming them is imported.',
   missingFiles: (count: number) => `${count} ${count === 1 ? 'entry has' : 'entries have'} no file yet: players will see a placeholder.`,
   characters: 'Characters',
   drawnFacing: 'drawn looking',
@@ -18,6 +18,7 @@ const en = {
   illustrations: 'Illustrations',
   music: 'Music',
   sounds: 'Sounds',
+  videos: 'Videos',
   fonts: 'Fonts',
   fontsHelp: 'For the CSS of the styles, in Definitions. Pages in a font are cut by how wide it draws text, measured when its file was added.',
   fontWidth: (percent: number) => `${percent} % as wide as the text box's`,
@@ -26,6 +27,7 @@ const en = {
   musicTarget: (name: string) => `Music ${name}`,
   soundTarget: (name: string) => `Sound ${name}`,
   illustrationTarget: (name: string) => `Illustration ${name}`,
+  videoTarget: (name: string) => `Video ${name}`,
   fontTarget: (name: string) => `Font ${name}`,
 }
 
@@ -34,11 +36,11 @@ type CastMessages = typeof en
 const fr: CastMessages = {
   filesAdded: (count, matches) => `${count} ${count <= 1 ? 'fichier ajouté' : 'fichiers ajoutés'} : ${matches}.`,
   filesUnused: fileNames => `Non utilisés, faute d’entrée portant leur nom : ${fileNames}.`,
-  dropTitle: 'Déposez ici images, musiques, sons et polices',
+  dropTitle: 'Déposez ici images, musiques, sons, vidéos et polices',
   dropHelpStart: 'ou cliquez pour les choisir. Chaque fichier est associé à l’entrée qui porte son nom :',
   dropHelpMiddle: ' ; un nouveau fichier remplace l’ancien. Un fichier de police (',
   dropHelpEnd: ') devient une police du même nom, utilisable dans le CSS.',
-  nothingYet: 'Les personnages, décors, illustrations, musiques et sons apparaissent ici dès qu’un texte qui les nomme est importé.',
+  nothingYet: 'Les personnages, décors, illustrations, musiques, sons et vidéos apparaissent ici dès qu’un texte qui les nomme est importé.',
   missingFiles: count => `${count} ${count <= 1 ? 'entrée n’a' : 'entrées n’ont'} pas encore de fichier : les joueurs verront un élément provisoire.`,
   characters: 'Personnages',
   drawnFacing: 'orientation du dessin',
@@ -51,6 +53,7 @@ const fr: CastMessages = {
   illustrations: 'Illustrations',
   music: 'Musiques',
   sounds: 'Sons',
+  videos: 'Vidéos',
   fonts: 'Polices',
   fontsHelp: 'À utiliser dans le CSS des styles, dans l’onglet Définitions. Le texte écrit dans une police est découpé en pages selon sa largeur, mesurée à l’ajout du fichier.',
   fontWidth: percent => `${percent} % de la largeur de la police habituelle`,
@@ -58,6 +61,7 @@ const fr: CastMessages = {
   musicTarget: name => `Musique ${name}`,
   soundTarget: name => `Son ${name}`,
   illustrationTarget: name => `Illustration ${name}`,
+  videoTarget: name => `Vidéo ${name}`,
   fontTarget: name => `Police ${name}`,
 }
 

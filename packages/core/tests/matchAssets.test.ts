@@ -10,6 +10,8 @@ const project: ProjectDocument = {
   sceneOrder: [],
   styles: [],
   decisions: [],
+  counters: [],
+  videos: [],
   characters: [
     { id: 'marie', name: 'Marie', drawnFacing: null, expressions: [{ id: 'marie-normal', name: 'normal', assetId: null }, { id: 'marie-smile', name: 'smile', assetId: null }] },
     { id: 'old-marie', name: 'Old Marie', drawnFacing: null, expressions: [{ id: 'old-marie-sad', name: 'sad', assetId: null }] },

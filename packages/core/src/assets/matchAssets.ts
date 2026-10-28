@@ -7,6 +7,7 @@ export type AssetTarget =
   | { type: 'music'; musicId: string }
   | { type: 'sound'; soundId: string }
   | { type: 'illustration'; illustrationId: string }
+  | { type: 'video'; videoId: string }
   | { type: 'font'; fontId: string }
 
 /** Expression a file named after a character alone is meant for: `marie.png`. */
@@ -25,8 +26,8 @@ function withoutExtension(fileName: string): string {
  * Finds the registry entry a file is meant for from its name, so that a whole folder can be
  * dropped at once: `rooftop.jpg` for the background `rooftop`, `marie-smile.png` for Marie's
  * `smile` expression, `marie.png` for her `normal` one, `calm.mp3` for the track `calm`, `door.ogg`
- * for the sound `door`. Images only go to backgrounds, illustrations and expressions, audio only to
- * music and sounds.
+ * for the sound `door`, `opening.webm` for the video `opening`. Images only go to backgrounds,
+ * illustrations and expressions, audio only to music and sounds, videos to videos.
  * A name both a track and a sound bear goes to the track.
  */
 export function matchAssetFile(fileName: string, mediaType: string, project: ProjectDocument): AssetTarget | null {
@@ -35,6 +36,11 @@ export function matchAssetFile(fileName: string, mediaType: string, project: Pro
   if (mediaType.startsWith('font/')) {
     const font = project.fonts.find(candidate => matchingKey(candidate.name) === fileKey)
     return font === undefined ? null : { type: 'font', fontId: font.id }
+  }
+
+  if (mediaType.startsWith('video/')) {
+    const video = project.videos.find(candidate => matchingKey(candidate.name) === fileKey)
+    return video === undefined ? null : { type: 'video', videoId: video.id }
   }
 
   if (mediaType.startsWith('audio/')) {
@@ -98,6 +104,11 @@ export function assignAsset(project: ProjectDocument, target: AssetTarget, asset
       return {
         ...withAsset,
         sounds: project.sounds.map(sound => sound.id === target.soundId ? { ...sound, assetId: asset.id } : sound),
+      }
+    case 'video':
+      return {
+        ...withAsset,
+        videos: project.videos.map(video => video.id === target.videoId ? { ...video, assetId: asset.id } : video),
       }
     case 'font':
       return {

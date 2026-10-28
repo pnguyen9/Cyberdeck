@@ -1,10 +1,11 @@
 import { styleClassName } from '../format/authorCss'
 import { readStyleProperty } from '../format/textStyles'
 import type { Condition, ImportedChapter, ImportProblem, ImportResult, StoryNode } from './importTypes'
+import { readAmount } from './readControl'
 import { flattenNodes, normalizeName } from './storyNodes'
 
 /**
- * A decision or style the project has. Declared somewhere else (`declaredIn` names where), it cannot
+ * A decision, counter or style the project has. Declared somewhere else (`declaredIn` names where), it cannot
  * be declared again; in the project's definitions or in the text replaced (`declaredIn` null), a
  * declaration gives it its new values, which must keep those still used elsewhere (`usedValues`).
  * An implicit one was made by choices: later choices add values to it.
@@ -23,6 +24,7 @@ export interface KnownDecision extends KnownDefinition {
 /** Names the project already has, which an import may use without declaring them. */
 export interface KnownNames {
   decisions: KnownDecision[]
+  counters?: KnownDefinition[]
   endings?: string[]
   memories?: string[]
   /** The project's styles; a name alone is declared elsewhere. */
@@ -42,7 +44,9 @@ const NO_KNOWN_NAMES: KnownNames = { decisions: [] }
  * One named nowhere, in the import or the project, is a typo.
  *
  * A choice on a decision nobody declared declares it, with the values of its options: writers
- * only need `[decision: …]` to fix the values in advance.
+ * only need `[decision: …]` to fix the values in advance. An `[add]` makes a counter the same way,
+ * starting at 0. A counter takes numbers where a decision takes values: `[set: Trust = 3]`,
+ * `Trust is 3`; no decision bears a counter's name.
  */
 export function checkReferences(result: ImportResult, knownNames: KnownNames = NO_KNOWN_NAMES): ImportProblem[] {
   const problems: ImportProblem[] = []
@@ -82,6 +86,16 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
   }
 
   const allNodes = [...result.chapters, ...result.scenes].flatMap(chapter => flattenNodes(chapter.nodes))
+  const counters = checkCounters(result, allNodes, knownNames.counters ?? [], problems)
+  for (const name of counters) {
+    // A choice on a counter's name, or a declaration, would make it a decision as well.
+    const clash = result.decisions.find(declaration => normalizeName(declaration.name) === name)
+      ?? allNodes.find(node => node.type === 'choice' && normalizeName(node.decision) === name)
+    if (clash !== undefined || knownByName.has(name)) {
+      const written = firstCounterWritten(result, allNodes, name)
+      problems.push({ severity: 'error', code: 'counterNamedLikeDecision', line: clash?.sourceLine ?? written?.line ?? 1, subject: written?.name ?? name })
+    }
+  }
   problems.push(...checkScenes(result, knownNames.scenes ?? []))
   problems.push(...checkStyles(result, allNodes, knownNames.styles ?? [], knownNames.styleClasses ?? []))
 
@@ -117,10 +131,22 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     }
   }
 
+  /** A counter takes a number where a decision takes one of its values. */
+  const checkCounterValue = (name: string, value: string, line: number) => {
+    if (readAmount(value) === null) {
+      problems.push({ severity: 'error', code: 'counterNeedsNumber', line, subject: `${name}: ${value}` })
+    }
+  }
+  const isCounter = (name: string) => counters.has(normalizeName(name))
+
   const checkCondition = (condition: Condition | null | undefined, line: number) => {
     for (const part of partsOf(condition ?? null)) {
-      if (part.type === 'is') {
+      if (part.type === 'is' && isCounter(part.decision)) {
+        checkCounterValue(part.decision, part.value, line)
+      } else if (part.type === 'is') {
         checkValue(part.decision, part.value, line)
+      } else if (part.type === 'compare' && !isCounter(part.counter)) {
+        problems.push({ severity: 'error', code: 'unknownCounter', line, subject: part.counter })
       } else if (part.type === 'remembered' && !memories.has(normalizeName(part.memory))) {
         problems.push({ severity: 'error', code: 'unknownMemory', line, subject: part.memory })
       } else if (part.type === 'endingSeen' && !endings.has(normalizeName(part.ending))) {
@@ -140,10 +166,16 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
       node.options.forEach(option => checkCondition(option.condition, option.sourceLine))
     }
     if (node.type === 'set') {
-      checkValue(node.decision, node.value, node.sourceLine)
+      if (isCounter(node.decision)) {
+        checkCounterValue(node.decision, node.value, node.sourceLine)
+      } else {
+        checkValue(node.decision, node.value, node.sourceLine)
+      }
     }
     if (node.type === 'unset') {
-      if (node.value !== null) {
+      if (isCounter(node.decision)) {
+        problems.push({ severity: 'error', code: 'unsetCounter', line: node.sourceLine, subject: node.decision })
+      } else if (node.value !== null) {
         checkValue(node.decision, node.value, node.sourceLine)
       } else if (!decisionValues.has(normalizeName(node.decision))) {
         problems.push({ severity: 'error', code: 'unknownDecision', line: node.sourceLine, subject: node.decision })
@@ -152,6 +184,41 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
   }
 
   return problems.sort((first, second) => first.line - second.line)
+}
+
+/**
+ * The names of every counter, normalised: the project's, those declared here and those an `[add]`
+ * makes. A counter declared twice, or declared here while a chapter elsewhere declares it, is reported.
+ */
+function checkCounters(result: ImportResult, allNodes: readonly StoryNode[], knownCounters: readonly KnownDefinition[], problems: ImportProblem[]): Set<string> {
+  const names = new Set(knownCounters.map(counter => normalizeName(counter.name)))
+  const placeOf = new Map(knownCounters.flatMap(counter => typeof counter.declaredIn === 'string' ? [[normalizeName(counter.name), counter.declaredIn] as const] : []))
+  const declaredHere = new Set<string>()
+  for (const declaration of result.counters) {
+    const name = normalizeName(declaration.name)
+    if (declaredHere.has(name) || placeOf.has(name)) {
+      const place = declaredHere.has(name) ? '' : placeOf.get(name) ?? ''
+      problems.push({ severity: 'error', code: 'duplicateCounter', line: declaration.sourceLine, subject: declaration.name, ...(place === '' ? {} : { suggestion: place }) })
+    }
+    declaredHere.add(name)
+    names.add(name)
+  }
+  for (const node of allNodes) {
+    if (node.type === 'add') {
+      names.add(normalizeName(node.counter))
+    }
+  }
+  return names
+}
+
+/** Where a counter is first written in the import, its declaration or its first `[add]`, and its name there; undefined when only the project has it. */
+function firstCounterWritten(result: ImportResult, allNodes: readonly StoryNode[], name: string): { line: number; name: string } | undefined {
+  const declaration = result.counters.find(candidate => normalizeName(candidate.name) === name)
+  if (declaration !== undefined) {
+    return { line: declaration.sourceLine, name: declaration.name }
+  }
+  const addition = allNodes.find(node => node.type === 'add' && normalizeName(node.counter) === name)
+  return addition?.type === 'add' ? { line: addition.sourceLine, name: addition.counter } : undefined
 }
 
 /** Styles declared twice, and styles used that are neither declared nor a property alone (`italic`). */
@@ -226,7 +293,7 @@ function checkScenes(result: ImportResult, knownScenes: readonly { name: string;
   return problems
 }
 
-type ConditionPart = Extract<Condition, { type: 'is' | 'remembered' | 'endingSeen' }>
+type ConditionPart = Extract<Condition, { type: 'is' | 'compare' | 'remembered' | 'endingSeen' }>
 
 function partsOf(condition: Condition | null): ConditionPart[] {
   if (condition === null || condition.type === 'invalid') {

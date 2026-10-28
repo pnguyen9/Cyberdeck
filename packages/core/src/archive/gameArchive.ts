@@ -14,9 +14,8 @@ import { isSafeArchivePath, readZip, writeZip, type ZipEntryToWrite } from './zi
  * - `scenes/<id>/scene.json` for every scene, in every archive: any chapter may play them;
  * - `assets/cover.<extension>`, in every archive of the game, so that the library always shows it;
  * - `assets/backgrounds/<name>`, `assets/characters/<character>/<expression>` and
- *   `assets/illustrations/<name>`, `assets/music/<name>` and `assets/sounds/<name>`, named after
- *   their entries; content used by
- *   several entries is stored once.
+ *   `assets/illustrations/<name>`, `assets/music/<name>`, `assets/sounds/<name>` and
+ *   `assets/videos/<name>`, named after their entries; content used by several entries is stored once.
  *
  * The whole game and a few chapters are the same format: installing merges archives of one game.
  * What only the editor needs, such as the file a chapter was imported from, is left out.
@@ -84,6 +83,8 @@ const EXTENSIONS_BY_MEDIA_TYPE: Readonly<Record<string, string>> = {
   'audio/flac': 'flac',
   'audio/mp4': 'm4a',
   'audio/webm': 'weba',
+  'video/webm': 'webm',
+  'video/mp4': 'mp4',
   'font/woff2': 'woff2',
   'font/woff': 'woff',
   'font/ttf': 'ttf',
@@ -103,6 +104,8 @@ export const MEDIA_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
   flac: 'audio/flac',
   m4a: 'audio/mp4',
   weba: 'audio/webm',
+  webm: 'video/webm',
+  mp4: 'video/mp4',
   woff2: 'font/woff2',
   woff: 'font/woff',
   ttf: 'font/ttf',
@@ -110,7 +113,7 @@ export const MEDIA_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
 }
 
 /** The cover, or a file of one of the asset folders, with an extension Datajack plays. */
-export const ASSET_FILE_PATH = new RegExp(`^assets/(cover|(backgrounds|illustrations|music|sounds|fonts|characters/[^/]+)/[^/]+)\\.(${Object.keys(MEDIA_TYPES_BY_EXTENSION).join('|')})$`)
+export const ASSET_FILE_PATH = new RegExp(`^assets/(cover|(backgrounds|illustrations|music|sounds|videos|fonts|characters/[^/]+)/[^/]+)\\.(${Object.keys(MEDIA_TYPES_BY_EXTENSION).join('|')})$`)
 
 const SHA_256 = /^[0-9a-f]{64}$/
 const MAXIMUM_RELEASE_LENGTH = 40
@@ -167,7 +170,7 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
     assetFiles[asset.id] = { path, sha256: hash }
   }
 
-  const formatVersion = playerFormatVersion(project)
+  const formatVersion = playerFormatVersion(project, [...included, ...scenes])
   const manifest: GameManifest = {
     archiveFormat: ARCHIVE_FORMAT,
     release,
@@ -190,14 +193,28 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
 
 /**
  * The oldest format that holds the game, so that players who have not updated Datajack can still
- * play what it draws: 1.1 unless a style uses a property 1.0 does not know, which it would refuse.
- * What 1.0 does not know besides, the CSS and title cards, it leaves out.
+ * play what it draws. 1.1, which Datajack 1.0 reads, unless the game uses what 1.0 would refuse
+ * rather than leave out: a style property it does not know or a font file need 1.2 (Datajack 1.1);
+ * counters, voices and videos need 1.3 (Datajack 1.2). What an older player does not know besides,
+ * the CSS and title cards for 1.0, it leaves out.
  */
-export function playerFormatVersion(project: ProjectDocument): string {
-  // Datajack 1.0 refuses a style word it does not know, and a font file, which it takes for a misplaced file.
-  const needsNewer = project.fonts.some(font => font.assetId !== null)
+export function playerFormatVersion(project: ProjectDocument, documents: readonly ChapterDocument[] = []): string {
+  // An older Datajack refuses the nodes, conditions, commands and files it does not know: told the
+  // game is newer, its player knows to update.
+  const needsDatajack12 = project.counters.length > 0
+    || project.videos.length > 0
+    || documents.some(document => flattenStoredNodes(document.nodes).some(node => commandsOf(node).some(command => command.type === 'voice')))
+  if (needsDatajack12) {
+    return '1.3'
+  }
+  // Datajack 1.0 takes a font file for a misplaced file.
+  const needsDatajack11 = project.fonts.some(font => font.assetId !== null)
     || project.styles.some(style => style.properties.some(property => !STYLE_PROPERTIES_OF_1_1.includes(property)))
-  return needsNewer ? '1.2' : '1.1'
+  return needsDatajack11 ? '1.2' : '1.1'
+}
+
+function commandsOf(node: StoredNode): readonly StageCommand[] {
+  return node.type === 'page' ? [...node.commandsBefore, ...node.inlineCommands] : node.type === 'stage' ? node.commands : []
 }
 
 /** A chapter as players get it: without where it was imported from, nor where definitions are written, which play nothing. */
@@ -286,7 +303,11 @@ export function assetsUsedBy(project: ProjectDocument, chapters: readonly Chapte
         add(project.music.find(track => track.id === command.musicId)?.assetId)
         break
       case 'sound':
+      case 'voice':
         add(project.sounds.find(sound => sound.id === command.soundId)?.assetId)
+        break
+      case 'video':
+        add(project.videos.find(video => video.id === command.videoId)?.assetId)
         break
       case 'illustration':
         add(project.illustrations.find(illustration => illustration.id === command.illustrationId)?.assetId)
@@ -324,6 +345,10 @@ function assetFolderAndName(project: ProjectDocument, assetId: string): { folder
   const sound = project.sounds.find(candidate => candidate.assetId === assetId)
   if (sound !== undefined) {
     return { folder: 'assets/sounds', name: sound.name }
+  }
+  const video = project.videos.find(candidate => candidate.assetId === assetId)
+  if (video !== undefined) {
+    return { folder: 'assets/videos', name: video.name }
   }
   const font = project.fonts.find(candidate => candidate.assetId === assetId)
   if (font !== undefined) {

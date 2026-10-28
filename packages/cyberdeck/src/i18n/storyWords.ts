@@ -13,6 +13,7 @@ export const storyWords: Readonly<Record<Locale, StoryWords>> = {
     scene: title => `Scène\u00a0: ${title}`,
     colon: '\u00a0: ',
     several: 'plusieurs',
+    startsAt: amount => `commence à ${amount}`,
     fromTheCss: 'depuis le CSS',
     none: 'aucune',
     noMore: value => `plus de ${value}`,

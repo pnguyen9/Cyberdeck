@@ -80,6 +80,11 @@ export type Condition =
   | { type: 'remembered'; memory: string; negated: boolean }
   /** `seen ending X`: the profile has reached this ending in some playthrough. */
   | { type: 'endingSeen'; ending: string; negated: boolean }
+  /**
+   * `Trust >= 3`: a counter compared with a number. `Trust is 3` reads as `is`, a decision's test,
+   * until the name is known to be a counter's.
+   */
+  | { type: 'compare'; counter: string; operator: '<' | '<=' | '>' | '>='; amount: number }
   | { type: 'and' | 'or'; conditions: Condition[] }
   /** Kept so that the branch still appears in the preview; the import reports it as an error. */
   | { type: 'invalid'; text: string }
@@ -98,6 +103,7 @@ export interface ConditionNode {
   branches: ConditionBranch[]
 }
 
+/** `[set: Mood = Happy]`; or a counter's new value, `[set: Trust = 3]`, once the name is known to be a counter's. */
 export interface SetNode {
   type: 'set'
   sourceLine: number
@@ -105,15 +111,23 @@ export interface SetNode {
   value: string
 }
 
+/** `[add: Trust 2]`, `[add: Trust -1]`, `[add: Trust]` for one more. */
+export interface AddNode {
+  type: 'add'
+  sourceLine: number
+  counter: string
+  amount: number
+}
+
 /**
- * Where a `[decision: …]` or `[style: X = …]` is written, among the pages of a chapter: its
+ * Where a `[decision: …]`, `[counter: …]` or `[style: X = …]` is written, among the pages of a chapter: its
  * declaration lives there. Written before the first heading of a text that has headings, it is
  * none of its chapters', and no node marks it.
  */
 export interface DefinitionNode {
   type: 'definition'
   sourceLine: number
-  kind: 'decision' | 'style'
+  kind: 'decision' | 'counter' | 'style'
   name: string
 }
 
@@ -158,7 +172,7 @@ export interface PlayNode {
   scene: string
 }
 
-export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
+export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | AddNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
 
 /** `[decision: Confession = Accept | Refuse]`, or `[decision multi: …]` when several values can hold at once. */
 export interface DecisionDeclaration {
@@ -166,6 +180,13 @@ export interface DecisionDeclaration {
   name: string
   values: string[]
   multiple: boolean
+}
+
+/** `[counter: Trust = 2]`, or `[counter: Trust]` starting at 0. */
+export interface CounterDeclaration {
+  sourceLine: number
+  name: string
+  initial: number
 }
 
 export interface ImportedChapter {
@@ -220,6 +241,13 @@ export type ImportProblemCode =
   | 'unknownDecision'
   | 'unknownDecisionValue'
   | 'duplicateDecision'
+  | 'invalidCounter'
+  | 'invalidAdd'
+  | 'unknownCounter'
+  | 'counterNeedsNumber'
+  | 'duplicateCounter'
+  | 'counterNamedLikeDecision'
+  | 'unsetCounter'
   | 'invalidStageDirective'
   | 'looksLikeStageKeyword'
   | 'unreachable'
@@ -244,6 +272,7 @@ export interface ImportResult {
   /** Declared by `[import: …]` on the first line, null when the writer left it to the interface. */
   kind: ImportKind | null
   decisions: DecisionDeclaration[]
+  counters: CounterDeclaration[]
   styles: StyleDeclaration[]
   chapters: ImportedChapter[]
   /** `# Scene: Name`: pages of no chapter, played wherever a `[play: Name]` is. */

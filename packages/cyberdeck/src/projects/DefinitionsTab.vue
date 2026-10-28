@@ -11,7 +11,9 @@ import {
   pagesTooLong,
   placeDescriber,
   previewDefinitions,
+  type DefinitionKind,
   type IndexedName,
+  type NameKind,
 } from '@cyberdeck/core'
 import { createTextboxLayout, useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, ref, watch } from 'vue'
@@ -29,8 +31,8 @@ import UnsavedQuestion from './UnsavedQuestion.vue'
 import { useUnsavedChanges } from './unsavedChanges'
 
 /**
- * The decisions and styles of the project: those of no chapter, edited here as text, and those a
- * chapter declares, or that choices made, listed with where they are.
+ * The decisions, counters and styles of the project: those of no chapter, edited here as text, and
+ * those a chapter declares, or that choices or `[add]` made, listed with where they are.
  */
 const { open, project, chapters, scenes, act, openStoryboard, openIndex } = useEditor()
 const layout = createTextboxLayout()
@@ -83,26 +85,30 @@ async function saveCss() {
 }
 const vocabulary = computed(() => vocabularyOf(project.value, scenes.value))
 
-const index = computed(() => allNames.value.filter(name => name.kind === 'decision' || name.kind === 'style'))
+/** The kinds of names declared as definitions. */
+const definitionKindOf = (kind: NameKind): DefinitionKind | null => kind === 'decision' || kind === 'counter' || kind === 'style' ? kind : null
+const index = computed(() => allNames.value.flatMap(name => {
+  const kind = definitionKindOf(name.kind)
+  return kind === null ? [] : [{ ...name, kind }]
+}))
 const placeOf = computed(() => placeDescriber(documents.value, project.value, words.value))
 
-/** `Confession: Accept | Refuse`, `Clues (several): Letter | Key`, `Whisper: italic, small`. */
-const describeDefinition = (kind: 'decision' | 'style', definedId: string) => describeNameDefinition(kind, definedId, project.value, words.value)
+/** `Confession: Accept | Refuse`, `Clues (several): Letter | Key`, `Trust: starts at 2`, `Whisper: italic, small`. */
+const describeDefinition = (kind: DefinitionKind, definedId: string) => describeNameDefinition(kind, definedId, project.value, words.value)
 
 /** Declared in a chapter or scene, at a definition node. */
 const local = computed(() => index.value.flatMap(name => {
   const home = homeOf(name, project.value)
   return home.type === 'chapter' ? [{ name, documentId: home.documentId, nodeId: home.nodeId }] : []
 }))
-/** Declared nowhere: made by the choices that name it, or a style named after a property alone. */
+/** Declared nowhere: made by the choices that name it, a counter by its `[add]`, or a style named after a property alone. */
 const implicit = computed(() => index.value.filter(name => homeOf(name, project.value).type === 'implicit').map(name => {
   const first = name.uses.find(entry => entry.role !== 'declared')
   return { name, place: first === undefined ? null : { documentId: first.documentId, nodeId: first.nodeId } }
 }))
 
-async function removeUnused(name: IndexedName) {
-  const kind = name.kind === 'decision' ? 'decision' : 'style'
-  await act(() => open.removeUnusedDefinition(kind, name.id), text.value.removedUnused(name.name, kind))
+async function removeUnused(name: IndexedName & { kind: DefinitionKind }) {
+  await act(() => open.removeUnusedDefinition(name.kind, name.id), text.value.removedUnused(name.name, name.kind))
 }
 
 async function save() {
@@ -121,8 +127,8 @@ async function moveHere(entry: { name: IndexedName; documentId: string; nodeId: 
 }
 
 /** A name declared nowhere gets its declaration written at the end of the text, to save or change first. */
-function declare(name: IndexedName) {
-  const line = definitionLine(project.value, name.kind === 'decision' ? 'decision' : 'style', name.id)
+function declare(name: IndexedName & { kind: DefinitionKind }) {
+  const line = definitionLine(project.value, name.kind, name.id)
   if (line !== null) {
     draft.value = draft.value.trim() === '' ? line : `${draft.value.replace(/\n+$/, '')}\n${line}`
   }
@@ -246,11 +252,11 @@ useUnsavedChanges(() => hasChanges.value, ask)
     <p v-if="local.length === 0" class="muted">{{ text.noneInChapters }}</p>
     <ul v-else class="entries">
       <li v-for="entry in local" :key="`${entry.name.kind}:${entry.name.id}`" class="entry">
-        <span class="definition">{{ describeDefinition(entry.name.kind === 'decision' ? 'decision' : 'style', entry.name.id) }}</span>
+        <span class="definition">{{ describeDefinition(entry.name.kind, entry.name.id) }}</span>
         <span class="muted">{{ placeOf(entry.documentId, entry.nodeId) }}</span>
         <span class="entry-actions">
           <button class="link-button" @click="openStoryboard(entry.documentId, entry.nodeId)">{{ text.show }}</button>
-          <button v-if="entry.name.kind === 'decision'" class="link-button" @click="openIndex(entry.name.kind, entry.name.id)">{{ text.uses }}</button>
+          <button v-if="entry.name.kind !== 'style'" class="link-button" @click="openIndex(entry.name.kind, entry.name.id)">{{ text.uses }}</button>
           <button class="link-button" @click="moveHere(entry)">{{ text.moveToDefinitions }}</button>
         </span>
       </li>
@@ -262,12 +268,12 @@ useUnsavedChanges(() => hasChanges.value, ask)
       <p class="muted">{{ text.implicitHelp }}</p>
       <ul class="entries">
         <li v-for="entry in implicit" :key="`${entry.name.kind}:${entry.name.id}`" class="entry">
-          <span class="definition">{{ describeDefinition(entry.name.kind === 'decision' ? 'decision' : 'style', entry.name.id) }}</span>
+          <span class="definition">{{ describeDefinition(entry.name.kind, entry.name.id) }}</span>
           <span class="muted">{{ entry.place === null ? indexText.usedNowhere(entry.name.kind) : text.firstIn(placeOf(entry.place.documentId, entry.place.nodeId)) }}</span>
           <span class="entry-actions">
-            <button v-if="entry.name.kind === 'decision' && entry.place !== null" class="link-button" @click="openIndex(entry.name.kind, entry.name.id)">{{ text.uses }}</button>
+            <button v-if="entry.name.kind !== 'style' && entry.place !== null" class="link-button" @click="openIndex(entry.name.kind, entry.name.id)">{{ text.uses }}</button>
             <button v-if="entry.place === null" class="link-button" @click="removeUnused(entry.name)">{{ common.remove }}</button>
-            <button v-if="entry.name.kind === 'decision'" class="link-button" @click="declare(entry.name)">{{ text.declareHere }}</button>
+            <button v-if="entry.name.kind !== 'style'" class="link-button" @click="declare(entry.name)">{{ text.declareHere }}</button>
           </span>
         </li>
       </ul>

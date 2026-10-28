@@ -8,13 +8,14 @@ const USE_GROUPS: Readonly<Record<UseRole, UseGroup>> = {
   chosen: 'given',
   set: 'given',
   unset: 'emptied',
+  changed: 'changed',
   tested: 'tested',
   remembered: 'remembered',
   reached: 'reached',
   used: 'used',
   played: 'played',
 }
-const GROUP_ORDER: readonly UseGroup[] = ['declared', 'given', 'emptied', 'tested', 'remembered', 'reached', 'used', 'played']
+const GROUP_ORDER: readonly UseGroup[] = ['declared', 'given', 'emptied', 'changed', 'tested', 'remembered', 'reached', 'used', 'played']
 
 /** The uses grouped by what they do, each with the values concerned, in a fixed order. */
 export function summariseUses(name: IndexedName, uses: readonly NameUse[], project: ProjectDocument, locale: Locale = 'en'): string {

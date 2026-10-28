@@ -1,6 +1,6 @@
 {
   "name": "@cyberdeck/stage",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "license": "Unlicense",
   "private": true,
   "description": "What shows a story, shared by Datajack and Cyberdeck's preview: stage, textbox, choices, log, saves panel, inputs",
@@ -14,7 +14,7 @@
     "typecheck": "vue-tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@cyberdeck/core": "1.1.0",
+    "@cyberdeck/core": "1.2.0",
     "vue": "3.5.44"
   },
   "devDependencies": {

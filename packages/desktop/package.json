@@ -1,6 +1,6 @@
 {
   "name": "@cyberdeck/desktop",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "license": "Unlicense",
   "private": true,
   "description": "What the desktop builds of Cyberdeck and Datajack share: a hardened Electron window, checked channels, safe file writing, packaging",

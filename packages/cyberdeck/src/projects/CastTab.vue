@@ -34,8 +34,9 @@ const backgrounds = computed(() => project.value.backgrounds.map(background => e
 const music = computed(() => project.value.music.map(track => entry(track.id, track.name, track.assetId)))
 const sounds = computed(() => project.value.sounds.map(sound => entry(sound.id, sound.name, sound.assetId)))
 const illustrations = computed(() => project.value.illustrations.map(illustration => entry(illustration.id, illustration.name, illustration.assetId)))
+const videos = computed(() => project.value.videos.map(video => entry(video.id, video.name, video.assetId)))
 const fonts = computed(() => project.value.fonts.map(font => ({ ...entry(font.id, font.name, font.assetId), widthScale: font.widthScale })))
-const missingCount = computed(() => [...characters.value.flatMap(character => character.expressions), ...backgrounds.value, ...illustrations.value, ...music.value, ...sounds.value]
+const missingCount = computed(() => [...characters.value.flatMap(character => character.expressions), ...backgrounds.value, ...illustrations.value, ...music.value, ...sounds.value, ...videos.value]
   .filter(candidate => candidate.file === null).length)
 
 async function addFiles(fileList: FileList | null | undefined) {
@@ -75,12 +76,12 @@ function setDrawnFacing(characterId: string, value: string) {
       @dragleave="isDraggingOver = false"
       @drop.prevent="onDrop"
     >
-      <input class="file-input" type="file" multiple accept="image/*,audio/*,.woff2,.woff,.ttf,.otf" @change="addFiles(($event.target as HTMLInputElement).files)">
+      <input class="file-input" type="file" multiple accept="image/*,audio/*,video/mp4,video/webm,.woff2,.woff,.ttf,.otf" @change="addFiles(($event.target as HTMLInputElement).files)">
       <strong>{{ text.dropTitle }}</strong>
-      <span class="muted">{{ text.dropHelpStart }} <code>rooftop.jpg</code>, <code>marie-smile.png</code>, <code>calm.ogg</code>, <code>door.ogg</code>{{ text.dropHelpMiddle }}<code>.woff2</code>, <code>.woff</code>, <code>.ttf</code>, <code>.otf</code>{{ text.dropHelpEnd }}</span>
+      <span class="muted">{{ text.dropHelpStart }} <code>rooftop.jpg</code>, <code>marie-smile.png</code>, <code>calm.ogg</code>, <code>door.ogg</code>, <code>opening.webm</code>{{ text.dropHelpMiddle }}<code>.woff2</code>, <code>.woff</code>, <code>.ttf</code>, <code>.otf</code>{{ text.dropHelpEnd }}</span>
     </label>
 
-    <p v-if="characters.length + backgrounds.length + illustrations.length + music.length + sounds.length === 0" class="muted">
+    <p v-if="characters.length + backgrounds.length + illustrations.length + music.length + sounds.length + videos.length === 0" class="muted">
       {{ text.nothingYet }}
     </p>
     <p v-else-if="missingCount > 0" class="muted">{{ text.missingFiles(missingCount) }}</p>
@@ -142,6 +143,14 @@ function setDrawnFacing(characterId: string, value: string) {
       <div v-for="sound in sounds" :key="sound.id" class="entry">
         <span>{{ sound.name }}</span>
         <span :class="sound.file === null ? 'missing' : 'present'">{{ sound.file?.fileName ?? text.noFile }}</span>
+      </div>
+    </template>
+
+    <template v-if="videos.length > 0">
+      <h2 class="section-title">{{ text.videos }}</h2>
+      <div v-for="video in videos" :key="video.id" class="entry">
+        <span>{{ video.name }}</span>
+        <span :class="video.file === null ? 'missing' : 'present'">{{ video.file?.fileName ?? text.noFile }}</span>
       </div>
     </template>
 

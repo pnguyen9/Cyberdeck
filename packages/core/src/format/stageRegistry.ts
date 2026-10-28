@@ -8,6 +8,7 @@ import type {
   MusicTrack,
   SoundEffect,
   Illustration,
+  VideoClip,
   Placement,
   PositionPreset,
   ProjectDocument,
@@ -22,13 +23,14 @@ export interface RegistryCreations {
   music: string[]
   sounds: string[]
   illustrations: string[]
+  videos: string[]
 }
 
 /** Expression of a character entering without one: `[enter: marie left]`. */
 const DEFAULT_EXPRESSION = 'normal'
 
 /**
- * The project's characters, backgrounds, music, sounds and illustrations plus those an import creates, found by name
+ * The project's characters, backgrounds, music, sounds, illustrations and videos plus those an import creates, found by name
  * ignoring case. Works on copies: the project given is left untouched.
  */
 export class StageRegistry {
@@ -38,7 +40,8 @@ export class StageRegistry {
   readonly sounds: SoundEffect[]
   readonly positions: readonly PositionPreset[]
   readonly illustrations: Illustration[]
-  readonly created: RegistryCreations = { characters: [], expressions: [], backgrounds: [], music: [], sounds: [], illustrations: [] }
+  readonly videos: VideoClip[]
+  readonly created: RegistryCreations = { characters: [], expressions: [], backgrounds: [], music: [], sounds: [], illustrations: [], videos: [] }
 
   constructor(project: ProjectDocument, private readonly environment: Environment) {
     this.characters = project.characters.map(character => ({ ...character, expressions: [...character.expressions] }))
@@ -46,6 +49,7 @@ export class StageRegistry {
     this.music = [...project.music]
     this.sounds = [...project.sounds]
     this.illustrations = [...project.illustrations]
+    this.videos = [...project.videos]
     this.positions = project.positions
   }
 
@@ -103,6 +107,16 @@ export class StageRegistry {
     return illustration
   }
 
+  video(name: string): VideoClip {
+    let video = findNamed(this.videos, name)
+    if (video === undefined) {
+      video = { id: this.environment.createId(), name, assetId: null }
+      this.videos.push(video)
+      this.created.videos.push(name)
+    }
+    return video
+  }
+
   soundEffect(name: string): SoundEffect {
     let sound = findNamed(this.sounds, name)
     if (sound === undefined) {
@@ -144,7 +158,10 @@ export class StageRegistry {
       case 'music':
         return { type: 'music', musicId: instruction.track === null ? null : this.musicTrack(instruction.track).id }
       case 'sound':
-        return { type: 'sound', soundId: this.soundEffect(instruction.sound).id }
+      case 'voice':
+        return { type: instruction.type, soundId: this.soundEffect(instruction.sound).id }
+      case 'video':
+        return { type: 'video', videoId: this.video(instruction.video).id }
       case 'enter': {
         const character = this.character(instruction.character)
         return {

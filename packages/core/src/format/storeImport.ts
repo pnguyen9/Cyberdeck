@@ -1,4 +1,5 @@
 import type { Condition, Directive, ImportResult, StoryNode, StyleDeclaration } from '../importer/importTypes'
+import { readAmount } from '../importer/readControl'
 import { flattenNodes, normalizeName } from '../importer/storyNodes'
 import { interpretStageDirective } from '../stage/stageDirectives'
 import { checkAuthorCss, styleClassName } from './authorCss'
@@ -7,6 +8,7 @@ import {
   defaultEnvironment,
   FORMAT_VERSION,
   type ChapterDocument,
+  type Counter,
   type Decision,
   type DecisionValue,
   type Environment,
@@ -57,6 +59,15 @@ export function storeImport(
       decisions.offer(node.decision, node.options.map(option => option.value))
     }
   }
+  const counters = new CounterRegistry(project.counters, environment)
+  for (const declaration of result.counters) {
+    counters.declare(declaration.name, declaration.initial)
+  }
+  for (const node of importedNodes) {
+    if (node.type === 'add') {
+      counters.use(node.counter)
+    }
+  }
 
   const registry = new StageRegistry(project, environment)
   const toCommand = (directive: Directive) => {
@@ -81,7 +92,7 @@ export function storeImport(
 
   const endings = new NameRegistry(project.endings, environment)
   const memories = new NameRegistry(project.memories, environment)
-  const toCondition = (condition: Condition) => storeCondition(condition, decisions, endings, memories)
+  const toCondition = (condition: Condition) => storeCondition(condition, decisions, counters, endings, memories)
   const styles = new StyleRegistry(project.styles, result.styles, environment, new Set(checkAuthorCss(project.css).classes))
   // Plays may name scenes written further down: every scene has its identifier before any node is stored.
   const sceneIds = new Map(knownScenes.map(scene => [normalizeName(scene.name), scene.id]))
@@ -144,15 +155,26 @@ export function storeImport(
         return { type: 'play', id, sceneId }
       }
       case 'set': {
+        const counter = counters.get(node.decision)
+        if (counter !== undefined) {
+          return { type: 'count', id, counterId: counter.id, operation: 'set', amount: amountOf(node.value) }
+        }
         const decision = decisions.find(node.decision)
         return { type: 'set', id, decisionId: decision.id, valueId: decisions.findValue(decision, node.value).id }
       }
+      case 'add':
+        return { type: 'count', id, counterId: counters.find(node.counter).id, operation: 'add', amount: node.amount }
       case 'unset': {
         const decision = decisions.find(node.decision)
         return { type: 'unset', id, decisionId: decision.id, valueId: node.value === null ? null : decisions.findValue(decision, node.value).id }
       }
       case 'definition':
-        return { type: 'definition', id, kind: node.kind, definedId: node.kind === 'decision' ? decisions.find(node.name).id : styles.idOf(node.name) }
+        return {
+          type: 'definition',
+          id,
+          kind: node.kind,
+          definedId: node.kind === 'decision' ? decisions.find(node.name).id : node.kind === 'counter' ? counters.find(node.name).id : styles.idOf(node.name),
+        }
       case 'ending':
         return { type: 'ending', id, endingId: endings.idOf(node.name) }
       case 'remember':
@@ -185,6 +207,7 @@ export function storeImport(
     project: {
       ...project,
       decisions: decisions.all(),
+      counters: counters.all(),
       endings: endings.all(),
       memories: memories.all(),
       styles: styles.all(),
@@ -193,6 +216,7 @@ export function storeImport(
       music: registry.music,
       sounds: registry.sounds,
       illustrations: registry.illustrations,
+      videos: registry.videos,
       chapterOrder: [...project.chapterOrder, ...chapters.map(chapter => chapter.id)],
       sceneOrder: [...project.sceneOrder, ...scenes.map(scene => scene.id).filter(sceneId => !project.sceneOrder.includes(sceneId))],
       updatedAt: now,
@@ -310,6 +334,57 @@ class DecisionRegistry {
   }
 }
 
+/** The project's counters plus those the import declares or adds to, looked up by name ignoring case. */
+class CounterRegistry {
+  private readonly counters: Counter[]
+
+  constructor(existing: readonly Counter[], private readonly environment: Environment) {
+    this.counters = [...existing]
+  }
+
+  /** A declaration: creates the counter, or gives one declared again its initial value, keeping its identifier. */
+  declare(name: string, initial: number) {
+    const existing = this.get(name)
+    const counter: Counter = { id: existing?.id ?? this.environment.createId(), name, initial }
+    if (existing === undefined) {
+      this.counters.push(counter)
+    } else {
+      this.counters[this.counters.indexOf(existing)] = counter
+    }
+  }
+
+  /** An `[add]`: makes the counter it names when nobody declared it, starting at 0. */
+  use(name: string) {
+    if (this.get(name) === undefined) {
+      this.counters.push({ id: this.environment.createId(), name, initial: 0, implicit: true })
+    }
+  }
+
+  get(name: string): Counter | undefined {
+    return this.counters.find(candidate => normalizeName(candidate.name) === normalizeName(name))
+  }
+
+  find(name: string): Counter {
+    const counter = this.get(name)
+    if (counter === undefined) {
+      throw new Error(`Unknown counter "${name}": check the import with checkReferences before storing it`)
+    }
+    return counter
+  }
+
+  all(): Counter[] {
+    return this.counters
+  }
+}
+
+function amountOf(value: string): number {
+  const amount = readAmount(value)
+  if (amount === null) {
+    throw new Error(`"${value}" is no whole number: check the import with checkReferences before storing it`)
+  }
+  return amount
+}
+
 /** Endings and memories: created by being named, found again by name ignoring case. */
 class NameRegistry {
   private readonly entries: { id: string; name: string }[]
@@ -333,19 +408,25 @@ class NameRegistry {
   }
 }
 
-function storeCondition(condition: Condition, decisions: DecisionRegistry, endings: NameRegistry, memories: NameRegistry): StoredCondition {
+function storeCondition(condition: Condition, decisions: DecisionRegistry, counters: CounterRegistry, endings: NameRegistry, memories: NameRegistry): StoredCondition {
   switch (condition.type) {
     case 'is': {
+      const counter = counters.get(condition.decision)
+      if (counter !== undefined) {
+        return { type: 'counter', counterId: counter.id, operator: condition.negated ? '!=' : '=', amount: amountOf(condition.value) }
+      }
       const decision = decisions.find(condition.decision)
       return { type: 'is', decisionId: decision.id, valueId: decisions.findValue(decision, condition.value).id, negated: condition.negated }
     }
+    case 'compare':
+      return { type: 'counter', counterId: counters.find(condition.counter).id, operator: condition.operator, amount: condition.amount }
     case 'remembered':
       return { type: 'remembered', memoryId: memories.idOf(condition.memory), negated: condition.negated }
     case 'endingSeen':
       return { type: 'endingSeen', endingId: endings.idOf(condition.ending), negated: condition.negated }
     case 'and':
     case 'or':
-      return { type: condition.type, conditions: condition.conditions.map(part => storeCondition(part, decisions, endings, memories)) }
+      return { type: condition.type, conditions: condition.conditions.map(part => storeCondition(part, decisions, counters, endings, memories)) }
     case 'invalid':
       throw new Error(`Invalid condition "${condition.text}": the import reported it as an error`)
   }

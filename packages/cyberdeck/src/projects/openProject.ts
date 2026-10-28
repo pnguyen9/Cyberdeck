@@ -32,6 +32,7 @@ import {
   withoutAssets,
   type AssetTarget,
   type ChapterDocument,
+  type DefinitionKind,
   type DefinitionsPreview,
   type Environment,
   type Facing,
@@ -87,18 +88,32 @@ export async function createNewProject(store: ProjectStore, name: string, locale
   return project
 }
 
-/** Restores a backup, replacing the project of the same identifier if there is one. */
-export async function restoreBackup(store: ProjectStore, bytes: Uint8Array<ArrayBuffer>): Promise<ProjectDocument> {
+/**
+ * Restores a backup, replacing the project of the same identifier if there is one; or, as a copy,
+ * beside it, as a new project named by `copyName` after the one backed up.
+ */
+export async function restoreBackup(
+  store: ProjectStore,
+  bytes: Uint8Array<ArrayBuffer>,
+  asCopy?: { copyName: (name: string) => string; environment?: Environment },
+): Promise<ProjectDocument> {
   const backup = await readProjectBackup(bytes)
-  await store.deleteProject(backup.project.id)
+  const environment = asCopy?.environment ?? defaultEnvironment
+  const now = environment.now()
+  const project = asCopy === undefined
+    ? backup.project
+    : { ...backup.project, id: environment.createId(), name: asCopy.copyName(backup.project.name), createdAt: now, updatedAt: now }
+  if (asCopy === undefined) {
+    await store.deleteProject(project.id)
+  }
   for (const chapter of backup.chapters) {
-    await store.writeChapter(backup.project.id, chapter)
+    await store.writeChapter(project.id, chapter)
   }
-  for (const asset of backup.project.assets) {
-    await store.writeAsset(backup.project.id, asset.id, backup.assetFiles.get(asset.id)!, asset.mediaType)
+  for (const asset of project.assets) {
+    await store.writeAsset(project.id, asset.id, backup.assetFiles.get(asset.id)!, asset.mediaType)
   }
-  await store.writeProject(backup.project)
-  return backup.project
+  await store.writeProject(project)
+  return project
 }
 
 /**
@@ -275,12 +290,15 @@ export class OpenProject {
     return this.saveProject({ ...this.currentProject, css, updatedAt: this.now() })
   }
 
-  /** Takes out a decision or style nothing uses any more, made by choices since removed for instance. */
-  removeUnusedDefinition(kind: 'decision' | 'style', id: string) {
+  /** Takes out a decision, counter or style nothing uses any more, made by choices since removed for instance. */
+  removeUnusedDefinition(kind: DefinitionKind, id: string) {
     const project = this.currentProject
-    return this.saveProject(kind === 'decision'
-      ? { ...project, decisions: project.decisions.filter(decision => decision.id !== id), updatedAt: this.now() }
-      : { ...project, styles: project.styles.filter(style => style.id !== id), updatedAt: this.now() })
+    const kept = <Entry extends { id: string }>(entries: Entry[]) => entries.filter(entry => entry.id !== id)
+    return this.saveProject({
+      ...project,
+      ...(kind === 'decision' ? { decisions: kept(project.decisions) } : kind === 'counter' ? { counters: kept(project.counters) } : { styles: kept(project.styles) }),
+      updatedAt: this.now(),
+    })
   }
 
   /** Takes a definition out of its chapter: it then lives in the project's definitions. Undone like any change to a chapter. */
@@ -428,6 +446,8 @@ function describeTarget(project: ProjectDocument, target: AssetTarget, locale: L
       return text.soundTarget(`${project.sounds.find(sound => sound.id === target.soundId)?.name}`)
     case 'illustration':
       return text.illustrationTarget(`${project.illustrations.find(illustration => illustration.id === target.illustrationId)?.name}`)
+    case 'video':
+      return text.videoTarget(`${project.videos.find(video => video.id === target.videoId)?.name}`)
     case 'font':
       return text.fontTarget(`${project.fonts.find(font => font.id === target.fontId)?.name}`)
     case 'expression': {

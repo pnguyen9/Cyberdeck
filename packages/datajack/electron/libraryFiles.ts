@@ -17,6 +17,8 @@ export const MEDIA_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
   flac: 'audio/flac',
   m4a: 'audio/mp4',
   weba: 'audio/webm',
+  webm: 'video/webm',
+  mp4: 'video/mp4',
   woff2: 'font/woff2',
   woff: 'font/woff',
   ttf: 'font/ttf',

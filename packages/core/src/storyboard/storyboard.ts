@@ -13,11 +13,12 @@ import {
   type StoredPage,
   type StoredRemember,
   type StoredSet,
+  type StoredCount,
   type StoredUnset,
   type StoredDefinition,
   type StoredStage,
 } from '../format/storyFormat'
-import { describeAssignment, describeCondition, describeDefinition, describeStageCommand, describeUnset } from './describeNodes'
+import { describeAssignment, describeCondition, describeCount, describeDefinition, describeStageCommand, describeUnset } from './describeNodes'
 import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
 
 /**
@@ -31,7 +32,7 @@ import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
  */
 export type StoryboardEntry =
   | { type: 'card'; id: string; node: StoredPage | StoredChoice; number: string; branch: string; slot: DropSlot }
-  | { type: 'marker'; id: string; node: StoredStage | StoredSet | StoredUnset | StoredDefinition | StoredEnding | StoredRemember | StoredBreak | StoredPlay; text: string; branch: string; slot: DropSlot }
+  | { type: 'marker'; id: string; node: StoredStage | StoredSet | StoredCount | StoredUnset | StoredDefinition | StoredEnding | StoredRemember | StoredBreak | StoredPlay; text: string; branch: string; slot: DropSlot }
   | { type: 'conditionStart'; id: string; node: StoredConditionNode; text: string; branch: string; slot: DropSlot }
   | { type: 'branchStart'; id: string; node: StoredConditionNode; branchIndex: number; text: string; branch: string; slot: DropSlot }
   | { type: 'conditionEnd'; id: string; node: StoredConditionNode; branch: string; slot: DropSlot }
@@ -73,6 +74,9 @@ export function storyboardEntries(chapter: ChapterDocument, project: ProjectDocu
           break
         case 'set':
           entries.push({ type: 'marker', id: node.id, node, text: describeAssignment(node.decisionId, node.valueId, project), branch, slot })
+          break
+        case 'count':
+          entries.push({ type: 'marker', id: node.id, node, text: describeCount(node, project), branch, slot })
           break
         case 'unset':
           entries.push({ type: 'marker', id: node.id, node, text: describeUnset(node.decisionId, node.valueId, project, words), branch, slot })

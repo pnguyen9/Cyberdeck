@@ -118,6 +118,8 @@ export function applyStageCommand(stage: StageState, command: StageCommand, cont
     case 'music':
       return { ...stage, musicId: command.musicId }
     case 'sound':
+    case 'voice':
+    case 'video':
     case 'shake':
     case 'flash':
       // Played by the interface as the command is reached: nothing stays on stage.

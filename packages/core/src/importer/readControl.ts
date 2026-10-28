@@ -4,6 +4,8 @@ import type { Condition, Directive } from './importTypes'
 export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
   'decision',
   'decision multi',
+  'counter',
+  'add',
   'choice',
   'if',
   'else if',
@@ -41,6 +43,30 @@ export function readDecisionDeclaration(text: string): { name: string; values: s
   return values.length === 0 ? null : { name: assignment.name, values }
 }
 
+/** A whole number as written in a tag: `3`, `-1`, `+2`. */
+export function readAmount(text: string): number | null {
+  const amount = /^[+-]?\d{1,15}$/.test(text.trim()) ? Number(text.trim()) : Number.NaN
+  return Number.isSafeInteger(amount) ? amount : null
+}
+
+/** `Trust = 2` → name and initial value; `Trust` alone starts at 0. Null without a name, or with a value that is no whole number. */
+export function readCounterDeclaration(text: string): { name: string; initial: number } | null {
+  if (!text.includes('=')) {
+    return text.trim() === '' ? null : { name: text.trim(), initial: 0 }
+  }
+  const assignment = readAssignment(text)
+  const initial = assignment === null ? null : readAmount(assignment.value)
+  return assignment === null || initial === null ? null : { name: assignment.name, initial }
+}
+
+/** `Trust 2`, `Trust -1` → name and amount; `Trust` alone adds 1. Null without a name. */
+export function readAddition(text: string): { name: string; amount: number } | null {
+  const withAmount = /^(.*\S)\s+([+-]?\d+)$/.exec(text.trim())
+  const amount = withAmount === null ? 1 : readAmount(withAmount[2]!)
+  const name = withAmount === null ? text.trim() : withAmount[1]!
+  return name === '' || amount === null ? null : { name, amount }
+}
+
 /** `Clues = Letter` → decision and value; null when either is missing. */
 export function readAssignment(text: string): { name: string; value: string } | null {
   const equalsIndex = text.indexOf('=')
@@ -54,8 +80,8 @@ export function readAssignment(text: string): { name: string; value: string } | 
 
 /**
  * `Answer is not B and Mood is Happy or Mood is Sad`: `and` binds tighter than `or`, as in
- * speech; there are no parentheses. Besides `X is Y`, a part may be `[not] remembered X` or
- * `[not] seen ending X`. Returns an invalid condition when a part is none of these.
+ * speech; there are no parentheses. Besides `X is Y`, a part may be `[not] remembered X`,
+ * `[not] seen ending X`, or a counter compared with a number, `Trust >= 3`. Returns an invalid condition when a part is none of these.
  */
 export function readCondition(text: string): Condition {
   const alternatives: Condition[] = []
@@ -79,6 +105,11 @@ function readComparison(text: string): Condition | null {
     const name = (flag[3] ?? '').trim()
     const negated = flag[1] !== undefined
     return /^remembered$/i.test(flag[2] ?? '') ? { type: 'remembered', memory: name, negated } : { type: 'endingSeen', ending: name, negated }
+  }
+  const counter = /^(.+?)\s*(<=|>=|<|>)\s*([+-]?\d+)$/.exec(text.trim())
+  if (counter !== null) {
+    const amount = readAmount(counter[3]!)
+    return amount === null ? null : { type: 'compare', counter: counter[1]!.trim(), operator: counter[2] as '<' | '<=' | '>' | '>=', amount }
   }
   const comparison = /^(.+?)\s+is\s+(not\s+)?(.+)$/i.exec(text.trim())
   if (comparison === null) {

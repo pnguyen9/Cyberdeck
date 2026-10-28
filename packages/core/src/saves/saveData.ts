@@ -3,7 +3,7 @@ import { flattenStoredNodes, type Facing, type FadeColor, type TintName } from '
 import type { PlayableStory } from '../runtime/playableStory'
 import { chaptersInOrder } from '../runtime/playableStory'
 import { EMPTY_STAGE, PAGES_PER_SCREENFUL, type CharacterOnStage } from '../runtime/stageState'
-import type { DecisionState, RuntimeState } from '../runtime/storyRuntime'
+import type { CounterState, DecisionState, RuntimeState } from '../runtime/storyRuntime'
 
 /**
  * A save file: plain JSON a player can read, with names wherever a person might look. Editing it
@@ -20,6 +20,8 @@ export interface SaveData {
   page: { chapterId: string; nodeId: string; playedFrom?: string[] } | null
   /** Decision name → names of the values it holds. */
   decisions: Record<string, string[]>
+  /** Counter name → its value, for those changed so far; absent when none was. */
+  counters?: Record<string, number>
   stage: {
     background: string | null
     music: string | null
@@ -42,6 +44,11 @@ const EXCERPT_LENGTH = 140
 export function toSave(story: PlayableStory, state: RuntimeState, savedAt: string): SaveData {
   const { project } = story
   const decisionsById = new Map(project.decisions.map(decision => [decision.id, decision]))
+  const countersById = new Map(project.counters.map(counter => [counter.id, counter]))
+  const counters = Object.entries(state.counters).flatMap(([counterId, count]) => {
+    const counter = countersById.get(counterId)
+    return counter === undefined ? [] : [[counter.name, count] as const]
+  })
   const charactersById = new Map(project.characters.map(character => [character.id, character]))
   const chapter = chaptersInOrder(story).find(candidate => candidate.id === state.page?.chapterId)
   // Scenes included: a choice made in one is part of the playthrough too.
@@ -61,6 +68,7 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
         valueIds.map(valueId => decision.values.find(value => value.id === valueId)?.name).filter(name => name !== undefined),
       ]]
     })),
+    ...(counters.length === 0 ? {} : { counters: Object.fromEntries(counters) }),
     stage: {
       background: project.backgrounds.find(background => background.id === state.stage.backgroundId)?.name ?? null,
       music: project.music.find(track => track.id === state.stage.musicId)?.name ?? null,
@@ -103,6 +111,14 @@ export function stateFromSave(story: PlayableStory, save: SaveData): RuntimeStat
     }
   }
 
+  const counters: Record<string, number> = {}
+  for (const [counterName, count] of Object.entries(save.counters ?? {})) {
+    const counter = findNamed(project.counters, counterName)
+    if (counter !== undefined) {
+      counters[counter.id] = count
+    }
+  }
+
   const characters: CharacterOnStage[] = save.stage.characters.flatMap(saved => {
     const character = findNamed(project.characters, saved.name)
     const expression = findNamed(character?.expressions ?? [], saved.expression)
@@ -122,6 +138,7 @@ export function stateFromSave(story: PlayableStory, save: SaveData): RuntimeStat
   return {
     page: save.page,
     decisions: decisions satisfies DecisionState,
+    counters: counters satisfies CounterState,
     stage: {
       ...EMPTY_STAGE,
       backgroundId: findNamed(project.backgrounds, save.stage.background)?.id ?? null,
@@ -153,6 +170,7 @@ export function parseSave(value: unknown): SaveData | null {
     && (page === null || (isRecord(page) && isString(page.chapterId) && isString(page.nodeId)
       && (page.playedFrom === undefined || (Array.isArray(page.playedFrom) && page.playedFrom.every(isString)))))
     && isRecord(decisions) && Object.values(decisions).every(values => Array.isArray(values) && values.every(isString))
+    && (value.counters === undefined || (isRecord(value.counters) && Object.values(value.counters).every(count => Number.isSafeInteger(count))))
     && isRecord(stage)
     && (stage.background === null || isString(stage.background))
     && (stage.music === null || isString(stage.music))

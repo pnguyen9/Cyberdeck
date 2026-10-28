@@ -1,5 +1,41 @@
 # Changelog
 
+## 1.2.0 — 2026-10-28
+
+Counting, voices and videos. Projects of 1.1.0 open as they were; a game keeps opening in older
+Datajacks unless it uses what is new here, which needs Datajack 1.2: an older one says so rather
+than failing.
+
+### Cyberdeck, the editor
+- Counters: `[counter: Trust = 2]` declares one, `[add: Trust]` or `[add: Trust -1]` changes it,
+  `[set: Trust = 0]` gives it a value, and `[if: Trust >= 3]` tests it (`>`, `>=`, `<`, `<=`, `is`,
+  `is not`). An `[add]` alone makes a counter starting at 0. Saves keep counters by name, going back
+  undoes them, and the storyboard, Definitions and Index show them; typing a tag suggests them.
+- Voices: `[voice: marie-01]` plays a line, one of the project's sounds, which stops as the player
+  moves on and plays again when they come back to its page.
+- Videos: `[video: Opening]` plays a `.webm` or `.mp4` over the whole screen, the text waiting for it;
+  moving on passes it. Video files are dropped in Cast & files like the others.
+- Restore as a copy: a backup comes back as a new project beside the one it was made from, named
+  `… (copy)`.
+- Preview from here takes the shortest way to the card.
+
+### Datajack, the player
+- Counts a game's counters, speaks its voices and plays its videos, the menus and text hidden and
+  the music silent while one plays.
+- Settings has a volume for voices; the music volume sets the videos' too.
+
+### Downloads
+As before, nothing to install: unpack a download and start the application inside.
+- `Cyberdeck-1.2.0-windows-x64.zip` and `Datajack-1.2.0-windows-x64.zip`: for Windows; start
+  `Cyberdeck.exe` or `Datajack.exe` (*More info → Run anyway* the first time: they are not signed).
+- `Cyberdeck-1.2.0-linux-x64.zip` and `Datajack-1.2.0-linux-x64.zip`: for Linux; start `cyberdeck`
+  or `datajack`.
+- `Cyberdeck-1.2.0-web.zip` and `Datajack-1.2.0-web.zip`: for any computer with a browser; open
+  `index.html`, without a server.
+- `Cyberdeck-1.2.0-documentation.zip`: the illustrated guide for authors (open
+  `docs/guide/index.html`), the README, these changes and the licence.
+- `SHA256SUMS`: the checksum of each download.
+
 ## 1.1.0 — 2026-10-28
 
 Quality of life for writing, and more freedom for how a story looks. Nothing written for 1.0.0

@@ -4,6 +4,7 @@ import { isPropertyAlone } from '../format/textStyles'
 import type {
   AnimationSpec,
   ChapterDocument,
+  DefinitionKind,
   InlineStageCommand,
   Placement,
   ProjectDocument,
@@ -56,11 +57,15 @@ export function exportText(project: ProjectDocument, chapters: readonly ChapterD
   return writer.text()
 }
 
-/** The declaration of a decision or a style, as written; null for one the project no longer has. */
-export function definitionLine(project: ProjectDocument, kind: 'decision' | 'style', definedId: string): string | null {
+/** The declaration of a decision, a counter or a style, as written; null for one the project no longer has. */
+export function definitionLine(project: ProjectDocument, kind: DefinitionKind, definedId: string): string | null {
   if (kind === 'decision') {
     const decision = project.decisions.find(candidate => candidate.id === definedId)
     return decision === undefined ? null : `[decision${decision.multiple ? ' multi' : ''}: ${decision.name} = ${decision.values.map(value => value.name).join(' | ')}]`
+  }
+  if (kind === 'counter') {
+    const counter = project.counters.find(candidate => candidate.id === definedId)
+    return counter === undefined ? null : `[counter: ${counter.name} = ${counter.initial}]`
   }
   const style = project.styles.find(candidate => candidate.id === definedId)
   return style === undefined ? null : `[style: ${style.name} = ${style.properties.length === 0 ? 'plain' : style.properties.join(', ')}]`
@@ -68,14 +73,16 @@ export function definitionLine(project: ProjectDocument, kind: 'decision' | 'sty
 
 /**
  * The declarations of the project's own definitions: those of no chapter, and not made by use alone
- * (a decision by its choices, a style named after a property).
+ * (a decision by its choices, a counter by its `[add]`, a style named after a property).
  */
 export function globalDefinitionLines(project: ProjectDocument, documents: readonly ChapterDocument[]): string[] {
   const nodes = documents.flatMap(document => flattenStoredNodes(document.nodes))
   const homed = new Set(nodes.flatMap(node => node.type === 'definition' ? [node.definedId] : []))
   const chosen = new Set(nodes.flatMap(node => node.type === 'choice' ? [node.decisionId] : []))
+  const added = new Set(nodes.flatMap(node => node.type === 'count' && node.operation === 'add' ? [node.counterId] : []))
   return [
     ...project.decisions.filter(decision => !homed.has(decision.id) && !(decision.implicit === true && chosen.has(decision.id))).map(decision => definitionLine(project, 'decision', decision.id)!),
+    ...project.counters.filter(counter => !homed.has(counter.id) && !(counter.implicit === true && added.has(counter.id))).map(counter => definitionLine(project, 'counter', counter.id)!),
     ...project.styles.filter(style => style.implicit !== true && !homed.has(style.id) && !isPropertyAlone(style)).map(style => definitionLine(project, 'style', style.id)!),
   ]
 }
@@ -166,6 +173,11 @@ class TextWriter {
           this.line(`[set: ${decision?.name ?? '?'} = ${decision?.values.find(value => value.id === node.valueId)?.name ?? '?'}]`)
           break
         }
+        case 'count': {
+          const name = this.counterName(node.counterId)
+          this.line(node.operation === 'add' ? `[add: ${name} ${node.amount}]` : `[set: ${name} = ${node.amount}]`)
+          break
+        }
         case 'unset': {
           const decision = this.decision(node.decisionId)
           const value = node.valueId === null ? '' : ` = ${decision?.values.find(value => value.id === node.valueId)?.name ?? '?'}`
@@ -235,7 +247,10 @@ class TextWriter {
       case 'music':
         return `[music: ${command.musicId === null ? 'stop' : this.project.music.find(track => track.id === command.musicId)?.name ?? '?'}]`
       case 'sound':
-        return `[sound: ${this.project.sounds.find(sound => sound.id === command.soundId)?.name ?? '?'}]`
+      case 'voice':
+        return `[${command.type}: ${this.project.sounds.find(sound => sound.id === command.soundId)?.name ?? '?'}]`
+      case 'video':
+        return `[video: ${this.project.videos.find(video => video.id === command.videoId)?.name ?? '?'}]`
       case 'enter': {
         const expression = this.expressionName(command.characterId, command.expressionId)
         return `[enter: ${words(
@@ -266,6 +281,12 @@ class TextWriter {
   }
 
   private requirement(requirement: Exclude<StoredCondition, { type: 'and' | 'or' }>): string {
+    if (requirement.type === 'counter') {
+      const name = this.counterName(requirement.counterId)
+      return requirement.operator === '=' ? `${name} is ${requirement.amount}`
+        : requirement.operator === '!=' ? `${name} is not ${requirement.amount}`
+          : `${name} ${requirement.operator} ${requirement.amount}`
+    }
     const not = requirement.negated ? 'not ' : ''
     switch (requirement.type) {
       case 'is': {
@@ -292,6 +313,10 @@ class TextWriter {
 
   private decision(decisionId: string) {
     return this.project.decisions.find(decision => decision.id === decisionId)
+  }
+
+  private counterName(counterId: string): string {
+    return this.project.counters.find(counter => counter.id === counterId)?.name ?? '?'
   }
 
   private characterName(characterId: string): string {

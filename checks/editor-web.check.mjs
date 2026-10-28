@@ -1,5 +1,5 @@
 // The editor end to end: projects, import, problems, cast and files, details, chapters, preview,
-// reload, partial export, backup and restore; then the partial export installed in Datajack.
+// reload, partial export, backup and restore, as a copy too; then the partial export installed in Datajack.
 import { readdirSync } from 'node:fs'
 import { createProfile, createProject, installGame, pause, shownStep } from './harness.mjs'
 
@@ -118,6 +118,16 @@ export default async function check(page, { url, assets, serve }) {
   await page.evaluate(`document.querySelector('.open-project').click()`)
   await page.waitFor('.chapter')
   page.check('the restored project has its chapters', await chapterTitles(), 'Chapter 1 — The Letter | Chapter 2 — The Rooftop')
+  await page.clickButton('← Projects')
+  await pause(800)
+  await page.setFiles('.file-button + .file-button input[type=file]', [backup])
+  await pause(1500)
+  page.check('restored as a copy, the backup comes beside its project', [await page.statusText(), await page.evaluate(`[...document.querySelectorAll('.project-name')].map(name => name.textContent.trim()).sort()`)], [
+    'The Letter (copy) was added.',
+    ['The Letter', 'The Letter (copy)'],
+  ])
+  await page.evaluate(`document.querySelector('.open-project').click()`)
+  await page.waitFor('.chapter')
 
   await createProfile(page, await serve('datajack'), 'Pascal')
   await installGame(page, archive)

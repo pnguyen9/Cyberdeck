@@ -1,5 +1,6 @@
 import type {
   ChapterDocument,
+  CounterOperator,
   Decision,
   InlineStageCommand,
   StageCommand,
@@ -22,6 +23,9 @@ export type PlayerStep =
 /** Values held by each decision, by identifier. A decision nobody made yet is absent. */
 export type DecisionState = Readonly<Record<string, readonly string[]>>
 
+/** Values of the counters changed so far, by identifier; one never changed holds its initial value. */
+export type CounterState = Readonly<Record<string, number>>
+
 /** An option picked, in the order of the playthrough. */
 export interface ChoiceRecord {
   choiceId: string
@@ -32,12 +36,15 @@ export interface PlayerSnapshot {
   step: PlayerStep
   stage: StageState
   decisions: DecisionState
+  counters: CounterState
   /** Every option picked so far: the playthrough itself, from which it could be replayed. */
   choices: readonly ChoiceRecord[]
 }
 
 /** An effect played once as it is reached, leaving nothing on stage. */
-export type Cue = Extract<StageCommand, { type: 'sound' | 'shake' | 'flash' }>
+export type Cue = Extract<StageCommand, { type: 'sound' | 'voice' | 'video' | 'shake' | 'flash' }>
+
+const CUE_TYPES: ReadonlySet<StageCommand['type']> = new Set(['sound', 'voice', 'video', 'shake', 'flash'])
 
 /** Where a playthrough stands, enough to resume it: what saves are made of. */
 export interface RuntimeState {
@@ -47,6 +54,7 @@ export interface RuntimeState {
    */
   page: { chapterId: string; nodeId: string; playedFrom?: string[] } | null
   decisions: DecisionState
+  counters: CounterState
   stage: StageState
   choices: readonly ChoiceRecord[]
 }
@@ -59,7 +67,7 @@ export type BacklogEntry =
   | { type: 'page'; page: StoredPage; stopIndex: number }
   | { type: 'choice'; choice: StoredChoice; optionText: string; stopIndex: number }
 
-const START_SNAPSHOT: PlayerSnapshot = { step: { type: 'end', endingId: null }, stage: EMPTY_STAGE, decisions: {}, choices: [] }
+const START_SNAPSHOT: PlayerSnapshot = { step: { type: 'end', endingId: null }, stage: EMPTY_STAGE, decisions: {}, counters: {}, choices: [] }
 
 /** A list of nodes being played, and the index of the next node to play in it. */
 interface Frame {
@@ -93,6 +101,7 @@ const MAXIMUM_HISTORY_LENGTH = 500
 export class StoryRuntime {
   private readonly chapters: ChapterDocument[]
   private readonly decisionsById: Map<string, Decision>
+  private readonly initialCounts: ReadonlyMap<string, number>
   private readonly stageContext: StageContext
   private chapterIndex = -1
   private readonly scenes: ReadonlyMap<string, ChapterDocument>
@@ -114,6 +123,7 @@ export class StoryRuntime {
     this.chapters = chaptersInOrder(story)
     this.scenes = scenesOf(story)
     this.decisionsById = new Map(story.project.decisions.map(decision => [decision.id, decision]))
+    this.initialCounts = new Map(story.project.counters.map(counter => [counter.id, counter.initial]))
     this.stageContext = createStageContext(story.project)
   }
 
@@ -164,6 +174,7 @@ export class StoryRuntime {
     return {
       page: chapter === undefined || nodeId === null ? null : { chapterId: chapter.id, nodeId, ...(playedFrom.length === 0 ? {} : { playedFrom }) },
       decisions: this.currentSnapshot.decisions,
+      counters: this.currentSnapshot.counters,
       stage: this.currentSnapshot.stage,
       choices: this.currentSnapshot.choices,
     }
@@ -210,6 +221,7 @@ export class StoryRuntime {
         ? { ...stage, screenfulPageIds: stage.screenfulPageIds.slice(0, -1) }
         : stage,
       decisions: state.decisions,
+      counters: state.counters,
       choices: state.choices,
     }
     this.playUntilStop()
@@ -277,7 +289,7 @@ export class StoryRuntime {
   }
 
   /**
-   * The sounds, shakes and flashes to play now: those reached since the last call, going forward.
+   * The sounds, voices, videos, shakes and flashes to play now: those reached since the last call, going forward.
    * Coming back to a stop, by going back or restoring a save, plays none until the story moves on.
    */
   takeCues(): Cue[] {
@@ -383,6 +395,11 @@ export class StoryRuntime {
         case 'unset':
           this.undecide(node.decisionId, node.valueId)
           break
+        case 'count': {
+          const count = node.operation === 'add' ? this.countOf(node.counterId) + node.amount : node.amount
+          this.currentSnapshot = { ...this.currentSnapshot, counters: { ...this.currentSnapshot.counters, [node.counterId]: count } }
+          break
+        }
         case 'condition': {
           const branch = node.branches.find(candidate => candidate.condition === null || this.holds(candidate.condition))
           if (branch !== undefined) {
@@ -446,8 +463,15 @@ export class StoryRuntime {
     return Object.hasOwn(this.currentSnapshot.decisions, decisionId) ? this.currentSnapshot.decisions[decisionId] ?? [] : []
   }
 
+  /** Own entries only, as for decisions. */
+  private countOf(counterId: string): number {
+    return Object.hasOwn(this.currentSnapshot.counters, counterId) ? this.currentSnapshot.counters[counterId] ?? 0 : this.initialCounts.get(counterId) ?? 0
+  }
+
   private holds(condition: StoredCondition): boolean {
     switch (condition.type) {
+      case 'counter':
+        return compare(this.countOf(condition.counterId), condition.operator, condition.amount)
       case 'is': {
         const isHeld = this.heldValues(condition.decisionId).includes(condition.valueId)
         return condition.negated ? !isHeld : isHeld
@@ -477,8 +501,8 @@ export class StoryRuntime {
   }
 
   private applyToStage(command: StageCommand) {
-    if ((command.type === 'sound' || command.type === 'shake' || command.type === 'flash') && !this.isReplaying) {
-      this.queuedCues.push(command)
+    if (CUE_TYPES.has(command.type) && !this.isReplaying) {
+      this.queuedCues.push(command as Cue)
     }
     const stage = applyStageCommand(this.currentSnapshot.stage, command, this.stageContext)
     if (stage !== this.currentSnapshot.stage) {
@@ -493,6 +517,23 @@ export class StoryRuntime {
     if (this.history.length > MAXIMUM_HISTORY_LENGTH) {
       this.history.shift()
     }
+  }
+}
+
+function compare(count: number, operator: CounterOperator, amount: number): boolean {
+  switch (operator) {
+    case '=':
+      return count === amount
+    case '!=':
+      return count !== amount
+    case '<':
+      return count < amount
+    case '<=':
+      return count <= amount
+    case '>':
+      return count > amount
+    case '>=':
+      return count >= amount
   }
 }
 

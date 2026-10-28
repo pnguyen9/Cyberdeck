@@ -8,8 +8,10 @@ const VOCABULARY: TagVocabulary = {
   music: ['calm'],
   sounds: ['door'],
   illustrations: ['Kiss'],
+  videos: ['Opening'],
   positions: ['far-left', 'left', 'center', 'right', 'far-right'],
   decisions: [{ name: 'Answer', values: ['Truth', 'Dodge'] }],
+  counters: ['Trust'],
   endings: ['Gone', 'Home'],
   scenes: ['Caught'],
   styles: ['Whisper'],
@@ -74,7 +76,11 @@ describe('suggestions', () => {
   })
 
   it('follow the grammar of conditions', () => {
-    expect(suggest('[if: |')?.labels).toEqual(['Answer', 'remembered', 'seen ending', 'not'])
+    expect(suggest('[if: |')?.labels).toEqual(['Answer', 'Trust', 'remembered', 'seen ending', 'not'])
+    expect(suggest('[if: Answer is Truth and Trust |')?.labels).toEqual(['>=', '<=', '>', '<', 'is'])
+    expect(suggest('[add: T|')?.labels).toEqual(['Trust'])
+    expect(suggest('[set: |')?.labels).toEqual(['Answer', 'Trust'])
+    expect(suggest('[unset: |')?.labels).toEqual(['Answer'])
     expect(suggest('[if: Answer is |')?.labels).toEqual(['not', 'Truth', 'Dodge'])
     expect(suggest('[if: Answer is not D|')?.labels).toEqual(['Dodge'])
     expect(suggest('[if: seen ending |')?.labels).toEqual(['Gone', 'Home'])

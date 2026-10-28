@@ -1,4 +1,4 @@
-import type { AnimationSpec, Placement, ProjectDocument, StageCommand, StoredCondition } from '../format/storyFormat'
+import type { AnimationSpec, DefinitionKind, Placement, ProjectDocument, StageCommand, StoredCondition, StoredCount } from '../format/storyFormat'
 import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
 
 /** Short descriptions of what nodes do, in the words of the writing syntax, for the storyboard. */
@@ -46,7 +46,10 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
     case 'music':
       return command.musicId === null ? 'music: stop' : `music: ${project.music.find(track => track.id === command.musicId)?.name ?? '?'}`
     case 'sound':
-      return `sound: ${project.sounds.find(sound => sound.id === command.soundId)?.name ?? '?'}`
+    case 'voice':
+      return `${command.type}: ${project.sounds.find(sound => sound.id === command.soundId)?.name ?? '?'}`
+    case 'video':
+      return `video: ${project.videos.find(video => video.id === command.videoId)?.name ?? '?'}`
     case 'enter':
       return `enter: ${[characterName(command.characterId), placementWords(command.placement, project), command.facing === null ? '' : `facing-${command.facing}`,
         command.depth ?? '', expressionName(command.characterId, command.expressionId), animationWords(command.animation)].filter(word => word !== '' && word !== 'normal').join(' ')}`
@@ -63,6 +66,11 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
 
 export function describeCondition(condition: StoredCondition, project: ProjectDocument): string {
   switch (condition.type) {
+    case 'counter': {
+      const name = project.counters.find(candidate => candidate.id === condition.counterId)?.name ?? '?'
+      const operator = condition.operator === '=' ? 'is' : condition.operator === '!=' ? 'is not' : condition.operator
+      return `${name} ${operator} ${condition.amount}`
+    }
     case 'is': {
       const decision = project.decisions.find(candidate => candidate.id === condition.decisionId)
       const value = decision?.values.find(candidate => candidate.id === condition.valueId)
@@ -85,11 +93,21 @@ export function describeAssignment(decisionId: string, valueId: string, project:
   return `${decision?.name ?? '?'} = ${decision?.values.find(value => value.id === valueId)?.name ?? '?'}`
 }
 
-/** `Confession: Accept | Refuse`, `Clues (several): Letter | Key`, `Whisper: italic, small`. */
-export function describeDefinition(kind: 'decision' | 'style', definedId: string, project: ProjectDocument, words: StoryWords = ENGLISH_STORY_WORDS): string {
+/** `Trust + 2`, `Trust − 1`, `Trust = 3`. */
+export function describeCount(node: StoredCount, project: ProjectDocument): string {
+  const name = project.counters.find(candidate => candidate.id === node.counterId)?.name ?? '?'
+  return node.operation === 'set' ? `${name} = ${node.amount}` : `${name} ${node.amount < 0 ? '−' : '+'} ${Math.abs(node.amount)}`
+}
+
+/** `Confession: Accept | Refuse`, `Clues (several): Letter | Key`, `Trust: starts at 2`, `Whisper: italic, small`. */
+export function describeDefinition(kind: DefinitionKind, definedId: string, project: ProjectDocument, words: StoryWords = ENGLISH_STORY_WORDS): string {
   if (kind === 'decision') {
     const decision = project.decisions.find(candidate => candidate.id === definedId)
     return decision === undefined ? '?' : `${decision.name}${decision.multiple ? ` (${words.several})` : ''}${words.colon}${decision.values.map(value => value.name).join(' | ')}`
+  }
+  if (kind === 'counter') {
+    const counter = project.counters.find(candidate => candidate.id === definedId)
+    return counter === undefined ? '?' : `${counter.name}${words.colon}${words.startsAt(counter.initial)}`
   }
   const style = project.styles.find(candidate => candidate.id === definedId)
   return style === undefined ? '?' : `${style.name}${words.colon}${style.properties.join(', ') || words.fromTheCss}`

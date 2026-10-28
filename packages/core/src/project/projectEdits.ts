@@ -14,6 +14,7 @@ import {
   FORMAT_VERSION,
   mapInnerLists,
   type ChapterDocument,
+  type DefinitionKind,
   type Environment,
   type Facing,
   type GameDetails,
@@ -71,11 +72,12 @@ export function styleWidthScales(project: ProjectDocument): Map<string, number> 
 }
 
 /**
- * Whether every decision, value and style a chapter refers to is still in the project: an older
+ * Whether every decision, value, counter and style a chapter refers to is still in the project: an older
  * version of a chapter, kept for undoing, may use one removed since.
  */
 export function refersOnlyToKnownDefinitions(chapter: ChapterDocument, project: ProjectDocument): boolean {
   const valueIds = new Map(project.decisions.map(decision => [decision.id, new Set(decision.values.map(value => value.id))]))
+  const counterIds = new Set(project.counters.map(counter => counter.id))
   const styleIds = new Set(project.styles.map(style => style.id))
   const knowsValue = (decisionId: string, valueId: string | null) => valueIds.get(decisionId)?.has(valueId ?? '') ?? false
   const knowsCondition = (condition: StoredCondition | null | undefined): boolean => {
@@ -83,6 +85,7 @@ export function refersOnlyToKnownDefinitions(chapter: ChapterDocument, project: 
       return true
     }
     return condition.type === 'is' ? knowsValue(condition.decisionId, condition.valueId)
+      : condition.type === 'counter' ? counterIds.has(condition.counterId)
       : condition.type === 'and' || condition.type === 'or' ? condition.conditions.every(knowsCondition)
         : true
   }
@@ -94,10 +97,12 @@ export function refersOnlyToKnownDefinitions(chapter: ChapterDocument, project: 
         return knowsValue(node.decisionId, node.valueId)
       case 'unset':
         return valueIds.has(node.decisionId) && (node.valueId === null || knowsValue(node.decisionId, node.valueId))
+      case 'count':
+        return counterIds.has(node.counterId)
       case 'condition':
         return node.branches.every(branch => knowsCondition(branch.condition))
       case 'definition':
-        return node.kind === 'decision' ? valueIds.has(node.definedId) : styleIds.has(node.definedId)
+        return node.kind === 'decision' ? valueIds.has(node.definedId) : node.kind === 'counter' ? counterIds.has(node.definedId) : styleIds.has(node.definedId)
       case 'page':
         return (node.styles ?? []).every(span => styleIds.has(span.styleId))
       default:
@@ -113,7 +118,7 @@ export interface ReplacedPart {
 }
 
 /**
- * The project's names as an import may use them. Given the documents, each decision and style says
+ * The project's names as an import may use them. Given the documents, each decision, counter and style says
  * where it is declared, unless in the project's definitions or in the part replaced, where a new
  * declaration may take its place; and each decision which of its values are used elsewhere, which a
  * new declaration must keep.
@@ -124,6 +129,7 @@ export function knownNamesFor(project: ProjectDocument, documents: readonly Chap
   if (documents === undefined) {
     return {
       decisions: project.decisions.map(decision => ({ name: decision.name, values: decision.values.map(value => value.name), declaredIn: '' })),
+      counters: project.counters.map(counter => ({ name: counter.name, declaredIn: '' })),
       endings,
       memories,
       styles: project.styles.map(style => style.name),
@@ -138,7 +144,7 @@ export function knownNamesFor(project: ProjectDocument, documents: readonly Chap
   const placeOf = placeDescriber(documents, project, words)
   const index = indexNames(project, documents)
   const namesByKey = new Map(index.map(name => [`${name.kind}:${name.id}`, name]))
-  const declaredIn = (kind: 'decision' | 'style', id: string): string | null => {
+  const declaredIn = (kind: DefinitionKind, id: string): string | null => {
     const name = namesByKey.get(`${kind}:${id}`)
     const home = name === undefined ? null : homeOf(name, project)
     return home?.type === 'chapter' && !isReplaced(home.documentId, home.nodeId) ? placeOf(home.documentId, home.nodeId) : null
@@ -155,6 +161,7 @@ export function knownNamesFor(project: ProjectDocument, documents: readonly Chap
         usedValues: decision.values.filter(value => usedValueIds.has(value.id)).map(value => value.name),
       }
     }),
+    counters: project.counters.map(counter => ({ name: counter.name, declaredIn: declaredIn('counter', counter.id), ...(counter.implicit === true ? { implicit: true } : {}) })),
     endings,
     memories,
     styles: project.styles.map(style => ({ name: style.name, declaredIn: declaredIn('style', style.id), ...(style.implicit === true ? { implicit: true } : {}) })),
@@ -354,6 +361,7 @@ export function unusedAssetIds(project: ProjectDocument): string[] {
     ...project.music.map(track => track.assetId),
     ...project.sounds.map(sound => sound.assetId),
     ...project.illustrations.map(illustration => illustration.assetId),
+    ...project.videos.map(video => video.assetId),
     ...project.fonts.map(font => font.assetId),
     ...project.characters.flatMap(character => character.expressions.map(expression => expression.assetId)),
   ])

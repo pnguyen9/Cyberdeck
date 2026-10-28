@@ -49,11 +49,13 @@ describe('createProject', () => {
       chapterOrder: [],
       sceneOrder: [],
       decisions: [],
+      counters: [],
       characters: [],
       backgrounds: [],
       music: [],
       sounds: [],
       illustrations: [],
+      videos: [],
       assets: [],
       positions: [...DEFAULT_POSITION_PRESETS],
       endings: [],
@@ -182,6 +184,7 @@ describe('storeImport', () => {
         music: ['calm'],
         sounds: ['Door'],
         illustrations: [],
+        videos: [],
       })
     })
 
@@ -226,7 +229,7 @@ describe('storeImport', () => {
 
       expect(second.project.characters).toEqual(first.project.characters)
       expect(second.project.backgrounds).toEqual(first.project.backgrounds)
-      expect(second.created).toEqual({ characters: [], expressions: [], backgrounds: [], music: [], sounds: [], illustrations: [] })
+      expect(second.created).toEqual({ characters: [], expressions: [], backgrounds: [], music: [], sounds: [], illustrations: [], videos: [] })
     })
 
     it('stores positions as presets, exact percentages, or automatic placement', () => {

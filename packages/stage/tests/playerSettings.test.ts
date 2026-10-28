@@ -5,7 +5,7 @@ import { memoryStorage } from './memoryStorage'
 
 describe('player settings', () => {
   it('keeps what was chosen', () => {
-    const chosen = { ...DEFAULT_PLAYER_SETTINGS, textSpeed: 0, musicVolume: 0.2, bindings: { ...DEFAULT_BINDINGS, skip: [{ type: 'key', code: 'Tab' }] } }
+    const chosen = { ...DEFAULT_PLAYER_SETTINGS, textSpeed: 0, musicVolume: 0.2, voiceVolume: 0.5, bindings: { ...DEFAULT_BINDINGS, skip: [{ type: 'key', code: 'Tab' }] } }
     expect(parsePlayerSettings(JSON.parse(JSON.stringify(chosen)))).toEqual(chosen)
   })
 
@@ -13,6 +13,8 @@ describe('player settings', () => {
     const settings = parsePlayerSettings({ textSpeed: 9999, soundVolume: 'loud', bindings: { advance: [{ type: 'key', code: 'KeyX' }, { type: 'mouseButton', button: 42 }, 'Space'] } })
     expect(settings.textSpeed).toBe(DEFAULT_PLAYER_SETTINGS.textSpeed)
     expect(settings.soundVolume).toBe(DEFAULT_PLAYER_SETTINGS.soundVolume)
+    // Settings kept before voices existed.
+    expect(settings.voiceVolume).toBe(DEFAULT_PLAYER_SETTINGS.voiceVolume)
     expect(settings.bindings.advance).toEqual([{ type: 'key', code: 'KeyX' }])
     expect(settings.bindings.hideText).toEqual(DEFAULT_BINDINGS.hideText)
     expect(parsePlayerSettings('nonsense')).toEqual(DEFAULT_PLAYER_SETTINGS)

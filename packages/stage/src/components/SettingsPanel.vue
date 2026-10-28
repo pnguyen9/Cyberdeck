@@ -126,6 +126,11 @@ onUnmounted(stopListening)
           <input type="range" min="0" max="100" :value="Math.round(settings.soundVolume * 100)" :aria-label="text.soundEffectsVolume" @input="update({ soundVolume: Number(($event.target as HTMLInputElement).value) / 100 })">
           <span class="setting-value">{{ text.percent(Math.round(settings.soundVolume * 100)) }}</span>
         </label>
+        <label class="setting">
+          <span class="setting-name">{{ text.voices }}</span>
+          <input type="range" min="0" max="100" :value="Math.round(settings.voiceVolume * 100)" :aria-label="text.voicesVolume" @input="update({ voiceVolume: Number(($event.target as HTMLInputElement).value) / 100 })">
+          <span class="setting-value">{{ text.percent(Math.round(settings.voiceVolume * 100)) }}</span>
+        </label>
         <button class="wide-button" @click="emit('toggleFullscreen')">{{ isFullscreen ? text.leaveFullscreen : text.fullscreen }}</button>
         <button class="wide-button" @click="settings = { ...DEFAULT_PLAYER_SETTINGS, bindings: settings.bindings }">{{ text.defaultSpeedAndVolumes }}</button>
         <label v-if="languageChoice !== undefined" class="setting">

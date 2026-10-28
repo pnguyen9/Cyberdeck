@@ -33,8 +33,10 @@ export interface TagVocabulary {
   music: string[]
   sounds: string[]
   illustrations: string[]
+  videos: string[]
   positions: string[]
   decisions: { name: string; values: string[] }[]
+  counters: string[]
   endings: string[]
   /** Names of the scenes, for `[play: …]`. */
   scenes: string[]
@@ -65,8 +67,10 @@ export function vocabularyOf(project: ProjectDocument, scenes: readonly ChapterD
     music: project.music.map(track => track.name),
     sounds: project.sounds.map(sound => sound.name),
     illustrations: project.illustrations.map(illustration => illustration.name),
+    videos: project.videos.map(video => video.name),
     positions: project.positions.map(position => position.name),
     decisions: project.decisions.map(decision => ({ name: decision.name, values: decision.values.map(value => value.name) })),
+    counters: project.counters.map(counter => counter.name),
     endings: project.endings.map(ending => ending.name),
     memories: project.memories.map(memory => memory.name),
     scenes: scenes.map(scene => scene.title ?? ''),
@@ -160,7 +164,10 @@ export function completionAt(text: string, caret: number, vocabulary: TagVocabul
       return completion(wholeFrom, closing(vocabulary.backgrounds, details.background).filter(item => startsWith(item.label, wholeArgument)))
     case 'music':
       return completion(wholeFrom, closing([...vocabulary.music, 'stop'], details.music).filter(item => startsWith(item.label, wholeArgument)))
+    case 'video':
+      return completion(wholeFrom, closing(vocabulary.videos, details.video).filter(item => startsWith(item.label, wholeArgument)))
     case 'sound':
+    case 'voice':
       return completion(wholeFrom, closing(vocabulary.sounds, details.sound).filter(item => startsWith(item.label, wholeArgument)))
     case 'transition':
       return completion(wordFrom, words(['fade', 'black', 'white'], details.transition).filter(item => startsWith(item.label, lastWord)))
@@ -187,11 +194,14 @@ export function completionAt(text: string, caret: number, vocabulary: TagVocabul
       return completion(wholeFrom, closing(vocabulary.memories, details.memory).filter(item => startsWith(item.label, wholeArgument)))
     case 'choice':
       return completion(wholeFrom, closing(vocabulary.decisions.map(decision => decision.name), details.decision).filter(item => startsWith(item.label, wholeArgument)))
+    case 'add':
+      return completion(wholeFrom, words(vocabulary.counters, details.counter).filter(item => startsWith(item.label, wholeArgument)))
     case 'set':
     case 'unset': {
       const equals = argumentText.indexOf('=')
       if (equals === -1) {
-        return completion(wholeFrom, words(vocabulary.decisions.map(decision => decision.name), details.decision).filter(item => startsWith(item.label, wholeArgument)))
+        const counters = name === 'set' ? words(vocabulary.counters, details.counter) : []
+        return completion(wholeFrom, [...words(vocabulary.decisions.map(decision => decision.name), details.decision), ...counters].filter(item => startsWith(item.label, wholeArgument)))
       }
       const decision = vocabulary.decisions.find(candidate => sameName(candidate.name, argumentText.slice(0, equals).trim()))
       return completion(wordFrom, closing(decision?.values ?? [], details.value).filter(item => startsWith(item.label, lastWord)))
@@ -224,7 +234,7 @@ export function completionAt(text: string, caret: number, vocabulary: TagVocabul
   }
 }
 
-/** What may follow in a condition: a decision, then `is`, then one of its values; or a memory or ending. */
+/** What may follow in a condition: a decision, then `is`, then one of its values; a counter, then a comparison; or a memory or ending. */
 function conditionWords(previousWords: readonly string[], vocabulary: TagVocabulary, details: TagTextMessages['details']): Completion['items'] {
   const words = (candidates: readonly string[], detail: string) => candidates.map(candidate => ({ label: candidate, insert: candidate, detail }))
   const last = previousWords.at(-1)?.toLowerCase()
@@ -247,9 +257,14 @@ function conditionWords(previousWords: readonly string[], vocabulary: TagVocabul
   if (last === undefined || last === 'and' || last === 'or' || last === 'not') {
     return [
       ...words(vocabulary.decisions.map(decision => decision.name), details.decision),
+      ...(last === 'not' ? [] : words(vocabulary.counters, details.counter)),
       ...words(['remembered', 'seen ending'], details.memoryOrEnding),
       ...(last === 'not' ? [] : words(['not'], details.negation)),
     ]
+  }
+  const connective = Math.max(previousWords.map(word => word.toLowerCase()).lastIndexOf('and'), previousWords.map(word => word.toLowerCase()).lastIndexOf('or'))
+  if (vocabulary.counters.some(counter => sameName(counter, previousWords.slice(connective + 1).join(' ')))) {
+    return words(['>=', '<=', '>', '<', 'is'], details.comparison)
   }
   return words(['is', 'and', 'or'], '')
 }

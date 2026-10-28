@@ -60,15 +60,16 @@ function create() {
   })
 }
 
-function restore(fileList: FileList | null) {
+/** A backup replaces the project it was made from, or comes beside it as a copy. */
+function restore(fileList: FileList | null, asCopy: boolean) {
   const file = fileList?.[0]
   if (file === undefined) {
     return
   }
   return attempt(async () => {
-    const project = await restoreBackup(props.store, new Uint8Array(await file.arrayBuffer()))
+    const project = await restoreBackup(props.store, new Uint8Array(await file.arrayBuffer()), asCopy ? { copyName: text.value.copyName } : undefined)
     await refresh()
-    message.value = text.value.restored(project.name)
+    message.value = asCopy ? text.value.restoredAsCopy(project.name) : text.value.restored(project.name)
   })
 }
 
@@ -138,10 +139,16 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
     </form>
 
     <h2 class="section-title">{{ text.backups }}</h2>
-    <label class="button file-button">
-      {{ text.restoreBackup }}
-      <input type="file" accept=".zip,application/zip" @change="restore(($event.target as HTMLInputElement).files)">
-    </label>
+    <div class="backup-actions">
+      <label class="button file-button">
+        {{ text.restoreBackup }}
+        <input type="file" accept=".zip,application/zip" @change="restore(($event.target as HTMLInputElement).files, false)">
+      </label>
+      <label class="button file-button">
+        {{ text.restoreAsCopy }}
+        <input type="file" accept=".zip,application/zip" @change="restore(($event.target as HTMLInputElement).files, true)">
+      </label>
+    </div>
     <p class="muted">{{ text.backupReplaces }}</p>
 
     <p v-if="message !== null" class="message" role="status">{{ message }}</p>
@@ -150,6 +157,12 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
 </template>
 
 <style scoped>
+.backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .page-header {
   display: flex;
   flex-wrap: wrap;

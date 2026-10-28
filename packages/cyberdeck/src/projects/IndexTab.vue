@@ -17,7 +17,7 @@ import { describeUse, summariseUses, warningMessage } from './nameUses'
 import { storyWords } from '../i18n/storyWords'
 
 /**
- * Every decision and memory of the project with every place it is used, and above them, what looks
+ * Every decision, counter and memory of the project with every place it is used, and above them, what looks
  * forgotten across the whole story: a condition that never holds, an ending nobody reaches.
  */
 const { project, chapters, scenes, openStoryboard, indexFocus } = useEditor()
@@ -34,10 +34,15 @@ const filter = ref('')
 const openKeys = ref(new Set<string>())
 const keyOf = (name: { kind: NameKind; id: string }) => `${name.kind}:${name.id}`
 
-const LISTED: { kind: NameKind; title: 'decisions' | 'memories' }[] = [
+const LISTED: { kind: NameKind; title: 'decisions' | 'counters' | 'memories' }[] = [
   { kind: 'decision', title: 'decisions' },
+  { kind: 'counter', title: 'counters' },
   { kind: 'memory', title: 'memories' },
 ]
+/** The names the Index lists, each with its places: the others lead to the storyboard. */
+const isListed = (kind: NameKind) => LISTED.some(section => section.kind === kind)
+/** Decisions and counters are declared somewhere, or made by use. */
+const isDeclarable = (kind: NameKind) => kind === 'decision' || kind === 'counter'
 const sections = computed(() => {
   const wanted = normalizeName(filter.value)
   return LISTED.map(section => ({
@@ -51,17 +56,21 @@ function homeText(name: IndexedName): string {
   const home = homeOf(name, project.value)
   switch (home.type) {
     case 'chapter':
-      return text.value.declaredIn(placeOf.value(home.documentId, home.nodeId))
+      return text.value.declaredIn(placeOf.value(home.documentId, home.nodeId), name.kind)
     case 'definitions':
-      return text.value.declaredInDefinitions
+      return text.value.declaredInDefinitions(name.kind)
     case 'implicit':
-      return text.value.madeByChoices
+      return name.kind === 'counter' ? text.value.madeByAdd : text.value.madeByChoices
   }
 }
 
-const valuesOf = (name: IndexedName) => name.kind === 'decision'
-  ? project.value.decisions.find(decision => decision.id === name.id)?.values.map(value => value.name) ?? []
-  : []
+function valuesOf(name: IndexedName): string[] {
+  if (name.kind === 'counter') {
+    const counter = project.value.counters.find(candidate => candidate.id === name.id)
+    return counter === undefined ? [] : [text.value.startsAt(counter.initial)]
+  }
+  return name.kind === 'decision' ? project.value.decisions.find(decision => decision.id === name.id)?.values.map(value => value.name) ?? [] : []
+}
 const isMultiple = (name: IndexedName) => name.kind === 'decision' && project.value.decisions.find(decision => decision.id === name.id)?.multiple === true
 
 function toggle(name: IndexedName) {
@@ -74,7 +83,7 @@ function toggle(name: IndexedName) {
 
 /** Opens a name and brings it into view: from a warning, or from the storyboard's "In this view". */
 function show(name: { kind: NameKind; id: string }) {
-  if (name.kind !== 'decision' && name.kind !== 'memory') {
+  if (!isListed(name.kind)) {
     return
   }
   filter.value = ''
@@ -82,12 +91,12 @@ function show(name: { kind: NameKind; id: string }) {
   void nextTick(() => document.getElementById(`name-${keyOf(name)}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
 }
 
-/** Whether a warning's name leads somewhere: a decision or memory here, a scene, an ending or a style to a card of its. */
-const leadsSomewhere = (name: IndexedName) => name.kind === 'decision' || name.kind === 'memory' || name.kind === 'scene' || name.uses.some(entry => entry.nodeId !== null)
+/** Whether a warning's name leads somewhere: a decision, counter or memory here, a scene, an ending or a style to a card of its. */
+const leadsSomewhere = (name: IndexedName) => isListed(name.kind) || name.kind === 'scene' || name.uses.some(entry => entry.nodeId !== null)
 
 /** Where a warning about an ending, a style or a scene leads: the place it is reached, used or declared. */
 function showWhere(name: IndexedName) {
-  if (name.kind === 'decision' || name.kind === 'memory') {
+  if (isListed(name.kind)) {
     show(name)
     return
   }
@@ -131,7 +140,7 @@ onMounted(() => {
       <article v-for="name in section.names" :id="`name-${keyOf(name)}`" :key="keyOf(name)" class="name-entry" :class="{ open: openKeys.has(keyOf(name)) }">
         <button class="name-header" :aria-expanded="openKeys.has(keyOf(name))" @click="toggle(name)">
           <span class="name-title">{{ name.name }}<span v-if="isMultiple(name)" class="muted">{{ text.several }}</span></span>
-          <span class="muted">{{ name.kind === 'decision' ? homeText(name) : text.placeCount(name.uses.length) }}</span>
+          <span class="muted">{{ isDeclarable(name.kind) ? homeText(name) : text.placeCount(name.uses.length) }}</span>
           <span class="summary muted">{{ summariseUses(name, name.uses, project, locale) || text.usedNowhere(name.kind) }}</span>
         </button>
         <div v-if="openKeys.has(keyOf(name))" class="name-body">

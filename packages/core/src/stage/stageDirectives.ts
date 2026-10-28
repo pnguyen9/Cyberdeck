@@ -12,6 +12,8 @@ export type StageInstruction =
   | { type: 'transition'; name: string; durationMs: number | null }
   | { type: 'music'; track: string | null }
   | { type: 'sound'; sound: string }
+  | { type: 'voice'; sound: string }
+  | { type: 'video'; video: string }
   | { type: 'enter'; character: string; position: PositionWord | null; facing: Facing | null; depth: Depth | null; expression: string | null; animation: AnimationWords }
   | { type: 'exit'; character: string; animation: AnimationWords }
   | { type: 'move'; character: string; position: PositionWord | null; depth: Depth | null; animation: AnimationWords }
@@ -43,7 +45,7 @@ export interface StageVocabulary {
   positionNames: readonly string[]
 }
 
-export const STAGE_KEYWORDS: readonly string[] = ['bg', 'background', 'transition', 'music', 'sound', 'enter', 'exit', 'move', 'wait', 'shake', 'flash', 'fade out', 'fade in', 'tint', 'text', 'clear', 'illustration', 'cg', 'style']
+export const STAGE_KEYWORDS: readonly string[] = ['bg', 'background', 'transition', 'music', 'sound', 'voice', 'video', 'enter', 'exit', 'move', 'wait', 'shake', 'flash', 'fade out', 'fade in', 'tint', 'text', 'clear', 'illustration', 'cg', 'style']
 
 const SHAKE_STRENGTHS: readonly ShakeStrength[] = ['light', 'strong']
 const FLASH_COLORS: readonly FlashColor[] = ['white', 'red', 'black']
@@ -232,7 +234,10 @@ export function interpretStageDirective(directive: Directive, vocabulary: StageV
       }
       return { type: 'music', track: argumentText.toLowerCase() === 'stop' ? null : argumentText }
     case 'sound':
-      return argumentText === '' ? null : { type: 'sound', sound: argumentText }
+    case 'voice':
+      return argumentText === '' ? null : { type: directive.name, sound: argumentText }
+    case 'video':
+      return argumentText === '' ? null : { type: 'video', video: argumentText }
     case 'enter': {
       const characterWordCount = leadingCharacterWordCount(directiveArguments, vocabulary)
       const read = readArgumentWords(directiveArguments.slice(characterWordCount), 'enter', vocabulary)

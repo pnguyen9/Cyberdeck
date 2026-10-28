@@ -54,6 +54,7 @@ export {
   type BacklogEntry,
   type Cue,
   type ChoiceRecord,
+  type CounterState,
   type DecisionState,
   type PlayerSnapshot,
   type PlayerStep,
@@ -106,7 +107,7 @@ export { checkAuthorCss, styleClassName, type CheckedCss, type LeftOut, type Lef
 export { RESERVED_STYLE_NAMES } from './format/textStyles'
 export { playerFormatVersion } from './archive/gameArchive'
 export { createProjectBackup, readProjectBackup, type ProjectBackup } from './project/projectBackup'
-export { describeAssignment, describeCondition, describeDefinition, describeStageCommand, describeUnset } from './storyboard/describeNodes'
+export { describeAssignment, describeCondition, describeCount, describeDefinition, describeStageCommand, describeUnset } from './storyboard/describeNodes'
 export { ENGLISH_STORY_WORDS, type StoryWords } from './storyboard/storyWords'
 export { CHAPTER_START, insertNodes, moveNodes, removeNodes, replaceNode, storyboardEntries, type DropSlot, type StoryboardEntry, type StoryboardOptions } from './storyboard/storyboard'
 export {

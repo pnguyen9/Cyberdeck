@@ -24,8 +24,10 @@ import { flattenNodes, normalizeName } from './storyNodes'
 import {
   argumentText,
   isControlDirective,
+  readAddition,
   readAssignment,
   readCondition,
+  readCounterDeclaration,
   readDecisionDeclaration,
 } from './readControl'
 
@@ -81,7 +83,7 @@ export function importText(input: string, options: ImportOptions): ImportResult 
 }
 
 class TextImporter {
-  private readonly result: ImportResult = { kind: null, decisions: [], styles: [], chapters: [], scenes: [], problems: [] }
+  private readonly result: ImportResult = { kind: null, decisions: [], counters: [], styles: [], chapters: [], scenes: [], problems: [] }
   private currentChapter: ImportedChapter | null = null
   /** Names of the styles the text declares `large`. */
   private readonly largeStyles = new Set<string>()
@@ -338,6 +340,26 @@ class TextImporter {
           this.result.decisions.push({ sourceLine: lineNumber, ...declaration, multiple: directive.name === 'decision multi' })
           this.addNode({ type: 'definition', sourceLine: lineNumber, kind: 'decision', name: declaration.name })
         }
+        return
+      }
+      case 'counter': {
+        const declaration = readCounterDeclaration(text)
+        if (declaration === null) {
+          this.addProblem('error', 'invalidCounter', lineNumber, text)
+        } else {
+          this.result.counters.push({ sourceLine: lineNumber, ...declaration })
+          this.addNode({ type: 'definition', sourceLine: lineNumber, kind: 'counter', name: declaration.name })
+        }
+        return
+      }
+      case 'add': {
+        const addition = readAddition(text)
+        if (addition === null) {
+          this.addProblem('error', 'invalidAdd', lineNumber, text === '' ? undefined : text)
+          return
+        }
+        this.flushPendingDirectives()
+        this.addNode({ type: 'add', sourceLine: lineNumber, counter: addition.name, amount: addition.amount })
         return
       }
       case 'choice':

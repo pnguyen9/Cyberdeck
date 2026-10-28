@@ -36,6 +36,7 @@ type Check<Value> = (value: unknown, path: string) => Value
 const string: Check<string> = (value, path) => typeof value === 'string' ? value : fail(path, 'a string')
 const boolean: Check<boolean> = (value, path) => typeof value === 'boolean' ? value : fail(path, 'true or false')
 const finiteNumber: Check<number> = (value, path) => typeof value === 'number' && Number.isFinite(value) ? value : fail(path, 'a number')
+const integer: Check<number> = (value, path) => Number.isSafeInteger(value) ? value as number : fail(path, 'a whole number')
 const percentage: Check<number> = (value, path) => finiteNumber(value, path) >= 0 && (value as number) <= 100 ? value as number : fail(path, 'a percentage')
 const duration: Check<number> = (value, path) => finiteNumber(value, path) >= 0 && (value as number) <= 600_000 ? value as number : fail(path, 'a duration')
 
@@ -110,6 +111,8 @@ const STAGE_COMMANDS: { [Type in StageCommand['type']]: Check<Extract<StageComma
   illustration: object({ type: oneOf('illustration'), illustrationId: nullable(string) }),
   music: object({ type: oneOf('music'), musicId: nullable(string) }),
   sound: object({ type: oneOf('sound'), soundId: string }),
+  voice: object({ type: oneOf('voice'), soundId: string }),
+  video: object({ type: oneOf('video'), videoId: string }),
   enter: object({ type: oneOf('enter'), characterId: string, expressionId: string, placement, facing: nullable(facing), depth: nullable(depth), animation }),
   exit: object({ type: oneOf('exit'), characterId: string, animation }),
   move: object({ type: oneOf('move'), characterId: string, placement: nullable(placement), depth: nullable(depth), animation }),
@@ -140,11 +143,14 @@ function condition(value: unknown, path: string, depth: number): StoredCondition
   if (fields.type === 'endingSeen') {
     return object({ type: oneOf('endingSeen'), endingId: string, negated: boolean })(value, path)
   }
+  if (fields.type === 'counter') {
+    return object({ type: oneOf('counter'), counterId: string, operator: oneOf('=', '!=', '<', '<=', '>', '>='), amount: integer })(value, path)
+  }
   if (fields.type === 'and' || fields.type === 'or') {
     const conditions = Array.isArray(fields.conditions) ? fields.conditions : fail(`${path}.conditions`, 'a list')
     return { type: fields.type, conditions: conditions.map((part, index) => condition(part, `${path}.conditions[${index}]`, depth + 1)) }
   }
-  return fail(`${path}.type`, 'is, remembered, endingSeen, and or or')
+  return fail(`${path}.type`, 'is, counter, remembered, endingSeen, and or or')
 }
 
 function node(value: unknown, path: string, depth: number): StoredNode {
@@ -185,12 +191,14 @@ function node(value: unknown, path: string, depth: number): StoredNode {
       return object({ type: oneOf('set'), id: string, decisionId: string, valueId: string })(value, path)
     case 'unset':
       return object({ type: oneOf('unset'), id: string, decisionId: string, valueId: nullable(string) })(value, path)
+    case 'count':
+      return object({ type: oneOf('count'), id: string, counterId: string, operation: oneOf('add', 'set'), amount: integer })(value, path)
     case 'ending':
       return object({ type: oneOf('ending'), id: string, endingId: string })(value, path)
     case 'remember':
       return object({ type: oneOf('remember'), id: string, memoryId: string })(value, path)
     case 'definition':
-      return object({ type: oneOf('definition'), id: string, kind: oneOf('decision', 'style'), definedId: string })(value, path)
+      return object({ type: oneOf('definition'), id: string, kind: oneOf('decision', 'counter', 'style'), definedId: string })(value, path)
     case 'break':
       return object({ type: oneOf('break'), id: string })(value, path)
     case 'play':
@@ -231,7 +239,9 @@ const withAssetId = object({ id: string, name: string, assetId: nullable(string)
 
 /** Fields added to projects after documents were first written: absent from those, they take these values. */
 const LATER_PROJECT_FIELDS = {
+  counters: [],
   illustrations: [],
+  videos: [],
   fonts: [],
   styles: [],
   sounds: [],
@@ -259,6 +269,7 @@ const checkProjectFields: Check<ProjectDocument> = object({
   chapterOrder: array(string),
   sceneOrder: array(string),
   decisions: array(withImplicit(object({ id: string, name: string, multiple: boolean, values: array(object({ id: string, name: string })) }))),
+  counters: array(withImplicit(object({ id: string, name: string, initial: integer }))),
   endings: array(object({ id: string, name: string })),
   memories: array(object({ id: string, name: string })),
   styles: array(withImplicit(object({ id: string, name: string, properties: styleProperties }))),
@@ -267,6 +278,7 @@ const checkProjectFields: Check<ProjectDocument> = object({
   music: array(withAssetId),
   sounds: array(withAssetId),
   illustrations: array(withAssetId),
+  videos: array(withAssetId),
   fonts: array(object({ id: string, name: string, assetId: nullable(string), widthScale: (value, path) => finiteNumber(value, path) > 0 && (value as number) <= 4 ? value as number : fail(path, 'a width scale') })),
   assets: array(object({ id: string, fileName: string, mediaType: string, byteSize: finiteNumber })),
   positions: array(object({ id: string, name: string, x: percentage })),

@@ -218,13 +218,13 @@ turns it into pages, characters and choices. Your players play it in Datajack.</
   <ol start="9">
     <li><a href="#problems">When the import finds a problem</a></li>
     <li><a href="#endings">Endings, and what players remember</a></li>
-    <li><a href="#decisions">More about decisions</a></li>
+    <li><a href="#decisions">More about decisions, and counters</a></li>
     <li><a href="#tracking">Keeping track of decisions</a></li>
     <li><a href="#loops">Places to come back to</a></li>
     <li><a href="#scenes">Scenes: write once, play anywhere</a></li>
     <li><a href="#routes">Chapters of a route</a></li>
     <li><a href="#staging">Characters on stage</a></li>
-    <li><a href="#effects">Sounds and screen effects</a></li>
+    <li><a href="#effects">Sounds, voices, videos and screen effects</a></li>
     <li><a href="#text">How the text looks</a></li>
     <li><a href="#illustrations">Illustrations and the gallery</a></li>
     <li><a href="#word">Working in Word</a></li>
@@ -309,6 +309,7 @@ goes where its name says:</p>
   <tr><td><code>marie.png</code></td><td>Marie's “normal” expression, the one she enters with</td></tr>
   <tr><td><code>marie-smile.png</code></td><td>Marie's “smile” expression</td></tr>
   <tr><td><code>calm.mp3</code></td><td>The track “calm”</td></tr>
+  <tr><td><code>opening.webm</code></td><td>The video “opening” (<code>.webm</code> or <code>.mp4</code>)</td></tr>
 </table>
 <p>Capitals, spaces, hyphens and underscores don't matter. Dropping a new file replaces the old one.</p>
 <figure>
@@ -429,7 +430,7 @@ several branches can share one ending: just write it after the block.</p>
 <p>Unlike decisions, what a player <strong>remembers</strong> stays across every new playthrough: for a story
 that knows you have been there before. <code>[if: seen ending Alone]</code> works the same way.</p>
 
-<h2 id="decisions">11. More about decisions</h2>
+<h2 id="decisions">11. More about decisions, and counters</h2>
 <p>Until a choice sets it, a decision has no value: <code>[if: Answer is Truth]</code> is false, and
 <code>[if: Answer is not Truth]</code> is true. A new playthrough starts with none.</p>
 <p>A decision normally holds one value, each new one replacing the last. To collect several, such as clues
@@ -440,6 +441,19 @@ found or places visited, declare it with <code>multi</code>:</p>
 [unset: Clues = Key]</pre>
 <p><code>[set]</code> gives a value without asking the player. <code>[unset]</code> takes it away (the key
 was lost), and <code>[unset: Clues]</code> takes them all away.</p>
+<p>What the story counts, such as affection, money or the rounds of a fight, is a <strong>counter</strong>.
+<code>[add]</code> adds 1, or the number after the name, and a condition compares it with a number:</p>
+<pre>[add: Affection]
+…
+[add: Affection -1]
+…
+[if: Affection >= 3]
+— Marie: I'm glad you came.
+[end]</pre>
+<p>A counter starts at 0. To start it elsewhere, declare it: <code>[counter: Affection = 2]</code>.
+<code>[set: Affection = 0]</code> starts it over. Conditions can use <code>&gt;</code>, <code>&gt;=</code>,
+<code>&lt;</code>, <code>&lt;=</code>, <code>is</code> and <code>is not</code>. Like decisions, counters are
+saved with the game and undone by going back.</p>
 
 <h2 id="tracking">12. Keeping track of decisions</h2>
 <p>A decision or a style can be declared anywhere, and used everywhere. Two tabs keep them from getting
@@ -451,13 +465,13 @@ listed too.</p>
 <figure>
   <a href="images/definitions.png"><img src="images/definitions.png" alt="The Definitions tab: the project's declarations as text, then the CSS of the styles, title cards, and the declarations kept in chapters with their places." loading="lazy"></a>
 </figure>
-<p><strong>Index</strong> lists every decision and memory, with every place it is given a value or
+<p><strong>Index</strong> lists every decision, counter and memory, with every place it is given a value or
 tested. Click a place to see the card. At the top, it points out what looks forgotten: a value tested
 but never given, so that condition can never hold; an ending no path reaches; a memory nobody checks.</p>
 <figure>
   <a href="images/index.png"><img src="images/index.png" alt="The Index: “To look at” finds nothing forgotten; below, each decision with where it is declared, how it is used, and its values: Answer, made by its choices; Visited, declared in Chapter 2." loading="lazy"></a>
 </figure>
-<p>In the storyboard, <strong>In this view</strong>, under the panel, lists the decisions and memories
+<p>In the storyboard, <strong>In this view</strong>, under the panel, lists the decisions, counters and memories
 the cards on screen use. Inside an opened block, it's only that block's.</p>
 
 <h2 id="loops">13. Places to come back to</h2>
@@ -513,10 +527,12 @@ The guard lets you pass.
 <p>In <strong>Cast &amp; files</strong>, tell Cyberdeck which way each character was drawn looking, and it
 turns them the right way.</p>
 
-<h2 id="effects">17. Sounds and screen effects</h2>
+<h2 id="effects">17. Sounds, voices, videos and screen effects</h2>
 <table>
   <tr><th>You write</th><th>What happens</th></tr>
   <tr><td><code>[sound: door]</code></td><td>A sound plays once. Its file is named after it: <code>door.ogg</code>.</td></tr>
+  <tr><td><code>[voice: marie-01]— Marie: Hello.</code></td><td>Marie's line is heard: <code>marie-01.ogg</code>. It stops when the player moves on, and plays again if they come back to the page.</td></tr>
+  <tr><td><code>[video: Opening]</code></td><td>A video fills the screen, and the text waits until it ends. Clicking or pressing Space passes it.</td></tr>
   <tr><td><code>[transition: fade]</code></td><td>The next background fades in. Also <code>black</code> or <code>white</code>, with a duration: <code>[transition: black 1.5s]</code>.</td></tr>
   <tr><td><code>[shake]</code>, <code>[shake: strong]</code></td><td>The screen trembles.</td></tr>
   <tr><td><code>[flash: red]</code></td><td>A flash of colour.</td></tr>
@@ -583,12 +599,14 @@ block side by side, to follow how the story goes. Here is the fair of chapter 2 
 </figure>
 <p><strong>Shortcuts</strong> (or <kbd>?</kbd>) lists every key by screen; click one to change it.</p>
 <p><strong>Back up</strong> downloads your whole project as one file. <strong>Restore a backup…</strong>, on
-the projects screen, brings it back, on this computer or another. Do it now and then.</p>
+the projects screen, brings it back, on this computer or another. Do it now and then.
+<strong>Restore as a copy…</strong> adds it beside the project instead: a version to try something on.</p>
 
 <h2 id="players">22. What your players see</h2>
-<p>Players have their own <strong>Settings</strong>: text speed, volumes, full screen, and their own keys.</p>
+<p>Players have their own <strong>Settings</strong>: text speed, volumes (music and videos, sounds,
+voices), full screen, and their own keys.</p>
 <figure>
-  <a href="images/settings.png"><img src="images/settings.png" alt="The Settings screen: text speed, music and sound volumes, full screen on the left; on the right, each action with its keys and an “Add a key” button." loading="lazy"></a>
+  <a href="images/settings.png"><img src="images/settings.png" alt="The Settings screen: text speed, the volumes of music, sounds and voices, full screen on the left; on the right, each action with its keys and an “Add a key” button." loading="lazy"></a>
 </figure>
 <p>The <strong>Log</strong> shows what they read and picked. Clicking a line goes back to it.</p>
 <figure>

@@ -90,8 +90,11 @@ const errorMessage = ref<string | null>(null)
 const openPanel = ref<'none' | 'log' | 'save' | 'load' | 'settings'>('none')
 /** The text box and the menu hidden, to look at the picture; any input shows them again. */
 const isTextHidden = ref(false)
+/** The video over the whole screen: the text waits until it ends, or the player passes it. */
+const playingVideo = ref<{ url: string } | null>(null)
+const videoElement = useTemplateRef<HTMLVideoElement>('video')
 /** The text, choices and menu: hidden by the player, and under a panel or the end screen, which have their own buttons. */
-const isHudShown = computed(() => !isTextHidden.value && openPanel.value === 'none' && snapshot.value.step.type !== 'end' && errorMessage.value === null && titleCard.value === null)
+const isHudShown = computed(() => !isTextHidden.value && openPanel.value === 'none' && snapshot.value.step.type !== 'end' && errorMessage.value === null && titleCard.value === null && playingVideo.value === null)
 const isFullscreen = ref(document.fullscreenElement !== null)
 const notice = ref<string | null>(null)
 let noticeTimer: ReturnType<typeof setTimeout> | undefined
@@ -225,12 +228,16 @@ const endingsReached = computed(() => props.story.project.endings.filter(ending 
  */
 /** Sound effects playing, stopped when the player is closed. Skipping passes them by. */
 const playingSounds = new Set<HTMLAudioElement>()
+/** The line being spoken: one at a time, stopped as the player moves on. */
+let voice: HTMLAudioElement | null = null
+/** A line reached with a video, spoken once the video is over. */
+let voiceAfterVideo: string | null = null
 const sceneElement = useTemplateRef<HTMLElement>('scene')
 const flashElement = useTemplateRef<HTMLElement>('flash')
 const FLASH_COLORS = { white: '#fff', red: '#e11d48', black: '#000' } as const
 const SHAKE_DISTANCES = { light: 12, strong: 32 } as const
 
-/** Effects played once as the story reaches them: sounds, shakes, flashes. */
+/** Effects played once as the story reaches them: sounds, voices, videos, shakes, flashes. */
 function playCues(cues: readonly Cue[]) {
   if (isSkipping.value) {
     return
@@ -239,6 +246,16 @@ function playCues(cues: readonly Cue[]) {
     switch (cue.type) {
       case 'sound':
         playSound(cue.soundId)
+        break
+      case 'voice':
+        if (playingVideo.value === null) {
+          playVoice(cue.soundId)
+        } else {
+          voiceAfterVideo = cue.soundId
+        }
+        break
+      case 'video':
+        playVideo(cue.videoId)
         break
       case 'shake': {
         const distance = SHAKE_DISTANCES[cue.strength]
@@ -274,6 +291,71 @@ function playSound(soundId: string) {
   sound.play().catch(() => playingSounds.delete(sound))
 }
 
+function playVoice(soundId: string) {
+  stopVoice()
+  const url = catalog.soundUrl(soundId)
+  if (url === null) {
+    return
+  }
+  const line = new Audio(url)
+  line.volume = settings.value.voiceVolume
+  voice = line
+  line.play().catch(() => undefined)
+}
+
+function stopVoice() {
+  voice?.pause()
+  voice = null
+  voiceAfterVideo = null
+}
+
+/** Coming back to a page, by going back or loading, its line is heard again; its other effects are not. */
+function replayVoice() {
+  const shown = page.value
+  const line = shown === null ? undefined : [...shown.commandsBefore, ...shown.inlineCommands].find(command => command.type === 'voice')
+  if (line?.type === 'voice' && !isSkipping.value) {
+    playVoice(line.soundId)
+  }
+}
+
+function playVideo(videoId: string) {
+  const url = catalog.videoUrl(videoId)
+  if (url === null) {
+    return
+  }
+  clearTimeout(typingTimer)
+  playingVideo.value = { url }
+}
+
+/** Starts the video once shown; a browser that refuses to play sound before a click plays it muted rather than not at all. */
+watch(videoElement, element => {
+  if (element !== null) {
+    element.volume = settings.value.musicVolume
+    element.play().catch(() => {
+      element.muted = true
+      return element.play()
+    }).catch(endVideo)
+  }
+})
+
+/** The video ended or was passed: the text it held back goes on. */
+function endVideo() {
+  if (playingVideo.value === null) {
+    return
+  }
+  playingVideo.value = null
+  if (voiceAfterVideo !== null) {
+    playVoice(voiceAfterVideo)
+  }
+  if (page.value !== null && !isTypingComplete.value) {
+    if (visibleLength.value === 0) {
+      startTyping()
+    } else {
+      typeNextCharacter()
+    }
+  }
+}
+
 function act(action: () => void) {
   const stepBefore = runtime.snapshot.step
   try {
@@ -284,6 +366,10 @@ function act(action: () => void) {
   snapshot.value = runtime.snapshot
   screenful.value = runtime.screenfulPages()
   canGoBack.value = runtime.canGoBack
+  if (runtime.snapshot.step !== stepBefore) {
+    stopVoice()
+    playingVideo.value = null
+  }
   playCues(runtime.takeCues())
   if (runtime.snapshot.step !== stepBefore) {
     recordProgress()
@@ -338,6 +424,7 @@ function resume(save: SaveData) {
   })
   errorMessage.value = null
   startTyping()
+  replayVoice()
   showNotice(text.value.restored[outcome])
 }
 
@@ -408,12 +495,16 @@ function goBackTo(stopIndex: number) {
   forgetTitleCard()
   act(() => runtime.backTo(stopIndex))
   showWholePage()
+  replayVoice()
 }
 
 /** Starts the text once the animations the page waits for are over. */
 function startTyping() {
   clearTimeout(typingTimer)
   visibleLength.value = 0
+  if (playingVideo.value !== null) {
+    return
+  }
   const delayMilliseconds = (page.value?.commandsBefore ?? []).reduce((total, command) => total + waitMillisecondsOf(command, runtime.context), 0)
   const type = settings.value.textSpeed === 0 ? showWholePage : typeNextCharacter
   if (delayMilliseconds > 0) {
@@ -465,7 +556,8 @@ function typeNextCharacter() {
   act(() => {
     reachedCommands = runtime.reachOffset(visibleLength.value)
   })
-  if (visibleLength.value >= text.length) {
+  // A video reached in the text holds it back until it ends.
+  if (visibleLength.value >= text.length || playingVideo.value !== null) {
     return
   }
 
@@ -507,6 +599,7 @@ function goBack() {
   forgetTitleCard()
   act(() => runtime.back())
   showWholePage()
+  replayVoice()
 }
 
 function choose(optionId: string) {
@@ -520,6 +613,11 @@ function toggleFullscreen() {
 }
 
 function perform(action: PlayerAction) {
+  // A video is passed by moving on, or by skipping; going back, the menus and leaving still work over it.
+  if (playingVideo.value !== null && (action === 'advance' || action === 'skip' || action === 'hideText')) {
+    endVideo()
+    return
+  }
   if (isTextHidden.value && action !== 'fullscreen') {
     isTextHidden.value = false
     return
@@ -682,6 +780,7 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
   playingSounds.forEach(sound => sound.pause())
+  stopVoice()
   document.removeEventListener('fullscreenchange', onFullscreenChange)
   window.removeEventListener('mousedown', onMouseDown)
   window.removeEventListener('mouseup', onMouseUp)
@@ -718,7 +817,10 @@ onUnmounted(() => {
         }"
       />
       <div ref="flash" class="flash" />
-      <MusicPlayer :url="musicUrl" :volume="settings.musicVolume" />
+      <MusicPlayer :url="musicUrl" :volume="playingVideo === null ? settings.musicVolume : 0" />
+      <div v-if="playingVideo !== null" class="video-screen">
+        <video ref="video" :src="playingVideo.url" playsinline @ended="endVideo" @error="endVideo" />
+      </div>
       <FullScreenText
         v-if="fullScreenPages !== null && fullScreenPages.length > 0 && isHudShown"
         :pages="fullScreenPages"
@@ -909,6 +1011,18 @@ onUnmounted(() => {
 
 /* A chapter's title over the stage, before its text; the style `chapter title` and the game's CSS give it its looks. */
 /* The default looks sit on the card and are inherited: a style's class on the title itself wins over them. */
+.video-screen {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+
+.video-screen video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .title-card {
   position: absolute;
   inset: 0;

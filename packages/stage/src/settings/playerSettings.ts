@@ -7,6 +7,8 @@ export interface PlayerSettings {
   /** From 0 to 1. */
   musicVolume: number
   soundVolume: number
+  /** Lines spoken, `[voice]`. */
+  voiceVolume: number
   bindings: Bindings
 }
 
@@ -16,6 +18,7 @@ export const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
   textSpeed: 45,
   musicVolume: 0.6,
   soundVolume: 0.8,
+  voiceVolume: 1,
   bindings: DEFAULT_BINDINGS,
 }
 
@@ -33,6 +36,7 @@ export function parsePlayerSettings(value: unknown): PlayerSettings {
       : DEFAULT_PLAYER_SETTINGS.textSpeed,
     musicVolume: isVolume(fields.musicVolume) ? fields.musicVolume : DEFAULT_PLAYER_SETTINGS.musicVolume,
     soundVolume: isVolume(fields.soundVolume) ? fields.soundVolume : DEFAULT_PLAYER_SETTINGS.soundVolume,
+    voiceVolume: isVolume(fields.voiceVolume) ? fields.voiceVolume : DEFAULT_PLAYER_SETTINGS.voiceVolume,
     bindings: Object.fromEntries(actions.map(action => {
       const saved = savedBindings[action]
       return [action, Array.isArray(saved) ? saved.filter(isInputBinding) : DEFAULT_BINDINGS[action]]

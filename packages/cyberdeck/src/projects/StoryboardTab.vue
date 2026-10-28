@@ -798,7 +798,7 @@ function stagingOf(entry: EditableEntry): string[] {
 }
 
 /**
- * The decisions and memories the cards on screen use: the whole chapter's, or in the grid, those
+ * The decisions, counters and memories the cards on screen use: the whole chapter's, or in the grid, those
  * inside the block opened; a chapter's own `[only if]` counts at its level.
  */
 const namesInView = computed(() => {
@@ -809,7 +809,7 @@ const namesInView = computed(() => {
   const block = view.value === 'grid' && blockId.value !== null ? flattenStoredNodes(current.nodes).find(node => node.id === blockId.value) : undefined
   const nodeIds = new Set(flattenStoredNodes(block === undefined ? current.nodes : [block]).map(node => node.id))
   return indexNames(project.value, [current])
-    .filter(name => name.kind === 'decision' || name.kind === 'memory')
+    .filter(name => name.kind === 'decision' || name.kind === 'counter' || name.kind === 'memory')
     .map(name => ({ name, uses: name.uses.filter(entry => entry.nodeId === null ? block === undefined : nodeIds.has(entry.nodeId)) }))
     .filter(entry => entry.uses.length > 0)
 })
@@ -1025,7 +1025,7 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
             <ul>
               <li v-for="entry in namesInView" :key="`${entry.name.kind}:${entry.name.id}`">
                 <button class="link-button name-link" :title="text.everyPlaceInIndex(indexText.kindLabels[entry.name.kind])" @click="openIndex(entry.name.kind, entry.name.id)">{{ entry.name.name }}</button>
-                <span class="muted uses-text">{{ entry.name.kind === 'memory' ? text.memoryPrefix : '' }}{{ summariseUses(entry.name, entry.uses, project, locale) }}</span>
+                <span class="muted uses-text">{{ entry.name.kind === 'memory' ? text.memoryPrefix : entry.name.kind === 'counter' ? text.counterPrefix : '' }}{{ summariseUses(entry.name, entry.uses, project, locale) }}</span>
               </li>
             </ul>
           </details>

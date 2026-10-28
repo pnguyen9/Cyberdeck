@@ -14,6 +14,8 @@ export interface StoryWords {
   colon: string
   /** After the name of a decision several values of which can hold at once. */
   several: string
+  /** What a counter holds before anything changes it. */
+  startsAt: (amount: number) => string
   /** In place of the properties of a style drawn by the CSS alone. */
   fromTheCss: string
   /** A decision with every value taken away. */
@@ -33,6 +35,7 @@ export const ENGLISH_STORY_WORDS: StoryWords = {
   scene: title => `Scene: ${title}`,
   colon: ': ',
   several: 'several',
+  startsAt: amount => `starts at ${amount}`,
   fromTheCss: 'from the CSS',
   none: 'none',
   noMore: value => `no more ${value}`,

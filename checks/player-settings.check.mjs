@@ -26,7 +26,7 @@ export default async function check(page, { url }) {
   await page.evaluate(`[...document.querySelectorAll('.overlay .key-row')].find(row => row.textContent.includes('Next')).querySelector('.add').click()`)
   await pause(100)
   await page.press('n')
-  await page.setValue('.overlay input[aria-label="Music volume"]', '20')
+  await page.setValue('.overlay input[aria-label="Music and videos volume"]', '20')
   await pause(100)
   page.check('the music volume follows the slider', await page.evaluate(`document.querySelector('.viewport audio').volume`), 0.2)
   await page.press('Escape')

@@ -156,7 +156,7 @@ describe('what 1.1.0 was reviewed for', () => {
     const preview = previewDefinitions('[decision: Route = Marie | Jules]\n[style: Whisper = italic, grey]', project, [chapters[0]!, moved], monospaceLayout, {
       baseText: '[decision: Route = Marie | Jules]\n[style: Whisper = italic, grey]',
     })
-    expect(preview.removedIds).toEqual({ decisions: [], styles: [] })
+    expect(preview.removedIds).toEqual({ decisions: [], counters: [], styles: [] })
   })
 })
 

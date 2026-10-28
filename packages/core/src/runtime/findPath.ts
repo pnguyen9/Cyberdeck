@@ -1,3 +1,4 @@
+import { testedIdsOf } from '../format/storyFormat'
 import type { PlayableStory } from './playableStory'
 import { StoryRuntime, type RuntimeState } from './storyRuntime'
 
@@ -12,36 +13,45 @@ export interface FoundPath {
 }
 
 /**
- * A way to reach a page or choice when playing the story, for previewing from it: the stage then
- * shows what a player would see there. Options are tried depth first, each choice reached with
- * given decisions being explored once, so that loops end. Each option goes on from the state at its
- * choice, so that the story is played once, not again for every option. Null when no path reaches
- * the node.
+ * The shortest way to reach a page or choice when playing the story, for previewing from it: the
+ * stage then shows what a player would see there. Paths are tried breadth first, each choice reached
+ * with given values of the decisions and counters conditions test being explored once, so that loops
+ * end, and a loop counting up for ever does not hide the way out. Each option goes on from the state at its choice, so that the
+ * story is played once, not again for every option. Null when no path reaches the node.
  */
 export function findPathTo(story: PlayableStory, nodeId: string, memory: { memoryIds: readonly string[]; endingIds: readonly string[] } = { memoryIds: [], endingIds: [] }): FoundPath | null {
   const explored = new Set<string>()
   let budget = MAXIMUM_STOPS
+  const testedIds = testedIdsOf(story.chapters)
+  const tested = (values: Readonly<Record<string, unknown>>) => JSON.stringify(Object.entries(values).filter(([id]) => testedIds.has(id)).sort(([first], [second]) => first.localeCompare(second)))
 
-  const explore = (runtime: StoryRuntime, optionIds: string[]): FoundPath | null => {
-    while (budget-- > 0) {
+  try {
+    const first = new StoryRuntime(story)
+    first.useMemory(memory)
+    first.start()
+    const queue = [{ runtime: first, optionIds: [] as string[] }]
+    for (let next = 0; next < queue.length; next++) {
+      const { runtime, optionIds } = queue[next]!
+      while (budget-- > 0 && runtime.snapshot.step.type === 'page' && runtime.snapshot.step.page.id !== nodeId) {
+        runtime.next()
+      }
       const step = runtime.snapshot.step
       if ((step.type === 'page' && step.page.id === nodeId) || (step.type === 'choice' && step.choice.id === nodeId)) {
         return { state: runtime.exportState(), optionIds }
       }
-      if (step.type === 'page') {
-        runtime.next()
-        continue
+      if (budget <= 0) {
+        return null
       }
       if (step.type !== 'choice') {
-        return null
+        continue
       }
       // A choice of a scene leads elsewhere from each play of it: where it was played from counts.
       // So do memories gained on the way: they open pages a path without them never reaches.
       const state = runtime.exportState()
       const gainedMemoryIds = runtime.memoryIds
-      const key = `${step.choice.id}:${JSON.stringify(state.page?.playedFrom ?? [])}:${JSON.stringify(state.decisions)}:${[...gainedMemoryIds].sort().join(',')}`
+      const key = `${step.choice.id}:${JSON.stringify(state.page?.playedFrom ?? [])}:${tested(state.decisions)}:${tested(state.counters)}:${[...gainedMemoryIds].sort().join(',')}`
       if (explored.has(key)) {
-        return null
+        continue
       }
       explored.add(key)
       for (const option of step.choice.options) {
@@ -49,21 +59,11 @@ export function findPathTo(story: PlayableStory, nodeId: string, memory: { memor
         branch.useMemory({ memoryIds: [...new Set([...memory.memoryIds, ...gainedMemoryIds])], endingIds: memory.endingIds })
         branch.restoreState(state)
         branch.choose(option.id)
-        const found = explore(branch, [...optionIds, option.id])
-        if (found !== null) {
-          return found
-        }
+        budget--
+        queue.push({ runtime: branch, optionIds: [...optionIds, option.id] })
       }
-      return null
     }
     return null
-  }
-
-  try {
-    const runtime = new StoryRuntime(story)
-    runtime.useMemory(memory)
-    runtime.start()
-    return explore(runtime, [])
   } catch {
     // A story that loops without showing anything has no path to offer.
     return null

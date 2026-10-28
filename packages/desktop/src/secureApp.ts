@@ -60,7 +60,7 @@ export function startSecureApp(options: SecureAppOptions) {
   const pageOrigin = `${options.scheme}://app`
   app.setName(options.name)
   app.enableSandbox()
-  protocol.registerSchemesAsPrivileged([{ scheme: options.scheme, privileges: { standard: true, secure: true, supportFetchAPI: true } }])
+  protocol.registerSchemesAsPrivileged([{ scheme: options.scheme, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }])
 
   if (!app.requestSingleInstanceLock()) {
     // A second copy writing the same files would race the first one.

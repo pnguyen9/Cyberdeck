@@ -190,6 +190,8 @@ one per language, of the same shape: another language is one more table each.
 | `[music: calm]`, `[music: stop]` | Plays a track in a loop, or stops it. |
 | `[illustration: Sunrise]` (or `[cg: …]`), `[illustration: none]` | A full-screen picture of a key moment over the stage, until taken away. Each profile keeps those it has seen, in any playthrough: Datajack's library shows them in the game's **Gallery**, the others locked. |
 | `[sound: door]` | Plays a sound effect once, over the music; inside a sentence, when the text reaches it. Going back, loading a save and skipping play none. |
+| `[voice: marie-01]— Marie: Hello.` | Plays a line spoken, one of the project's sounds, at the player's voice volume. It stops as the player moves on; going back to its page or loading a save there plays it again. Needs Datajack 1.2. |
+| `[video: Opening]` | Plays a video (`.webm` or `.mp4`) over the whole screen, the music silent; the text waits until it ends, or until the player moves on, which passes it. A voice of the same page waits for it. Needs Datajack 1.2. |
 | `[enter: marie]`, `[exit: marie]`, `[move: marie right]` | A character enters (`normal` expression unless told), leaves, moves. |
 | `[enter: marie left smile]`, `[enter: marie 35%]` | Positions: presets (`far-left`, `left`, `center`, `right`, `far-right`, or the project's own) or a percentage of the stage width. |
 | `[enter: marie slide-from-right 1.2s wait]`, `[exit: marie slide-to-left]`, `[move: marie right instant]` | Animations: `fade`, `instant`, `slide-from-left/right` (enter), `slide-to-left/right` (exit); a duration in `s` or `ms`; `wait` holds the text until the animation ends. |
@@ -204,13 +206,16 @@ one per language, of the same shape: another language is one more table each.
 | `[if: Confession is Accept]` … `[else if: …]` … `[else]` … `[end]` | Plays the first branch whose condition holds. Conditions use `is`, `is not`, `and`, `or`. |
 | `[loop]` … `[break]` … `[end]` | Plays what is inside again and again; `[break]`, usually in a branch, leaves the innermost loop and goes on after its `[end]`. A loop with nothing inside to leave it (no `[break]` or `[ending]`) is reported. |
 | `[set: Clues = Letter]` | Sets a decision without a choice. |
+| `[counter: Trust = 2]`, `[counter: Trust]` | Declares a counter, a whole number the story counts with, and what it starts at (0 when not given). Optional: an `[add]` makes the counter it names. |
+| `[add: Trust]`, `[add: Trust 2]`, `[add: Trust -1]` | Adds to a counter: 1, or the amount after its name. `[set: Trust = 0]` gives it a value. |
+| `[if: Trust >= 3]`, `Trust < 2`, `Trust is 3`, `Trust is not 0` | Compares a counter with a number: `>`, `>=`, `<`, `<=`, `is`, `is not`; combines with the rest by `and` / `or`. |
 | `[unset: Clues = Key]`, `[unset: Clues]` | Takes a value away from a decision, or every value: tests of it no longer hold, as if it had never been set. |
 | `[ending: The Empty Room]` | Ends the path here: the player has reached this ending (named endings are counted). |
 | `[remember: The ghost's name]` | The profile remembers it for good, in every later playthrough; going back or loading an older save does not forget. |
 | `[if: remembered The ghost's name]`, `[if: not seen ending Departure]` | Tests what the profile remembers, or the endings it has reached in any playthrough; combines with decisions by `and` / `or`. A memory or ending may be tested before the place naming it; one named nowhere is reported as a typo. |
 
-Story directives (`decision`, `choice`, `if`, `else`, `end`, `loop`, `break`, `play`, `only if`,
-`set`, `unset`, `ending`, `remember`) must be alone on their line. Names are compared ignoring case.
+Story directives (`decision`, `counter`, `choice`, `if`, `else`, `end`, `loop`, `break`, `play`,
+`only if`, `set`, `add`, `unset`, `ending`, `remember`) must be alone on their line. Names are compared ignoring case.
 
 **Decisions.** A decision is what the story remembers of a playthrough: a name and the values it
 may take, `Confession` being `Accept` or `Refuse`. Until a choice or a `[set]` gives it one, a
@@ -222,12 +227,32 @@ whatever else is. `[unset]` takes a value away when the story needs it gone, a k
 promise broken. Decisions belong to the playthrough: a new game starts without any, a save keeps
 them, and going back undoes them. What must outlast the playthrough is a `[remember]`.
 
-**Definitions.** Decisions and styles belong to the whole story, wherever they are declared: any
+**Counters.** What a story counts goes in a counter rather than a decision: affection, trust,
+money, the rounds of a fight. `[add: Affection]` after a kind word, `[add: Affection -1]` after a
+cold one, then `[if: Affection >= 3]` where it matters. A counter starts at 0, or at what
+`[counter: Affection = 2]` declares, and like decisions it belongs to the playthrough: a save keeps
+it by name, going back undoes what was added. A loop may count its rounds and leave after the
+third:
+
+```text
+[loop]
+[add: Rounds]
+The blades meet again.
+[if: Rounds >= 3]
+[break]
+[end]
+[end]
+```
+
+A name is a decision or a counter, never both. Counters are declared and kept like decisions
+(Definitions, Index), and a game using them needs Datajack 1.2 or later.
+
+**Definitions.** Decisions, counters and styles belong to the whole story, wherever they are declared: any
 chapter may use them. A declaration written among a chapter's pages stays there, a card of the
 storyboard and a line of the chapter's text export; one written above the first heading of a text
 that has headings, as the whole story's export writes them, belongs to no chapter and lives in the
 project's **Definitions** tab. A decision a choice makes without any declaration is made by use:
-later choices may add values to it. A definition is declared once: another declaration of it is
+later choices may add values to it; so is a counter an `[add]` makes, starting at 0. A definition is declared once: another declaration of it is
 refused, unless it replaces the first in place (editing its card, importing its chapter again).
 A declaration may change the values of a decision, but never drop one still used elsewhere.
 
@@ -324,12 +349,13 @@ otherwise; a sprite is mirrored to do so only when the author has said which way
 looking (never for sprites drawn facing the viewer). Animations not written take the project
 defaults: entrances and exits fade over 0.4 s, moves glide over 0.6 s.
 
-Characters, expressions, backgrounds, music, sounds and illustrations are created by being named
-in the text, as are endings and memories: nothing needs declaring but decisions and styles. A
+Characters, expressions, backgrounds, music, sounds, illustrations and videos are created by being
+named in the text, as are endings, memories and counters: nothing needs declaring but decisions and
+styles. A
 directive whose name looks like a misspelled keyword (`[backgound: …]`) is reported rather than
 taken for a new character. Images and sounds are then given to these entries by file name:
 `rooftop.jpg`, `marie-smile.png` (Marie's `smile`), `marie.png` (her `normal`), `calm.mp3`,
-`door.wav`; case, spaces, hyphens and underscores do not matter. An entry without a file shows as
+`door.wav`, `opening.webm`; case, spaces, hyphens and underscores do not matter. An entry without a file shows as
 a placeholder.
 
 A paragraph longer than the textbox is cut into several pages: between sentences first, then
@@ -394,10 +420,10 @@ A **project** holds the whole game. Its screens:
   title too while changes are not saved (●). Nothing written is thrown away unasked: opening
   another card, Esc, another chapter, another tab or leaving the project first asks to **Save**,
   **Discard** or **Keep editing**, and the browser asks before the page is closed.
-- **Definitions**: the project's own decisions and styles, edited as their declarations; those
+- **Definitions**: the project's own decisions, counters and styles, edited as their declarations; those
   declared in chapters, each with where it is, to show or to **Move to Definitions**; those made
   by use, to declare here. Then the CSS of the styles, and title cards.
-- **Index**: every decision and memory, each with its values and every place that declares, gives,
+- **Index**: every decision, counter and memory, each with its values and every place that declares, gives,
   empties or tests it (`Chapter 2 · page 7a`, `after 5`), a click away. Above them, what looks
   forgotten across the whole story, as an IDE would point it out: a decision or value tested but
   never given (that condition never holds), a memory tested but never remembered, an ending no
@@ -421,7 +447,7 @@ A **project** holds the whole game. Its screens:
   the project replaces it, `[import: pages]` goes at the end of the last chapter, anything else
   makes new chapters. Scenes (`# Scene: Name`) go in whatever the choice, one named like a scene of
   the project replacing it.
-- **Cast & files**: drop images, music and sounds (illustrations included); each file goes to the entry it is named after,
+- **Cast & files**: drop images, music, sounds and videos (illustrations and voices included); each file goes to the entry it is named after,
   replacing the file it had (the old one is deleted). Characters say which way their sprites were
   drawn looking. A font file (`.woff2`, `.woff`, `.ttf`, `.otf`) becomes a font of its name, which
   the CSS names: `font-family: "Cinzel"` for `Cinzel.woff2`. It is measured as it is added, how
@@ -450,7 +476,8 @@ author chooses another folder on the projects screen (a synced one, for instance
 old version and swapped in one move. Deleting a project moves its folder to the system's trash.
 In the browser, projects live in IndexedDB (the browser is asked to keep them). In both,
 **Back up** downloads the project folder zipped, and **Restore a backup** reads it back, on this
-computer or another.
+computer or another, in place of the project it was made from. **Restore as a copy** adds it as a
+new project beside the first, named `… (copy)`: a version to try something on.
 
 ## Game archives
 
@@ -459,8 +486,8 @@ so an author may offer either for download; installing an archive of a game alre
 merges it.
 
 ```
-game.json                      the project: decisions, characters, backgrounds, music, sounds,
-                               illustrations, positions, styles and their CSS, title cards, the
+game.json                      the project: decisions, counters, characters, backgrounds, music,
+                               sounds, illustrations, videos, positions, styles and their CSS, title cards, the
                                order of scenes, dates, description, credits; the release; every
                                chapter of the game with whether this archive includes it; each
                                asset file and its SHA-256
@@ -472,6 +499,7 @@ assets/characters/Marie/smile.png
 assets/music/calm.ogg
 assets/sounds/door.ogg
 assets/illustrations/Sunrise.png
+assets/videos/Opening.webm
 ```
 
 Assets are named after their entries; content used by several entries is stored once. Datajack
@@ -483,9 +511,10 @@ imported from, or where definitions are written, is not exported.
 
 Each document says the format it is written in. An archive takes the oldest format that holds the
 game, so that players who have not updated Datajack still play it: format 1.1, which Datajack 1.0
-reads, unless a style uses `fade-in`, `rise` or `glow`, or the project has fonts, which Datajack 1.0
-would refuse; it then shows a game's text without the CSS and title cards it does not know of. Projects are written in
-the current format, 1.2.
+reads; 1.2, which Datajack 1.1 reads, when a style uses `fade-in`, `rise` or `glow` or the project
+has fonts; 1.3, for Datajack 1.2, when the game uses counters, voices or videos. An older Datajack
+says a newer game needs an update rather than failing on it, and Datajack 1.0 shows a game's text
+without the CSS and title cards it does not know of. Projects are written in the current format, 1.3.
 
 When an archive is installed, the newer export (by date) brings the project, the release, the
 chapter list and the scenes; an older archive only adds chapters still missing. Asset files go first and
@@ -520,8 +549,8 @@ the desktop, games live in the application's data folder (`library/games/<game>/
 
 ### Settings
 
-The **Settings** screen sets the text speed (or each page shown at once), the music and sound
-effect volumes and full screen, and the inputs of every action: *Add a key* then press a key or a
+The **Settings** screen sets the text speed (or each page shown at once), the volumes of the music
+(and videos), the sound effects and the voices, full screen, and the inputs of every action: *Add a key* then press a key or a
 mouse button, which leaves the action that had it; × removes one; *Default keys* restores them.
 Keys are bound by their place on the keyboard (`KeyboardEvent.code`), so a binding means the same
 key on AZERTY and QWERTY; they are named as on a US keyboard, so on another layout a name may

@@ -10,7 +10,7 @@ import { previewImport, type ImportPreview } from './projectEdits'
 
 /**
  * The project's own definitions, those of no chapter, edited as the text that declares them: one
- * `[decision: …]` or `[style: Name = …]` per line. What a chapter declares stays in that chapter.
+ * `[decision: …]`, `[counter: …]` or `[style: Name = …]` per line. What a chapter declares stays in that chapter.
  */
 
 /** The text of the project's definitions, as the Definitions tab shows it. */
@@ -20,13 +20,21 @@ export function definitionsText(project: ProjectDocument, documents: readonly Ch
 
 export interface DefinitionsPreview extends ImportPreview {
   /** Definitions of the project left out of the text, and used nowhere: saving takes them out. */
-  removedIds: { decisions: string[]; styles: string[] }
+  removedIds: DefinitionIds
 }
 
-/** Names declared by a text, decisions and styles apart, ignoring case. */
-function declaredNamesIn(text: string): { decisions: Set<string>; styles: Set<string> } {
+type DefinitionIds = Record<'decisions' | 'counters' | 'styles', string[]>
+
+const KIND_LISTS = { decision: 'decisions', counter: 'counters', style: 'styles' } as const
+
+/** Names declared by a text, decisions, counters and styles apart, ignoring case. */
+function declaredNamesIn(text: string): Record<keyof DefinitionIds, Set<string>> {
   const namesOf = (pattern: RegExp) => new Set([...text.matchAll(pattern)].map(match => normalizeName(match[1]!)))
-  return { decisions: namesOf(/\[\s*decision(?:\s+multi)?\s*:([^=\]]+)=/gi), styles: namesOf(/\[\s*style\s*:([^=\]]+)=/gi) }
+  return {
+    decisions: namesOf(/\[\s*decision(?:\s+multi)?\s*:([^=\]]+)=/gi),
+    counters: namesOf(/\[\s*counter\s*:([^=\]]+)[=\]]/gi),
+    styles: namesOf(/\[\s*style\s*:([^=\]]+)=/gi),
+  }
 }
 
 /**
@@ -55,11 +63,15 @@ export function previewDefinitions(
   }
 
   const index = options.index ?? indexNames(project, documents)
-  const declared = { decisions: new Set(result.decisions.map(declaration => normalizeName(declaration.name))), styles: new Set(result.styles.map(declaration => normalizeName(declaration.name))) }
+  const namesOf = (declarations: readonly { name: string }[]) => new Set(declarations.map(declaration => normalizeName(declaration.name)))
+  const declared = { decisions: namesOf(result.decisions), counters: namesOf(result.counters), styles: namesOf(result.styles) }
   const started = declaredNamesIn(options.baseText ?? definitionsText(project, documents))
-  const removedIds = { decisions: [] as string[], styles: [] as string[] }
-  for (const name of index.filter(candidate => candidate.kind === 'decision' || candidate.kind === 'style')) {
-    const kind = name.kind === 'decision' ? 'decisions' : 'styles'
+  const removedIds: DefinitionIds = { decisions: [], counters: [], styles: [] }
+  for (const name of index) {
+    if (name.kind !== 'decision' && name.kind !== 'counter' && name.kind !== 'style') {
+      continue
+    }
+    const kind = KIND_LISTS[name.kind]
     const key = normalizeName(name.name)
     if (homeOf(name, project).type !== 'definitions' || declared[kind].has(key) || !started[kind].has(key)) {
       continue
@@ -81,6 +93,7 @@ export function applyDefinitions(preview: DefinitionsPreview, project: ProjectDo
   }
   const stored = storeImport(preview.result, project, { fileName: null }, environment, preview.knownScenes)
   const removedDecisions = new Set(preview.removedIds.decisions)
+  const removedCounters = new Set(preview.removedIds.counters)
   const removedStyles = new Set(preview.removedIds.styles)
   return {
     ...stored.project,
@@ -88,6 +101,7 @@ export function applyDefinitions(preview: DefinitionsPreview, project: ProjectDo
     chapterOrder: project.chapterOrder,
     sceneOrder: project.sceneOrder,
     decisions: stored.project.decisions.filter(decision => !removedDecisions.has(decision.id)),
+    counters: stored.project.counters.filter(counter => !removedCounters.has(counter.id)),
     styles: stored.project.styles.filter(style => !removedStyles.has(style.id)),
     updatedAt: environment.now(),
   }
@@ -99,7 +113,9 @@ export function definitionsOf(chapter: ChapterDocument, project: ProjectDocument
     if (node.type !== 'definition') {
       return []
     }
-    const named = node.kind === 'decision' ? project.decisions.find(decision => decision.id === node.definedId) : project.styles.find(style => style.id === node.definedId)
+    const named = node.kind === 'decision' ? project.decisions.find(decision => decision.id === node.definedId)
+      : node.kind === 'counter' ? project.counters.find(counter => counter.id === node.definedId)
+        : project.styles.find(style => style.id === node.definedId)
     return named === undefined ? [] : [named.name]
   })
 }

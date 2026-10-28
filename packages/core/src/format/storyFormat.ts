@@ -5,7 +5,7 @@ import type { StyleProperty } from './textStyles'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '1.2'
+export const FORMAT_VERSION = '1.3'
 
 /** True when this version of the code can read a document written in `version`. */
 export function isSupportedFormatVersion(version: string): boolean {
@@ -40,6 +40,18 @@ export interface Decision {
    * extend. A declared decision lives where its declaration is, a `definition` node of a chapter,
    * or in the project's definitions when no node declares it. Since 1.2.
    */
+  implicit?: true
+}
+
+/**
+ * A number the story counts with, `[counter: Trust = 2]`: added to, set, and compared. One never
+ * changed holds `initial`. Since 1.3.
+ */
+export interface Counter {
+  id: string
+  name: string
+  initial: number
+  /** Declared nowhere: an `[add]` made it, starting at 0. */
   implicit?: true
 }
 
@@ -162,6 +174,13 @@ export interface SoundEffect {
   assetId: string | null
 }
 
+/** A video played over the whole screen where it is named: an opening, a cutscene. Since 1.3. */
+export interface VideoClip {
+  id: string
+  name: string
+  assetId: string | null
+}
+
 /** An ending of the story, named by `[ending: …]`; players see how many they have reached. */
 export interface Ending {
   id: string
@@ -203,6 +222,8 @@ export interface ProjectDocument extends Audited {
   /** Scenes: pages of no chapter, played wherever a `[play]` names them. Stored as chapters are. Since 1.1. */
   sceneOrder: string[]
   decisions: Decision[]
+  /** Since 1.3. */
+  counters: Counter[]
   endings: Ending[]
   memories: Memory[]
   styles: TextStyle[]
@@ -211,6 +232,8 @@ export interface ProjectDocument extends Audited {
   music: MusicTrack[]
   sounds: SoundEffect[]
   illustrations: Illustration[]
+  /** Since 1.3. */
+  videos: VideoClip[]
   /** Since 1.2. */
   fonts: FontEntry[]
   assets: Asset[]
@@ -244,6 +267,10 @@ export type StageCommand =
   | { type: 'music'; musicId: string | null }
   /** Played once, over the music; changes nothing on stage. */
   | { type: 'sound'; soundId: string }
+  /** A line spoken, one of the project's sounds: played like a sound, but stopped as the player moves on. Since 1.3. */
+  | { type: 'voice'; soundId: string }
+  /** Played over the whole screen; the text waits until it ends, or the player skips it. Since 1.3. */
+  | { type: 'video'; videoId: string }
   /** Played once, like a sound: the stage trembles, or a colour flashes over it. */
   | { type: 'shake'; strength: ShakeStrength; durationMs: number | null }
   | { type: 'flash'; color: FlashColor; durationMs: number | null }
@@ -315,8 +342,12 @@ export interface StoredChoiceOption {
   condition: StoredCondition | null
 }
 
+export type CounterOperator = '=' | '!=' | '<' | '<=' | '>' | '>='
+
 export type StoredCondition =
   | { type: 'is'; decisionId: string; valueId: string; negated: boolean }
+  /** The counter compared with `amount`: `Trust >= 3`. Since 1.3. */
+  | { type: 'counter'; counterId: string; operator: CounterOperator; amount: number }
   | { type: 'remembered'; memoryId: string; negated: boolean }
   | { type: 'endingSeen'; endingId: string; negated: boolean }
   | { type: 'and' | 'or'; conditions: StoredCondition[] }
@@ -342,6 +373,15 @@ export interface StoredUnset {
   valueId: string | null
 }
 
+/** Adds `amount` to a counter, `[add: Trust -1]`, or gives it that value, `[set: Trust = 3]`. Since 1.3. */
+export interface StoredCount {
+  type: 'count'
+  id: string
+  counterId: string
+  operation: 'add' | 'set'
+  amount: number
+}
+
 /** The path ends here: the player has reached this ending. */
 export interface StoredEnding {
   type: 'ending'
@@ -350,16 +390,19 @@ export interface StoredEnding {
 }
 
 /**
- * Where a decision or a style is declared, when the author keeps its declaration in a chapter: the
+ * Where a decision, a counter or a style is declared, when the author keeps its declaration in a chapter: the
  * declaration is written there on export, and the storyboard shows it there. It plays nothing, and
  * games leave it out. Since 1.2.
  */
 export interface StoredDefinition {
   type: 'definition'
   id: string
-  kind: 'decision' | 'style'
+  /** `counter` since 1.3. */
+  kind: DefinitionKind
   definedId: string
 }
+
+export type DefinitionKind = 'decision' | 'counter' | 'style'
 
 /** The profile remembers this from now on, in every playthrough. */
 export interface StoredRemember {
@@ -388,7 +431,7 @@ export interface StoredBreak {
   id: string
 }
 
-export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredDefinition | StoredEnding | StoredRemember
+export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredCount | StoredDefinition | StoredEnding | StoredRemember
 
 /** A list of nodes inside a block: a branch of a condition, or the body of a loop, which bears the loop's identifier. */
 export interface InnerList {
@@ -417,6 +460,32 @@ export function flattenStoredNodes(nodes: readonly StoredNode[]): StoredNode[] {
   return nodes.flatMap(node => [node, ...innerListsOf(node).flatMap(list => flattenStoredNodes(list.nodes))])
 }
 
+/** The decisions and counters a condition tests, by identifier. */
+export function testedIdsIn(condition: StoredCondition): string[] {
+  switch (condition.type) {
+    case 'is':
+      return [condition.decisionId]
+    case 'counter':
+      return [condition.counterId]
+    case 'remembered':
+    case 'endingSeen':
+      return []
+    case 'and':
+    case 'or':
+      return condition.conditions.flatMap(testedIdsIn)
+  }
+}
+
+/** Every decision and counter some condition of the documents tests, by identifier: the others change nothing of where the story goes. */
+export function testedIdsOf(documents: readonly ChapterDocument[]): Set<string> {
+  return new Set(documents.flatMap(document => [
+    ...(document.condition === undefined ? [] : testedIdsIn(document.condition)),
+    ...flattenStoredNodes(document.nodes).flatMap(node => node.type === 'condition'
+      ? node.branches.flatMap(branch => branch.condition === null ? [] : testedIdsIn(branch.condition))
+      : node.type === 'choice' ? node.options.flatMap(option => option.condition === null ? [] : testedIdsIn(option.condition)) : []),
+  ]))
+}
+
 /** Where identifiers and dates come from; tests replace it to get predictable documents. */
 export interface Environment {
   createId: () => string
@@ -438,6 +507,7 @@ export function createProject(settings: { name: string; locale: string }, enviro
     chapterOrder: [],
     sceneOrder: [],
     decisions: [],
+    counters: [],
     endings: [],
     memories: [],
     styles: [],
@@ -446,6 +516,7 @@ export function createProject(settings: { name: string; locale: string }, enviro
     music: [],
     sounds: [],
     illustrations: [],
+    videos: [],
     fonts: [],
     assets: [],
     positions: [...DEFAULT_POSITION_PRESETS],

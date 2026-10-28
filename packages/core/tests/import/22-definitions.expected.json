@@ -1,5 +1,6 @@
 {
   "kind": "story",
+  "counters": [],
   "decisions": [
     { "sourceLine": 2, "name": "Route", "values": ["Marie", "Jules"], "multiple": false },
     { "sourceLine": 5, "name": "Clues", "values": ["Letter", "Key"], "multiple": true },

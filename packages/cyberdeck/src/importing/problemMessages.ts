@@ -7,6 +7,8 @@ const STAGE_DIRECTIVE_HINTS: Readonly<Record<string, string>> = {
   background: 'it takes the name of a background',
   music: 'it takes the name of a track, or stop',
   sound: 'it takes the name of a sound',
+  voice: 'it takes the name of the sound of the line',
+  video: 'it takes the name of a video',
   transition: 'it takes fade, black or white, and a duration if wished (1.5s)',
   enter: 'it takes a name, then a position (left, center, right, or 35%), an expression, near or far, an animation, a duration',
   exit: 'it takes a name, then an animation and a duration if wished',
@@ -73,12 +75,24 @@ const en: ProblemMessages = {
   duplicateDecision: (subject, suggestion) => suggestion === ''
     ? `The decision "${subject}" is declared twice.`
     : `The decision "${subject}" is already declared in ${suggestion}: change it there, or move it to Definitions first.`,
+  invalidCounter: subject => `"${subject}" should look like: Name = 0, a whole number, or the name alone to start at 0.`,
+  invalidAdd: subject => subject === '' ? '[add: …] needs the name of a counter, and an amount if not 1: [add: Trust 2], [add: Trust -1].' : `"${subject}" should look like: Counter 2, Counter -1, or the counter alone to add 1.`,
+  unknownCounter: subject => `No counter is called "${subject}": declare it with [counter: ${subject}], or count with [add: ${subject}].`,
+  counterNeedsNumber: subject => {
+    const [counter, value] = subject.split(': ')
+    return `${counter} is a counter: it holds whole numbers, not "${value}".`
+  },
+  duplicateCounter: (subject, suggestion) => suggestion === ''
+    ? `The counter "${subject}" is declared twice.`
+    : `The counter "${subject}" is already declared in ${suggestion}: change it there, or move it to Definitions first.`,
+  counterNamedLikeDecision: subject => `"${subject}" is both a counter and a decision: give one of them another name.`,
+  unsetCounter: subject => `${subject} is a counter: [unset] takes values away from decisions. To start it over, write [set: ${subject} = 0].`,
   decisionValueStillUsed: subject => {
     const [decision, value] = subject.split(': ')
     return `"${value}" is still used elsewhere as a value of ${decision}: keep it in the list, or change those places first (the Index shows them).`
   },
   definitionStillUsed: subject => `"${subject}" is still used in the story: it cannot be taken out of the definitions.`,
-  notADefinition: () => 'Only declarations belong here: [decision: …], [decision multi: …] and [style: Name = …].',
+  notADefinition: () => 'Only declarations belong here: [decision: …], [decision multi: …], [counter: …] and [style: Name = …].',
   invalidStageDirective: subject => `[${subject}: …] is not understood: ${STAGE_DIRECTIVE_HINTS[subject] ?? 'a name, a position (left, center, right) or a number is missing'}.`,
   looksLikeStageKeyword: (subject, suggestion) => `[${subject}] would create a character called "${subject}". Did you mean [${suggestion}]?`,
 }
@@ -88,6 +102,8 @@ const STAGE_DIRECTIVE_HINTS_FR: Readonly<Record<string, string>> = {
   background: 'il attend le nom d’un décor',
   music: 'il attend le nom d’une musique, ou stop',
   sound: 'il attend le nom d’un son',
+  voice: 'il attend le nom du son de la réplique',
+  video: 'il attend le nom d’une vidéo',
   transition: 'il attend fade, black ou white, et une durée si besoin (1.5s)',
   enter: 'il attend un nom, puis une position (left, center, right, ou 35%), une expression, near ou far, une animation, une durée',
   exit: 'il attend un nom, puis une animation et une durée si besoin',
@@ -155,12 +171,24 @@ const fr: ProblemMessages = {
   duplicateDecision: (subject, suggestion) => suggestion === ''
     ? `La décision ${quoted(subject)} est déclarée deux fois.`
     : `La décision ${quoted(subject)} est déjà déclarée dans ${suggestion}\u00a0: modifiez-la là-bas, ou déplacez-la d’abord dans Définitions.`,
+  invalidCounter: subject => `${quoted(subject)} devrait avoir cette forme\u00a0: Nom = 0, un nombre entier, ou le nom seul pour commencer à 0.`,
+  invalidAdd: subject => subject === '' ? '[add: …] attend le nom d’un compteur, et le nombre à ajouter, si ce n’est pas 1\u00a0: [add: Confiance 2], [add: Confiance -1].' : `${quoted(subject)} devrait avoir cette forme\u00a0: Compteur 2, Compteur -1, ou le compteur seul pour ajouter 1.`,
+  unknownCounter: subject => `Aucun compteur ne s’appelle ${quoted(subject)}\u00a0: déclarez-le avec [counter: ${subject}], ou comptez avec [add: ${subject}].`,
+  counterNeedsNumber: subject => {
+    const [counter, value] = subject.split(': ')
+    return `${counter} est un compteur\u00a0: il contient des nombres entiers, pas ${quoted(value ?? '')}.`
+  },
+  duplicateCounter: (subject, suggestion) => suggestion === ''
+    ? `Le compteur ${quoted(subject)} est déclaré deux fois.`
+    : `Le compteur ${quoted(subject)} est déjà déclaré dans ${suggestion}\u00a0: modifiez-le là-bas, ou déplacez-le d’abord dans Définitions.`,
+  counterNamedLikeDecision: subject => `${quoted(subject)} est à la fois un compteur et une décision\u00a0: renommez l’un des deux.`,
+  unsetCounter: subject => `${subject} est un compteur\u00a0: [unset] retire des valeurs aux décisions. Pour le remettre à zéro, écrivez [set: ${subject} = 0].`,
   decisionValueStillUsed: subject => {
     const [decision, value] = subject.split(': ')
     return `${quoted(value ?? '')} est encore utilisée ailleurs comme valeur de ${decision}\u00a0: gardez-la dans la liste, ou modifiez d’abord ces endroits (l’Index les montre).`
   },
   definitionStillUsed: subject => `L’histoire utilise encore ${quoted(subject)}\u00a0: impossible de retirer cette définition.`,
-  notADefinition: () => 'Seules des déclarations ont leur place ici\u00a0: [decision: …], [decision multi: …] et [style: Nom = …].',
+  notADefinition: () => 'Seules des déclarations ont leur place ici\u00a0: [decision: …], [decision multi: …], [counter: …] et [style: Nom = …].',
   invalidStageDirective: subject => `[${subject}: …] n’est pas compris\u00a0: ${STAGE_DIRECTIVE_HINTS_FR[subject] ?? 'il manque un nom, une position (left, center, right) ou un nombre'}.`,
   looksLikeStageKeyword: (subject, suggestion) => `[${subject}] créerait un personnage appelé ${quoted(subject)}. Vouliez-vous dire [${suggestion}]\u00a0?`,
 }

@@ -1,4 +1,4 @@
-import { flattenStoredNodes, type StoredChoice, type StoredCondition } from '../format/storyFormat'
+import { flattenStoredNodes, testedIdsIn, type StoredChoice } from '../format/storyFormat'
 import { chaptersInOrder, scenesOf, type PlayableStory } from '../runtime/playableStory'
 import type { RuntimeState } from '../runtime/storyRuntime'
 import { parseSave, toSave, type SaveData } from '../saves/saveData'
@@ -7,8 +7,8 @@ import { parseSave, toSave, type SaveData } from '../saves/saveData'
  * What a profile has seen of a game over every playthrough: the choices reached, where each option
  * taken led, the endings, and the pages read. It feeds the map and skipping; the story never reads it.
  *
- * A point of the map is a choice reached with a given stage and given values of the decisions the
- * story still tests from there on. Two paths reaching the same choice that agree on those merge
+ * A point of the map is a choice reached with a given stage and given values of the decisions and
+ * counters the story still tests from there on. Two paths reaching the same choice that agree on those merge
  * into one point; otherwise they stay apart, so that characters react the same way to everything
  * ahead whichever path is resumed from the point.
  */
@@ -90,26 +90,29 @@ export function recordEndReached(progress: ProgressData, endingId: string | null
 }
 
 /**
- * The key of a point: its choice, stage and the decisions that matter ahead, whatever the order
- * they were written in, and for a choice in a scene, where the scene was played from.
+ * The key of a point: its choice, stage and the decisions and counters that matter ahead, whatever
+ * the order they were written in, and for a choice in a scene, where the scene was played from.
+ * Counters count only when some matter: points of stories without them keep the keys they had.
  */
-export function pointKeyOf(choiceId: string, save: SaveData, decisionsThatMatter: ReadonlySet<string>): string {
-  const decisions = Object.keys(save.decisions).filter(name => decisionsThatMatter.has(name)).sort()
+export function pointKeyOf(choiceId: string, save: SaveData, namesThatMatter: ReadonlySet<string>): string {
+  const decisions = Object.keys(save.decisions).filter(name => namesThatMatter.has(name)).sort()
     .map(name => [name, [...(save.decisions[name] ?? [])].sort()])
+  const counters = Object.keys(save.counters ?? {}).filter(name => namesThatMatter.has(name)).sort()
+    .map(name => [name, save.counters?.[name]])
   const characters = [...save.stage.characters].sort((first, second) => first.name.localeCompare(second.name))
   const playedFrom = save.page?.playedFrom ?? []
   const { background, music, cover, tint, text, illustration } = save.stage
-  return `${choiceId}:${fingerprint(JSON.stringify({ decisions, background, music, characters, cover, tint, text, illustration, playedFrom }))}`
+  return `${choiceId}:${fingerprint(JSON.stringify({ decisions, ...(counters.length === 0 ? {} : { counters }), background, music, characters, cover, tint, text, illustration, playedFrom }))}`
 }
 
 const testedDecisionsByStory = new WeakMap<PlayableStory, Map<string, ReadonlySet<string>>>()
 
 /**
- * Names of the decisions that conditions test from a choice on, in reading order, those deciding
+ * Names of the decisions and counters that conditions test from a choice on, in reading order, those deciding
  * which of its options are offered included, those of every scene, which may be played ahead, and
  * those deciding which chapters are played.
- * A loop around the choice, or a scene holding it, may test anything again: every decision tested
- * in the story then counts.
+ * A loop around the choice, or a scene holding it, may test anything again: every name tested in
+ * the story then counts.
  */
 export function decisionsTestedFrom(story: PlayableStory, choiceId: string): ReadonlySet<string> {
   const cache = testedDecisionsByStory.get(story) ?? new Map<string, ReadonlySet<string>>()
@@ -123,26 +126,13 @@ export function decisionsTestedFrom(story: PlayableStory, choiceId: string): Rea
   const choiceIndex = nodes.findIndex(node => node.id === choiceId)
   const isInLoop = nodes.some(node => node.type === 'loop' && flattenStoredNodes(node.nodes).some(inner => inner.id === choiceId))
   const ahead = choiceIndex === -1 || isInLoop ? nodes : nodes.slice(choiceIndex)
-  const chapterConditionIds = chaptersInOrder(story).flatMap(chapter => chapter.condition === undefined ? [] : decisionIdsIn(chapter.condition))
-  const testedIds = [...chapterConditionIds, ...[...ahead, ...sceneNodes].flatMap(node => node.type === 'condition'
-    ? node.branches.flatMap(branch => branch.condition === null ? [] : decisionIdsIn(branch.condition))
-    : node.type === 'choice' ? node.options.flatMap(option => option.condition === null ? [] : decisionIdsIn(option.condition)) : [])]
-  const names = new Set(story.project.decisions.filter(decision => testedIds.includes(decision.id)).map(decision => decision.name))
+  const chapterConditionIds = chaptersInOrder(story).flatMap(chapter => chapter.condition === undefined ? [] : testedIdsIn(chapter.condition))
+  const testedIds = new Set([...chapterConditionIds, ...[...ahead, ...sceneNodes].flatMap(node => node.type === 'condition'
+    ? node.branches.flatMap(branch => branch.condition === null ? [] : testedIdsIn(branch.condition))
+    : node.type === 'choice' ? node.options.flatMap(option => option.condition === null ? [] : testedIdsIn(option.condition)) : [])])
+  const names = new Set([...story.project.decisions, ...story.project.counters].filter(named => testedIds.has(named.id)).map(named => named.name))
   cache.set(choiceId, names)
   return names
-}
-
-function decisionIdsIn(condition: StoredCondition): string[] {
-  switch (condition.type) {
-    case 'is':
-      return [condition.decisionId]
-    case 'remembered':
-    case 'endingSeen':
-      return []
-    case 'and':
-    case 'or':
-      return condition.conditions.flatMap(decisionIdsIn)
-  }
 }
 
 /** The choices of the story by identifier, for showing their options on the map. */

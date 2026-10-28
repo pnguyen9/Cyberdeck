@@ -70,6 +70,7 @@ const en = {
   markerKinds: {
     stage: 'stage',
     set: 'set',
+    count: 'counter',
     unset: 'unset',
     definition: 'definition',
     ending: 'ending',
@@ -94,6 +95,7 @@ const en = {
   inThisView: (count: number) => `In this view · ${count} ${count === 1 ? 'name' : 'names'}`,
   everyPlaceInIndex: (kind: string) => `${kind}: every place, in the Index`,
   memoryPrefix: 'memory · ',
+  counterPrefix: 'counter · ',
   editCard: 'Edit',
   openBlock: 'Open the block',
   previewFromHere: 'Preview from here ▶',
@@ -180,6 +182,7 @@ const fr: StoryboardMessages = {
   markerKinds: {
     stage: 'mise en scène',
     set: 'valeur donnée',
+    count: 'compteur',
     unset: 'valeur retirée',
     definition: 'définition',
     ending: 'fin',
@@ -204,6 +207,7 @@ const fr: StoryboardMessages = {
   inThisView: count => `Dans cette vue · ${count} ${count <= 1 ? 'nom' : 'noms'}`,
   everyPlaceInIndex: kind => `${kind} : toutes ses utilisations, dans l’Index`,
   memoryPrefix: 'souvenir · ',
+  counterPrefix: 'compteur · ',
   editCard: 'Modifier',
   openBlock: 'Ouvrir le bloc',
   previewFromHere: 'Aperçu à partir d’ici ▶',

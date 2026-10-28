@@ -112,6 +112,20 @@ describe('projects', () => {
     expect((await listProjects(elsewhere.store))).toHaveLength(1)
   })
 
+  it('restore a backup as a copy, beside the project it was made from', async () => {
+    const { open, store } = await projectWith('# One\n[bg: street]\nHello.')
+    await open.addFiles([file('street.png', 'image/png', 1)])
+    const backup = await open.backup(new Date(NOW))
+
+    const copy = await restoreBackup(store, backup, { copyName: name => `${name} (copy)`, environment: { createId: () => 'copy-id', now: () => NOW } })
+    expect(copy.id).toBe('copy-id')
+    expect(copy.name).toBe(`${open.project.name} (copy)`)
+    expect((await listProjects(store)).map(project => project.id).sort()).toEqual([open.project.id, 'copy-id'].sort())
+    const reopened = await OpenProject.open(store, 'copy-id')
+    expect(reopened.chapters).toEqual(open.chapters)
+    expect(await store.readAsset('copy-id', open.project.assets[0]!.id)).toEqual(new Uint8Array([1]))
+  })
+
   it('preview from a chapter', async () => {
     const { open } = await projectWith('# One\nHello.\n# Two\nGoodbye.')
     const runtime = new StoryRuntime(await open.playable(open.chapters[1]!.id))

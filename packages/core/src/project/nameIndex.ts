@@ -12,14 +12,15 @@ const RESERVED_NAMES: ReadonlySet<string> = new Set(Object.values(RESERVED_STYLE
  * shows of the cards on screen, and what tells an edit which values are still needed elsewhere.
  */
 
-export type NameKind = 'decision' | 'memory' | 'ending' | 'style' | 'scene'
+export type NameKind = 'decision' | 'counter' | 'memory' | 'ending' | 'style' | 'scene'
 
 /**
  * How a place uses a name: a decision is declared, given a value by a choice or a `[set]`, emptied by
- * `[unset]`, tested by a condition; a memory remembered or tested; an ending reached or tested; a
- * style declared or used by a page; a scene played.
+ * `[unset]`, tested by a condition; a counter declared, changed by `[add]` or `[set]`, tested; a
+ * memory remembered or tested; an ending reached or tested; a style declared or used by a page; a
+ * scene played.
  */
-export type UseRole = 'declared' | 'chosen' | 'set' | 'unset' | 'tested' | 'remembered' | 'reached' | 'used' | 'played'
+export type UseRole = 'declared' | 'chosen' | 'set' | 'unset' | 'changed' | 'tested' | 'remembered' | 'reached' | 'used' | 'played'
 
 export interface NameUse {
   role: UseRole
@@ -71,11 +72,12 @@ export function storyFlow(chapters: readonly ChapterDocument[], scenes: readonly
   }
 }
 
-/** Every decision, memory, ending, style and scene of the project, in the project's order, each with its uses in the documents. */
+/** Every decision, counter, memory, ending, style and scene of the project, in the project's order, each with its uses in the documents. */
 export function indexNames(project: ProjectDocument, documents: readonly ChapterDocument[]): IndexedName[] {
   const names = new Map<string, IndexedName>()
   const add = (kind: NameKind, entries: readonly { id: string; name: string }[]) => entries.forEach(entry => names.set(`${kind}:${entry.id}`, { kind, id: entry.id, name: entry.name, uses: [] }))
   add('decision', project.decisions)
+  add('counter', project.counters)
   add('memory', project.memories)
   add('ending', project.endings)
   add('style', project.styles)
@@ -86,6 +88,9 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
     switch (condition.type) {
       case 'is':
         use('decision', condition.decisionId, { role: 'tested', documentId, nodeId, valueId: condition.valueId })
+        break
+      case 'counter':
+        use('counter', condition.counterId, { role: 'tested', documentId, nodeId })
         break
       case 'remembered':
         use('memory', condition.memoryId, { role: 'tested', documentId, nodeId })
@@ -124,6 +129,9 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
         case 'set':
           use('decision', node.decisionId, { role: 'set', documentId, nodeId, valueId: node.valueId })
           break
+        case 'count':
+          use('counter', node.counterId, { role: 'changed', documentId, nodeId })
+          break
         case 'unset':
           use('decision', node.decisionId, { role: 'unset', documentId, nodeId, ...(node.valueId === null ? {} : { valueId: node.valueId }) })
           break
@@ -147,7 +155,7 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
   return [...names.values()]
 }
 
-/** Where a declared decision or style lives: in a chapter, at its definition node; in the project's definitions; or nowhere, made by use alone. */
+/** Where a declared decision, counter or style lives: in a chapter, at its definition node; in the project's definitions; or nowhere, made by use alone. */
 export type DefinitionHome = { type: 'chapter'; documentId: string; nodeId: string } | { type: 'definitions' } | { type: 'implicit' }
 
 export function homeOf(name: IndexedName, project: ProjectDocument): DefinitionHome {
@@ -155,9 +163,9 @@ export function homeOf(name: IndexedName, project: ProjectDocument): DefinitionH
   if (declared !== undefined && declared.nodeId !== null) {
     return { type: 'chapter', documentId: declared.documentId, nodeId: declared.nodeId }
   }
-  const definition = name.kind === 'decision'
-    ? project.decisions.find(decision => decision.id === name.id)
-    : project.styles.find(style => style.id === name.id)
+  const definition = name.kind === 'decision' ? project.decisions.find(decision => decision.id === name.id)
+    : name.kind === 'counter' ? project.counters.find(counter => counter.id === name.id)
+      : project.styles.find(style => style.id === name.id)
   const isNamedAfterProperty = definition !== undefined && 'properties' in definition && isPropertyAlone(definition)
   return definition?.implicit === true || isNamedAfterProperty ? { type: 'implicit' } : { type: 'definitions' }
 }
@@ -167,6 +175,8 @@ export type NameWarningCode =
   | 'testedNeverGiven'
   | 'valueTestedNeverGiven'
   | 'givenNeverTested'
+  | 'counterTestedNeverChanged'
+  | 'counterChangedNeverTested'
   | 'memoryTestedNeverRemembered'
   | 'memoryNeverTested'
   | 'endingNeverReached'
@@ -214,6 +224,15 @@ export function nameWarnings(index: readonly IndexedName[], project: ProjectDocu
         }
         break
       }
+      case 'counter':
+        if (!usedBeyondDeclaration) {
+          warnings.push({ severity: 'notice', code: 'declaredNeverUsed', name })
+        } else if (!has(name, 'changed')) {
+          warnings.push({ severity: 'warning', code: 'counterTestedNeverChanged', name })
+        } else if (!has(name, 'tested')) {
+          warnings.push({ severity: 'notice', code: 'counterChangedNeverTested', name })
+        }
+        break
       case 'memory':
         if (!has(name, 'remembered')) {
           warnings.push({ severity: 'warning', code: 'memoryTestedNeverRemembered', name })

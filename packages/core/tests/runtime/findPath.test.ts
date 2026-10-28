@@ -50,9 +50,9 @@ describe('findPathTo', () => {
     expect(findPathTo(story, pageId(story, 'Start.'))?.optionIds).toEqual([])
   })
 
-  it('ends on stories that loop', () => {
+  it('ends on stories that loop, taking the shortest way out', () => {
     const story = storyFromText(['[loop]', '[choice: Loop]', '> Again = Again', '> Out = Out', '[if: Loop is Out]', '[break]', '[end]', '[end]', 'Out.'])
-    expect(findPathTo(story, pageId(story, 'Out.'))?.optionIds).toHaveLength(2)
+    expect(findPathTo(story, pageId(story, 'Out.'))?.optionIds).toHaveLength(1)
     expect(findPathTo(story, 'nowhere')).toBeNull()
   })
 
