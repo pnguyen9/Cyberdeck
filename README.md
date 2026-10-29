@@ -656,6 +656,35 @@ the SHA-256 in their name; and only save folders the player picked in the system
   box behind the text, and the menus stay Datajack's own.
 - **Save slots with a picture**: each slot shows the stage as it was when the game was saved, the
   same shape as the game's cover, beside the chapter and the excerpt it shows today.
+- **Blocks made and edited from the storyboard**: a *New block* action, beside *New page*, to add an
+  `[if]` or a `[loop]` without typing it into a page; and a way to edit a block's own text, its
+  conditions and branches, as a page is edited, from the keyboard as well as the mouse: Enter keeps
+  opening the block, and *Edit* (with keys of its own) edits it. The panel of a block selected says
+  how to do each: open it, edit it, move it, delete it.
+- **Names nothing uses any more go away**: a track, a sound, a background or a character the text
+  stopped naming (`calm` replaced by `loud`, for instance), and the values of a decision made by its
+  choices that no option gives any more (the `A` and `B` of options renamed since), are taken out of
+  the project once nothing refers to them, rather than staying in Cast & files, the Index and the
+  suggestions. One with a file of its own is offered for removal instead, so that no file is lost
+  unasked.
+- **Index and Cast & files easier to read**: each kind of name, and each kind of file, in a section
+  of its own, folded until opened, with a filter by kind; for a decision or a counter, where it is
+  set and where it is tested kept apart, each place a link to its card; and the problems to look
+  at shown first, apart from the lists, each with a sentence saying why it matters and what to do.
+  The Index also points out a value given but never tested (the `A` and `B` of a new choice, while
+  its decision is tested elsewhere), not only a decision never tested as a whole; its "Nothing to
+  look at" says what it checked, and a line at the top says what the tab is for.
+- **The Index's search finds values too**: `Truth` finds the decision `Answer`, its value shown.
+- **Suggestions that leave room to go on**: picking a suggestion in the middle of a tag, a decision
+  in `[if: …]` or `[set: …]`, adds the space that follows, as `if: ` already does; one that ends the
+  tag still closes it with `]`.
+- **Editing inside a tag from the keyboard**: a tag stays one piece for Backspace, Delete and the
+  arrows, as today, but Alt+← and Alt+→ (keys of their own in Shortcuts) step into the tag next to
+  the caret, at the end of what it says, `[transition: black|]`, to change it without the mouse;
+  and a line under the text says so whenever the caret is beside a tag.
+- **A pass over the editor with a fresh eye**: every action reachable from the keyboard as from the
+  mouse, every panel saying what it is for, and the small things that do not behave as they read,
+  found by going through each tab as a new writer would.
 
 ## License
 
