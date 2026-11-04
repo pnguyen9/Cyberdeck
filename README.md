@@ -682,6 +682,33 @@ the SHA-256 in their name; and only save folders the player picked in the system
   arrows, as today, but Alt+← and Alt+→ (keys of their own in Shortcuts) step into the tag next to
   the caret, at the end of what it says, `[transition: black|]`, to change it without the mouse;
   and a line under the text says so whenever the caret is beside a tag.
+- **The story as a level of the storyboard**: one level above the chapters, each chapter a block,
+  its `[only if]` shown as its heading, with how many pages and endings it holds. Esc goes up from a
+  chapter to the story, Enter opens one, and chapters move, cut and paste as cards do. A route is a
+  block of chapters under one condition, folded until opened: the six chapters of one pairing beside
+  the six of the next, the condition written once. It replaces the Chapters tab's own way of
+  working; chapters stay documents of their own underneath, exported, imported and saved as today.
+- **A graph of the whole story**: a view beside the grid and the tree, drawing the same levels
+  (story, chapters, blocks), where the story reads as a map, laid out by itself: chapters one after the other, each choice and block forking into its
+  branches and joining again after it, endings where routes stop, and scenes apart, linked to each
+  `[play]` that calls them. Zoom and drag to move around, a click opens the card in the storyboard.
+  From there, adding a branch to a block or an option to a choice, and reordering branches; moving
+  pages between blocks stays the storyboard's.
+- **Values in the text**: `{…}` shows any value the story keeps, as `{Hero}` shows a name given:
+  a counter's number, `{Hour}`, so that "It is {Hour} o'clock" follows the time of day; a decision's
+  value, `{Mood}`; a name the player gave, as today. Every `{…}` must name something the story knows,
+  or the import reports it with its line, so that a typo or a stray brace is never shown nor lost
+  silently; `{{` writes a brace itself. A name is one thing only: an asked name cannot bear the name
+  of a counter or a decision, as counters and decisions already cannot share theirs. Pages are cut
+  as if each value were as long as the longest it may be.
+- **Chance**: `[set: Weather = random 1 6]` gives a counter a number drawn between two, so that the
+  same choices may lead elsewhere (who is met in the park, the weather of the day). A save keeps what
+  was drawn, and going back does not draw again, so that a player cannot draw until it suits them.
+- **A "Going further" section in the guide**: what is possible once one thinks like a programmer,
+  shown as recipes for what visual novels often need and the engine does not make obvious: routes
+  that meet again at a shared ending, a hub the player roams with the time of day running out,
+  affection deciding a route, a choice that remembers what was already picked, an epilogue that
+  depends on several routes, scenes used as functions, a game that changes on the second playthrough.
 - **A pass over the editor with a fresh eye**: every action reachable from the keyboard as from the
   mouse, every panel saying what it is for, and the small things that do not behave as they read,
   found by going through each tab as a new writer would.
