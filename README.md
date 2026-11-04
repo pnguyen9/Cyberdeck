@@ -726,6 +726,14 @@ Datajack 2.0, which an older one says rather than failing. Datajack 2.0 keeps re
 - **Forgetting.** `[forget: Found the key]` takes a memory away from the profile, for good, as
   `[remember]` gives it: a flag that lasts from one playthrough to the next, and that the story can
   also clear, a key used up or a promise broken.
+- **Lasting counters and decisions.** `[counter lasting: Coins = 0]`, `[decision multi lasting: Bag =
+  Key | Lamp]`: within a playthrough they behave as any other, going back undoing what was added or
+  taken, and the profile keeps what they hold whenever the game moves on, so that a new playthrough
+  starts with what the last one left: money, trust, a bag carried from one game to the next. They
+  differ from `[remember]` in what they are for. A memory is what the game knows, which even going
+  back or loading an older save does not unlearn: a character noticing the player reloaded, a name
+  heard in a branch taken back. A lasting value is what the player carries, which follows ordinary
+  play and then carries over. Both are kept per profile, beside the endings seen.
 - **What the player has collected.** A window players open from the menu, showing only what the
   author chose, so that a story which says nothing keeps its secrets (and the menu shows no button):
   `[shown: Bag, Clues]` shows decisions and counters while they hold something, a `[decision multi]`
