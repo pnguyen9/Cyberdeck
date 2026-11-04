@@ -718,8 +718,9 @@ Datajack 2.0, which an older one says rather than failing. Datajack 2.0 keeps re
   - Any language, not only English and French: a language is its standard code (`es`, `ja`, `pt-BR`),
     which cuts sentences, picks the read-aloud voice and tells screen readers what they read. The
     editor carries the list of the two-letter codes (ISO 639-1); the browser names each one, in the
-    editor's language and in its own ("Spanish", "español"). The author picks it in a field that
-    suggests as they type, found by either name or by its code, or types a regional code; written
+    editor's language and in its own ("Spanish", "español"). The author picks it in a combo box: a
+    field that opens the whole list, narrowed as they type by either name or by the code, which also
+    takes a regional code typed in full; written
     in the text, `[import: story es]`, an unknown code is reported. The words the player writes
     itself (the end, the endings count) fall back to English in a language they are not translated
     into. Languages written without spaces between words (Chinese, Japanese) break their lines where
