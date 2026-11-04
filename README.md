@@ -687,6 +687,51 @@ through a short list of channels whose arguments the main process checks again: 
 lists of strings only; identifiers that cannot leave their folder; asset files whose content matches
 the SHA-256 in their name; and only save folders the player picked in the system dialog.
 
+## Planned for 2.0
+
+A major version: the way of working changes for translations, though nothing old stops working.
+Cyberdeck opens 1.x projects as stories of one language, the one they were created in; a game of a
+single language stays in a format Datajack 1.4 reads, and only a game with several languages needs
+Datajack 2.0, which an older one says rather than failing. Datajack 2.0 keeps reading every 1.x game.
+
+- **Several languages in one game.** A story has one structure, its chapters in order, its scenes and
+  its names (decisions and their values, counters, endings, memories), and each language is a set of
+  texts laid over it. No language is the main one: the first is only the first written.
+  - The language belongs to the text: written in it (`[import: story fr]`), or chosen in the Import
+    tab. A new project no longer asks for one. Each language's pages are cut by its own rules.
+  - Importing in any language works as today. Chapters correspond by their place (the third `#`
+    heading is the third chapter), scenes by their name, which `[play: …]` uses and players never see.
+    New chapters or scenes from any language join the structure and show as hollow blocks in the
+    others, the original title standing in until a translated one is given; a whole text with fewer
+    chapters leaves the others hollow in its language. Names are declared from any language, since
+    they are the same in all.
+  - What players read of a name is translated as option values already are: `[ending: The Empty
+    Room = La Chambre vide]`, the first name being how the story knows the ending. A chapter's title
+    is the `#` heading of each language's text.
+  - The editor shows one language at a time, nothing of the others. Players choose a language as they
+    choose a game, and see nothing of the others; switching in the middle of a game resumes at the
+    start of the same chapter, with the same decisions, which keeps progress, the map and endings
+    seen the same in every language.
+  - The Export tab ships the chapters chosen in every language ticked; a language where one of them
+    is still hollow cannot be ticked, and says which.
+  - *Copy without the story* goes, and the README and the guide's translation section are rewritten.
+- **What the player has collected.** A window players open from the menu, showing only what the
+  author chose, so that a story which says nothing keeps its secrets (and the menu shows no button):
+  `[shown: Bag, Clues]` shows decisions and counters while they hold something, a `[decision multi]`
+  used as a bag showing each item while held and none once `[unset]`; `[shown after an ending:
+  Trust]` shows them once the profile has reached any ending, for players hunting the others; and
+  the endings reached may be shown the same way. Lines among the definitions, one name or several
+  separated by commas; in the Index, a menu by name ("Players see it: never, always, after an ending")
+  writes them for the author. Values show under their own names.
+- **Paragraphs as written, in text export.** Besides one page per paragraph, which imports back cut
+  exactly as it is, an export that rejoins the pages the import cut, by the import's own rules in
+  reverse, so that a text sent to a translator reads like the one written: a narration page goes on
+  the paragraph before it when that was narration and the import would not have fitted its first
+  sentence on the page before (otherwise they were two paragraphs); a page of the same speaker joins
+  their line the same way; a speaker starts a new paragraph; a note alone on its line (a scene
+  change, an entrance) stands on its own line, and notes inside the text stay inside it. Nothing new
+  is stored, so it works for every project.
+
 ## License
 
 Released into the public domain under the [Unlicense](LICENSE): anyone may use, change and
