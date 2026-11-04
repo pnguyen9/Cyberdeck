@@ -723,6 +723,9 @@ Datajack 2.0, which an older one says rather than failing. Datajack 2.0 keeps re
   without waiting. The time bar runs towards the option it will take, so that players see what
   waiting means. With *Choices wait for me* on, nothing is taken by itself, and every outcome stays
   a button away.
+- **Forgetting.** `[forget: Found the key]` takes a memory away from the profile, for good, as
+  `[remember]` gives it: a flag that lasts from one playthrough to the next, and that the story can
+  also clear, a key used up or a promise broken.
 - **What the player has collected.** A window players open from the menu, showing only what the
   author chose, so that a story which says nothing keeps its secrets (and the menu shows no button):
   `[shown: Bag, Clues]` shows decisions and counters while they hold something, a `[decision multi]`
