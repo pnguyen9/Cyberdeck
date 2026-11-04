@@ -33,11 +33,19 @@ const project: ProjectDocument = {
   fonts: [],
   css: '',
   chapterTitleCards: false,
+  frames: { textBox: null, namePlate: null },
   createdAt: '2026-10-26T10:00:00.000Z',
   updatedAt: '2026-10-26T10:00:00.000Z',
 }
 
 describe('matchAssetFile', () => {
+  it('takes images named text-box and name-plate for the frames, whatever the story names', () => {
+    expect(matchAssetFile('Text Box.png', 'image/png', project)).toEqual({ type: 'frame', frame: 'textBox' })
+    expect(matchAssetFile('name_plate.webp', 'image/webp', project)).toEqual({ type: 'frame', frame: 'namePlate' })
+    expect(matchAssetFile('text-box.ogg', 'audio/ogg', project)).toBeNull()
+    expect(matchAssetFile('constructor.png', 'image/png', project)).toBeNull()
+  })
+
   it('matches an image to the background of the same name, ignoring case, spaces, hyphens and underscores', () => {
     expect(matchAssetFile('Rooftop.JPG', 'image/jpeg', project)).toEqual({ type: 'background', backgroundId: 'rooftop' })
     expect(matchAssetFile('classroom evening.png', 'image/png', project)).toEqual({ type: 'background', backgroundId: 'classroom' })

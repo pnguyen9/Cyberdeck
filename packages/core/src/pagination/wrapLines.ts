@@ -1,3 +1,4 @@
+import { placeholderSpans } from '../format/textValues'
 import { textOfRange, wholeTextRange, type TextRange } from './textRange'
 
 /** Width of a text as displayed, in the same unit as the line width (pixels in the player). */
@@ -8,16 +9,18 @@ const SPACED_PUNCTUATION_START = /^[!?:;»]/
 
 /**
  * Splits a range into the smallest pieces a line may break between: words, kept together with
- * French spaced punctuation (`bonjour !`, `« Non`). Each piece keeps its trailing spaces, so the
- * pieces cover the whole range.
+ * French spaced punctuation (`bonjour !`, `« Non`) and with the rest of a `{…}` value they are in.
+ * Each piece keeps its trailing spaces, so the pieces cover the whole range.
  */
 export function chunkRanges(text: string, range: TextRange): TextRange[] {
   const chunks: TextRange[] = []
   let chunkStart = range.start
+  const values = text.includes('{') ? placeholderSpans(text) : []
+  const isInsideValue = (index: number) => values.some(value => index > value.start && index < value.end)
 
   for (let index = range.start + 1; index < range.end; index++) {
     const startsNewWord = text[index - 1] === ' ' && text[index] !== ' '
-    if (startsNewWord && isBreakAllowedBefore(text, chunkStart, index)) {
+    if (startsNewWord && !isInsideValue(index) && isBreakAllowedBefore(text, chunkStart, index)) {
       chunks.push({ start: chunkStart, end: index })
       chunkStart = index
     }

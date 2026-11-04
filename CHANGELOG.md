@@ -1,5 +1,56 @@
 # Changelog
 
+## 1.4.0 — 2026-11-04
+
+The story as a map, values and chance in the text, the look of the text box, auto mode and save
+pictures. Projects of 1.3.0 open as they were; games using what is new here need Datajack 1.4, which
+an older one says rather than failing.
+
+### Cyberdeck, the editor
+- The story is the storyboard's first level, replacing the Chapters tab: every chapter a card in
+  playing order, those under the same `[only if]` framed together as a route, its condition set
+  from the panel for one chapter or the whole route. Esc or ↑ Story goes up from a chapter.
+- A Graph view draws the whole story as a map: chapters, choices and blocks forking and joining,
+  loops, endings, and scenes linked to where they are played. From there, add a branch or an option,
+  or move a branch. Usable from the keyboard as from the mouse.
+- Blocks are made and edited from the storyboard: B adds an `[if]` written as text, E edits a
+  block's own text, conditions and branches included.
+- Values in the text: `{Hour}` shows a counter, `{Clues}` a decision's values, as `{Hero}` already
+  showed a name; a `{…}` naming nothing known is reported, and `{{` writes a brace.
+- Chance: `[set: Weather = random 1 6]` draws a counter's number.
+- The text box and the name plate take the styles `text box` and `name plate` (or the classes
+  `.text-box` and `.name-plate`), a frame each from `text-box.png` and `name-plate.png`, and each
+  character a colour for their name.
+- The preview's State button shows the decisions, counters and names on the page shown, what is
+  remembered and the endings seen.
+- Names nothing uses any more go away by themselves; those keeping a file are offered for removal
+  in Cast & files.
+- The Index and Cast & files are in folded sections with a filter by kind; the Index shows its
+  warnings first, each with what to do, groups each name's places by use, finds values by search,
+  and points out a value given but never tested.
+- Suggestions add the space that follows; Alt+← and Alt+→ step into a tag beside the caret.
+- Removing a chapter or a scene can be undone. The guide gains recipes for bigger stories, and a Markdown version, `docs/guide/guide.md`, readable
+  on GitHub.
+
+### Datajack, the player
+- Auto mode (A, or Auto ▶): pages move on by themselves, waiting for a voice or for a reading time,
+  with a speed of its own in Settings.
+- Each save slot shows a picture of the stage as it was saved.
+- Shows values and draws numbers in the text, frames and colours the text box and name plates.
+
+### Downloads
+As before, nothing to install: unpack a download and start the application inside.
+- `Cyberdeck-1.4.0-windows-x64.zip` and `Datajack-1.4.0-windows-x64.zip`: for Windows; start
+  `Cyberdeck.exe` or `Datajack.exe` (*More info → Run anyway* the first time: they are not signed).
+- `Cyberdeck-1.4.0-linux-x64.zip` and `Datajack-1.4.0-linux-x64.zip`: for Linux; start `cyberdeck`
+  or `datajack`.
+- `Cyberdeck-1.4.0-web.zip` and `Datajack-1.4.0-web.zip`: for any computer with a browser; open
+  `index.html`, without a server.
+- `Cyberdeck-1.4.0-documentation.zip`: the illustrated guide for authors (open
+  `docs/guide/index.html` in a browser, or read `docs/guide/guide.md`), the README, these changes
+  and the licence.
+- `SHA256SUMS`: the checksum of each download.
+
 ## 1.3.0 — 2026-10-28
 
 The player's name, timed choices, accessibility, captions, and a start for translations. Projects of 1.2.0

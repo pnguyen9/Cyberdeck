@@ -13,20 +13,24 @@ import { useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { indexMessages } from '../i18n/indexMessages'
 import { useEditor } from './editorContext'
-import { describeUse, summariseUses, warningMessage } from './nameUses'
+import FoldedSection from './FoldedSection.vue'
+import { useFoldedSections } from './foldedSections'
+import KindFilter from './KindFilter.vue'
+import { describeUse, summariseUses, usesByGroup, warningMessage } from './nameUses'
 import { storyWords } from '../i18n/storyWords'
 
 /**
  * Every decision, counter and memory of the project with every place it is used, and above them, what looks
  * forgotten across the whole story: a condition that never holds, an ending nobody reaches.
  */
-const { project, chapters, scenes, openStoryboard, indexFocus } = useEditor()
+const { project, chapters, scenes, documents, openStoryboard, indexFocus } = useEditor()
 const locale = useLocale()
 const text = useMessages(indexMessages)
 
-const documents = computed(() => [...chapters.value, ...scenes.value])
 const index = computed(() => indexNames(project.value, documents.value))
-const warnings = computed(() => nameWarnings(index.value, project.value, storyFlow(chapters.value, scenes.value)))
+/** What changes how the story plays first, then what is only unused. */
+const warnings = computed(() => nameWarnings(index.value, project.value, storyFlow(chapters.value, scenes.value))
+  .sort((first, second) => Number(first.severity === 'notice') - Number(second.severity === 'notice')))
 const placeOf = computed(() => placeDescriber(documents.value, project.value, storyWords[locale.value]))
 
 const filter = ref('')
@@ -43,12 +47,25 @@ const LISTED: { kind: NameKind; title: 'decisions' | 'counters' | 'memories' }[]
 const isListed = (kind: NameKind) => LISTED.some(section => section.kind === kind)
 /** Decisions and counters are declared somewhere, or made by use. */
 const isDeclarable = (kind: NameKind) => kind === 'decision' || kind === 'counter'
+const listedKinds = computed(() => LISTED.map(section => section.kind))
+const { kindShown, showKind, isShown, isOpen, toggleSection } = useFoldedSections(listedKinds)
+/** Sections opened by the author; a search, or a name to show, opens those it concerns. */
+const isSectionOpen = (kind: NameKind) => isOpen(kind) || filter.value.trim() !== ''
+const filterKinds = computed(() => LISTED.map(section => ({ kind: section.kind, label: text.value[section.title] })))
+const valuesByDecision = computed(() => new Map(project.value.decisions.map(decision => [decision.id, decision.values])))
+
+
+/** The sections shown, each with its names the search finds, and the value it found a decision by. */
 const sections = computed(() => {
   const wanted = normalizeName(filter.value)
-  return LISTED.map(section => ({
+  return LISTED.filter(section => isShown(section.kind)).map(section => ({
     kind: section.kind,
     title: text.value[section.title],
-    names: index.value.filter(name => name.kind === section.kind && (wanted === '' || normalizeName(name.name).includes(wanted))),
+    names: index.value.filter(name => name.kind === section.kind).flatMap(name => {
+      const isFoundByName = wanted === '' || normalizeName(name.name).includes(wanted)
+      const matchedValue = isFoundByName || name.kind !== 'decision' ? null : valuesByDecision.value.get(name.id)?.find(value => normalizeName(value.name).includes(wanted))?.name ?? null
+      return isFoundByName || matchedValue !== null ? [{ name, matchedValue }] : []
+    }),
   }))
 })
 
@@ -87,6 +104,8 @@ function show(name: { kind: NameKind; id: string }) {
     return
   }
   filter.value = ''
+  showKind('all')
+  toggleSection(name.kind, true)
   openKeys.value = new Set([...openKeys.value, keyOf(name)])
   void nextTick(() => document.getElementById(`name-${keyOf(name)}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
 }
@@ -118,6 +137,7 @@ onMounted(() => {
 
 <template>
   <section class="index">
+    <p class="muted intro">{{ text.intro }}</p>
     <h2 class="section-title">{{ text.toLookAt }}</h2>
     <p v-if="warnings.length === 0" class="muted">{{ text.nothingToLookAt }}</p>
     <ul v-else class="warnings">
@@ -129,17 +149,19 @@ onMounted(() => {
       </li>
     </ul>
 
-    <label class="field filter">
-      <span>{{ text.find }}</span>
-      <input v-model="filter" class="text-input" type="search" autocomplete="off" :placeholder="text.findPlaceholder">
-    </label>
+    <div class="filters">
+      <label class="field filter">
+        <span>{{ text.find }}</span>
+        <input v-model="filter" class="text-input" type="search" autocomplete="off" :placeholder="text.findPlaceholder">
+      </label>
+      <KindFilter :kinds="filterKinds" :shown="kindShown" :all-label="text.allKinds" :label="text.showOnly" @show="showKind" />
+    </div>
 
-    <section v-for="section in sections" :key="section.kind" class="names">
-      <h2 class="section-title">{{ section.title }} · {{ section.names.length }}</h2>
+    <FoldedSection v-for="section in sections" :key="section.kind" class="names" :title="section.title" :count="section.names.length" :open="isSectionOpen(section.kind)" @toggle="toggleSection(section.kind, $event)">
       <p v-if="section.names.length === 0" class="muted">{{ filter === '' ? text.noneYet(section.kind) : text.noneOfThatName(section.kind) }}</p>
-      <article v-for="name in section.names" :id="`name-${keyOf(name)}`" :key="keyOf(name)" class="name-entry" :class="{ open: openKeys.has(keyOf(name)) }">
+      <article v-for="{ name, matchedValue } in section.names" :id="`name-${keyOf(name)}`" :key="keyOf(name)" class="name-entry" :class="{ open: openKeys.has(keyOf(name)) }">
         <button class="name-header" :aria-expanded="openKeys.has(keyOf(name))" @click="toggle(name)">
-          <span class="name-title">{{ name.name }}<span v-if="isMultiple(name)" class="muted">{{ text.several }}</span></span>
+          <span class="name-title">{{ name.name }}<span v-if="isMultiple(name)" class="muted">{{ text.several }}</span><span v-if="matchedValue !== null" class="matched">{{ text.byValue(matchedValue) }}</span></span>
           <span class="muted">{{ isDeclarable(name.kind) ? homeText(name) : text.placeCount(name.uses.length) }}</span>
           <span class="summary muted">{{ summariseUses(name, name.uses, project, locale) || text.usedNowhere(name.kind) }}</span>
         </button>
@@ -147,15 +169,18 @@ onMounted(() => {
           <p v-if="valuesOf(name).length > 0" class="values">
             <span v-for="value in valuesOf(name)" :key="value" class="value">{{ value }}</span>
           </p>
-          <ul class="uses">
-            <li v-for="(entry, useIndex) in name.uses" :key="useIndex">
-              <button class="link-button" @click="entry.nodeId === null ? openStoryboard(entry.documentId) : openStoryboard(entry.documentId, entry.nodeId)">{{ placeOf(entry.documentId, entry.nodeId) }}</button>
-              <span class="muted use-role">{{ describeUse(entry, project, name, locale) }}</span>
-            </li>
-          </ul>
+          <div v-for="group in usesByGroup(name)" :key="group.group" class="use-group">
+            <h3 class="use-heading">{{ text.useWord(group.group, name.kind) }} · {{ group.uses.length }}</h3>
+            <ul class="uses">
+              <li v-for="(entry, useIndex) in group.uses" :key="useIndex">
+                <button class="link-button" @click="entry.nodeId === null ? openStoryboard(entry.documentId) : openStoryboard(entry.documentId, entry.nodeId)">{{ placeOf(entry.documentId, entry.nodeId) }}</button>
+                <span class="muted use-role">{{ describeUse(entry, project, name, locale) }}</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </article>
-    </section>
+    </FoldedSection>
   </section>
 </template>
 
@@ -205,9 +230,33 @@ onMounted(() => {
   color: #9eeaff;
 }
 
-.filter {
-  max-width: 420px;
+.intro {
+  margin: 0;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 24px;
   margin-top: 12px;
+}
+
+.filter {
+  flex: 0 1 420px;
+}
+
+.use-group + .use-group {
+  margin-top: 8px;
+}
+
+.use-heading {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7b8597;
 }
 
 .names {
@@ -245,6 +294,11 @@ onMounted(() => {
 
 .name-title {
   font-weight: 600;
+}
+
+.matched {
+  font-weight: 400;
+  color: #9eeaff;
 }
 
 .summary {

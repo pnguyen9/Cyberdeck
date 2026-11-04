@@ -1,8 +1,8 @@
 // The shortcuts panel: opened with ?, listed by screen, keys changed, conflicts confirmed, the
 // storyboard answering to the new keys, kept after a reload, and reset.
-import { createProjectWithSample, pause } from './harness.mjs'
+import { createProjectWithSample, openChapterBoard, pause } from './harness.mjs'
 
-const ADD_PAGE = 'Add a page after'
+const ADD_PAGE = "Add a page after, or a chapter on the story's level"
 const EDIT = 'Edit the card, or open the block'
 
 export default async function check(page, { url }) {
@@ -19,7 +19,7 @@ export default async function check(page, { url }) {
   }
 
   await createProjectWithSample(page, url, 'Keys')
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   await focusFirstCard()
 
@@ -57,7 +57,7 @@ export default async function check(page, { url }) {
   await page.waitFor('.open-project')
   await page.evaluate(`document.querySelector('.open-project').click()`)
   await pause(800)
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   page.check('changes are kept after a reload', (await hint())?.includes('K edits'), true)
   await page.clickButton('Shortcuts', '.button')

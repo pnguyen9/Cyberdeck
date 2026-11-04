@@ -192,3 +192,19 @@ describe('drop slots', () => {
     expect(slotAfter('end')).toEqual({ containerId: null, index: 3 })
   })
 })
+
+describe('moveBranch', () => {
+  it('moves a branch among those with a condition, never past the [else]', async () => {
+    const { storyFromText } = await import('../runtime/storyFromText')
+    const { moveBranch } = await import('../../src/index')
+    const story = storyFromText(['[choice: Mood]', '> Calm', '> Angry', '[if: Mood is A]', 'Calm.', '[else if: Mood is B]', 'Angry.', '[else]', 'Neither.', '[end]'])
+    const chapter = story.chapters[0]!
+    const block = chapter.nodes.find(node => node.type === 'condition')!
+    const [first, second, otherwise] = block.type === 'condition' ? block.branches : []
+    const moved = moveBranch(chapter, block.id, second!.id, -1, 'now')
+    const movedBlock = moved.nodes.find(node => node.type === 'condition')
+    expect(movedBlock?.type === 'condition' && movedBlock.branches.map(branch => branch.id)).toEqual([second!.id, first!.id, otherwise!.id])
+    expect(moveBranch(chapter, block.id, second!.id, 1, 'now')).toBe(chapter)
+    expect(moveBranch(chapter, block.id, otherwise!.id, -1, 'now')).toBe(chapter)
+  })
+})

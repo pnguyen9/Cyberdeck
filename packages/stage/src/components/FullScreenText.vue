@@ -7,7 +7,7 @@ import { textRuns, type StyledPart } from '../textRuns'
  * one typed as the text box would.
  */
 const props = defineProps<{
-  pages: readonly { id: string; speaker: string | null; text: string; styles: readonly StyledPart[] }[]
+  pages: readonly { id: string; speaker: string | null; speakerClasses?: readonly string[]; speakerColor?: string | null; text: string; styles: readonly StyledPart[] }[]
   /** Characters shown of the last page; earlier ones are complete. */
   visibleLength: number
   isComplete: boolean
@@ -16,6 +16,8 @@ const props = defineProps<{
 const paragraphs = computed(() => props.pages.map((page, index) => ({
   id: page.id,
   speaker: page.speaker,
+  speakerClasses: page.speakerClasses ?? [],
+  speakerStyle: page.speakerColor == null ? undefined : { color: page.speakerColor },
   runs: textRuns(page.text, index === props.pages.length - 1 ? props.visibleLength : page.text.length, page.styles),
 })))
 </script>
@@ -24,7 +26,7 @@ const paragraphs = computed(() => props.pages.map((page, index) => ({
   <div class="full-text" aria-hidden="true">
     <!-- Typed a letter at a time: screen readers hear each page whole from the player's announcements instead. -->
     <div v-for="paragraph in paragraphs" :key="paragraph.id" class="paragraph">
-      <div v-if="paragraph.speaker !== null" class="speaker">{{ paragraph.speaker }}</div>
+      <div v-if="paragraph.speaker !== null" class="speaker" :class="paragraph.speakerClasses" :style="paragraph.speakerStyle">{{ paragraph.speaker }}</div>
       <p class="paragraph-text">
         <span v-for="run in paragraph.runs" :key="run.start" :class="run.classes">{{ run.text }}</span>
       </p>
@@ -60,6 +62,10 @@ const paragraphs = computed(() => props.pages.map((page, index) => ({
 .speaker {
   display: inline-block;
   margin-bottom: 6px;
+}
+
+/* Below anything a game's CSS says of its plates. */
+:where(.speaker) {
   padding: 4px 18px;
   border: 2px solid rgb(120 220 255 / 0.5);
   border-radius: 8px;

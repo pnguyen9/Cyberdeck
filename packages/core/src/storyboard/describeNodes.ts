@@ -93,10 +93,12 @@ export function describeAssignment(decisionId: string, valueId: string, project:
   return `${decision?.name ?? '?'} = ${decision?.values.find(value => value.id === valueId)?.name ?? '?'}`
 }
 
-/** `Trust + 2`, `Trust − 1`, `Trust = 3`. */
+/** `Trust + 2`, `Trust − 1`, `Trust = 3`, `Weather = random 1–6`. */
 export function describeCount(node: StoredCount, project: ProjectDocument): string {
   const name = project.counters.find(candidate => candidate.id === node.counterId)?.name ?? '?'
-  return node.operation === 'set' ? `${name} = ${node.amount}` : `${name} ${node.amount < 0 ? '−' : '+'} ${Math.abs(node.amount)}`
+  return node.operation === 'set' ? `${name} = ${node.amount}`
+    : node.operation === 'random' ? `${name} = random ${node.amount}–${node.maximum ?? node.amount}`
+      : `${name} ${node.amount < 0 ? '−' : '+'} ${Math.abs(node.amount)}`
 }
 
 /** `Confession: Accept | Refuse`, `Clues (several): Letter | Key`, `Trust: starts at 2`, `Whisper: italic, small`. */

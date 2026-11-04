@@ -9,6 +9,8 @@ export interface EditorContext {
   chapters: Readonly<ShallowRef<ChapterDocument[]>>
   /** Pages of no chapter, played wherever a `[play]` names them; stored as chapters are. */
   scenes: Readonly<ShallowRef<ChapterDocument[]>>
+  /** The chapters, then the scenes. */
+  documents: Readonly<Ref<ChapterDocument[]>>
   /** Runs a change, then shows the project as stored; an error becomes the message shown. Resolves to whether it succeeded. */
   act: (change: () => Promise<unknown>, successMessage?: string | (() => string)) => Promise<boolean>
   preview: (fromChapterId: string | null) => void
@@ -26,8 +28,8 @@ export interface EditorContext {
   setLeaveGuard: (guard: ((proceed: () => void) => boolean) | null) => void
   /** What the storyboard is asked to do from anywhere in the project, numbered so that the same request twice is seen twice. */
   storyboardRequest: Readonly<Ref<{ kind: 'goToBoard' | 'togglePanel' | 'reveal'; nodeId?: string; count: number } | null>>
-  /** Begins a chapter, or a scene, with no page yet, and opens it in the storyboard to write it. */
-  startEmptyDocument: (kind: 'chapter' | 'scene') => void
+  /** Begins a chapter, or a scene, with no page yet, a chapter at `atIndex` when given, and opens it in the storyboard to write it. */
+  startEmptyDocument: (kind: 'chapter' | 'scene', atIndex?: number) => void
   /** The name the Index opens on; set by `openIndex`. */
   indexFocus: Ref<{ kind: NameKind; id: string } | null>
   openIndex: (kind: NameKind, id: string) => void

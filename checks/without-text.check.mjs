@@ -1,6 +1,6 @@
 // A project begun without any text: an empty chapter, written page by page in the storyboard; then
-// a second chapter and a scene from the Chapters tab, named so that each has its own name.
-import { createProject, pause } from './harness.mjs'
+// a second chapter and a scene from the story's level, named so that each has its own name.
+import { createProject, pause, showStory } from './harness.mjs'
 
 export default async function check(page, { url }) {
   await createProject(page, url, 'Blank')
@@ -16,16 +16,13 @@ export default async function check(page, { url }) {
   await pause(500)
   page.check('its first page is written there', await page.evaluate(`[...document.querySelectorAll('.grid .text')].map(text => text.textContent.trim())`), ['Here we are.'])
 
-  await page.clickButton('Chapters', '.tab')
-  await pause(300)
-  await page.clickButton('New chapter', '.add-actions .button')
+  await showStory(page)
+  await page.evaluate(`[...document.querySelectorAll('.add-actions .button')].find(button => button.textContent.trim().startsWith('New chapter')).click()`)
   await pause(500)
-  await page.clickButton('Chapters', '.tab')
-  await pause(300)
+  await showStory(page)
   await page.clickButton('New scene', '.add-actions .button')
   await pause(500)
-  await page.clickButton('Chapters', '.tab')
-  await pause(300)
-  page.check('more chapters and scenes, each with a name of its own', await page.evaluate(`[...document.querySelectorAll('.chapter .title')].map(title => title.textContent.trim())`), ['Chapter 1', 'Chapter 2', 'Scene 1'])
-  await page.screenshot('chapters')
+  await showStory(page)
+  page.check('more chapters and scenes, each with a name of its own', await page.evaluate(`[...document.querySelectorAll('.story-level .chapter .title')].map(title => title.textContent.trim())`), ['Chapter 1', 'Chapter 2', 'Scene 1'])
+  await page.screenshot('story')
 }

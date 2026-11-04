@@ -66,7 +66,7 @@ const en: ProblemMessages = {
   unreachable: () => 'Never reached: every path before it ends, at an [ending] or in a block whose branches, [else] included, all end.',
   dashWithoutSpeaker: () => 'A dash opens dialogue only with a name, “— Marie: …” (“— ???: …” for an unknown voice): this line is read as narration.',
   speakerWithoutDash: subject => `For ${subject} to speak, start the line with a dash: “— ${subject}: …”. Without it, the line is read as narration.`,
-  chapterHeadingInEdit: () => 'A page cannot start a chapter: add one with New chapter, in the Chapters tab, or import a text.',
+  chapterHeadingInEdit: () => 'A page cannot start a chapter: add one with New chapter, in the Storyboard, at the story’s level, or import a text.',
   missingMemoryName: () => 'Something to remember needs a name: [remember: The ghost\'s name].',
   unknownEnding: subject => `No [ending: ${subject}] anywhere in the story: is the name misspelt?`,
   unknownMemory: subject => `Nothing is ever remembered as “${subject}”: add [remember: ${subject}] where the player learns it, or check the spelling.`,
@@ -80,7 +80,7 @@ const en: ProblemMessages = {
   unknownCounter: subject => `No counter is called "${subject}": declare it with [counter: ${subject}], or count with [add: ${subject}].`,
   counterNeedsNumber: subject => {
     const [counter, value] = subject.split(': ')
-    return `${counter} is a counter: it holds whole numbers, not "${value}".`
+    return `${counter} is a counter: it holds whole numbers, not "${value}". [set] may also draw one, random 1 6.`
   },
   duplicateCounter: (subject, suggestion) => suggestion === ''
     ? `The counter "${subject}" is declared twice.`
@@ -90,7 +90,9 @@ const en: ProblemMessages = {
   invalidAsk: subject => subject === ''
     ? '[ask: …] needs the name to ask for, one word, and a default if wished: [ask: Hero = Alex].'
     : `"${subject}" should look like: Hero, or Hero = Alex; the name one word, the default at most 12 characters.`,
-  unknownAskedName: subject => `Nothing asks the player for {${subject}}: add [ask: ${subject}] where they give it, or check the spelling.`,
+  unknownValue: subject => `Nothing in the story is called "${subject}": {…} shows a name asked with [ask], a counter or a decision. Check the spelling, or write {{ for a brace itself.`,
+  askedNameTaken: subject => `${subject} is already a counter or a decision: a name asked for needs a name of its own, so that {${subject}} says which one it shows.`,
+  nameIsAsked: subject => `${subject} is a name asked of the player: a counter or a decision needs a name of its own, so that {${subject}} says which one it shows.`,
   timedChoiceWithoutTimeout: subject => `The timed choice ${subject} needs an option for when time runs out: add one ending with [timeout].`,
   timeoutWithoutTime: subject => `[timeout] marks what happens when time runs out, but the choice ${subject} has no time: write it after its name, [choice: ${subject} 10s].`,
   severalTimeouts: subject => `The choice ${subject} has more than one option for when time runs out: keep one [timeout].`,
@@ -170,7 +172,7 @@ const fr: ProblemMessages = {
   unreachable: () => 'Jamais atteint\u00a0: tous les parcours s’arrêtent avant, sur un [ending] ou dans un bloc dont toutes les branches, [else] compris, se terminent.',
   dashWithoutSpeaker: () => `Un tiret n’ouvre une réplique qu’avec un nom, ${quoted('— Marie\u00a0: …')} (${quoted('— ???\u00a0: …')} pour une voix inconnue)\u00a0: cette ligne est lue comme de la narration.`,
   speakerWithoutDash: subject => `Pour que ${subject} parle, commencez la ligne par un tiret\u00a0: ${quoted(`— ${subject}\u00a0: …`)}. Sans lui, la ligne est lue comme de la narration.`,
-  chapterHeadingInEdit: () => 'Une page ne peut pas commencer un chapitre\u00a0: ajoutez-en un avec Nouveau chapitre, dans l’onglet Chapitres, ou importez un texte.',
+  chapterHeadingInEdit: () => 'Une page ne peut pas commencer un chapitre\u00a0: ajoutez-en un avec Nouveau chapitre, dans le Storyboard, au niveau de l’histoire, ou importez un texte.',
   missingMemoryName: () => 'Un souvenir a besoin d’un nom\u00a0: [remember: Le nom du fantôme].',
   unknownEnding: subject => `Aucun [ending: ${subject}] dans toute l’histoire\u00a0: le nom est-il mal orthographié\u00a0?`,
   unknownMemory: subject => `Rien n’est jamais retenu sous le nom ${quoted(subject)}\u00a0: ajoutez [remember: ${subject}] là où le joueur l’apprend, ou vérifiez l’orthographe.`,
@@ -184,7 +186,7 @@ const fr: ProblemMessages = {
   unknownCounter: subject => `Aucun compteur ne s’appelle ${quoted(subject)}\u00a0: déclarez-le avec [counter: ${subject}], ou comptez avec [add: ${subject}].`,
   counterNeedsNumber: subject => {
     const [counter, value] = subject.split(': ')
-    return `${counter} est un compteur\u00a0: il contient des nombres entiers, pas ${quoted(value ?? '')}.`
+    return `${counter} est un compteur\u00a0: il contient des nombres entiers, pas ${quoted(value ?? '')}. [set] peut aussi en tirer un au hasard, random 1 6.`
   },
   duplicateCounter: (subject, suggestion) => suggestion === ''
     ? `Le compteur ${quoted(subject)} est déclaré deux fois.`
@@ -194,7 +196,9 @@ const fr: ProblemMessages = {
   invalidAsk: subject => subject === ''
     ? '[ask: …] attend le nom à demander, en un seul mot, et une valeur par défaut si besoin\u00a0: [ask: Héros = Alex].'
     : `${quoted(subject)} devrait avoir cette forme\u00a0: Héros, ou Héros = Alex\u00a0; le nom en un seul mot, la valeur par défaut en 12 caractères au plus.`,
-  unknownAskedName: subject => `Rien ne demande {${subject}} au joueur\u00a0: ajoutez [ask: ${subject}] là où il le donne, ou vérifiez l’orthographe.`,
+  unknownValue: subject => `Rien dans l’histoire ne s’appelle ${quoted(subject)}\u00a0: {…} affiche un nom demandé avec [ask], un compteur ou une décision. Vérifiez l’orthographe, ou écrivez {{ pour une accolade.`,
+  askedNameTaken: subject => `${subject} est déjà un compteur ou une décision\u00a0: un nom demandé a besoin d’un nom à lui, pour que {${subject}} dise lequel il affiche.`,
+  nameIsAsked: subject => `${subject} est un nom demandé au joueur\u00a0: un compteur ou une décision a besoin d’un nom à lui, pour que {${subject}} dise lequel il affiche.`,
   timedChoiceWithoutTimeout: subject => `Le choix minuté ${subject} a besoin d’une option pour quand le temps est écoulé\u00a0: ajoutez-en une qui se termine par [timeout].`,
   timeoutWithoutTime: subject => `[timeout] indique ce qui se passe quand le temps est écoulé, mais le choix ${subject} n’a pas de durée\u00a0: écrivez-la après son nom, [choice: ${subject} 10s].`,
   severalTimeouts: subject => `Le choix ${subject} a plusieurs options pour quand le temps est écoulé\u00a0: n’en gardez qu’une avec [timeout].`,

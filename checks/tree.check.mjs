@@ -1,11 +1,11 @@
 // The tree view of the storyboard: branches side by side, editing by clicking, no moving, and back to the grid.
-import { createProjectWithSample, pause } from './harness.mjs'
+import { createProjectWithSample, openChapterBoard, pause } from './harness.mjs'
 
 export default async function check(page, { url }) {
   const treeOrder = () => page.evaluate(`[...document.querySelectorAll('.board.tree .item.card .line')].map(line => line.textContent.trim().slice(0, 20))`)
 
   await createProjectWithSample(page, url, 'Tree')
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   await page.clickButton('Tree', '.view-switch .button')
   await page.waitFor('.board.tree')

@@ -1,7 +1,9 @@
 import { normalizeName } from '../importer/storyNodes'
-import { givenName } from '../format/askedNames'
+import { givenName, withValues } from '../format/textValues'
+import { valuesReader } from '../runtime/storyValues'
 import { flattenStoredNodes, type Facing, type FadeColor, type TintName } from '../format/storyFormat'
 import type { PlayableStory } from '../runtime/playableStory'
+import { drawsNumbers, newSeed } from '../runtime/chance'
 import { chaptersInOrder } from '../runtime/playableStory'
 import { EMPTY_STAGE, PAGES_PER_SCREENFUL, type CharacterOnStage } from '../runtime/stageState'
 import type { CounterState, DecisionState, NameState, RuntimeState } from '../runtime/storyRuntime'
@@ -25,6 +27,10 @@ export interface SaveData {
   counters?: Record<string, number>
   /** Asked name → the name the player gave, for those given so far; absent when none was. */
   names?: Record<string, string>
+  /** Where the draws of `random` stand; absent from saves of games that never draw. */
+  seed?: number
+  /** The stage when it was saved, a small JPEG as a data URL, for the list of saves; absent when it could not be drawn. */
+  picture?: string
   stage: {
     background: string | null
     music: string | null
@@ -43,6 +49,8 @@ export interface SaveData {
 }
 
 const EXCERPT_LENGTH = 140
+/** Far beyond the small picture a player draws; a save is refused rather than carry anything bigger. */
+const MAXIMUM_PICTURE_LENGTH = 200_000
 
 export function toSave(story: PlayableStory, state: RuntimeState, savedAt: string): SaveData {
   const { project } = story
@@ -77,6 +85,7 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
     })),
     ...(counters.length === 0 ? {} : { counters: Object.fromEntries(counters) }),
     ...(names.length === 0 ? {} : { names: Object.fromEntries(names) }),
+    ...(drawsNumbers(story.chapters) ? { seed: state.seed } : {}),
     stage: {
       background: project.backgrounds.find(background => background.id === state.stage.backgroundId)?.name ?? null,
       music: project.music.find(track => track.id === state.stage.musicId)?.name ?? null,
@@ -156,6 +165,7 @@ export function stateFromSave(story: PlayableStory, save: SaveData): RuntimeStat
     decisions: decisions satisfies DecisionState,
     counters: counters satisfies CounterState,
     names: names satisfies NameState,
+    seed: save.seed ?? newSeed(),
     stage: {
       ...EMPTY_STAGE,
       backgroundId: findNamed(project.backgrounds, save.stage.background)?.id ?? null,
@@ -189,6 +199,8 @@ export function parseSave(value: unknown): SaveData | null {
     && isRecord(decisions) && Object.values(decisions).every(values => Array.isArray(values) && values.every(isString))
     && (value.counters === undefined || (isRecord(value.counters) && Object.values(value.counters).every(count => Number.isSafeInteger(count))))
     && (value.names === undefined || (isRecord(value.names) && Object.values(value.names).every(isString)))
+    && (value.seed === undefined || (Number.isSafeInteger(value.seed) && (value.seed as number) >= 0))
+    && (value.picture === undefined || (isString(value.picture) && value.picture.length <= MAXIMUM_PICTURE_LENGTH && value.picture.startsWith('data:image/jpeg;base64,')))
     && isRecord(stage)
     && (stage.background === null || isString(stage.background))
     && (stage.music === null || isString(stage.music))
@@ -206,6 +218,7 @@ export function parseSave(value: unknown): SaveData | null {
   return isValid ? value as unknown as SaveData : null
 }
 
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -218,8 +231,10 @@ function isPercentage(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100
 }
 
+/** The text shown where the save was made, its values in place, cut short. */
 function excerptAt(story: PlayableStory, state: RuntimeState): string {
   const node = story.chapters.flatMap(chapter => flattenStoredNodes(chapter.nodes)).find(candidate => candidate.id === state.page?.nodeId)
-  const text = node?.type === 'page' ? node.text : node?.type === 'choice' ? node.options.map(option => option.text).join(' / ') : ''
+  const written = node?.type === 'page' ? node.text : node?.type === 'choice' ? node.options.map(option => option.text).join(' / ') : ''
+  const text = withValues(written, valuesReader(story.project)(state))
   return text.length > EXCERPT_LENGTH ? `${text.slice(0, EXCERPT_LENGTH - 1)}…` : text
 }

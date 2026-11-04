@@ -1,7 +1,7 @@
 // Both applications in French: Cyberdeck once its language is chosen, the editor's own words around
 // the story syntax, which stays as written; then Datajack, its screens in the player's language and
 // the game's own words in the story's.
-import { createProfile, exportGame, installGame, pause, shownStep } from './harness.mjs'
+import { createProfile, exportGame, installGame, openChapterBoard, pause, shownStep } from './harness.mjs'
 
 const STORY = `# Chapitre 1
 [decision multi: Indices = Lettre | Clé]
@@ -42,11 +42,11 @@ export default async function check(page, { url, serve }) {
   await choose('.language-select', 'fr')
   await pause(300)
   page.check('Cyberdeck speaks French once chosen, and keeps the choice', [await tabs(), await page.evaluate(`[document.documentElement.lang, localStorage.getItem('cyberdeck:language')]`)], [
-    ['Chapitres', 'Storyboard', 'Import', 'Personnages et fichiers', 'Définitions', 'Index', 'Détails', 'Export'],
+    ['Storyboard', 'Import', 'Personnages et fichiers', 'Définitions', 'Index', 'Détails', 'Export'],
     ['fr', 'fr'],
   ])
 
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   await pause(300)
   page.check('the storyboard says its own words in French, the syntax as written', await page.evaluate(`[...document.querySelectorAll('.grid .element')].map(element => element.textContent.replace(/\\s+/g, ' ').trim()).find(text => text.startsWith('◇'))`), '◇ Indices (plusieurs) : Lettre | Clé')

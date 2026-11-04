@@ -34,7 +34,7 @@ import { useUnsavedChanges } from './unsavedChanges'
  * The decisions, counters and styles of the project: those of no chapter, edited here as text, and
  * those a chapter declares, or that choices or `[add]` made, listed with where they are.
  */
-const { open, project, chapters, scenes, act, openStoryboard, openIndex } = useEditor()
+const { open, project, scenes, documents, act, openStoryboard, openIndex } = useEditor()
 const layout = createTextboxLayout()
 const locale = useLocale()
 const text = useMessages(definitionsMessages)
@@ -42,7 +42,6 @@ const common = useMessages(commonMessages)
 const lineLabels = useMessages(importMessages)
 const indexText = useMessages(indexMessages)
 
-const documents = computed(() => [...chapters.value, ...scenes.value])
 const storedText = computed(() => definitionsText(project.value, documents.value))
 /** The text as last stored, which the draft started from: it differs from it once the author types. */
 const baseText = ref(storedText.value)
@@ -249,6 +248,7 @@ useUnsavedChanges(() => hasChanges.value, ask)
     </p>
 
     <h2 class="section-title">{{ text.declaredInChapters }}</h2>
+    <p v-if="local.length > 0" class="muted">{{ text.inChaptersHelp }}</p>
     <p v-if="local.length === 0" class="muted">{{ text.noneInChapters }}</p>
     <ul v-else class="entries">
       <li v-for="entry in local" :key="`${entry.name.kind}:${entry.name.id}`" class="entry">

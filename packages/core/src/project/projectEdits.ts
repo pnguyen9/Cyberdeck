@@ -1,6 +1,7 @@
 import { checkAuthorCss, styleClassName } from '../format/authorCss'
 import { LARGE_WIDTH_SCALE } from '../format/textStyles'
 import { checkReferences, type KnownNames } from '../importer/checkReferences'
+import { possibleValues } from '../format/textValues'
 import { homeOf, indexNames, placeDescriber } from './nameIndex'
 import type { StoryWords } from '../storyboard/storyWords'
 import { normalizeName } from '../importer/storyNodes'
@@ -196,6 +197,7 @@ export function previewImport(
   const result = importText(text, {
     ...(options.isInsideLoop === undefined ? {} : { isInsideLoop: options.isInsideLoop }),
     styleWidthScales: styleWidthScales(project),
+    possibleValues: possibleValues(project),
     layout,
     locale: project.locale,
     knownCharacterNames: project.characters.map(character => character.name),
@@ -364,6 +366,35 @@ export function projectWithoutStory(source: ProjectDocument, settings: { name: s
   }
 }
 
+/**
+ * The condition a chapter is played under, read from what `[only if: …]` would say, checked as an
+ * import checks it; `undefined` for an empty text, a chapter always played.
+ */
+export function previewChapterCondition(
+  text: string,
+  project: ProjectDocument,
+  layout: PageLayout,
+  documents: readonly ChapterDocument[],
+): { condition: StoredCondition | undefined; problems: ImportProblem[] } {
+  if (text.trim() === '') {
+    return { condition: undefined, problems: [] }
+  }
+  // Written alone on a line, a bracket would end the tag: the condition is read as it would be there.
+  const preview = previewImport(`#\n[only if: ${text.replace(/[[\]\n]/g, ' ')}]`, project, layout, { scenes: documents, documents })
+  const problems = preview.problems.filter(problem => problem.severity === 'error')
+  if (problems.length > 0) {
+    return { condition: undefined, problems }
+  }
+  const stored = storeImport(preview.result, project, { fileName: null }, defaultEnvironment, preview.knownScenes)
+  return { condition: stored.chapters[0]?.condition, problems: [] }
+}
+
+/** The chapter played only under this condition, or always for `undefined`. */
+export function withChapterCondition(chapter: ChapterDocument, condition: StoredCondition | undefined, now: string): ChapterDocument {
+  const { condition: _previous, ...rest } = chapter
+  return condition === undefined ? { ...rest, updatedAt: now } : { ...rest, condition, updatedAt: now }
+}
+
 export function renameProject(project: ProjectDocument, name: string, now: string): ProjectDocument {
   const trimmedName = name.trim()
   if (trimmedName === '') {
@@ -384,6 +415,21 @@ export function setDrawnFacing(project: ProjectDocument, characterId: string, dr
   }
 }
 
+/** The colour of a character's name on their plate, `#rrggbb`, or null for the plate's own. */
+export function setNameColor(project: ProjectDocument, characterId: string, nameColor: string | null, now: string): ProjectDocument {
+  return {
+    ...project,
+    characters: project.characters.map(character => {
+      if (character.id !== characterId) {
+        return character
+      }
+      const { nameColor: _previous, ...rest } = character
+      return nameColor === null ? rest : { ...rest, nameColor }
+    }),
+    updatedAt: now,
+  }
+}
+
 /** Assets no entry uses any more, replaced by another file for instance: their files can be deleted. */
 export function unusedAssetIds(project: ProjectDocument): string[] {
   const used = new Set<string | null>([
@@ -394,6 +440,8 @@ export function unusedAssetIds(project: ProjectDocument): string[] {
     ...project.illustrations.map(illustration => illustration.assetId),
     ...project.videos.flatMap(video => [video.assetId, video.captionsAssetId ?? null]),
     ...project.fonts.map(font => font.assetId),
+    project.frames.textBox,
+    project.frames.namePlate,
     ...project.characters.flatMap(character => character.expressions.map(expression => expression.assetId)),
   ])
   return project.assets.filter(asset => !used.has(asset.id)).map(asset => asset.id)

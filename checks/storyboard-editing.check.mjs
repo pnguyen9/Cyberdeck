@@ -1,7 +1,7 @@
 // Editing pages from the keyboard: the board focused on arrival, Alt+G between the board and the page
 // edited, nothing unsaved lost without asking (another card, Esc, another tab), and the side panel
 // sliding over the board in a narrow window.
-import { createProjectWithSample, pause } from './harness.mjs'
+import { createProjectWithSample, openChapterBoard, pause } from './harness.mjs'
 
 export default async function check(page, { url }) {
   const active = () => page.evaluate(`document.activeElement?.classList.contains('board') ? 'board' : document.activeElement?.classList.contains('field') ? 'editor' : document.activeElement?.tagName`)
@@ -10,7 +10,7 @@ export default async function check(page, { url }) {
   const fieldValue = () => page.evaluate(`document.querySelector('.tag-editor .field')?.value ?? null`)
 
   await createProjectWithSample(page, url, 'Editing')
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   await pause(300)
   page.check('the board has the focus on arrival', await active(), 'board')

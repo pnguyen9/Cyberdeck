@@ -40,6 +40,8 @@ function isEnabled(summary: SlotSummary): boolean {
         :disabled="!isEnabled(summary)"
         @click="emit('pick', summary.slot)"
       >
+        <img v-if="summary.save?.picture !== undefined" class="slot-picture" :src="summary.save.picture" alt="">
+        <span v-else class="slot-picture empty" />
         <span class="slot-label">{{ summary.label }}</span>
         <template v-if="summary.save !== null">
           <span class="slot-chapter">{{ summary.save.chapter ?? text.untitledChapter }}</span>
@@ -119,10 +121,13 @@ kbd {
   gap: 24px;
 }
 
+/* The picture of the stage on the left, the shape of the game's cover; what was saved beside it. */
 .slot {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-auto-rows: min-content;
+  align-content: start;
+  gap: 8px 24px;
   min-height: 190px;
   padding: 24px 28px;
   border: 2px solid rgb(120 220 255 / 0.25);
@@ -131,6 +136,22 @@ kbd {
   text-align: left;
   color: #e6e9ef;
   cursor: pointer;
+}
+
+.slot > :not(.slot-picture) {
+  grid-column: 2;
+}
+
+.slot-picture {
+  grid-row: 1 / span 4;
+  width: 240px;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.slot-picture.empty {
+  background: rgb(255 255 255 / 0.06);
 }
 
 .slot:hover:not(:disabled),

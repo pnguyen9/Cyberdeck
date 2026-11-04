@@ -1,6 +1,6 @@
 // Importing a Word document made by a word processor: chapters, dialogue from list items, runs joined.
 // fixtures/story.docx is fixtures/story.html saved by LibreOffice: `soffice --headless --convert-to docx story.html`.
-import { pause } from './harness.mjs'
+import { openChapterBoard, pause } from './harness.mjs'
 
 export default async function check(page, { url, fixtures }) {
   await page.navigate(url)
@@ -20,9 +20,9 @@ export default async function check(page, { url, fixtures }) {
   page.check('without a problem', await page.evaluate(`document.querySelectorAll('.problems li').length`), 0)
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)
-  page.check('the chapters are imported', await page.evaluate(`[...document.querySelectorAll('.chapter .title')].map(title => title.textContent).join(' | ')`), 'Chapter 1 — The Letter | Chapter 2 — Rooftop')
-  page.check('they say where they came from', (await page.evaluate(`document.querySelector('.chapter .details')?.textContent`))?.includes('Imported from story.docx'), true)
-  await page.clickButton('Storyboard', '.tab')
+  page.check('the chapters are imported', await page.evaluate(`[...document.querySelectorAll('.story-level .chapter .title')].map(title => title.textContent).join(' | ')`), 'Chapter 1 — The Letter | Chapter 2 — Rooftop')
+  page.check('they say where they came from', (await page.evaluate(`document.querySelector('.story-level .inspector')?.textContent`))?.includes('Imported from story.docx'), true)
+  await openChapterBoard(page)
   await pause(500)
   page.check('the list items are dialogue', await page.evaluate(`[...document.querySelectorAll('.element.card .speaker')].map(speaker => speaker.textContent).join(', ')`), 'Marie, Theo, Marie')
 }

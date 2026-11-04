@@ -67,6 +67,7 @@ describe('createProject', () => {
       fonts: [],
       css: '',
       chapterTitleCards: false,
+      frames: { textBox: null, namePlate: null },
       createdAt: '2026-10-26T10:00:00.000Z',
       updatedAt: '2026-10-26T10:00:00.000Z',
     })

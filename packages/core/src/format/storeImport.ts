@@ -1,5 +1,5 @@
 import type { Condition, Directive, ImportResult, StoryNode, StyleDeclaration } from '../importer/importTypes'
-import { readAmount } from '../importer/readControl'
+import { readAmount, readRandom } from '../importer/readControl'
 import { flattenNodes, normalizeName } from '../importer/storyNodes'
 import { interpretStageDirective } from '../stage/stageDirectives'
 import { checkAuthorCss, styleClassName } from './authorCss'
@@ -166,7 +166,10 @@ export function storeImport(
       case 'set': {
         const counter = counters.get(node.decision)
         if (counter !== undefined) {
-          return { type: 'count', id, counterId: counter.id, operation: 'set', amount: amountOf(node.value) }
+          const random = readRandom(node.value)
+          return random === null
+            ? { type: 'count', id, counterId: counter.id, operation: 'set', amount: amountOf(node.value) }
+            : { type: 'count', id, counterId: counter.id, operation: 'random', amount: random.minimum, maximum: random.maximum }
         }
         const decision = decisions.find(node.decision)
         return { type: 'set', id, decisionId: decision.id, valueId: decisions.findValue(decision, node.value).id }

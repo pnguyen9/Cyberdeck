@@ -84,6 +84,13 @@ function createPage(outputDirectory, connection, stop) {
       await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode, modifiers })
       await pause(150)
     },
+    /** Clicks the middle of an element with the mouse, as a real click: pointer capture and all. */
+    clickAt: async selector => {
+      const point = await page.evaluate(`(() => { const rect = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 } })()`)
+      for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) {
+        await send('Input.dispatchMouseEvent', { type, x: point.x, y: point.y, button: type === 'mouseMoved' ? 'none' : 'left', clickCount: type === 'mouseMoved' ? 0 : 1 })
+      }
+    },
     /** Drags an element onto another, by the events a mouse drag fires; `side` picks the half of the target dropped on. */
     drag: async (sourceSelector, targetSelector, side = 'before') => {
       await page.evaluate(`(() => {
@@ -219,7 +226,7 @@ export async function createProjectWithStory(page, url, name, story) {
   await pause(800)
 }
 
-/** Creates a project holding the sample story Cyberdeck offers, leaving its Chapters tab open. */
+/** Creates a project holding the sample story Cyberdeck offers, leaving the story's level of the storyboard open. */
 export async function createProjectWithSample(page, url, name) {
   await createProject(page, url, name)
   await page.clickButton('Use the sample story')
@@ -235,6 +242,33 @@ export async function exportGame(page, fileName) {
   await page.clickButton('Export', '.export .button')
   await page.waitFor('.export .download')
   return page.saveDownload(fileName, '.export .download')
+}
+
+/** Shows the story's level of the storyboard: every chapter and scene, the panel of the one focused. */
+export async function showStory(page) {
+  await page.clickButton('Storyboard', '.tab')
+  await pause(300)
+  if (await page.evaluate(`!!document.querySelector('.story-button')`)) {
+    await page.evaluate(`document.querySelector('.story-button').click()`)
+    await pause(300)
+  }
+  await page.waitFor('.story-level')
+}
+
+/** Opens the storyboard on a chapter: the one shown last, or from the story's level, the first. */
+export async function openChapterBoard(page) {
+  await page.clickButton('Storyboard', '.tab')
+  await pause(300)
+  if (await page.evaluate(`!!document.querySelector('.story-level')`)) {
+    await page.evaluate(`document.querySelector('.story-level .inspector .button.primary').click()`)
+    await pause(300)
+  }
+}
+
+/** Focuses a chapter or scene of the story's level by its title, for its panel's actions. */
+export async function focusStoryCard(page, title) {
+  await page.evaluate(`[...document.querySelectorAll('.story-level .card')].find(card => card.querySelector('.title')?.textContent.trim() === ${JSON.stringify(title)})?.click()`)
+  await pause(200)
 }
 
 /** Creates a profile on Datajack's first start, which opens the library. */

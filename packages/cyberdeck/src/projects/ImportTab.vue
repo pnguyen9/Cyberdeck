@@ -10,7 +10,7 @@ import { SAMPLE_STORY } from '../importing/sampleStory'
 import { useEditor } from './editorContext'
 
 const emit = defineEmits<{ imported: [] }>()
-const { open, project, chapters, scenes, act, importDraft, startEmptyDocument } = useEditor()
+const { open, project, chapters, scenes, documents, act, importDraft, startEmptyDocument } = useEditor()
 const locale = useLocale()
 const text = useMessages(importMessages)
 const common = useMessages(commonMessages)
@@ -70,7 +70,7 @@ onUnmounted(() => clearTimeout(previewTimer))
 /** Against every document, so that definitions are declared once; a chapter replaced may declare its own again. */
 const previewOf = (text: string) => text.trim() === '' ? null : previewImport(text, project.value, layout, {
   scenes: scenes.value,
-  documents: [...chapters.value, ...scenes.value],
+  documents: documents.value,
   words: storyWords[locale.value],
   ...(target.value?.type === 'replaceChapter' ? { replacing: { documentId: target.value.chapterId } } : {}),
 })

@@ -23,8 +23,8 @@ const en = {
   stylesFromCss: (classes: string) => `Styles from the CSS: ${classes}.`,
   leftOut: 'Left out:',
   pagesTooLong: (count: number) => count === 1
-    ? '1 page was cut before this CSS made its style larger, and no longer fits the text box. Edit it in the storyboard and save: the page is cut again.'
-    : `${count} pages were cut before this CSS made their style larger, and no longer fit the text box. Edit each in the storyboard and save: the page is cut again.`,
+    ? '1 page was cut before its style grew larger or a value it shows grew longer, and no longer fits the text box. Edit it in the storyboard and save: the page is cut again.'
+    : `${count} pages were cut before their style grew larger or a value they show grew longer, and no longer fit the text box. Edit each in the storyboard and save: the page is cut again.`,
   saveCss: 'Save the CSS',
   cssTooLong: (maximumLength: number) => `Too long: at most ${maximumLength.toLocaleString('en')} characters.`,
   titleCards: 'Title cards',
@@ -37,6 +37,7 @@ const en = {
   titleCardsHelpClass: ', or give them a class in the CSS:',
   titleCardsHelpEnd: '.',
   declaredInChapters: 'Declared in chapters',
+  inChaptersHelp: 'Kept in a chapter\'s text, where they are written; Move to Definitions keeps them here instead.',
   noneInChapters: 'None: write a [decision: …], [counter: …] or [style: …] line in a chapter to keep it there.',
   show: 'Show',
   uses: 'Uses',
@@ -73,8 +74,8 @@ const fr: DefinitionsMessages = {
   stylesFromCss: classes => `Styles venant du CSS : ${classes}.`,
   leftOut: 'Écarté :',
   pagesTooLong: count => count <= 1
-    ? 'Une page a été découpée avant que ce CSS n’agrandisse son style : elle ne tient plus dans la zone de texte. Ouvrez-la dans le storyboard et enregistrez-la pour la redécouper.'
-    : `${count} pages ont été découpées avant que ce CSS n’agrandisse leur style : elles ne tiennent plus dans la zone de texte. Ouvrez chacune d’elles dans le storyboard et enregistrez-la pour la redécouper.`,
+    ? 'Une page a été découpée avant que son style ne grandisse ou qu’une valeur qu’elle affiche ne s’allonge\u00a0: elle ne tient plus dans la zone de texte. Ouvrez-la dans le storyboard et enregistrez-la pour la redécouper.'
+    : `${count} pages ont été découpées avant que leur style ne grandisse ou qu’une valeur qu’elles affichent ne s’allonge\u00a0: elles ne tiennent plus dans la zone de texte. Ouvrez chacune d’elles dans le storyboard et enregistrez-la pour la redécouper.`,
   saveCss: 'Enregistrer le CSS',
   cssTooLong: maximumLength => `Trop long : ${maximumLength.toLocaleString('fr')} caractères au plus.`,
   titleCards: 'Cartons de titre',
@@ -87,6 +88,7 @@ const fr: DefinitionsMessages = {
   titleCardsHelpClass: ', ou donnez-leur une classe dans le CSS :',
   titleCardsHelpEnd: '.',
   declaredInChapters: 'Déclarées dans les chapitres',
+  inChaptersHelp: 'Gardées dans le texte d’un chapitre, là où elles sont écrites\u00a0; Déplacer dans Définitions les garde plutôt ici.',
   noneInChapters: 'Aucune : écrivez une ligne [decision: …], [counter: …] ou [style: …] dans un chapitre pour l’y garder.',
   show: 'Afficher',
   uses: 'Utilisations',

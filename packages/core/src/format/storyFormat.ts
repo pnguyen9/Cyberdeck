@@ -5,7 +5,7 @@ import type { StyleProperty } from './textStyles'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '1.4'
+export const FORMAT_VERSION = '1.5'
 
 /** True when this version of the code can read a document written in `version`. */
 export function isSupportedFormatVersion(version: string): boolean {
@@ -94,6 +94,14 @@ export interface Character {
    * parting): they are shown as drawn.
    */
   drawnFacing: Facing | null
+  /** The colour of the name on their plate, `#rrggbb`; absent for the plate's own. Since 1.5. */
+  nameColor?: string
+}
+
+/** Picture frames of the text box and the name plate: images of the project, stretched by their edges. Since 1.5. */
+export interface Frames {
+  textBox: string | null
+  namePlate: string | null
 }
 
 /** A named spot on the stage, like a CSS position: `x` is the percentage of the stage width at the character's centre. */
@@ -258,6 +266,8 @@ export interface ProjectDocument extends Audited {
   css: string
   /** Each chapter's title shown over the stage as it starts. Since 1.2. */
   chapterTitleCards: boolean
+  /** Asset identifiers of the frames, null for none. Since 1.5. */
+  frames: Frames
 }
 
 /** How close to the player a character stands: nearer is larger and in front. Since 1.1. */
@@ -391,13 +401,18 @@ export interface StoredUnset {
   valueId: string | null
 }
 
-/** Adds `amount` to a counter, `[add: Trust -1]`, or gives it that value, `[set: Trust = 3]`. Since 1.3. */
+/**
+ * Adds `amount` to a counter, `[add: Trust -1]`, gives it that value, `[set: Trust = 3]`, or a value
+ * drawn from `amount` to `maximum`, `[set: Weather = random 1 6]`. Since 1.3; `random` since 1.5.
+ */
 export interface StoredCount {
   type: 'count'
   id: string
   counterId: string
-  operation: 'add' | 'set'
+  operation: 'add' | 'set' | 'random'
   amount: number
+  /** For `random`: the highest number drawn, `amount` the lowest. */
+  maximum?: number
 }
 
 /** The path ends here: the player has reached this ending. */
@@ -550,6 +565,7 @@ export function createProject(settings: { name: string; locale: string }, enviro
     details: { description: '', credits: '', coverAssetId: null },
     css: '',
     chapterTitleCards: false,
+    frames: { textBox: null, namePlate: null },
     createdAt: now,
     updatedAt: now,
   }

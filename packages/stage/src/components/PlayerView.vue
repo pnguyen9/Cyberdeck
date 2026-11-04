@@ -42,11 +42,13 @@ import {
   type StoredPage,
 } from '@cyberdeck/core'
 import { AUTOSAVE_SLOT, MANUAL_SLOTS, type SaveStore } from '../saveStore'
+import { stagePicture } from '../stagePicture'
 import { STAGE_HEIGHT, STAGE_WIDTH } from '../textboxLayout'
 import BacklogPanel, { type BacklogLine } from './BacklogPanel.vue'
 import ChoiceMenu from './ChoiceMenu.vue'
 import SaveLoadPanel, { type SlotSummary } from './SaveLoadPanel.vue'
 import SettingsPanel from './SettingsPanel.vue'
+import StatePanel from './StatePanel.vue'
 import MusicPlayer from './MusicPlayer.vue'
 import StageView from './StageView.vue'
 import TextBox from './TextBox.vue'
@@ -62,6 +64,8 @@ const props = defineProps<{
   leaveLabel: string
   /** Offers the map of the routes explored, which the application shows when asked. */
   canOpenMap?: boolean
+  /** Offers the state of the story beside the stage: for an author testing it, never for players. */
+  canInspect?: boolean
 }>()
 const emit = defineEmits<{ leave: []; map: [] }>()
 /** The player's choices: text speed, volumes, inputs. The application keeps them. */
@@ -126,7 +130,7 @@ const typedName = ref('')
 const askInput = useTemplateRef<HTMLInputElement>('askInput')
 watch(askInput, input => input?.focus())
 /** A character's name, which may be one the player gave: `{Hero}`. */
-const characterName = (characterId: string) => runtime.withNames(catalog.characterName(characterId))
+const characterName = (characterId: string) => runtime.withValues(catalog.characterName(characterId))
 /** The styled parts of a page, with the properties of their styles. */
 function stylesOf(shownPage: StoredPage): StyledPart[] {
   return (shownPage.styles ?? []).map(span => {
@@ -179,6 +183,8 @@ const fullScreenPages = computed(() => snapshot.value.stage.textMode !== 'full'
   : screenful.value.map(shownPage => ({
     id: shownPage.id,
     speaker: shownPage.speakerId === null ? null : characterName(shownPage.speakerId),
+    speakerClasses: plateLooksOf(shownPage.speakerId).classes,
+    speakerColor: plateLooksOf(shownPage.speakerId).color,
     text: shownPage.text,
     styles: stylesOf(shownPage),
   })))
@@ -220,9 +226,25 @@ const TITLE_CARD_MILLISECONDS = 2800
 
 /** The looks of a reserved style, `chapter title` or `ending`: its properties, and its class in the game's CSS. */
 function reservedStyleClasses(styleName: string): string[] {
-  const style = props.story.project.styles.find(candidate => normalizeName(candidate.name) === styleName)
+  const style = props.story.project.styles.find(candidate => normalizeName(candidate.name) === normalizeName(styleName))
   return [...(style?.properties ?? []).map(property => `style-${property}`), `author-${styleClassName(styleName)}`]
 }
+
+/** The text box as the game draws it: its style `text box`, the class `.text-box`, its picture frame. */
+const boxClasses = computed(() => reservedStyleClasses(RESERVED_STYLE_NAMES.textBox))
+const boxFrame = computed(() => catalog.frameUrl('textBox'))
+const plateFrame = computed(() => catalog.frameUrl('namePlate'))
+const plateClasses = computed(() => reservedStyleClasses(RESERVED_STYLE_NAMES.namePlate))
+/**
+ * A speaker's plate: the style `name plate` and the class `.name-plate`, then the character's own
+ * style or class, `.marie`, and the colour given to their name.
+ */
+function plateLooksOf(characterId: string | null): { classes: string[]; color: string | null } {
+  return characterId === null
+    ? { classes: [], color: null }
+    : { classes: [...plateClasses.value, ...reservedStyleClasses(catalog.characterName(characterId))], color: catalog.nameColor(characterId) }
+}
+const pagePlate = computed(() => plateLooksOf(page.value?.speakerId ?? null))
 
 /** Plays forward, then shows the title of a chapter just started; its text starts typing once the title is gone. */
 function playForward(action: () => void) {
@@ -264,6 +286,41 @@ const playingSounds = new Set<HTMLAudioElement>()
 let voice: HTMLAudioElement | null = null
 /** A line reached with a video, spoken once the video is over. */
 let voiceAfterVideo: string | null = null
+/** Whether the line of the page is being spoken, or was heard to its end: auto mode waits for it. */
+const isVoicePlaying = ref(false)
+const wasVoiceHeard = ref(false)
+
+/**
+ * Auto mode: pages move on by themselves. A page with a voice waits for its line, then a moment;
+ * another waits a reading time from its length, once it is whole, so that text shown at once gets the
+ * same time. Videos, title cards, panels and hidden text hold it; a choice, a name asked or the end
+ * stops it, as any input of the player's other than its own does.
+ */
+const isAuto = ref(false)
+/** The state of the story beside the stage, for an author testing it. */
+const isStateShown = ref(false)
+/** What the profile remembers and the endings it has seen, read again whenever the story moves. */
+const remembered = computed(() => {
+  void snapshot.value
+  return { memoryIds: runtime.memoryIds, endingIds: runtime.endingIds }
+})
+let autoTimer: ReturnType<typeof setTimeout> | undefined
+const AUTO_PAUSE_AFTER_VOICE_MILLISECONDS = 700
+const AUTO_PAUSE_MILLISECONDS = 1000
+
+/** A button of the menu pressed, other than Auto itself, takes over from auto mode. */
+function fromMenu(action: () => void) {
+  isAuto.value = false
+  action()
+}
+
+function toggleAuto() {
+  isAuto.value = !isAuto.value
+  if (isAuto.value) {
+    isSkipping.value = false
+    clearTimeout(skipTimer)
+  }
+}
 const sceneElement = useTemplateRef<HTMLElement>('scene')
 const flashElement = useTemplateRef<HTMLElement>('flash')
 const FLASH_COLORS = { white: '#fff', red: '#e11d48', black: '#000' } as const
@@ -332,13 +389,28 @@ function playVoice(soundId: string) {
   const line = new Audio(url)
   line.volume = settings.value.voiceVolume
   voice = line
-  line.play().catch(() => undefined)
+  isVoicePlaying.value = true
+  line.addEventListener('ended', () => {
+    if (voice === line) {
+      isVoicePlaying.value = false
+      wasVoiceHeard.value = true
+    }
+  })
+  line.play().catch(() => {
+    isVoicePlaying.value = false
+  })
 }
+
+/** The page or options being read aloud, if any. */
+let reading: SpeechSynthesisUtterance | null = null
 
 function stopVoice() {
   voice?.pause()
   voice = null
   voiceAfterVideo = null
+  isVoicePlaying.value = false
+  wasVoiceHeard.value = false
+  reading = null
   if (typeof speechSynthesis !== 'undefined') {
     speechSynthesis.cancel()
   }
@@ -360,6 +432,18 @@ function readAloud() {
   if (spoken !== '') {
     const utterance = new SpeechSynthesisUtterance(spoken)
     utterance.lang = props.story.project.locale
+    // Auto mode waits for the page read aloud as for a voice.
+    reading = utterance
+    isVoicePlaying.value = true
+    const finish = () => {
+      if (reading === utterance) {
+        reading = null
+        isVoicePlaying.value = false
+        wasVoiceHeard.value = true
+      }
+    }
+    utterance.addEventListener('end', finish)
+    utterance.addEventListener('error', finish)
     speechSynthesis.speak(utterance)
   }
 }
@@ -413,6 +497,27 @@ function endVideo() {
   }
 }
 
+watch([isAuto, () => snapshot.value.step, isTypingComplete, isVoicePlaying, playingVideo, openPanel, titleCard, isTextHidden], () => {
+  clearTimeout(autoTimer)
+  if (!isAuto.value) {
+    return
+  }
+  const step = snapshot.value.step
+  if (step.type !== 'page') {
+    isAuto.value = false
+    return
+  }
+  if (!isTypingComplete.value || isVoicePlaying.value || playingVideo.value !== null || openPanel.value !== 'none' || titleCard.value !== null || isTextHidden.value) {
+    return
+  }
+  const readingMilliseconds = [...step.page.text].length / settings.value.autoSpeed * 1000
+  autoTimer = setTimeout(() => {
+    if (isAuto.value && snapshot.value.step === step) {
+      playForward(() => runtime.next())
+    }
+  }, wasVoiceHeard.value ? AUTO_PAUSE_AFTER_VOICE_MILLISECONDS : AUTO_PAUSE_MILLISECONDS + readingMilliseconds)
+})
+
 function act(action: () => void) {
   const stepBefore = runtime.snapshot.step
   try {
@@ -433,12 +538,7 @@ function act(action: () => void) {
     recordProgress()
   }
   if (runtime.snapshot.step !== stepBefore && runtime.snapshot.step.type !== 'end') {
-    void props.saveStore.write(props.story.project.id, AUTOSAVE_SLOT, toSave(props.story, runtime.exportState(), new Date().toISOString()))
-      .then(isWritten => {
-        if (!isWritten) {
-          showNotice(text.value.autosaveFailed)
-        }
-      })
+    autosave()
   }
 }
 
@@ -512,11 +612,36 @@ watch(openPanel, panel => {
   }
 })
 
+/** The playthrough as it stands, with a picture of its stage for the list of saves to show. */
+async function currentSave(now = new Date()): Promise<SaveData> {
+  const save = toSave(props.story, runtime.exportState(), now.toISOString())
+  const picture = await stagePicture(runtime.snapshot.stage, catalog).catch(() => null)
+  return picture === null ? save : { ...save, picture }
+}
+
+/**
+ * Autosaves are written one after the other, in the order the pages came: a picture slow to draw
+ * never lets an older autosave land over a newer one.
+ */
+let autosaving: Promise<void> = Promise.resolve()
+function autosave() {
+  const save = currentSave()
+  autosaving = autosaving
+    .then(() => save)
+    .then(made => props.saveStore.write(props.story.project.id, AUTOSAVE_SLOT, made))
+    .then(isWritten => {
+      if (!isWritten) {
+        showNotice(text.value.autosaveFailed)
+      }
+    })
+    .catch(() => showNotice(text.value.autosaveFailed))
+}
+
 async function openSlots(mode: 'save' | 'load') {
   const gameId = props.story.project.id
   if (mode === 'save') {
     const now = new Date()
-    const save = toSave(props.story, runtime.exportState(), now.toISOString())
+    const save = await currentSave(now)
     const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}h${String(now.getMinutes()).padStart(2, '0')}`
     saveFile.value = {
       url: URL.createObjectURL(new Blob([JSON.stringify(save, null, 2)], { type: 'application/json' })),
@@ -536,7 +661,7 @@ async function pickSlot(slot: string) {
   const mode = openPanel.value
   openPanel.value = 'none'
   if (mode === 'save') {
-    const isWritten = await props.saveStore.write(gameId, slot, toSave(props.story, runtime.exportState(), new Date().toISOString()))
+    const isWritten = await props.saveStore.write(gameId, slot, await currentSave())
     showNotice(isWritten ? text.value.savedInSlot(slot) : text.value.saveFailed)
   } else {
     const save = await props.saveStore.read(gameId, slot)
@@ -721,6 +846,12 @@ function toggleFullscreen() {
 }
 
 function perform(action: PlayerAction) {
+  if (action === 'auto') {
+    toggleAuto()
+    return
+  }
+  // Any other input of the player's takes over from auto mode.
+  isAuto.value = false
   // A video is passed by moving on, or by skipping; going back, the menus and leaving still work over it.
   if (playingVideo.value !== null && (action === 'advance' || action === 'skip' || action === 'hideText')) {
     endVideo()
@@ -911,6 +1042,7 @@ onUnmounted(() => {
   playingSounds.forEach(sound => sound.pause())
   stopVoice()
   clearTimeout(choiceTimer)
+  clearTimeout(autoTimer)
   document.removeEventListener('fullscreenchange', onFullscreenChange)
   window.removeEventListener('mousedown', onMouseDown)
   window.removeEventListener('mouseup', onMouseUp)
@@ -971,6 +1103,11 @@ onUnmounted(() => {
         :is-complete="isTypingComplete"
         :styles="pageStyles"
         :speaker-x="speakerX"
+        :box-classes="boxClasses"
+        :box-frame="boxFrame"
+        :plate-classes="pagePlate.classes"
+        :plate-frame="plateFrame"
+        :plate-color="pagePlate.color"
       />
       <ChoiceMenu v-if="choice !== null && isHudShown" :key="choice.id" :choice="choice" :time="choiceTime" @choose="choose" />
       <form v-if="asked !== null && isHudShown" class="ask" @click.stop @submit.prevent="answer">
@@ -989,14 +1126,24 @@ onUnmounted(() => {
         <button class="ask-button" type="submit">{{ text.confirmName }}</button>
       </form>
       <div v-if="isHudShown" class="quick-menu" :class="{ low: fullScreenPages !== null }" :style="fullScreenPages === null ? { bottom: `${quickMenuBottom}px` } : undefined">
-        <button class="quick-button" :disabled="!canGoBack" @click.stop="goBack">{{ text.back }}</button>
-        <button class="quick-button" @click.stop="openLog">{{ text.log }}</button>
-        <button class="quick-button" @click.stop="openSlots('save')">{{ text.save }}</button>
-        <button class="quick-button" @click.stop="openSlots('load')">{{ text.load }}</button>
-        <button class="quick-button" :class="{ active: isSkipping }" :aria-pressed="isSkipping" @click.stop="toggleSkipping">{{ text.skip }}</button>
-        <button v-if="isMapOffered" class="quick-button" @click.stop="emit('map')">{{ text.map }}</button>
-        <button class="quick-button" @click.stop="openPanel = 'settings'">{{ text.settings }}</button>
+        <button class="quick-button" :disabled="!canGoBack" @click.stop="fromMenu(goBack)">{{ text.back }}</button>
+        <button class="quick-button" @click.stop="fromMenu(openLog)">{{ text.log }}</button>
+        <button class="quick-button" @click.stop="fromMenu(() => openSlots('save'))">{{ text.save }}</button>
+        <button class="quick-button" @click.stop="fromMenu(() => openSlots('load'))">{{ text.load }}</button>
+        <button v-if="canInspect" class="quick-button" :class="{ active: isStateShown }" :aria-pressed="isStateShown" @click.stop="fromMenu(() => { isStateShown = !isStateShown })">{{ text.state }}</button>
+        <button class="quick-button auto-button" :class="{ active: isAuto }" :aria-pressed="isAuto" @click.stop="toggleAuto">{{ text.auto }}</button>
+        <button class="quick-button" :class="{ active: isSkipping }" :aria-pressed="isSkipping" @click.stop="fromMenu(toggleSkipping)">{{ text.skip }}</button>
+        <button v-if="isMapOffered" class="quick-button" @click.stop="fromMenu(() => emit('map'))">{{ text.map }}</button>
+        <button class="quick-button" @click.stop="fromMenu(() => { openPanel = 'settings' })">{{ text.settings }}</button>
       </div>
+      <StatePanel
+        v-if="canInspect && isStateShown && openPanel === 'none'"
+        :story="story"
+        :snapshot="snapshot"
+        :memory-ids="remembered.memoryIds"
+        :ending-ids="remembered.endingIds"
+        @close="isStateShown = false"
+      />
       <BacklogPanel v-if="openPanel === 'log'" :lines="backlogLines" @close="openPanel = 'none'" @go-back="goBackTo" />
       <SettingsPanel
         v-if="openPanel === 'settings'"
@@ -1171,10 +1318,17 @@ onUnmounted(() => {
   font-family: Verdana, 'DejaVu Sans', 'Bitstream Vera Sans', sans-serif !important;
 }
 
+/* Over a game's own looks too: a frame or a busy background gives way to a plain box. */
 .strong-contrast :deep(.textbox),
+.strong-contrast :deep(.speaker),
 .strong-contrast :deep(.option) {
-  background: #000;
-  border-color: rgb(158 234 255 / 0.9);
+  border-image: none !important;
+  background: #000 !important;
+  border: 2px solid rgb(158 234 255 / 0.9) !important;
+}
+
+.strong-contrast :deep(.textbox) {
+  color: #fff !important;
 }
 
 .strong-contrast :deep(.full-text) {

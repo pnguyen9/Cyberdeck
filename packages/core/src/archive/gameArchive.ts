@@ -1,6 +1,9 @@
 import { checkChapterDocument, checkProjectDocument, DocumentError, isPlainIdentifier } from '../format/checkDocuments'
 import { flattenStoredNodes, mapInnerLists, type Asset, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredNode } from '../format/storyFormat'
 import { STYLE_PROPERTIES_OF_1_1 } from '../format/textStyles'
+import { isAskableName, placeholdersAsWritten } from '../format/textValues'
+import { drawsNumbers } from '../runtime/chance'
+import { normalizeName } from '../importer/storyNodes'
 import { ArchiveError } from './archiveError'
 import { isSafeArchivePath, readZip, writeZip, type ZipEntryToWrite } from './zip'
 
@@ -115,7 +118,7 @@ export const MEDIA_TYPES_BY_EXTENSION: Readonly<Record<string, string>> = {
 }
 
 /** The cover, or a file of one of the asset folders, with an extension Datajack plays. */
-export const ASSET_FILE_PATH = new RegExp(`^assets/(cover|(backgrounds|illustrations|music|sounds|videos|fonts|characters/[^/]+)/[^/]+)\\.(${Object.keys(MEDIA_TYPES_BY_EXTENSION).join('|')})$`)
+export const ASSET_FILE_PATH = new RegExp(`^assets/(cover|(backgrounds|illustrations|music|sounds|videos|fonts|frames|characters/[^/]+)/[^/]+)\\.(${Object.keys(MEDIA_TYPES_BY_EXTENSION).join('|')})$`)
 
 const SHA_256 = /^[0-9a-f]{64}$/
 const MAXIMUM_RELEASE_LENGTH = 40
@@ -198,12 +201,24 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
  * play what it draws. 1.1, which Datajack 1.0 reads, unless the game uses what 1.0 would refuse
  * rather than leave out: a style property it does not know or a font file need 1.2 (Datajack 1.1);
  * counters, voices and videos need 1.3 (Datajack 1.2); names asked for, timed choices and captions
- * need 1.4 (Datajack 1.3). What an older player does not know besides,
+ * need 1.4 (Datajack 1.3); numbers drawn at random, and values other than names in the text, need 1.5
+ * (Datajack 1.4), which an older player would show as written. What an older player does not know besides,
  * the CSS and title cards for 1.0, it leaves out.
  */
 export function playerFormatVersion(project: ProjectDocument, documents: readonly ChapterDocument[] = []): string {
   // An older Datajack refuses the nodes, conditions, commands and files it does not know: told the
   // game is newer, its player knows to update.
+  const askedNames = new Set(project.askedNames.map(asked => normalizeName(asked.name)))
+  // Datajack 1.3 shows a name asked for, written `{Hero}` exactly; anything else in braces it shows as written.
+  const showsNewerValues = (text: string) => text.includes('{{')
+    || placeholdersAsWritten(text).some(name => !isAskableName(name) || !askedNames.has(normalizeName(name)))
+  const needsDatajack14 = project.frames.textBox !== null || project.frames.namePlate !== null
+    || project.characters.some(character => character.nameColor !== undefined || showsNewerValues(character.name))
+    || drawsNumbers(documents)
+    || documents.some(document => flattenStoredNodes(document.nodes).some(node => textsShownBy(node).some(showsNewerValues)))
+  if (needsDatajack14) {
+    return '1.5'
+  }
   const needsDatajack13 = project.askedNames.length > 0
     || project.videos.some(video => video.captionsAssetId !== undefined)
     || documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'choice' && node.timeLimitMs !== undefined))
@@ -220,6 +235,11 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   const needsDatajack11 = project.fonts.some(font => font.assetId !== null)
     || project.styles.some(style => style.properties.some(property => !STYLE_PROPERTIES_OF_1_1.includes(property)))
   return needsDatajack11 ? '1.2' : '1.1'
+}
+
+/** The texts a node shows players, where `{…}` may stand. */
+function textsShownBy(node: StoredNode): string[] {
+  return node.type === 'page' ? [node.text] : node.type === 'choice' ? node.options.map(option => option.text) : []
 }
 
 function commandsOf(node: StoredNode): readonly StageCommand[] {
@@ -291,8 +311,8 @@ export async function readGameArchive(bytes: Uint8Array<ArrayBuffer>): Promise<G
 
 /** Assets shown or played by the chapters: what an archive of these chapters must carry. */
 export function assetsUsedBy(project: ProjectDocument, chapters: readonly ChapterDocument[]): Set<string> {
-  // Fonts are named by the CSS, which any chapter's styles may use: every archive carries them all.
-  const used = new Set<string>(project.fonts.flatMap(font => font.assetId === null ? [] : [font.assetId]))
+  // Fonts are named by the CSS, which any chapter's styles may use, and frames draw every page: every archive carries them all.
+  const used = new Set<string>([...project.fonts.map(font => font.assetId), project.frames.textBox, project.frames.namePlate].flatMap(assetId => assetId === null ? [] : [assetId]))
   const add = (assetId: string | null | undefined) => {
     if (assetId != null) {
       used.add(assetId)
@@ -361,6 +381,9 @@ function assetFolderAndName(project: ProjectDocument, assetId: string): { folder
   const video = project.videos.find(candidate => candidate.assetId === assetId || candidate.captionsAssetId === assetId)
   if (video !== undefined) {
     return { folder: 'assets/videos', name: video.name }
+  }
+  if (project.frames.textBox === assetId || project.frames.namePlate === assetId) {
+    return { folder: 'assets/frames', name: project.frames.textBox === assetId ? 'text-box' : 'name-plate' }
   }
   const font = project.fonts.find(candidate => candidate.assetId === assetId)
   if (font !== undefined) {

@@ -1,4 +1,7 @@
-import type { Asset, ProjectDocument } from '../format/storyFormat'
+import type { Asset, Frames, ProjectDocument } from '../format/storyFormat'
+
+/** Images named so are the frames of the text box and the name plate, whatever the story names. */
+const FRAME_FILES: ReadonlyMap<string, keyof Frames> = new Map([['text-box', 'textBox'], ['name-plate', 'namePlate']])
 
 /** The registry entry a file is meant for. */
 export type AssetTarget =
@@ -9,6 +12,7 @@ export type AssetTarget =
   | { type: 'illustration'; illustrationId: string }
   | { type: 'video'; videoId: string }
   | { type: 'captions'; videoId: string }
+  | { type: 'frame'; frame: keyof Frames }
   | { type: 'font'; fontId: string }
 
 /** Expression a file named after a character alone is meant for: `marie.png`. */
@@ -59,6 +63,10 @@ export function matchAssetFile(fileName: string, mediaType: string, project: Pro
   }
   if (!mediaType.startsWith('image/')) {
     return null
+  }
+  const frame = FRAME_FILES.get(fileKey)
+  if (frame !== undefined) {
+    return { type: 'frame', frame }
   }
 
   const background = project.backgrounds.find(candidate => matchingKey(candidate.name) === fileKey)
@@ -116,6 +124,8 @@ export function assignAsset(project: ProjectDocument, target: AssetTarget, asset
         ...withAsset,
         videos: project.videos.map(video => video.id === target.videoId ? { ...video, assetId: asset.id } : video),
       }
+    case 'frame':
+      return { ...withAsset, frames: { ...project.frames, [target.frame]: asset.id } }
     case 'captions':
       return {
         ...withAsset,

@@ -1,3 +1,14 @@
+import type { UnusedName } from '@cyberdeck/core'
+
+const UNUSED_KINDS_EN: Readonly<Record<UnusedName['kind'], string>> = {
+  character: 'Character', expression: 'Expression', background: 'Background', music: 'Music', sound: 'Sound',
+  illustration: 'Illustration', video: 'Video', counter: 'Counter', decision: 'Decision', decisionValue: 'Value',
+}
+const UNUSED_KINDS_FR: Readonly<Record<UnusedName['kind'], string>> = {
+  character: 'Personnage', expression: 'Expression', background: 'Décor', music: 'Musique', sound: 'Son',
+  illustration: 'Illustration', video: 'Vidéo', counter: 'Compteur', decision: 'Décision', decisionValue: 'Valeur',
+}
+
 const en = {
   filesAdded: (count: number, matches: string) => `${count} ${count === 1 ? 'file' : 'files'} added: ${matches}.`,
   filesUnused: (fileNames: string) => `Not used, no entry of that name: ${fileNames}.`,
@@ -30,6 +41,18 @@ const en = {
   illustrationTarget: (name: string) => `Illustration ${name}`,
   videoTarget: (name: string) => `Video ${name}`,
   captionsTarget: (name: string) => `Captions of ${name}`,
+  frames: 'Frames',
+  framesHelp: 'Pictures drawn around the text box and the name plate, stretched by their edges so that their corners stay whole: images named text-box and name-plate.',
+  frameTarget: (frame: 'textBox' | 'namePlate'): string => frame === 'textBox' ? 'Frame of the text box' : 'Frame of the name plate',
+  nameColor: 'name colour',
+  plateColor: 'Use the plate\'s colour',
+  allKinds: 'All',
+  withoutFile: (count: number) => `${count} without a file`,
+  notUsed: 'Not used any more',
+  notUsedHelp: 'The story no longer names these. They hold a file, or a setting of yours, so they stay until you remove them; what holds nothing goes by itself.',
+  unusedEntry: (kind: UnusedName['kind'], name: string) => `${UNUSED_KINDS_EN[kind]} ${name}`,
+  unusedExpression: (character: string, expression: string) => `${character}, ${expression}`,
+  unusedRemoved: (entry: string) => `${entry} is removed, with its file.`,
   captions: (fileName: string) => `captions: ${fileName}`,
   noCaptions: 'no captions',
   fontTarget: (name: string) => `Font ${name}`,
@@ -68,6 +91,18 @@ const fr: CastMessages = {
   illustrationTarget: name => `Illustration ${name}`,
   videoTarget: name => `Vidéo ${name}`,
   captionsTarget: name => `Sous-titres de ${name}`,
+  frames: 'Cadres',
+  framesHelp: 'Images dessinées autour de la zone de texte et de l’étiquette du nom, étirées par leurs bords pour que leurs coins restent entiers\u00a0: des images nommées text-box et name-plate.',
+  frameTarget: frame => frame === 'textBox' ? 'Cadre de la zone de texte' : 'Cadre de l’étiquette du nom',
+  nameColor: 'couleur du nom',
+  plateColor: 'Reprendre la couleur de l’étiquette',
+  allKinds: 'Tout',
+  withoutFile: count => `${count} sans fichier`,
+  notUsed: 'Plus utilisés',
+  notUsedHelp: 'L’histoire ne les nomme plus. Ils gardent un fichier, ou un réglage de votre part\u00a0: ils restent jusqu’à ce que vous les supprimiez. Ce qui ne garde rien s’en va tout seul.',
+  unusedEntry: (kind, name) => `${UNUSED_KINDS_FR[kind]} ${name}`,
+  unusedExpression: (character, expression) => `${character}, ${expression}`,
+  unusedRemoved: entry => `${entry}\u00a0: supprimé, avec son fichier.`,
   captions: fileName => `sous-titres\u00a0: ${fileName}`,
   noCaptions: 'pas de sous-titres',
   fontTarget: name => `Police ${name}`,

@@ -3,7 +3,6 @@ import type { PreviewNote } from '../projects/openProject'
 /** The frame of an open project: its header and tabs, and the question about changes not saved. */
 const en = {
   tabs: {
-    chapters: 'Chapters',
     storyboard: 'Storyboard',
     import: 'Import',
     cast: 'Cast & files',
@@ -37,7 +36,6 @@ type EditorMessages = typeof en
 
 const fr: EditorMessages = {
   tabs: {
-    chapters: 'Chapitres',
     storyboard: 'Storyboard',
     import: 'Import',
     cast: 'Personnages et fichiers',

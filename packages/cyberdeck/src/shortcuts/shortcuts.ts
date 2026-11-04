@@ -35,17 +35,20 @@ export type ShortcutId =
   | 'selectAll'
   | 'edit'
   | 'addPage'
+  | 'addBlock'
+  | 'editBlock'
   | 'previewFromHere'
   | 'remove'
   | 'undo'
   | 'save'
   | 'cancel'
+  | 'enterTagBefore'
+  | 'enterTagAfter'
   | 'showShortcuts'
   | 'goToBoard'
   | 'togglePanel'
   | 'previousTab'
   | 'nextTab'
-  | 'tabChapters'
   | 'tabStoryboard'
   | 'tabImport'
   | 'tabCast'
@@ -84,18 +87,23 @@ export const SHORTCUT_ACTIONS: readonly ShortcutAction[] = [
   { id: 'edit', screen: 'Storyboard', defaults: [chord('Enter')] },
   { id: 'leave', screen: 'Storyboard', defaults: [chord('Escape')] },
   { id: 'addPage', screen: 'Storyboard', defaults: [chord('n')] },
+  { id: 'addBlock', screen: 'Storyboard', defaults: [chord('b')] },
+  // Enter opens a block; its own text, conditions and branches, is edited apart.
+  { id: 'editBlock', screen: 'Storyboard', defaults: [chord('e')] },
   { id: 'previewFromHere', screen: 'Storyboard', defaults: [chord('p')] },
   { id: 'remove', screen: 'Storyboard', defaults: [chord('Delete'), chord('Backspace')] },
   { id: 'undo', screen: 'Storyboard', defaults: [chord('z', { ctrl: true })] },
   { id: 'save', screen: 'Editing a page', defaults: [chord('Enter', { ctrl: true })] },
   { id: 'cancel', screen: 'Editing a page', defaults: [chord('Escape')] },
+  // A tag stays one piece for the arrows alone: with Alt, they step into it to change what it says.
+  { id: 'enterTagBefore', screen: 'Editing a page', defaults: [chord('ArrowLeft', { alt: true })] },
+  { id: 'enterTagAfter', screen: 'Editing a page', defaults: [chord('ArrowRight', { alt: true })] },
   { id: 'showShortcuts', screen: 'Everywhere', defaults: [chord('?')] },
   // With Alt, so that they work while typing a page too; Alt+digits are the browsers' own.
   { id: 'goToBoard', screen: 'Everywhere', defaults: [chord('g', { alt: true })] },
   { id: 'togglePanel', screen: 'Everywhere', defaults: [chord('p', { alt: true })] },
   { id: 'previousTab', screen: 'Everywhere', defaults: [chord('PageUp', { alt: true })] },
   { id: 'nextTab', screen: 'Everywhere', defaults: [chord('PageDown', { alt: true })] },
-  { id: 'tabChapters', screen: 'Everywhere', defaults: [] },
   { id: 'tabStoryboard', screen: 'Everywhere', defaults: [] },
   { id: 'tabImport', screen: 'Everywhere', defaults: [] },
   { id: 'tabCast', screen: 'Everywhere', defaults: [] },
@@ -136,6 +144,12 @@ export function chordDescriber(locale: Locale): (chord: KeyChord) => string {
 }
 
 export const describeChord = chordDescriber('en')
+
+/** The first keys of an action, as a hint beside it; empty when it has none. */
+export function firstKeysOf(map: ShortcutMap, actionId: ShortcutId, locale: Locale): string {
+  const first = map[actionId][0]
+  return first === undefined ? '' : chordDescriber(locale)(first)
+}
 
 /** Actions already using the keys where the action applies: they would both answer. */
 export function conflictsOf(map: ShortcutMap, actionId: ShortcutId, chord: KeyChord): ShortcutId[] {

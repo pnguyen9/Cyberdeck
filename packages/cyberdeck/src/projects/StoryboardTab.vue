@@ -8,6 +8,7 @@ import {
   locateNode,
   moveNodes,
   nodesText,
+  moveBranch,
   previewNodeEdit,
   removeNodes,
   stepNodes,
@@ -25,15 +26,17 @@ import {
   type StoryboardEntry,
 } from '@cyberdeck/core'
 import { createTextboxLayout, useLocale, useMessages } from '@cyberdeck/stage'
+import StoryLevel from './StoryLevel.vue'
+import StoryGraphView from './StoryGraphView.vue'
 import { storyWords } from '../i18n/storyWords'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { indexMessages } from '../i18n/indexMessages'
 import { storyboardMessages } from '../i18n/storyboardMessages'
-import { vocabularyOf } from '../editing/tagText'
+import { vocabularyOf, withNewBranch } from '../editing/tagText'
 import { useEditorSettings } from '../settings/editorSettings'
 import { useShortcuts } from '../shortcuts/shortcutStore'
-import { actionFor, chordDescriber, type ShortcutId } from '../shortcuts/shortcuts'
+import { actionFor, firstKeysOf, type ShortcutId } from '../shortcuts/shortcuts'
 import TagTextEditor from '../editing/TagTextEditor.vue'
 import { problemMessage } from '../importing/problemMessages'
 import { answeredStoryboardRequests, useEditor } from './editorContext'
@@ -44,7 +47,7 @@ import UnsavedQuestion from './UnsavedQuestion.vue'
 import { useUnsavedChanges } from './unsavedChanges'
 import StoryTree from './StoryTree.vue'
 
-const { open, project, chapters, scenes, act, storyboardChapterId, previewFrom, storyboardRequest, openIndex, startEmptyDocument } = useEditor()
+const { open, project, chapters, scenes, documents, act, storyboardChapterId, previewFrom, storyboardRequest, openIndex, startEmptyDocument } = useEditor()
 const { shortcuts, isPanelOpen } = useShortcuts()
 const settings = useEditorSettings()
 const locale = useLocale()
@@ -52,9 +55,8 @@ const text = useMessages(storyboardMessages)
 const words = computed(() => storyWords[locale.value])
 const common = useMessages(commonMessages)
 const indexText = useMessages(indexMessages)
-const describeChord = computed(() => chordDescriber(locale.value))
 /** The first keys of an action, as shown on buttons; empty when the author removed them all. */
-const keysOf = (actionId: ShortcutId) => shortcuts.value[actionId].map(describeChord.value)[0] ?? ''
+const keysOf = (actionId: ShortcutId) => firstKeysOf(shortcuts.value, actionId, locale.value)
 
 const BRANCH_COLORS = ['#5eead4', '#fbbf24', '#c4b5fd', '#fda4af', '#bef264', '#93c5fd']
 
@@ -67,12 +69,11 @@ interface GridItem extends PlacedElement {
 }
 
 /** Chapters then scenes: the storyboard shows either. */
-const documents = computed(() => [...chapters.value, ...scenes.value])
 const chapter = computed(() => documents.value.find(candidate => candidate.id === storyboardChapterId.value) ?? chapters.value[0] ?? scenes.value[0] ?? null)
 const isScene = computed(() => chapter.value !== null && project.value.sceneOrder.includes(chapter.value.id))
 const sceneNames = computed(() => new Map(scenes.value.map(scene => [scene.id, scene.title ?? ''])))
 /** The grid sorts cards like slides; the tree shows each condition's branches side by side, for reading, not moving. */
-const view = ref<'grid' | 'tree'>('grid')
+const view = ref<'grid' | 'tree' | 'graph'>('grid')
 
 /** The block whose branches the grid shows; null for the chapter's own level. */
 const blockId = ref<string | null>(null)
@@ -112,6 +113,8 @@ const hint = ref<string | null>(null)
 const dropTarget = ref<{ elementId: string; side: 'before' | 'after' } | null>(null)
 const isDragging = ref(false)
 const board = ref<HTMLElement | null>(null)
+const storyLevel = ref<InstanceType<typeof StoryLevel> | null>(null)
+const emit = defineEmits<{ import: [] }>()
 const elements = new Map<string, HTMLElement>()
 
 /** The selection as far as it is on screen: nodes removed, or out of the level shown, drop out of it. */
@@ -182,6 +185,10 @@ function settleEdit(question: string, run: () => void) {
   }
   pending.value = { question, run }
   isPanelShown.value = true
+  // The question sits beside the page edited, which only the grid and the tree show.
+  if (view.value === 'graph') {
+    view.value = 'grid'
+  }
 }
 
 function openEdit(target: NodeEditTarget, text: string) {
@@ -215,6 +222,22 @@ function slotAfterFocus(): DropSlot {
 
 function startAdding() {
   settleEdit(text.value.unsavedPage, () => openEdit({ type: 'insert', slot: slotAfterFocus() }, ''))
+}
+
+/** A new block after the focus, as text to complete: an `[if]` and its `[else]`, ready for the condition. */
+const NEW_BLOCK = '[if: ]\n\n[else]\n\n[end]'
+
+function startAddingBlock() {
+  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'insert', slot: slotAfterFocus() }, NEW_BLOCK))
+}
+
+/** A block's own text, its conditions and branches with the pages in them, edited as a page is. */
+function startEditingBlock(block: BlockElement) {
+  if (editingId.value === block.node.id) {
+    void nextTick(() => editor.value?.focus())
+    return
+  }
+  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'replace', nodeId: block.node.id }, nodesText(project.value, [block.node], scenes.value)))
 }
 
 async function saveEdit(): Promise<boolean> {
@@ -293,6 +316,10 @@ function reveal(nodeId: string) {
  * from the page edited, to its card; from the board, back into the page edited.
  */
 function goToBoard() {
+  if (isStoryLevel.value || chapter.value === null) {
+    storyLevel.value?.focus()
+    return
+  }
   const active = document.activeElement
   const isInEditor = editing.value !== null && active instanceof HTMLElement && active.closest('.edit') !== null
   if (editing.value !== null && active === board.value) {
@@ -477,6 +504,14 @@ function onKeydown(event: KeyboardEvent) {
     case 'addPage':
       startAdding()
       return
+    case 'addBlock':
+      startAddingBlock()
+      return
+    case 'editBlock':
+      if (focusedBlock.value !== null) {
+        startEditingBlock(focusedBlock.value)
+      }
+      return
     case 'previewFromHere':
       previewFocused()
       return
@@ -579,9 +614,85 @@ function leave() {
     selection.value = NO_SELECTION
   } else if (level.value !== null && level.value.path.length > 0) {
     goTo(level.value.path.at(-2)?.id ?? null)
-  } else {
+  } else if (cutIds.value.length > 0) {
     cutIds.value = []
+  } else {
+    goUpToStory()
   }
+}
+
+/** The story's level, above the chapters: shown first, until a chapter is opened. */
+const isStoryLevel = ref(storyboardChapterId.value === null)
+watch(storyboardChapterId, chapterId => {
+  if (chapterId !== null) {
+    isStoryLevel.value = false
+  }
+})
+watch(storyboardRequest, request => {
+  if (request?.kind === 'reveal') {
+    isStoryLevel.value = false
+  }
+})
+
+function goUpToStory() {
+  settleEdit(text.value.unsavedPage, () => {
+    editing.value = null
+    isStoryLevel.value = true
+  })
+}
+
+/** From the graph to the card in the grid, the chapter or scene it is in opened. */
+function openFromGraph(documentId: string, nodeId: string | null) {
+  settleEdit(text.value.unsavedPage, () => {
+    editing.value = null
+    storyboardChapterId.value = documentId
+    view.value = 'grid'
+    void nextTick(() => {
+      board.value?.focus()
+      if (nodeId !== null) {
+        reveal(nodeId)
+      }
+    })
+  })
+}
+
+/** The node's text, edited in the grid with something added to it: a branch, an option. */
+function editFromGraph(documentId: string, nodeId: string, withAddition: (text: string) => string) {
+  const document = documents.value.find(candidate => candidate.id === documentId)
+  const node = document === undefined ? undefined : flattenStoredNodes(document.nodes).find(candidate => candidate.id === nodeId)
+  if (node === undefined) {
+    return
+  }
+  settleEdit(text.value.unsavedPage, () => {
+    storyboardChapterId.value = documentId
+    view.value = 'grid'
+    void nextTick(() => {
+      reveal(nodeId)
+      openEdit({ type: 'replace', nodeId }, withAddition(nodesText(project.value, [node], scenes.value)))
+    })
+  })
+}
+
+/** A new `[else if: ]` before the block's own `[else]`, or before its `[end]` when it has none. */
+function addBranchFromGraph(documentId: string, conditionId: string) {
+  editFromGraph(documentId, conditionId, withNewBranch)
+}
+
+function addOptionFromGraph(documentId: string, choiceId: string) {
+  editFromGraph(documentId, choiceId, choiceText => `${choiceText}\n> `)
+}
+
+async function moveBranchFromGraph(documentId: string, conditionId: string, branchId: string, step: -1 | 1) {
+  const document = documents.value.find(candidate => candidate.id === documentId)
+  if (document !== undefined) {
+    await act(() => open.replaceChapter(moveBranch(document, conditionId, branchId, step, new Date().toISOString())))
+  }
+}
+
+function openFromStory(documentId: string) {
+  storyboardChapterId.value = documentId
+  isStoryLevel.value = false
+  void nextTick(() => board.value?.focus())
 }
 
 /** Shows the level holding the nodes and selects them, after they moved or were written. */
@@ -702,7 +813,7 @@ async function undo() {
     if (chapterId !== null) {
       storyboardChapterId.value = chapterId
     }
-  }, open.canUndo ? text.value.undone : text.value.undoneLast)
+  }, () => open.canUndo ? common.value.undone : common.value.undoneLast)
 }
 
 function onPick(elementId: string, event: MouseEvent) {
@@ -831,12 +942,10 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
 
 <template>
   <section class="storyboard">
-    <p v-if="chapter === null" class="muted">
-      {{ text.noChapters }}
-      <button class="button small" @click="startEmptyDocument('chapter')">{{ text.startChapter }}</button>
-    </p>
+    <StoryLevel v-if="isStoryLevel || chapter === null" ref="storyLevel" @open="openFromStory" @import="emit('import')" />
     <template v-else>
       <div class="toolbar">
+        <button class="button small story-button" :title="text.upToStory" @click="goUpToStory">↑ {{ text.story }}</button>
         <label class="field chapter-picker">
           <span>{{ isScene ? text.scene : text.chapter }}</span>
           <select class="text-input" :value="chapter.id" @change="onChapterPicked">
@@ -851,12 +960,14 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
         <div class="view-switch" role="group" :aria-label="text.view">
           <button class="button small" :class="{ primary: view === 'grid' }" :aria-pressed="view === 'grid'" @click="view = 'grid'">{{ text.grid }}</button>
           <button class="button small" :class="{ primary: view === 'tree' }" :aria-pressed="view === 'tree'" @click="view = 'tree'">{{ text.tree }}</button>
+          <button class="button small" :class="{ primary: view === 'graph' }" :aria-pressed="view === 'graph'" @click="view = 'graph'">{{ text.graph }}</button>
         </div>
         <label class="field block-limit" :class="{ unused: view !== 'grid' }" :inert="view !== 'grid'" :title="text.blockLimitTitle">
           <span>{{ text.blockLimit }}</span>
           <input v-model.number="settings.blockPageLimit" class="text-input" type="number" min="1" max="99" step="1" :aria-label="text.blockLimitLabel">
         </label>
-        <p class="muted keys">
+        <p v-if="view === 'graph'" class="muted keys">{{ text.graphKeys }}</p>
+        <p v-else class="muted keys">
           <template v-if="view === 'grid'">
             {{ text.gridKeys({
               select: keysOf('toggleSelected'),
@@ -878,7 +989,14 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
       <p v-if="chapterUnreachableCount > 0" class="warning" role="note">
         {{ text.chapterUnreached(chapterUnreachableCount) }}
       </p>
-      <div class="layout">
+      <StoryGraphView
+        v-if="view === 'graph'"
+        @open="openFromGraph"
+        @add-branch="addBranchFromGraph"
+        @add-option="addOptionFromGraph"
+        @move-branch="moveBranchFromGraph"
+      />
+      <div v-else class="layout">
         <div
           ref="board"
           class="board"
@@ -1003,7 +1121,7 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
             <h3>{{ text.loopHeading(focusedBlock.numbers, pagesWord(focusedBlock.pageCount)) }}</h3>
             <p class="muted">{{ text.loopHelp }}</p>
             <p v-if="focusedBlock.isEndless" class="warning">{{ text.endlessLoop }}</p>
-            <p class="muted">{{ text.loopMovesAsOne }}</p>
+            <p class="muted">{{ text.blockHow(keysOf('edit'), keysOf('editBlock'), keysOf('moveSelectionForward'), keysOf('remove')) }}</p>
           </template>
           <template v-else-if="focusedBlock !== null && focusedBlock.node.type === 'condition'">
             <h3>{{ text.blockHeading(focusedBlock.numbers, pagesWord(focusedBlock.pageCount)) }}</h3>
@@ -1012,7 +1130,7 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
             </ul>
             <p v-if="focusedBlock.allRoutesEnd" class="muted">{{ text.everyRouteEndsInside }}</p>
             <p v-else-if="focusedBlock.endingRouteCount > 0" class="muted">{{ text.someRoutesEndInside(focusedBlock.endingRouteCount, focusedBlock.branches.length) }}</p>
-            <p class="muted">{{ text.blockMovesAsOne }}</p>
+            <p class="muted">{{ text.blockHow(keysOf('edit'), keysOf('editBlock'), keysOf('moveSelectionForward'), keysOf('remove')) }}</p>
           </template>
           <p v-else-if="focusedItem?.element === null" class="muted">{{ text.emptyBranch }}</p>
           <p v-else class="muted">{{ text.selectACard }}</p>
@@ -1033,8 +1151,10 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
           <div v-if="editing === null" class="inspector-actions">
             <button v-if="focusedEntry !== null" class="button small" @click="startEditing(focusedEntry)">{{ text.editCard }} <kbd>{{ keysOf('edit') }}</kbd></button>
             <button v-if="focusedBlock !== null" class="button small" @click="openElement(focusedBlock.id)">{{ text.openBlock }} <kbd>{{ keysOf('edit') }}</kbd></button>
+            <button v-if="focusedBlock !== null" class="button small" @click="startEditingBlock(focusedBlock)">{{ text.editBlock }} <kbd>{{ keysOf('editBlock') }}</kbd></button>
             <button v-if="focusedEntry?.type === 'card'" class="button small" @click="previewFocused">{{ text.previewFromHere }} <kbd>{{ keysOf('previewFromHere') }}</kbd></button>
             <button class="button small" @click="startAdding">{{ chapter.nodes.length === 0 ? text.writeFirstPage : focusedItem?.element === null ? text.writePageHere : text.addPageAfter }} <kbd>{{ keysOf('addPage') }}</kbd></button>
+            <button class="button small" :title="text.newBlockHelp" @click="startAddingBlock">{{ text.addBlockAfter }} <kbd>{{ keysOf('addBlock') }}</kbd></button>
           </div>
         </aside>
       </div>

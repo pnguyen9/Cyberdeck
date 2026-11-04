@@ -9,7 +9,7 @@ export default async function check(page, { url, fixtures, serve }) {
   page.check('the document imports without a problem', await page.evaluate(`document.querySelectorAll('.problems li').length`), 0)
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)
-  page.check('it becomes one chapter', await page.evaluate(`document.querySelectorAll('.chapter').length`), 1)
+  page.check('it becomes one chapter', await page.evaluate(`document.querySelectorAll('.story-level .chapter').length`), 1)
   const archive = await exportGame(page, 'clockmaker.zip')
 
   await createProfile(page, await serve('datajack'), 'Reader')

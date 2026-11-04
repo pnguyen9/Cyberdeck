@@ -11,6 +11,8 @@ const en = {
   remove: 'Remove',
   cancel: 'Cancel',
   save: 'Save',
+  undone: 'Undone.',
+  undoneLast: 'Undone. Nothing more to undo.',
   kilobytes: (count: number) => `${count} KB`,
   megabytes: (amount: number) => `${amount.toFixed(1)} MB`,
 }
@@ -28,6 +30,8 @@ const fr: CommonMessages = {
   remove: 'Supprimer',
   cancel: 'Annuler',
   save: 'Enregistrer',
+  undone: 'Annulé.',
+  undoneLast: 'Annulé. Plus rien à annuler.',
   kilobytes: count => `${count} Ko`,
   megabytes: amount => `${amount.toFixed(1).replace('.', ',')} Mo`,
 }

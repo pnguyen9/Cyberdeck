@@ -1,6 +1,6 @@
 // The storyboard grid without a mouse: blocks as single elements, entering them, selecting neighbours with
 // Space, moving with Ctrl+Shift+arrows, cut and paste across levels; then dragging, and the block size setting.
-import { createProjectWithStory, pause } from './harness.mjs'
+import { createProjectWithStory, openChapterBoard, pause } from './harness.mjs'
 
 const STORY = `# Grid
 First page.
@@ -49,11 +49,11 @@ export default async function check(page, { url }) {
   const ctrlShift = { ctrl: true, shift: true }
 
   await createProjectWithStory(page, url, 'Grid', STORY)
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   page.check('each condition is one block', await shown(), 'chapter: First page. / Choice: Answer / [block] / After the small block. / [stack] / The end.')
   page.check('a small block shows its pages', await page.evaluate(`[...document.querySelectorAll('.element.block:not(.collapsed) .mini')].map(mini => mini.textContent.trim()).join(', ')`), '3a Yes one., 4a Yes two., 3b No one.')
-  page.check('a block over the limit is one card that says so', await page.evaluate(`document.querySelector('.element.block.collapsed .summary').textContent.trim()`), '2 routes · 7 pages')
+  page.check('a block over the limit is one card that says so', await page.evaluate(`document.querySelector('.element.block.collapsed .summary').textContent.trim()`), '2 paths · 7 pages')
   await page.screenshot('chapter-level')
 
   await page.evaluate(`document.querySelector('.board').focus()`)

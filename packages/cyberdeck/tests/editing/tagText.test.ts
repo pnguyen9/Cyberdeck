@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { completionAt, tagEndingAt, tagKind, tagProblem, tagsIn, tagStartingAt, type TagVocabulary } from '../../src/editing/tagText'
+import { completionAt, tagEndingAt, tagKind, tagProblem, tagsIn, tagStartingAt, withNewBranch, type TagVocabulary } from '../../src/editing/tagText'
 
 const layout = { lineWidth: 40, maxLines: 2, measureText: (text: string) => [...text].length }
 const VOCABULARY: TagVocabulary = {
@@ -54,6 +54,14 @@ describe('tags in the text', () => {
   })
 })
 
+describe('a new branch', () => {
+  it('goes before the block\'s own [else], past the blocks inside it, or before its [end]', () => {
+    expect(withNewBranch('[if: A is B]\n[if: C is D]\nInside.\n[else]\nNot.\n[end]\n[else]\nOther.\n[end]'))
+      .toBe('[if: A is B]\n[if: C is D]\nInside.\n[else]\nNot.\n[end]\n[else if: ]\n\n[else]\nOther.\n[end]')
+    expect(withNewBranch('[if: A is B]\nYes.\n[end]')).toBe('[if: A is B]\nYes.\n[else if: ]\n\n[end]')
+  })
+})
+
 describe('suggestions', () => {
   it('offer directives and characters after an opening bracket', () => {
     expect(suggest('[|')?.labels.slice(0, 3)).toEqual(['bg', 'transition', 'music'])
@@ -78,6 +86,9 @@ describe('suggestions', () => {
   it('follow the grammar of conditions', () => {
     expect(suggest('[if: |')?.labels).toEqual(['Answer', 'Trust', 'remembered', 'seen ending', 'not'])
     expect(suggest('[if: Answer is Truth and Trust |')?.labels).toEqual(['>=', '<=', '>', '<', 'is'])
+    // A word in the middle of a tag brings the space that follows; one that ends the tag closes it.
+    expect(completionAt('[if: Ans', 8, VOCABULARY)?.items[0]?.insert).toBe('Answer ')
+    expect(completionAt('[play: Ca', 9, VOCABULARY)?.items[0]?.insert).toBe('Caught]')
     expect(suggest('[add: T|')?.labels).toEqual(['Trust'])
     expect(suggest('[set: |')?.labels).toEqual(['Answer', 'Trust'])
     expect(suggest('[unset: |')?.labels).toEqual(['Answer'])

@@ -22,12 +22,16 @@ import {
   matchAssetFile,
   moveChapter,
   projectWithoutStory,
+  withChapterCondition,
+  unusedNames,
+  withoutNames,
   readProjectBackup,
   removeChapter,
   removeNodes,
   renameChapter,
   renameProject,
   setDrawnFacing,
+  setNameColor,
   toSave,
   unusedAssetIds,
   updateDetails,
@@ -35,6 +39,8 @@ import {
   type AssetTarget,
   type ChapterDocument,
   type DefinitionKind,
+  type StoredCondition,
+  type UnusedName,
   type DefinitionsPreview,
   type Environment,
   type Facing,
@@ -127,9 +133,15 @@ export async function restoreBackup(store: ProjectStore, bytes: Uint8Array<Array
 /** Storyboard changes that can be undone, the oldest forgotten first. */
 const MAXIMUM_UNDO_STEPS = 100
 
+/** What one change replaced, or the chapter it removed and where it stood. */
+interface UndoStep {
+  chapters: ChapterDocument[]
+  removedFrom?: { order: 'chapterOrder' | 'sceneOrder'; index: number }
+}
+
 export class OpenProject {
-  /** Chapters as they were before each storyboard change, the latest last. */
-  private undoSteps: ChapterDocument[] = []
+  /** What each storyboard change replaced or removed, the latest last: one Ctrl+Z puts a whole change back. */
+  private undoSteps: UndoStep[] = []
 
   private constructor(
     private readonly store: ProjectStore,
@@ -170,6 +182,7 @@ export class OpenProject {
     }
     this.storedChapters = [...this.storedChapters.filter(chapter => !applied.chapters.some(changed => changed.id === chapter.id)), ...applied.chapters]
     await this.saveProject(applied.project)
+    await this.forgetUnusedNames()
     return applied.chapters
   }
 
@@ -233,13 +246,33 @@ export class OpenProject {
   }
 
   /** Stores a chapter changed in the storyboard; the version it replaces can be restored with `undo`. */
-  async replaceChapter(chapter: ChapterDocument) {
-    const previous = this.storedChapters.find(candidate => candidate.id === chapter.id)
-    if (previous === undefined || previous === chapter) {
-      return
+  replaceChapter(chapter: ChapterDocument) {
+    return this.replaceChapters([chapter])
+  }
+
+  /** Stores chapters changed together: one `undo` restores them all. */
+  private async replaceChapters(chapters: readonly ChapterDocument[]) {
+    const replaced: ChapterDocument[] = []
+    for (const chapter of chapters) {
+      const previous = this.storedChapters.find(candidate => candidate.id === chapter.id)
+      if (previous !== undefined && previous !== chapter) {
+        await this.writeChapter(chapter)
+        replaced.push(previous)
+      }
     }
-    await this.writeChapter(chapter)
-    this.undoSteps = [...this.undoSteps.slice(1 - MAXIMUM_UNDO_STEPS), previous]
+    if (replaced.length > 0) {
+      this.pushUndoStep({ chapters: replaced })
+      await this.forgetUnusedNames()
+    }
+  }
+
+  private pushUndoStep(step: UndoStep) {
+    this.undoSteps = [...this.undoSteps.slice(1 - MAXIMUM_UNDO_STEPS), step]
+  }
+
+  /** The chapters and scenes an undo could bring back: what they name is still used. */
+  private get undoableChapters(): ChapterDocument[] {
+    return this.undoSteps.flatMap(step => step.chapters)
   }
 
   /**
@@ -258,23 +291,35 @@ export class OpenProject {
     return this.undoSteps.length > 0
   }
 
-  /** Restores the chapter changed last as it was; returns its identifier, or null when there was nothing to undo. */
+  /** Restores what the last change replaced or removed; returns the chapter concerned, or null when there was nothing to undo. */
   async undo(): Promise<string | null> {
-    const previous = this.undoSteps.at(-1)
-    if (previous === undefined) {
+    const step = this.undoSteps.at(-1)
+    if (step === undefined) {
       return null
     }
-    await this.writeChapter({ ...previous, updatedAt: this.now() })
+    const place = step.removedFrom
+    for (const previous of step.chapters) {
+      if (place === undefined) {
+        await this.writeChapter({ ...previous, updatedAt: this.now() })
+      } else {
+        const chapter = { ...previous, formatVersion: FORMAT_VERSION, updatedAt: this.now() }
+        await this.store.writeChapter(this.currentProject.id, chapter)
+        this.storedChapters = [...this.storedChapters, chapter]
+        const order = this.currentProject[place.order]
+        await this.saveProject({ ...this.currentProject, [place.order]: [...order.slice(0, place.index), chapter.id, ...order.slice(place.index)], updatedAt: this.now() })
+      }
+    }
     this.undoSteps = this.undoSteps.slice(0, -1)
-    return previous.id
+    await this.forgetUnusedNames()
+    return step.chapters[0]?.id ?? null
   }
 
-  /** A chapter or a scene with no page yet, to write in the storyboard; returns its identifier. */
-  async addEmptyDocument(kind: 'chapter' | 'scene', title: string): Promise<string> {
+  /** A chapter or a scene with no page yet, to write in the storyboard, a chapter at `atIndex` when given; returns its identifier. */
+  async addEmptyDocument(kind: 'chapter' | 'scene', title: string, atIndex?: number): Promise<string> {
     const added = addEmptyDocument(this.currentProject, kind, title, this.environment)
     await this.store.writeChapter(this.currentProject.id, added.document)
     this.storedChapters = [...this.storedChapters, added.document]
-    await this.saveProject(added.project)
+    await this.saveProject(atIndex === undefined ? added.project : moveChapter(added.project, added.document.id, atIndex, this.now()))
     return added.document.id
   }
 
@@ -327,6 +372,11 @@ export class OpenProject {
     return this.saveProject(setDrawnFacing(this.currentProject, characterId, drawnFacing, this.now()))
   }
 
+  /** The colour of a character's name on their plate, `#rrggbb`, or null for the plate's own. */
+  setNameColor(characterId: string, nameColor: string | null) {
+    return this.saveProject(setNameColor(this.currentProject, characterId, nameColor, this.now()))
+  }
+
   async renameChapter(chapterId: string, title: string) {
     const chapter = this.storedChapters.find(candidate => candidate.id === chapterId)
     if (chapter === undefined) {
@@ -335,14 +385,43 @@ export class OpenProject {
     await this.writeChapter(renameChapter(chapter, title, this.now()))
   }
 
+  /** Plays the chapters only under this condition, or always for `undefined`: a route's condition, written once. */
+  setChapterConditions(chapterIds: readonly string[], condition: StoredCondition | undefined) {
+    const chapters = this.storedChapters.filter(chapter => chapterIds.includes(chapter.id))
+    return this.replaceChapters(chapters.map(chapter => withChapterCondition(chapter, condition, this.now())))
+  }
+
   moveChapter(chapterId: string, toIndex: number) {
     return this.saveProject(moveChapter(this.currentProject, chapterId, toIndex, this.now()))
   }
 
+  /** Removes a chapter or a scene; `undo` puts it back where it stood. */
   async removeChapter(chapterId: string) {
+    const removed = this.storedChapters.find(chapter => chapter.id === chapterId)
+    const order = this.currentProject.sceneOrder.includes(chapterId) ? 'sceneOrder' : 'chapterOrder'
+    const index = this.currentProject[order].indexOf(chapterId)
     await this.saveProject(removeChapter(this.currentProject, chapterId, this.now()))
     await this.store.deleteChapter(this.currentProject.id, chapterId)
     this.storedChapters = this.storedChapters.filter(chapter => chapter.id !== chapterId)
+    if (removed !== undefined && index !== -1) {
+      this.pushUndoStep({ chapters: [removed], removedFrom: { order, index } })
+    }
+    await this.forgetUnusedNames()
+  }
+
+  /** Names the story no longer uses that hold a file or a setting of the author's: Cast & files offers to remove them. */
+  get unusedNamesKept(): UnusedName[] {
+    return unusedNames(this.currentProject, this.documents).filter(name => name.isKept)
+  }
+
+  /**
+   * Removes a name nothing uses, and its files with it. An undo bringing back a chapter that names it
+   * could not any more: those steps go, as when a definition goes.
+   */
+  removeUnusedName(name: UnusedName) {
+    const namesIt = (chapter: ChapterDocument) => !unusedNames(this.currentProject, [chapter]).some(unused => unused.kind === name.kind && unused.id === name.id)
+    this.undoSteps = this.undoSteps.filter(step => !step.chapters.some(namesIt))
+    return this.saveWithoutUnusedFiles(withoutNames(this.currentProject, [name]))
   }
 
   /** The game players download: the chapters chosen, and the files they use. */
@@ -411,6 +490,17 @@ export class OpenProject {
     return { project: { ...this.currentProject, chapterOrder: order.slice(start) }, chapters: this.documents, assetUrls }
   }
 
+  /**
+   * Names the text no longer uses, which hold nothing of the author's, go: a track renamed, the values
+   * of options renamed. What an undo could bring back is still used.
+   */
+  private async forgetUnusedNames() {
+    const unused = unusedNames(this.currentProject, [...this.documents, ...this.undoableChapters]).filter(name => !name.isKept)
+    if (unused.length > 0) {
+      await this.saveProject({ ...withoutNames(this.currentProject, unused), updatedAt: this.now() })
+    }
+  }
+
   /** Files no entry uses any more are deleted once the project no longer lists them. */
   private async saveWithoutUnusedFiles(project: ProjectDocument) {
     const unused = unusedAssetIds(project)
@@ -433,7 +523,7 @@ export class OpenProject {
     await this.store.writeProject(project)
     this.currentProject = project
     // An older chapter using a decision, a value or a style removed since can no longer be undone to.
-    this.undoSteps = this.undoSteps.filter(step => refersOnlyToKnownDefinitions(step, project))
+    this.undoSteps = this.undoSteps.filter(step => step.chapters.every(chapter => refersOnlyToKnownDefinitions(chapter, project)))
   }
 
   private now() {
@@ -454,6 +544,8 @@ function describeTarget(project: ProjectDocument, target: AssetTarget, locale: L
       return text.illustrationTarget(`${project.illustrations.find(illustration => illustration.id === target.illustrationId)?.name}`)
     case 'video':
       return text.videoTarget(`${project.videos.find(video => video.id === target.videoId)?.name}`)
+    case 'frame':
+      return text.frameTarget(target.frame)
     case 'captions':
       return text.captionsTarget(`${project.videos.find(video => video.id === target.videoId)?.name}`)
     case 'font':

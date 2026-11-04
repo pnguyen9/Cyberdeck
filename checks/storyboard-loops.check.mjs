@@ -1,6 +1,6 @@
 // Loops: a hub the player leaves with a break, shown and entered as a block in the grid and played by the
 // preview; a loop nothing leaves is warned about at import and marked in the grid.
-import { advanceUntil, createProjectWithStory, pause, shownStep } from './harness.mjs'
+import { advanceUntil, createProjectWithStory, openChapterBoard, pause, shownStep } from './harness.mjs'
 
 const STORY = `# Hub
 [loop]
@@ -36,7 +36,7 @@ export default async function check(page, { url }) {
   ])
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
 
   // A block's title and its marks are spaced by the style, not by the text: their parts are read one by one.

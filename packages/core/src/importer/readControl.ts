@@ -51,6 +51,14 @@ export function readAmount(text: string): number | null {
   return Number.isSafeInteger(amount) ? amount : null
 }
 
+/** `random 1 6` → the lowest and highest numbers to draw from; null for anything else, or the highest below the lowest. */
+export function readRandom(text: string): { minimum: number; maximum: number } | null {
+  const random = /^random\s+(\S+)\s+(\S+)$/i.exec(text.trim())
+  const minimum = random === null ? null : readAmount(random[1]!)
+  const maximum = random === null ? null : readAmount(random[2]!)
+  return minimum === null || maximum === null || maximum < minimum ? null : { minimum, maximum }
+}
+
 /** `Trust = 2` → name and initial value; `Trust` alone starts at 0. Null without a name, or with a value that is no whole number. */
 export function readCounterDeclaration(text: string): { name: string; initial: number } | null {
   if (!text.includes('=')) {

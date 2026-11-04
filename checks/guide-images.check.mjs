@@ -2,7 +2,7 @@
 // page to Datajack's library. `npm run guide:images` runs it and copies the screenshots into the guide;
 // `npm run checks` runs it too, leaving the guide as it is.
 import { readdirSync } from 'node:fs'
-import { advanceUntil, createProfile, createProject, exportGame, installGame, pause, shownStep } from './harness.mjs'
+import { advanceUntil, createProfile, createProject, exportGame, installGame, openChapterBoard, pause, shownStep } from './harness.mjs'
 
 const HUB = `# Chapter 2 — The Fair
 [style: Whisper = italic, small, grey]
@@ -44,7 +44,7 @@ export default async function check(page, { url, assets, serve }) {
   await page.screenshot('import')
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)
-  await page.screenshot('chapters')
+  await page.screenshot('story')
 
   await page.clickButton('Cast & files', '.tab')
   await page.waitFor('.drop-zone .file-input')
@@ -52,7 +52,7 @@ export default async function check(page, { url, assets, serve }) {
   await pause(1000)
   await page.screenshot('cast')
 
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   await pause(300)
   await scrollTo('.board')
@@ -107,7 +107,7 @@ export default async function check(page, { url, assets, serve }) {
   await pause(800)
 
   // The chapter of the fair, its loop holding three branches, in each view.
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.board')
   await page.evaluate(`(() => {
     const picker = document.querySelector('.chapter-picker select')
@@ -122,6 +122,11 @@ export default async function check(page, { url, assets, serve }) {
   await pause(300)
   await scrollTo('.board')
   await page.screenshot('tree')
+  await page.clickButton('Graph', '.view-switch .button')
+  await page.waitFor('.graph-view')
+  await pause(400)
+  await scrollTo('.graph-viewport')
+  await page.screenshot('graph')
   await page.clickButton('Grid', '.view-switch .button')
 
   // Definitions with a style for title cards, which are turned on; the Index; a title card.

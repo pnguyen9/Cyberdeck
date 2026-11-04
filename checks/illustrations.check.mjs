@@ -33,7 +33,7 @@ export default async function check(page, { url, assets, serve }) {
   // Any image does for the test: the background's picture stands in for the illustration's too.
   await page.setFiles('.drop-zone .file-input', [`${assets}/Rooftop.svg`])
   await pause(800)
-  page.check('Cast & files lists the illustrations', await page.evaluate(`[...document.querySelectorAll('.section-title')].map(title => title.textContent)`).then(titles => titles.includes('Illustrations')), true)
+  page.check('Cast & files lists the illustrations', await page.evaluate(`[...document.querySelectorAll('.section-title')].map(title => title.textContent)`).then(titles => titles.some(title => title.trim().startsWith('Illustrations'))), true)
   const archive = await exportGame(page, 'Sunrise.zip')
 
   await createProfile(page, url, 'Pascal')

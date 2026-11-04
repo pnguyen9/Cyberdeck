@@ -32,7 +32,8 @@ export function findPathTo(story: PlayableStory, nodeId: string, memory: { memor
   try {
     const first = new StoryRuntime(story)
     first.useMemory(memory)
-    first.start()
+    // The same draws at every search, so that a page is found or not the same way each time.
+    first.start(0)
     const queue = [{ runtime: first, optionIds: [] as string[] }]
     for (let next = 0; next < queue.length; next++) {
       const { runtime, optionIds } = queue[next]!

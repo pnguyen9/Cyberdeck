@@ -16,7 +16,7 @@ export default async function check(page, { url, serve }) {
   page.check('leaving the preview goes back to the project', await page.evaluate(`document.querySelector('.leave-button')?.textContent.trim()`), '← Project Esc')
   await page.evaluate(`document.querySelector('.leave-button').click()`)
   await pause(500)
-  page.check('on the tab it was left from', await page.evaluate(`document.querySelector('.tab.current')?.textContent.trim()`), 'Chapters')
+  page.check('on the tab it was left from', await page.evaluate(`document.querySelector('.tab.current')?.textContent.trim()`), 'Storyboard')
   const archive = await exportGame(page, 'The Letter 1.0.zip')
   page.check('the export is named after the project and its release', await page.evaluate(`document.querySelector('.export .download')?.getAttribute('download')`), 'The Letter 1.0.zip')
   page.check('no content security violation in Cyberdeck', await page.violations(), '[]')

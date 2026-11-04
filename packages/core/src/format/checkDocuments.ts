@@ -6,7 +6,9 @@ import {
   type Placement,
   type ProjectDocument,
   type StageCommand,
+  type Character,
   type StoredChoice,
+  type StoredCount,
   type VideoClip,
   type StoredCondition,
   type StoredNode,
@@ -205,8 +207,14 @@ function node(value: unknown, path: string, depth: number): StoredNode {
       return object({ type: oneOf('set'), id: string, decisionId: string, valueId: string })(value, path)
     case 'unset':
       return object({ type: oneOf('unset'), id: string, decisionId: string, valueId: nullable(string) })(value, path)
-    case 'count':
-      return object({ type: oneOf('count'), id: string, counterId: string, operation: oneOf('add', 'set'), amount: integer })(value, path)
+    case 'count': {
+      const count: StoredCount = object({ type: oneOf('count'), id: string, counterId: string, operation: oneOf('add', 'set', 'random'), amount: integer })(value, path)
+      if (count.operation === 'random') {
+        const maximum = integer(fields.maximum, `${path}.maximum`)
+        count.maximum = maximum >= count.amount ? maximum : fail(`${path}.maximum`, 'a number at least the lowest one')
+      }
+      return count
+    }
     case 'ending':
       return object({ type: oneOf('ending'), id: string, endingId: string })(value, path)
     case 'remember':
@@ -266,6 +274,7 @@ const LATER_PROJECT_FIELDS = {
   details: { description: '', credits: '', coverAssetId: null },
   css: '',
   chapterTitleCards: false,
+  frames: { textBox: null, namePlate: null },
 }
 
 /** Far beyond any project's styles; low enough that checking it stays quick. */
@@ -289,7 +298,11 @@ const checkProjectFields: Check<ProjectDocument> = object({
   endings: array(object({ id: string, name: string })),
   memories: array(object({ id: string, name: string })),
   styles: array(withImplicit(object({ id: string, name: string, properties: styleProperties }))),
-  characters: array(object({ id: string, name: string, expressions: array(withAssetId), drawnFacing: nullable(facing) })),
+  characters: array((value, path) => {
+    const character: Character = object({ id: string, name: string, expressions: array(withAssetId), drawnFacing: nullable(facing) })(value, path)
+    const color = record(value, path).nameColor
+    return color === undefined ? character : { ...character, nameColor: /^#[0-9a-f]{6}$/i.test(String(color)) ? String(color) : fail(`${path}.nameColor`, 'a colour, #rrggbb') }
+  }),
   backgrounds: array(withAssetId),
   music: array(withAssetId),
   sounds: array(withAssetId),
@@ -310,6 +323,7 @@ const checkProjectFields: Check<ProjectDocument> = object({
   details: object({ description: string, credits: string, coverAssetId: nullable(string) }),
   css,
   chapterTitleCards: boolean,
+  frames: object({ textBox: nullable(string), namePlate: nullable(string) }),
   createdAt: string,
   updatedAt: string,
 })

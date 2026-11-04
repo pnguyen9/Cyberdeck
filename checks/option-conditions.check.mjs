@@ -1,6 +1,6 @@
 // Options with a condition: shown as such on the choice card, and offered by the preview only while it
 // holds, so that places visited leave a hub.
-import { advanceUntil, pause, shownStep } from './harness.mjs'
+import { advanceUntil, openChapterBoard, pause, shownStep } from './harness.mjs'
 
 const STORY = `# Hub
 [decision multi: Visited = Library | Park]
@@ -34,7 +34,7 @@ export default async function check(page, { url }) {
   page.check('the import accepts it', await page.evaluate(`document.querySelectorAll('.problems li').length`), 0)
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
 
   // The declaration written in the chapter is its first card; the loop comes next.

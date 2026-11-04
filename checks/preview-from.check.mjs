@@ -1,5 +1,5 @@
 // Previewing from a card of the storyboard: a path is found to it, and the stage follows that path.
-import { createProjectWithSample, pause } from './harness.mjs'
+import { createProjectWithSample, openChapterBoard, pause } from './harness.mjs'
 
 export default async function check(page, { url }) {
   const clickCard = async test => {
@@ -8,7 +8,7 @@ export default async function check(page, { url }) {
   }
 
   await createProjectWithSample(page, url, 'Paths')
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   await page.evaluate(`document.querySelector('.grid .element.block').click()`)
   await pause(200)

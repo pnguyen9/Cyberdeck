@@ -231,7 +231,9 @@ turns it into pages, characters and choices. Your players play it in Datajack.</
     <li><a href="#tools">Tree view, shortcuts and backups</a></li>
     <li><a href="#players">What your players see</a></li>
     <li><a href="#names">The player's name, and timed choices</a></li>
+    <li><a href="#values">Values in the text, and chance</a></li>
     <li><a href="#translating">Translating your story</a></li>
+    <li><a href="#further">Recipes for bigger stories</a></li>
   </ol>
 </nav>
 
@@ -255,7 +257,7 @@ theirs in Datajack.</p></div>
 first, press <strong>Use the sample story</strong>.</p>
 <div class="tip"><p>No text yet? <strong>Start without a text</strong> opens an empty chapter in the storyboard,
 where you write it page by page. More chapters and scenes come from <strong>New chapter</strong> and
-<strong>New scene</strong>, in the <strong>Chapters</strong> tab.</p></div>
+<strong>New scene</strong>, on the story's level of the <strong>Storyboard</strong>.</p></div>
 <figure>
   <a href="images/import.png"><img src="images/import.png" alt="The Import tab with the sample story pasted in; below it, “1 chapter (Chapter 1 — The Letter), 14 pages” and the Import button." loading="lazy"></a>
   <figcaption>As you type, Cyberdeck says what it understood: here one chapter of 14 pages.</figcaption>
@@ -275,10 +277,11 @@ by itself, between sentences when it can.</p>
 you have, <strong>Pages at the end of a chapter</strong> to continue one, or <strong>In place of a chapter</strong>
 to replace one with a new version. Cyberdeck picks the right one by itself most of the time; you only
 change it to continue a chapter.</p>
-<p>Press <strong>Import</strong>. Your chapter appears in the <strong>Chapters</strong> tab, where chapters
-can be moved, renamed, removed, or played from.</p>
+<p>Press <strong>Import</strong>. Your chapter appears in the <strong>Storyboard</strong>, on the story's own
+level: every chapter as a card, in the order they are played. Click one and its panel moves, renames,
+removes, exports or plays it; <kbd>Enter</kbd> opens it.</p>
 <figure>
-  <a href="images/chapters.png"><img src="images/chapters.png" alt="The Chapters tab listing “Chapter 1 — The Letter”, 14 pages, with links to its storyboard, preview, and to move, export, rename or remove it." loading="lazy"></a>
+  <a href="images/story.png"><img src="images/story.png" alt="The story's level of the storyboard: the chapters as cards, and the panel of the one selected, with Open, Preview from here, Export as text, Rename and Remove." loading="lazy"></a>
 </figure>
 
 <h2 id="stage">3. Set the stage</h2>
@@ -340,8 +343,9 @@ later.</p></div>
 </table>
 
 <h2 id="storyboard">6. Your story as cards</h2>
-<p>The <strong>Storyboard</strong> shows a chapter as cards, read left to right and top to bottom. Each
-card is a page; the small ◧ and its number say how many stage notes come with it.</p>
+<p>Open a chapter, and the <strong>Storyboard</strong> shows it as cards, read left to right and top to
+bottom. Each card is a page; the small ◧ and its number say how many stage notes come with it.
+<kbd>Esc</kbd>, or <strong>↑ Story</strong>, goes back up to every chapter.</p>
 <figure>
   <a href="images/storyboard.png"><img src="images/storyboard.png" alt="The storyboard: numbered page cards in a grid, a choice card, and a framed block “if Answer is Truth” holding pages 7a–8a and 7b–8b." loading="lazy"></a>
 </figure>
@@ -354,10 +358,15 @@ card is a page; the small ◧ and its number say how many stage notes come with 
 </ul>
 <p>Everything also works without a mouse: the arrows move around, <kbd>Space</kbd> selects, and
 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+arrows move what is selected.</p>
+<p>A block, an <code>[if]</code> or a <code>[loop]</code>, is one card in the grid. <kbd>B</kbd> adds a new one,
+ready for its condition; on a block, <kbd>Enter</kbd> opens it to work on its pages, and <kbd>E</kbd> edits its
+own text, its conditions and branches.</p>
 <figure>
   <a href="images/page-edit.png"><img src="images/page-edit.png" alt="Editing page 3: the text “— Marie: You came after all.” with the tag [enter: Marie] drawn as a chip, and a suggestion list offering Marie after typing “[Ma”." loading="lazy"></a>
   <figcaption>While editing, notes in brackets are drawn as chips, and typing <code>[</code> suggests what can go there.</figcaption>
 </figure>
+<p>A note in brackets is one piece: <kbd>Backspace</kbd> removes it whole, and the arrows step over it. To
+change what it says from the keyboard, <kbd>Alt</kbd>+<kbd>←</kbd> or <kbd>Alt</kbd>+<kbd>→</kbd> steps into it.</p>
 <p>While editing, <strong>Insert tag</strong> lists every kind of note, if you'd rather pick than type.
 <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels. The card you are editing is marked ✎, and
 nothing you wrote is lost by accident: opening another card, another chapter or another tab first asks
@@ -516,6 +525,9 @@ The guard lets you pass.
 <p>A chapter that belongs to one route only says so right under its title. Other players pass it by:</p>
 <pre># Chapter 3 — Marie's route
 [only if: Route is Marie]</pre>
+<p>On the story's level of the storyboard, chapters following one another under the same condition form
+a route, framed together, the condition written once. In a chapter's panel, <strong>Played only if</strong>
+sets its condition; <strong>Apply to its route</strong> sets it for every chapter of the route at once.</p>
 
 <h2 id="staging">16. Characters on stage</h2>
 <table>
@@ -582,7 +594,7 @@ piling up until <code>[clear]</code>. <code>[text: box]</code> brings the text b
 <h2 id="word">20. Working in Word</h2>
 <p>You can write your whole story in Word and open the <code>.docx</code> in the Import tab. Titles in
 the “Heading 1” style become chapters. A dialogue line that Word turned into a bulleted list is still dialogue.</p>
-<p>To edit in Word again later, <strong>Export as text</strong> (in Chapters, for one chapter) writes the
+<p>To edit in Word again later, <strong>Export as text</strong> (in a chapter's panel, on the story's level) writes the
 story back with every change you made in Cyberdeck. Import it again, and Cyberdeck chooses
 <strong>In place of a chapter</strong> by itself, for the chapter of the same title: its first line,
 <code>[import: chapter]</code>, says it is one. The chapter keeps its place, and players' saves inside it
@@ -600,13 +612,20 @@ block side by side, to follow how the story goes. Here is the fair of chapter 2 
   <a href="images/tree.png"><img src="images/tree.png" alt="Chapter 2 in the tree: “loop, until a break”, the choice Where, then three branches side by side (if Where is Wheel, else if Where is Stand, else with “out of the loop”), “back to the start”, then Marie's page and the ending." loading="lazy"></a>
   <figcaption>The tree: the loop, its choice and its three branches, all at once. Cards are edited here, not moved.</figcaption>
 </figure>
+<p>The <strong>Graph</strong> view draws the whole story as a map: chapters one under the other, blocks
+forking into their branches and joining again, endings where routes stop, and scenes on the side, linked
+to each <code>[play]</code> that calls them. Drag it to move around, use the wheel to zoom, and click a box:
+its panel opens it in the grid, adds a branch to a block or an option to a choice, or moves a branch.</p>
+<figure>
+  <a href="images/graph.png"><img src="images/graph.png" alt="The graph of the story: its two chapters one under the other, their pages and choices, the blocks forking into branches that join again, the loop of the fair and its ending." loading="lazy"></a>
+</figure>
 <p><strong>Shortcuts</strong> (or <kbd>?</kbd>) lists every key by screen; click one to change it.</p>
 <p><strong>Back up</strong> downloads your whole project as one file. <strong>Restore a backup…</strong>, on
 the projects screen, brings it back, on this computer or another. Do it now and then.</p>
 
 <h2 id="players">22. What your players see</h2>
 <p>Players have their own <strong>Settings</strong>, in three categories. <strong>General</strong>: text
-speed, volumes (music and videos, sounds, voices), full screen. <strong>Accessibility</strong>: larger text,
+speed, volumes (music and videos, sounds, voices), the speed of auto mode, full screen. <strong>Accessibility</strong>: larger text,
 a plainer font, a stronger contrast, pages read aloud, choices that wait for them, and captions on
 videos. Players with a screen reader hear each page whole as it appears.
 <strong>Controls</strong>: their own keys. You have nothing to do for any of it: it works in every game.</p>
@@ -622,8 +641,17 @@ videos. Players with a screen reader hear each page whole as it appears.
 </figure>
 <p>The game saves at every page. Save and Load add six slots, and <strong>Save to a file</strong> keeps a
 save as a file, to put aside or to carry to another computer. There, <strong>Load a save…</strong> in the
-library opens it, if the game is installed. The <strong>Map</strong> shows each choice they have reached and
-where each option led, so that they can try another from there.</p>
+library opens it, if the game is installed. Each save shows a small picture of the stage as it was. The
+<strong>Map</strong> shows each choice they have reached and where each option led, so that they can try
+another from there.</p>
+<p><strong>Auto ▶</strong> moves on by itself: a page with a voice waits for its line, another for the time it
+takes to read it. Any key or click takes over again.</p>
+<p>The look of the text box and of the names is yours to set, too. Images named <code>text-box.png</code> and
+<code>name-plate.png</code>, dropped in Cast &amp; files, frame them, stretched by their edges so that their corners
+stay whole: a floral border, for instance. In the CSS, <code>.text-box</code> and <code>.name-plate</code> change
+their colours, borders and shadows, and a class named after a character, <code>.marie</code>, her plate alone; or
+give her name a colour in Cast &amp; files. In the preview, <strong>State</strong> shows what the story holds on
+the page shown: each decision, counter and name, what is remembered.</p>
 
 <h2 id="names">23. The player's name, and timed choices</h2>
 <p>To let players name the hero, ask for it, then write the name between braces wherever it goes:</p>
@@ -640,12 +668,111 @@ it is never shown, and it is what happens when time runs out.</p>
 > … = Silent [timeout]</pre>
 <div class="tip"><p>Players who need more time can ask choices to wait for them, in their settings.</p></div>
 
-<h2 id="translating">24. Translating your story</h2>
+<h2 id="values">24. Values in the text, and chance</h2>
+<p>Braces show a value the story keeps: a counter, a decision, a name the player gave.</p>
+<pre>[counter: Hour = 8]
+[decision multi: Clues = Letter | Key]
+It is {Hour} o'clock. In your pocket: {Clues}.</pre>
+<p>A decision shows its values, separated by commas. A name that means nothing to the story is reported
+when you import, so a typo never shows; one name means one thing, so a name asked of the player cannot
+also be a counter's. To write a brace itself, double it: <code>{{</code>.</p>
+<p>For a counter, <code>[set: Weather = random 1 6]</code> draws a number between the two, so that the same
+choices may lead elsewhere. A save keeps what was drawn, and going back draws the same again.</p>
+
+<h2 id="translating">25. Translating your story</h2>
 <p>On the projects screen, <strong>Copy without the story</strong> makes a new project with your files,
 characters and settings, but none of your chapters. Give it a name and the language of the
 translation, then import the translated text into it, from Word or pasted. Keep the tags as they are,
 <code>[bg: rooftop]</code> or <code>[enter: marie]</code>: that is how the translation finds your pictures and
 sounds.</p>
+
+<h2 id="further">26. Recipes for bigger stories</h2>
+<p>A few ways to put the pieces together, for stories that branch more than once.</p>
+
+<h3>Routes that meet at the end</h3>
+<p>Each route is a run of chapters under its own condition; the epilogue has none, so every route
+reaches it, and its own <code>[if]</code> says goodbye in each one's way.</p>
+<pre># Chapter 3 — Marie
+[only if: Route is Marie]
+…
+# Chapter 3 — Jules
+[only if: Route is Jules]
+…
+# Epilogue
+[if: Route is Marie]
+— Marie: Same time next year?
+[else]
+— Jules: Don't be a stranger.
+[end]
+[ending: Together]</pre>
+
+<h3>Affection deciding the route</h3>
+<p>A counter per character, raised by the options that please them, then read once, where the route
+starts:</p>
+<pre>[choice: Gift]
+> Flowers = Flowers [add: Marie]
+> A book = Book [add: Jules]
+…
+[if: Marie >= 3]
+[set: Route = Marie]
+[else]
+[set: Route = Jules]
+[end]</pre>
+
+<h3>A hub where time runs out</h3>
+<p>A loop around a choice, a counter for the hour, and a way out when it is late:</p>
+<pre>[counter: Hour = 18]
+[loop]
+[if: Hour >= 22]
+The fair is closing.
+[break]
+[end]
+[choice: Where]
+> The big wheel = Wheel
+> The candy stand = Stand
+[add: Hour]
+It is now {Hour} o'clock.
+[end]</pre>
+
+<h3>A choice that remembers</h3>
+<p>A <code>[decision multi]</code> keeps each option picked; an <code>[if]</code> after an option hides the
+ones already taken, as in the fair above.</p>
+
+<h3>An ending for those who saw the others</h3>
+<p>What the player has seen stays with their profile from one playthrough to the next. A true ending
+can wait for both routes:</p>
+<pre>[if: seen ending Marie's Ending and seen ending Jules's Ending]
+[play: The Truth]
+[end]</pre>
+
+<h3>Scenes as pieces to reuse</h3>
+<p>A scene can be played by many chapters, and test the story itself: one morning scene for every day,
+its lines changing with what happened.</p>
+<pre># Scene: Morning
+[bg: kitchen]
+[if: Hour >= 9]
+— Mum: You're late again.
+[else]
+— Mum: Breakfast is ready.
+[end]</pre>
+
+<h3>A second playthrough</h3>
+<p><code>[remember]</code> marks what the profile keeps for good. Later, <code>[if: remembered …]</code> lets a
+character notice:</p>
+<pre>[if: remembered The ghost's name]
+— Ghost: You came back, and you know my name.
+[end]</pre>
+
+<h3>A little chance</h3>
+<p>A random draw lets the same choices lead to different evenings:</p>
+<pre>[counter: Weather]
+[set: Weather = random 1 6]
+[if: Weather >= 5]
+[bg: rain]
+It started to pour.
+[end]</pre>
+<p>The <strong>Graph</strong> view of the storyboard is the place to check the whole: every route, where
+it forks, where it ends.</p>
 
 </main>
 </body>

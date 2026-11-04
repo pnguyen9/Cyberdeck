@@ -1,4 +1,4 @@
-// Scenes: one bad end written once and played from two chapters. The import, the Chapters tab, the
+// Scenes: one bad end written once and played from two chapters. The import, the story's level, the
 // storyboard (the play, the branch it ends, the scene itself) and the preview reaching its ending.
 import { advanceUntil, pause, shownStep } from './harness.mjs'
 
@@ -38,13 +38,13 @@ export default async function check(page, { url }) {
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)
 
-  page.check('the Chapters tab lists the scene, and who plays it', await page.evaluate(`document.querySelector('.chapter.scene .details')?.textContent.replace(/\\s+/g, ' ').trim()`), '1 page · played by Chapter 2, Chapter 5')
-  page.check('apart from the chapters', await page.evaluate(`[...document.querySelectorAll('.chapter:not(.scene) .title')].map(title => title.textContent).join(' | ')`), 'Chapter 2 | Chapter 5')
+  page.check('the story lists the scene, and who plays it', await page.evaluate(`[...document.querySelector('.story-level .scene')?.children ?? []].map(part => part.textContent.trim()).join(' ')`), '▷ Caught played by Chapter 2, Chapter 5')
+  page.check('apart from the chapters', await page.evaluate(`[...document.querySelectorAll('.story-level .chapter:not(.scene) .title')].map(title => title.textContent).join(' | ')`), 'Chapter 2 | Chapter 5')
 
-  await page.clickButton('Storyboard', '.tab')
+  await page.press('Enter')
   await page.waitFor('.grid')
   page.check('the play shows in the block, naming the scene', await page.evaluate(`[...document.querySelectorAll('.grid .element.block .mini.marker')].map(mini => mini.textContent.trim())`), ['▷ Caught'])
-  page.check('the branch playing a scene that ends is marked as ending', await page.evaluate(`document.querySelector('.grid .element.block .ending-mark')?.textContent.trim()`), '★ 1 route ends')
+  page.check('the branch playing a scene that ends is marked as ending', await page.evaluate(`document.querySelector('.grid .element.block .ending-mark')?.textContent.trim()`), '★ 1 path ends')
   await page.screenshot('chapter')
 
   const sceneId = await page.evaluate(`[...document.querySelectorAll('.chapter-picker option')].find(option => option.textContent === 'Caught').value`)

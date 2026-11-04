@@ -13,7 +13,7 @@ import {
   stateFromSave,
   toSave,
 } from '../../src/index'
-import { pageWithNames } from '../../src/format/askedNames'
+import { pageWithValues } from '../../src/format/textValues'
 import { monospaceLayout } from '../monospaceLayout'
 import { storyFromText } from './storyFromText'
 
@@ -36,7 +36,7 @@ describe('names the player gives', () => {
     expect(runtime.snapshot.step.type).toBe('ask')
     runtime.answer('  Morgan   le   Fay and more  ')
     expect(shownText(runtime)).toBe('I am Morgan le Fa.')
-    expect(runtime.withNames(story.project.characters[0]!.name)).toBe('Morgan le Fa')
+    expect(runtime.withValues(story.project.characters[0]!.name)).toBe('Morgan le Fa')
     runtime.next()
     expect(shownText(runtime)).toBe('No, Morgan le Fa.')
     runtime.next()
@@ -58,7 +58,7 @@ describe('names the player gives', () => {
   it('move the styles and inline commands of the page with the text', () => {
     const story = storyFromText(['[ask: Hero]', 'Then {Hero} [style: italic]ran[style: none] [wait: 1]away.'])
     const page = flattenStoredNodes(story.chapters[0]!.nodes).find(node => node.type === 'page')!
-    const shown = pageWithNames(page, () => 'Jo')
+    const shown = pageWithValues(page, () => 'Jo')
     expect(shown.text).toBe('Then Jo ran away.')
     expect(shown.styles?.map(span => shown.text.slice(span.start, span.end))).toEqual(['ran'])
     expect(shown.inlineCommands.map(command => shown.text.slice(command.offset))).toEqual(['away.'])
@@ -87,7 +87,7 @@ describe('names the player gives', () => {
     expect(problemsOf(['[ask: Two Words]', '[ask: Hero = A name far too long]', 'Hello {Nobody}.'])).toEqual([
       '1 invalidAsk Two Words',
       '2 invalidAsk Hero = A name far too long',
-      '3 unknownAskedName Nobody',
+      '3 unknownValue Nobody',
     ])
   })
 

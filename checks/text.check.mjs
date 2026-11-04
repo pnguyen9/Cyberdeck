@@ -1,11 +1,11 @@
 // Exporting as text: a chapter edited as text replaces itself; the whole story imports as a new
 // project that exports to the same text.
-import { createProject, createProjectWithSample, pause } from './harness.mjs'
+import { createProject, createProjectWithSample, openChapterBoard, pause } from './harness.mjs'
 
 export default async function check(page, { url }) {
   const lastDownload = `[...document.querySelectorAll('.download')].at(-1)`
   const downloadedText = () => page.evaluate(`fetch(${lastDownload}.href).then(response => response.text())`)
-  const chapterTitles = () => page.evaluate(`[...document.querySelectorAll('.chapter .title')].map(title => title.textContent).join(' | ')`)
+  const chapterTitles = () => page.evaluate(`[...document.querySelectorAll('.story-level .chapter:not(.scene) .title')].map(title => title.textContent).join(' | ')`)
   const exportStoryText = async () => {
     await page.clickButton('Export', '.tab')
     await pause(300)
@@ -15,7 +15,7 @@ export default async function check(page, { url }) {
 
   await createProjectWithSample(page, url, 'Letters')
   await page.watchViolations()
-  await page.clickButton('Export as text', '.link-button')
+  await page.clickButton('Export as text', '.inspector .button')
   await pause(400)
   page.check('a chapter is offered as a text file', await page.evaluate(`${lastDownload}?.getAttribute('download')`), 'Chapter 1 — The Letter.txt')
   const chapterText = await downloadedText()
@@ -33,7 +33,7 @@ export default async function check(page, { url }) {
   await pause(800)
   page.check('replacing is reported', /^Chapter 1 — The Letter was replaced by the text imported: \d+ pages\.$/.test(await page.statusText() ?? ''), true)
   page.check('the chapter keeps its place, alone', await chapterTitles(), 'Chapter 1 — The Letter')
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   page.check('the edit is in the storyboard', await page.evaluate(`[...document.querySelectorAll('.grid .element.card .text')].some(text => text.textContent === 'You came, after all this time.')`), true)
 

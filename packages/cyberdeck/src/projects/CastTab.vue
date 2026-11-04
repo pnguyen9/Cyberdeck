@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import type { Facing } from '@cyberdeck/core'
+import { unusedNames, type Facing, type UnusedName } from '@cyberdeck/core'
 import { useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { castMessages } from '../i18n/castMessages'
+import { commonMessages } from '../i18n/commonMessages'
 import { readGivenFiles, useEditor } from './editorContext'
+import FoldedSection from './FoldedSection.vue'
+import { useFoldedSections } from './foldedSections'
+import KindFilter from './KindFilter.vue'
 import { measureFontWidth } from './fontWidth'
 
-const { open, project, act } = useEditor()
+const { open, project, documents, act } = useEditor()
+const common = useMessages(commonMessages)
 const locale = useLocale()
 const text = useMessages(castMessages)
 const isDraggingOver = ref(false)
@@ -28,6 +33,7 @@ const characters = computed(() => project.value.characters.map(character => ({
   id: character.id,
   name: character.name,
   drawnFacing: character.drawnFacing ?? 'viewer',
+  nameColor: character.nameColor ?? null,
   expressions: character.expressions.map(expression => entry(expression.id, expression.name, expression.assetId)),
 })))
 const backgrounds = computed(() => project.value.backgrounds.map(background => entry(background.id, background.name, background.assetId)))
@@ -38,6 +44,38 @@ const videos = computed(() => project.value.videos.map(video => ({ ...entry(vide
 const fonts = computed(() => project.value.fonts.map(font => ({ ...entry(font.id, font.name, font.assetId), widthScale: font.widthScale })))
 const missingCount = computed(() => [...characters.value.flatMap(character => character.expressions), ...backgrounds.value, ...illustrations.value, ...music.value, ...sounds.value, ...videos.value]
   .filter(candidate => candidate.file === null).length)
+
+/** Entries the story names no longer, which keep a file or a setting: removed only when the author says so. */
+const unusedKept = computed(() => unusedNames(project.value, documents.value).filter(name => name.isKept))
+const characterNameOf = (characterId: string) => project.value.characters.find(character => character.id === characterId)?.name ?? '?'
+const describeUnused = (name: UnusedName) => name.kind === 'expression' ? text.value.unusedExpression(characterNameOf(name.characterId), name.name) : text.value.unusedEntry(name.kind, name.name)
+
+function removeUnused(name: UnusedName) {
+  void act(() => open.removeUnusedName(name), text.value.unusedRemoved(describeUnused(name)))
+}
+
+/** Each kind of file in a section of its own, folded until opened; a filter shows one kind alone. */
+type SectionKind = 'characters' | 'backgrounds' | 'illustrations' | 'music' | 'sounds' | 'videos' | 'frames' | 'unusedKept' | 'fonts'
+const SECTION_TITLES = { characters: 'characters', backgrounds: 'backgrounds', illustrations: 'illustrations', music: 'music', sounds: 'sounds', videos: 'videos', frames: 'frames', unusedKept: 'notUsed', fonts: 'fonts' } as const
+const counts = computed((): Record<SectionKind, number> => ({
+  characters: characters.value.length,
+  backgrounds: backgrounds.value.length,
+  illustrations: illustrations.value.length,
+  music: music.value.length,
+  sounds: sounds.value.length,
+  videos: videos.value.length,
+  frames: frames.value.length,
+  unusedKept: unusedKept.value.length,
+  fonts: fonts.value.length,
+}))
+const kindsPresent = computed(() => (Object.keys(counts.value) as SectionKind[]).filter(kind => counts.value[kind] > 0))
+const { kindShown, showKind, isShown, isOpen, toggleSection } = useFoldedSections(kindsPresent)
+const filterKinds = computed(() => kindsPresent.value.map(kind => ({ kind, label: text.value[SECTION_TITLES[kind]] })))
+/** "3 without a file", for the title of a section whose entries lack some. */
+const missingText = (entries: readonly { file: unknown }[]) => {
+  const missing = entries.filter(candidate => candidate.file === null).length
+  return missing === 0 ? null : text.value.withoutFile(missing)
+}
 
 async function addFiles(fileList: FileList | null | undefined) {
   const files = await readGivenFiles(fileList)
@@ -60,6 +98,17 @@ function onDrop(event: DragEvent) {
   isDraggingOver.value = false
   void addFiles(event.dataTransfer?.files)
 }
+
+function setNameColor(characterId: string, color: string | null) {
+  void act(() => open.setNameColor(characterId, color))
+}
+
+/** The frames of the text box and the name plate, when the project has their pictures. */
+const frames = computed(() => (['textBox', 'namePlate'] as const).flatMap(frame => {
+  const file = fileOf(project.value.frames[frame])
+  const assetId = project.value.frames[frame]
+  return file === null ? [] : [{ frame, file, imageUrl: assetId === null ? null : imageUrls.value.get(assetId) ?? null }]
+}))
 
 function setDrawnFacing(characterId: string, value: string) {
   const facing: Facing | null = value === 'left' || value === 'right' ? value : null
@@ -85,12 +134,17 @@ function setDrawnFacing(characterId: string, value: string) {
       {{ text.nothingYet }}
     </p>
     <p v-else-if="missingCount > 0" class="muted">{{ text.missingFiles(missingCount) }}</p>
+    <KindFilter v-if="kindsPresent.length > 1" :kinds="filterKinds" :shown="kindShown" :all-label="text.allKinds" @show="showKind" />
 
-    <template v-if="characters.length > 0">
-      <h2 class="section-title">{{ text.characters }}</h2>
+    <FoldedSection v-if="isShown('characters')" class="cast-section" :title="text.characters" :count="counts.characters" :missing-text="missingText(characters.flatMap(character => character.expressions))" :open="isOpen('characters')" @toggle="toggleSection('characters', $event)">
       <div v-for="character in characters" :key="character.id" class="group">
         <div class="group-name">
           {{ character.name }}
+          <label class="drawn-facing muted">
+            {{ text.nameColor }}
+            <input type="color" :value="character.nameColor ?? '#9eeaff'" @change="setNameColor(character.id, ($event.target as HTMLInputElement).value)">
+            <button v-if="character.nameColor !== null" class="link-button" @click="setNameColor(character.id, null)">{{ text.plateColor }}</button>
+          </label>
           <label class="drawn-facing muted">
             {{ text.drawnFacing }}
             <select :value="character.drawnFacing" @change="setDrawnFacing(character.id, ($event.target as HTMLSelectElement).value)">
@@ -108,61 +162,72 @@ function setDrawnFacing(characterId: string, value: string) {
           <span :class="expression.file === null ? 'missing' : 'present'">{{ expression.file?.fileName ?? text.noFile }}</span>
         </div>
       </div>
-    </template>
+    </FoldedSection>
 
-    <template v-if="backgrounds.length > 0">
-      <h2 class="section-title">{{ text.backgrounds }}</h2>
+    <FoldedSection v-if="isShown('backgrounds')" class="cast-section" :title="text.backgrounds" :count="counts.backgrounds" :missing-text="missingText(backgrounds)" :open="isOpen('backgrounds')" @toggle="toggleSection('backgrounds', $event)">
       <div v-for="background in backgrounds" :key="background.id" class="entry">
         <img v-if="background.imageUrl !== null" class="thumbnail wide" :src="background.imageUrl" alt="">
         <span v-else class="thumbnail wide empty" />
         <span>{{ background.name }}</span>
         <span :class="background.file === null ? 'missing' : 'present'">{{ background.file?.fileName ?? text.noFile }}</span>
       </div>
-    </template>
+    </FoldedSection>
 
-    <template v-if="illustrations.length > 0">
-      <h2 class="section-title">{{ text.illustrations }}</h2>
+    <FoldedSection v-if="isShown('illustrations')" class="cast-section" :title="text.illustrations" :count="counts.illustrations" :missing-text="missingText(illustrations)" :open="isOpen('illustrations')" @toggle="toggleSection('illustrations', $event)">
       <div v-for="illustration in illustrations" :key="illustration.id" class="entry">
         <img v-if="illustration.imageUrl !== null" class="thumbnail wide" :src="illustration.imageUrl" alt="">
         <span v-else class="thumbnail wide empty" />
         <span>{{ illustration.name }}</span>
         <span :class="illustration.file === null ? 'missing' : 'present'">{{ illustration.file?.fileName ?? text.noFile }}</span>
       </div>
-    </template>
+    </FoldedSection>
 
-    <template v-if="music.length > 0">
-      <h2 class="section-title">{{ text.music }}</h2>
+    <FoldedSection v-if="isShown('music')" class="cast-section" :title="text.music" :count="counts.music" :missing-text="missingText(music)" :open="isOpen('music')" @toggle="toggleSection('music', $event)">
       <div v-for="track in music" :key="track.id" class="entry">
         <span>{{ track.name }}</span>
         <span :class="track.file === null ? 'missing' : 'present'">{{ track.file?.fileName ?? text.noFile }}</span>
       </div>
-    </template>
+    </FoldedSection>
 
-    <template v-if="sounds.length > 0">
-      <h2 class="section-title">{{ text.sounds }}</h2>
+    <FoldedSection v-if="isShown('sounds')" class="cast-section" :title="text.sounds" :count="counts.sounds" :missing-text="missingText(sounds)" :open="isOpen('sounds')" @toggle="toggleSection('sounds', $event)">
       <div v-for="sound in sounds" :key="sound.id" class="entry">
         <span>{{ sound.name }}</span>
         <span :class="sound.file === null ? 'missing' : 'present'">{{ sound.file?.fileName ?? text.noFile }}</span>
       </div>
-    </template>
+    </FoldedSection>
 
-    <template v-if="videos.length > 0">
-      <h2 class="section-title">{{ text.videos }}</h2>
+    <FoldedSection v-if="isShown('videos')" class="cast-section" :title="text.videos" :count="counts.videos" :missing-text="missingText(videos)" :open="isOpen('videos')" @toggle="toggleSection('videos', $event)">
       <div v-for="video in videos" :key="video.id" class="entry">
         <span>{{ video.name }}</span>
         <span :class="video.file === null ? 'missing' : 'present'">{{ video.file?.fileName ?? text.noFile }}</span>
         <span class="muted">{{ video.captions === null ? text.noCaptions : text.captions(video.captions.fileName) }}</span>
       </div>
-    </template>
+    </FoldedSection>
 
-    <template v-if="fonts.length > 0">
-      <h2 class="section-title">{{ text.fonts }}</h2>
+    <FoldedSection v-if="isShown('frames')" class="cast-section" :title="text.frames" :count="counts.frames" :missing-text="null" :open="isOpen('frames')" @toggle="toggleSection('frames', $event)">
+      <p class="muted">{{ text.framesHelp }}</p>
+      <div v-for="frame in frames" :key="frame.frame" class="entry">
+        <img v-if="frame.imageUrl !== null" class="thumbnail wide" :src="frame.imageUrl" alt="">
+        <span>{{ text.frameTarget(frame.frame) }}</span>
+        <span class="present">{{ frame.file.fileName }}</span>
+      </div>
+    </FoldedSection>
+
+    <FoldedSection v-if="isShown('unusedKept')" class="cast-section unused" :title="text.notUsed" :count="counts.unusedKept" :missing-text="null" :open="isOpen('unusedKept')" @toggle="toggleSection('unusedKept', $event)">
+      <p class="muted">{{ text.notUsedHelp }}</p>
+      <div v-for="name in unusedKept" :key="name.id" class="entry">
+        <span>{{ describeUnused(name) }}</span>
+        <button class="link-button" @click="removeUnused(name)">{{ common.remove }}</button>
+      </div>
+    </FoldedSection>
+
+    <FoldedSection v-if="isShown('fonts')" class="cast-section" :title="text.fonts" :count="counts.fonts" :missing-text="missingText(fonts)" :open="isOpen('fonts')" @toggle="toggleSection('fonts', $event)">
       <p class="muted">{{ text.fontsHelp }}</p>
       <div v-for="font in fonts" :key="font.id" class="entry">
         <code>font-family: "{{ font.name }}"</code>
         <span :class="font.file === null ? 'missing' : 'present'">{{ font.file?.fileName ?? text.noFile }} · {{ text.fontWidth(Math.round(font.widthScale * 100)) }}</span>
       </div>
-    </template>
+    </FoldedSection>
   </section>
 </template>
 

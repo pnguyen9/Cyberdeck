@@ -62,6 +62,7 @@ export {
   type RestoreOutcome,
   type RuntimeState,
 } from './runtime/storyRuntime'
+export { valuesReader, type HeldValues } from './runtime/storyValues'
 export { parseSave, stateFromSave, toSave, type SaveData } from './saves/saveData'
 export {
   addEmptyDocument,
@@ -71,12 +72,15 @@ export {
   refersOnlyToKnownDefinitions,
   styleWidthScales,
   previewImport,
+  previewChapterCondition,
+  withChapterCondition,
   playsOf,
   projectWithoutStory,
   removeChapter,
   renameChapter,
   renameProject,
   setDrawnFacing,
+  setNameColor,
   unusedAssetIds,
   updateDetails,
   withoutAssets,
@@ -105,14 +109,15 @@ export {
 export { knownNamesForEdit } from './project/nodeEdits'
 export { applyDefinitions, definitionsOf, definitionsText, previewDefinitions, type DefinitionsPreview } from './project/definitionEdits'
 export { pagesTooLong } from './project/styleFit'
+export { unusedNames, withoutNames, type UnusedName } from './project/unusedNames'
 export { checkAuthorCss, styleClassName, type CheckedCss, type LeftOut, type LeftOutReason } from './format/authorCss'
 export { RESERVED_STYLE_NAMES } from './format/textStyles'
-export { givenName, MAXIMUM_ASKED_NAME_LENGTH } from './format/askedNames'
+export { givenName, MAXIMUM_ASKED_NAME_LENGTH, possibleValues, type PossibleValues } from './format/textValues'
 export { playerFormatVersion } from './archive/gameArchive'
 export { createProjectBackup, readProjectBackup, type ProjectBackup } from './project/projectBackup'
 export { describeAssignment, describeCondition, describeCount, describeDefinition, describeStageCommand, describeUnset } from './storyboard/describeNodes'
 export { ENGLISH_STORY_WORDS, type StoryWords } from './storyboard/storyWords'
-export { CHAPTER_START, insertNodes, moveNodes, removeNodes, replaceNode, storyboardEntries, type DropSlot, type StoryboardEntry, type StoryboardOptions } from './storyboard/storyboard'
+export { CHAPTER_START, insertNodes, moveBranch, moveNodes, removeNodes, replaceNode, storyboardEntries, type DropSlot, type StoryboardEntry, type StoryboardOptions } from './storyboard/storyboard'
 export {
   choicesOf,
   decisionsTestedFrom,

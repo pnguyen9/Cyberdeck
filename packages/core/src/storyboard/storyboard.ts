@@ -1,4 +1,5 @@
 import {
+  flattenStoredNodes,
   innerListsOf,
   mapInnerLists,
   type ChapterDocument,
@@ -173,6 +174,27 @@ export function replaceNode(chapter: ChapterDocument, nodeId: string, replacemen
     ? [...replacement]
     : [mapInnerLists(node, list => replaceIn(list.nodes))])
   return { ...chapter, nodes: replaceIn(chapter.nodes), updatedAt: now }
+}
+
+/**
+ * A branch of a block moved one place towards the start (-1) or the end (1): the first branch played
+ * whose condition holds comes first. `[else]`, taken when none holds, stays last. The chapter as it
+ * was when the branch cannot move so.
+ */
+export function moveBranch(chapter: ChapterDocument, conditionId: string, branchId: string, step: -1 | 1, now: string): ChapterDocument {
+  const node = flattenStoredNodes(chapter.nodes).find(candidate => candidate.id === conditionId)
+  if (node?.type !== 'condition') {
+    return chapter
+  }
+  const from = node.branches.findIndex(branch => branch.id === branchId)
+  const to = from + step
+  const isElse = (index: number) => node.branches[index]?.condition === null
+  if (from === -1 || to < 0 || to >= node.branches.length || isElse(from) || isElse(to)) {
+    return chapter
+  }
+  const branches = [...node.branches]
+  ;[branches[from], branches[to]] = [branches[to]!, branches[from]!]
+  return replaceNode(chapter, conditionId, [{ ...node, branches }], now)
 }
 
 export function removeNodes(chapter: ChapterDocument, nodeIds: readonly string[], now: string): ChapterDocument {

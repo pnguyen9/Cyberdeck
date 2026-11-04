@@ -1,4 +1,4 @@
-// Route chapters: a chapter played only on a condition says so in the Chapters tab and the storyboard,
+// Route chapters: a chapter played only on a condition says so in the story's level and the storyboard,
 // and the preview passes it by when the condition does not hold.
 import { advanceUntil, pause, shownStep } from './harness.mjs'
 
@@ -29,15 +29,15 @@ export default async function check(page, { url }) {
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)
 
-  page.check('the Chapters tab says which chapters play only on a route', await page.evaluate(`[...document.querySelectorAll('.chapter')].map(chapter => chapter.querySelector('.only-if')?.textContent.trim() ?? '—')`), [
-    '—',
-    'Played only if Route is Marie',
-    'Played only if Route is Jules',
-    '—',
+  page.check('the story shows each route, its condition written once', await page.evaluate(`[...document.querySelectorAll('.story-level .route')].map(route => [route.querySelector('.route-heading')?.textContent.trim() ?? '—', [...route.querySelectorAll('.title')].map(title => title.textContent).join(', ')].join(': '))`), [
+    '—: Prologue',
+    "Played only if Route is Marie: Marie's route",
+    "Played only if Route is Jules: Jules's route",
+    '—: Epilogue',
   ])
-  await page.screenshot('chapters')
+  await page.screenshot('story')
 
-  await page.clickButton('Storyboard', '.tab')
+  await page.press('Enter')
   await page.waitFor('.grid')
   const chapterId = await page.evaluate(`[...document.querySelectorAll('.chapter-picker option')].find(option => option.textContent === "Jules's route").value`)
   await page.setValue('.chapter-picker select', chapterId, 'change')

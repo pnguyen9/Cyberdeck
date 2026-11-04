@@ -74,6 +74,7 @@ const en = {
     memoryOrEnding: 'memory or ending',
   },
   insertTag: 'Insert tag ▾',
+  enterTagHint: (keys: string) => keys === '' ? 'A tag is one piece: click inside it to change what it says.' : `A tag is one piece: ${keys} steps into it to change what it says.`,
   orType: 'or type',
   templateGroups: {
     stage: 'Stage',
@@ -198,6 +199,7 @@ const fr: TagTextMessages = {
     memoryOrEnding: 'souvenir ou fin',
   },
   insertTag: 'Insérer une balise ▾',
+  enterTagHint: keys => keys === '' ? 'Une balise forme un bloc\u00a0: cliquez dedans pour changer ce qu’elle dit.' : `Une balise forme un bloc\u00a0: ${keys} y entre pour changer ce qu’elle dit.`,
   orType: 'ou tapez',
   templateGroups: {
     stage: 'Mise en scène',

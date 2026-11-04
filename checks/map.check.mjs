@@ -1,5 +1,5 @@
 // Endings, memories, the map of the routes explored and skipping: a story written in Cyberdeck, played in Datajack.
-import { createProfile, createProjectWithStory, exportGame, installGame, pause, shownStep } from './harness.mjs'
+import { createProfile, createProjectWithStory, exportGame, installGame, openChapterBoard, pause, shownStep } from './harness.mjs'
 
 const STORY = `# Night
 The station was empty.
@@ -36,7 +36,7 @@ export default async function check(page, { url, serve }) {
   const cardChapters = () => page.evaluate(`document.querySelector('.chapters')?.textContent.trim()`)
 
   await createProjectWithStory(page, url, 'Night Train', STORY)
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.board')
   await page.clickButton('Tree', '.view-switch .button')
   await page.waitFor('.board.tree')

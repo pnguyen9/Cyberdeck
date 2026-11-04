@@ -5,7 +5,7 @@
 export const STYLE_PROPERTIES = ['italic', 'bold', 'small', 'large', 'grey', 'red', 'blue', 'green', 'gold', 'shaking', 'fade-in', 'rise', 'glow'] as const
 
 /** Styles the player draws outside the text: a chapter's title card, and the ending's name on the end screen. */
-export const RESERVED_STYLE_NAMES = { chapterTitle: 'chapter title', ending: 'ending' } as const
+export const RESERVED_STYLE_NAMES = { chapterTitle: 'chapter title', ending: 'ending', textBox: 'text box', namePlate: 'name plate' } as const
 
 /** Those Datajack 1.0 (format 1.1) draws: it refuses a style with any other. */
 export const STYLE_PROPERTIES_OF_1_1: readonly string[] = ['italic', 'bold', 'small', 'large', 'grey', 'red', 'blue', 'green', 'gold', 'shaking']

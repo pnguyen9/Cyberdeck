@@ -1,6 +1,6 @@
 // The tag editor of a page: tags as chips of their kind, suggestions as tags are typed and chosen with the
 // arrows, chips removed whole and stepped over, undo, the insert menu, and invalid tags explained.
-import { createProjectWithSample, pause } from './harness.mjs'
+import { createProjectWithSample, openChapterBoard, pause } from './harness.mjs'
 
 export default async function check(page, { url }) {
   const typeText = async text => {
@@ -13,7 +13,7 @@ export default async function check(page, { url }) {
   const caretAtEnd = () => page.evaluate(`(() => { const field = document.querySelector('.tag-editor .field'); field.focus(); field.setSelectionRange(field.value.length, field.value.length); field.dispatchEvent(new Event('click')); return true })()`)
 
   await createProjectWithSample(page, url, 'Chips')
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   await page.evaluate(`[...document.querySelectorAll('.grid .lane > .elements > .element.card')][2].click()`)
   await pause(200)

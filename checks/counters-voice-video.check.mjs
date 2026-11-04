@@ -5,7 +5,7 @@
 // rather than kept in the repository.
 import { execFileSync } from 'node:child_process'
 import { copyFileSync, writeFileSync } from 'node:fs'
-import { createProjectWithStory, pause, shownStep } from './harness.mjs'
+import { createProjectWithStory, openChapterBoard, pause, shownStep } from './harness.mjs'
 
 const STORY = `[counter: Trust = 1]
 [loop]
@@ -39,9 +39,9 @@ export default async function check(page, { url, assets, output }) {
   await page.setFiles('.drop-zone .file-input', [video, captions, voice])
   await pause(1200)
   page.check('the video, its captions and the voice get their files', await page.statusText(), '3 files added: Opening.webm → Video Opening, Opening.vtt → Captions of Opening, hello-line.wav → Sound hello-line.')
-  page.check('Cast & files lists the video', await page.evaluate(`[...document.querySelectorAll('.section-title')].map(title => title.textContent.trim()).includes('Videos')`), true)
+  page.check('Cast & files lists the video', await page.evaluate(`[...document.querySelectorAll('.section-title')].some(title => title.textContent.trim().startsWith('Videos'))`), true)
 
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   await pause(400)
   page.check('the storyboard shows what the counter does', await page.evaluate(`[...document.querySelectorAll('.grid .element')].map(element => element.textContent.replace(/\\s+/g, ' ').trim()).filter(text => text.startsWith('◇') || text.startsWith('±'))`), ['◇ Trust: starts at 1'])

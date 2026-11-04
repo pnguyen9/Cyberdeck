@@ -1,6 +1,6 @@
 // The storyboard of the sample story: numbering, markers, focus and selection by mouse and keyboard,
 // reordering by keyboard and by dragging, removal, undo, and the order kept after a reload.
-import { createProjectWithSample, pause } from './harness.mjs'
+import { createProjectWithSample, openChapterBoard, pause } from './harness.mjs'
 
 export default async function check(page, { url }) {
   const cardSelector = '.grid .lane > .elements > .element.card'
@@ -11,7 +11,7 @@ export default async function check(page, { url }) {
   const ctrlShift = { ctrl: true, shift: true }
 
   await createProjectWithSample(page, url, 'Board')
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   const initial = await cards()
   page.check('pages are numbered from 1', initial[0]?.startsWith('1 '), true)
@@ -71,7 +71,7 @@ export default async function check(page, { url }) {
   await page.waitFor('.open-project')
   await page.evaluate(`document.querySelector('.open-project').click()`)
   await pause(800)
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
   page.check('the new order is kept after a reload', await cards(), dragged)
 

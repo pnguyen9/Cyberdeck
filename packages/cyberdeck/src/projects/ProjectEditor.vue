@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import type { ChapterDocument, NameKind, PlayableStory, ProjectDocument, SaveData } from '@cyberdeck/core'
 import { useLocale, useMessages } from '@cyberdeck/stage'
-import { onMounted, onUnmounted, provide, ref, shallowRef } from 'vue'
+import { computed, onMounted, onUnmounted, provide, ref, shallowRef } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { editorMessages } from '../i18n/editorMessages'
 import { errorText } from '../i18n/errorMessages'
 import { projectsMessages } from '../i18n/projectsMessages'
 import LanguageSelect from '../settings/LanguageSelect.vue'
 import CastTab from './CastTab.vue'
-import ChaptersTab from './ChaptersTab.vue'
 import DefinitionsTab from './DefinitionsTab.vue'
 import DetailsTab from './DetailsTab.vue'
 import { EDITOR } from './editorContext'
@@ -24,7 +23,7 @@ import { formatSize, safeFileName, usePreparedDownload } from './preparedDownloa
 const props = defineProps<{ open: OpenProject }>()
 const emit = defineEmits<{ close: []; preview: [story: PlayableStory, resumeFrom: SaveData | null] }>()
 
-const TABS = ['chapters', 'storyboard', 'import', 'cast', 'definitions', 'index', 'details', 'export'] as const
+const TABS = ['storyboard', 'import', 'cast', 'definitions', 'index', 'details', 'export'] as const
 type TabId = typeof TABS[number]
 const locale = useLocale()
 const text = useMessages(editorMessages)
@@ -34,7 +33,8 @@ const projectsText = useMessages(projectsMessages)
 const project = shallowRef<ProjectDocument>(props.open.project)
 const chapters = shallowRef<ChapterDocument[]>(props.open.chapters)
 const scenes = shallowRef<ChapterDocument[]>(props.open.scenes)
-const tab = ref<TabId>(chapters.value.length === 0 ? 'import' : 'chapters')
+const documents = computed(() => [...chapters.value, ...scenes.value])
+const tab = ref<TabId>(chapters.value.length === 0 ? 'import' : 'storyboard')
 const renaming = ref<string | null>(null)
 const message = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
@@ -114,7 +114,6 @@ function requestStoryboard(kind: 'goToBoard' | 'togglePanel' | 'reveal', nodeId?
 }
 
 const TAB_SHORTCUTS: Partial<Record<ShortcutId, TabId>> = {
-  tabChapters: 'chapters',
   tabStoryboard: 'storyboard',
   tabImport: 'import',
   tabCast: 'cast',
@@ -174,7 +173,7 @@ const setLeaveGuard = (guard: ((proceed: () => void) => boolean) | null) => {
 }
 /** The first `Chapter N` or `Scene N` free, in the author's language: renamed at will in Chapters. */
 function freeTitle(kind: 'chapter' | 'scene'): string {
-  const taken = new Set([...chapters.value, ...scenes.value].map(document => document.title))
+  const taken = new Set(documents.value.map(document => document.title))
   const titleOf = (number: number) => kind === 'chapter' ? text.value.newChapterTitle(number) : text.value.newSceneTitle(number)
   let number = (kind === 'chapter' ? chapters.value.length : scenes.value.length) + 1
   while (taken.has(titleOf(number))) {
@@ -183,11 +182,11 @@ function freeTitle(kind: 'chapter' | 'scene'): string {
   return titleOf(number)
 }
 
-async function startEmptyDocument(kind: 'chapter' | 'scene') {
+async function startEmptyDocument(kind: 'chapter' | 'scene', atIndex?: number) {
   const title = freeTitle(kind)
   let documentId: string | null = null
   if (await act(async () => {
-    documentId = await props.open.addEmptyDocument(kind, title)
+    documentId = await props.open.addEmptyDocument(kind, title, atIndex)
   }) && documentId !== null) {
     openStoryboard(documentId)
     // Said once there: showing a tab clears the message of the one left.
@@ -202,7 +201,7 @@ function openIndex(kind: NameKind, id: string) {
     showTab('index')
   })
 }
-provide(EDITOR, { open: props.open, project, chapters, scenes, act, preview, previewFrom, importDraft, storyboardChapterId, openStoryboard, setLeaveGuard, storyboardRequest, indexFocus, openIndex, startEmptyDocument })
+provide(EDITOR, { open: props.open, project, chapters, scenes, documents, act, preview, previewFrom, importDraft, storyboardChapterId, openStoryboard, setLeaveGuard, storyboardRequest, indexFocus, openIndex, startEmptyDocument })
 </script>
 
 <template>
@@ -250,10 +249,9 @@ provide(EDITOR, { open: props.open, project, chapters, scenes, act, preview, pre
     <p v-if="message !== null" class="message" role="status">{{ message }}</p>
     <p v-if="errorMessage !== null" class="error" role="alert">{{ errorMessage }}</p>
 
-    <ChaptersTab v-if="tab === 'chapters'" @import="switchTab('import')" />
-    <StoryboardTab v-else-if="tab === 'storyboard'" />
-    <!-- Straight to the chapters, keeping the message that says what was imported. -->
-    <ImportTab v-else-if="tab === 'import'" @imported="tab = 'chapters'" />
+    <StoryboardTab v-if="tab === 'storyboard'" @import="showTab('import')" />
+    <!-- Straight to the story's chapters, keeping the message that says what was imported. -->
+    <ImportTab v-else-if="tab === 'import'" @imported="storyboardChapterId = null; tab = 'storyboard'" />
     <CastTab v-else-if="tab === 'cast'" />
     <DefinitionsTab v-else-if="tab === 'definitions'" />
     <IndexTab v-else-if="tab === 'index'" />

@@ -10,12 +10,19 @@ const USE_GROUPS: Readonly<Record<UseRole, UseGroup>> = {
   unset: 'emptied',
   changed: 'changed',
   tested: 'tested',
+  shown: 'shown',
   remembered: 'remembered',
   reached: 'reached',
   used: 'used',
   played: 'played',
 }
-const GROUP_ORDER: readonly UseGroup[] = ['declared', 'given', 'emptied', 'changed', 'tested', 'remembered', 'reached', 'used', 'played']
+/** In the order a story does it: declared, given, changed, emptied, tested, shown. */
+const GROUP_ORDER: readonly UseGroup[] = ['declared', 'given', 'changed', 'emptied', 'tested', 'shown', 'remembered', 'reached', 'used', 'played']
+
+/** A name's places by what they do, in that order. */
+export function usesByGroup(name: IndexedName): { group: UseGroup; uses: NameUse[] }[] {
+  return GROUP_ORDER.map(group => ({ group, uses: name.uses.filter(entry => USE_GROUPS[entry.role] === group) })).filter(entry => entry.uses.length > 0)
+}
 
 /** The uses grouped by what they do, each with the values concerned, in a fixed order. */
 export function summariseUses(name: IndexedName, uses: readonly NameUse[], project: ProjectDocument, locale: Locale = 'en'): string {

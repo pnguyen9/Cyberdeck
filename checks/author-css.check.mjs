@@ -55,6 +55,6 @@ export default async function check(page, { url }) {
   await page.waitFor('.definitions textarea.css')
   await page.setValue('.definitions textarea.css', '.ghost { color: rgb(136, 170, 255); font-size: 1.5em }')
   await pause(400)
-  page.check('pages cut before the class grew are pointed out', await page.evaluate(`document.querySelector('.definitions .problems p.warning')?.textContent.replace(/\\s+/g, ' ').trim()`), '1 page was cut before this CSS made its style larger, and no longer fits the text box. Edit it in the storyboard and save: the page is cut again.')
+  page.check('pages cut before the class grew are pointed out', await page.evaluate(`document.querySelector('.definitions .problems p.warning')?.textContent.replace(/\\s+/g, ' ').trim()`), '1 page was cut before its style grew larger or a value it shows grew longer, and no longer fits the text box. Edit it in the storyboard and save: the page is cut again.')
   await page.screenshot('too-long')
 }

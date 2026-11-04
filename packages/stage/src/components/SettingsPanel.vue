@@ -3,7 +3,7 @@ import { onUnmounted, ref } from 'vue'
 import { actionOf, DEFAULT_BINDINGS, describeInput as describeInputIn, rebind, unbind, type InputBinding, type PlayerAction } from '../input/bindings'
 import { useLocale, useMessages, type LanguageChoice } from '../i18n/locale'
 import { settingsMessages } from '../i18n/settingsMessages'
-import { DEFAULT_PLAYER_SETTINGS, TEXT_SCALES, TEXT_SPEED_RANGE, type PlayerSettings } from '../settings/playerSettings'
+import { AUTO_SPEED_RANGE, DEFAULT_PLAYER_SETTINGS, TEXT_SCALES, TEXT_SPEED_RANGE, type PlayerSettings } from '../settings/playerSettings'
 import LanguageSelect from './LanguageSelect.vue'
 
 /**
@@ -33,8 +33,8 @@ const category = ref<(typeof CATEGORIES)[number]>('general')
 const canReadAloud = typeof speechSynthesis !== 'undefined'
 
 function resetSpeedAndVolumes() {
-  const { textSpeed, musicVolume, soundVolume, voiceVolume } = DEFAULT_PLAYER_SETTINGS
-  update({ textSpeed, musicVolume, soundVolume, voiceVolume })
+  const { textSpeed, musicVolume, soundVolume, voiceVolume, autoSpeed } = DEFAULT_PLAYER_SETTINGS
+  update({ textSpeed, musicVolume, soundVolume, voiceVolume, autoSpeed })
 }
 
 function resetAccessibility() {
@@ -159,6 +159,11 @@ onUnmounted(stopListening)
         <span class="setting-name">{{ text.voices }}</span>
         <input type="range" min="0" max="100" :value="Math.round(settings.voiceVolume * 100)" :aria-label="text.voicesVolume" @input="update({ voiceVolume: Number(($event.target as HTMLInputElement).value) / 100 })">
         <span class="setting-value">{{ text.percent(Math.round(settings.voiceVolume * 100)) }}</span>
+      </label>
+      <label class="setting">
+        <span class="setting-name">{{ text.autoSpeed }}</span>
+        <input type="range" :min="AUTO_SPEED_RANGE.slowest" :max="AUTO_SPEED_RANGE.fastest" :value="settings.autoSpeed" :aria-label="text.autoSpeedLabel" @input="update({ autoSpeed: Number(($event.target as HTMLInputElement).value) })">
+        <span class="setting-value">{{ text.speed(settings.autoSpeed) }} · {{ text.autoSpeedHelp }}</span>
       </label>
       <button class="wide-button" @click="emit('toggleFullscreen')">{{ isFullscreen ? text.leaveFullscreen : text.fullscreen }}</button>
       <button class="wide-button" @click="resetSpeedAndVolumes">{{ text.defaultSpeedAndVolumes }}</button>

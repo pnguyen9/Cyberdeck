@@ -1,8 +1,8 @@
 import { styleClassName } from '../format/authorCss'
-import { placeholdersIn } from '../format/askedNames'
+import { placeholdersIn } from '../format/textValues'
 import { readStyleProperty } from '../format/textStyles'
 import type { Condition, ImportedChapter, ImportProblem, ImportResult, StoryNode } from './importTypes'
-import { readAmount } from './readControl'
+import { readAmount, readRandom } from './readControl'
 import { flattenNodes, normalizeName } from './storyNodes'
 
 /**
@@ -135,8 +135,8 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
   }
 
   /** A counter takes a number where a decision takes one of its values. */
-  const checkCounterValue = (name: string, value: string, line: number) => {
-    if (readAmount(value) === null) {
+  const checkCounterValue = (name: string, value: string, line: number, mayDraw = false) => {
+    if (readAmount(value) === null && !(mayDraw && readRandom(value) !== null)) {
       problems.push({ severity: 'error', code: 'counterNeedsNumber', line, subject: `${name}: ${value}` })
     }
   }
@@ -170,7 +170,7 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     }
     if (node.type === 'set') {
       if (isCounter(node.decision)) {
-        checkCounterValue(node.decision, node.value, node.sourceLine)
+        checkCounterValue(node.decision, node.value, node.sourceLine, true)
       } else {
         checkValue(node.decision, node.value, node.sourceLine)
       }
@@ -186,17 +186,40 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     }
   }
 
-  problems.push(...checkPlaceholders(allNodes, knownNames.askedNames ?? []))
+  problems.push(...checkPlaceholders(result, allNodes, knownNames.askedNames ?? [], new Set([...decisionValues.keys(), ...counters])))
   return problems.sort((first, second) => first.line - second.line)
 }
 
-/** `{Name}` in a page, a speaker or an option, where no `[ask]` of the story asks for that name. */
-function checkPlaceholders(allNodes: readonly StoryNode[], knownAskedNames: readonly string[]): ImportProblem[] {
-  const asked = new Set([...knownAskedNames, ...allNodes.flatMap(node => node.type === 'ask' ? [node.name] : [])].map(normalizeName))
+/**
+ * `{…}` in a page, a speaker or an option naming nothing the story keeps: no name asked for, no
+ * counter, no decision. A name asked for that is also a counter's or a decision's is reported where
+ * it is asked: `{…}` could not tell which is meant.
+ */
+function checkPlaceholders(result: ImportResult, allNodes: readonly StoryNode[], knownAskedNames: readonly string[], counterAndDecisionNames: ReadonlySet<string>): ImportProblem[] {
+  const asks = allNodes.flatMap(node => node.type === 'ask' ? [node] : [])
+  const asked = new Set([...knownAskedNames, ...asks.map(node => node.name)].map(normalizeName))
   const textsOf = (node: StoryNode): string[] => node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : []
-  return allNodes.flatMap(node => [...new Set(textsOf(node).flatMap(placeholdersIn))]
-    .filter(name => !asked.has(normalizeName(name)))
-    .map((name): ImportProblem => ({ severity: 'error', code: 'unknownAskedName', line: node.sourceLine, subject: name })))
+  const unknown = allNodes.flatMap(node => [...new Set(textsOf(node).flatMap(placeholdersIn))]
+    .filter(name => !asked.has(normalizeName(name)) && !counterAndDecisionNames.has(normalizeName(name)))
+    .map((name): ImportProblem => ({ severity: 'error', code: 'unknownValue', line: node.sourceLine, subject: name })))
+  const taken = asks.filter(node => counterAndDecisionNames.has(normalizeName(node.name)))
+    .map((node): ImportProblem => ({ severity: 'error', code: 'askedNameTaken', line: node.sourceLine, subject: node.name }))
+  // A counter or a decision this text makes, named as a name asked in another chapter.
+  const askedElsewhere = new Set(knownAskedNames.map(normalizeName))
+  const named = [
+    ...result.decisions.map(declaration => ({ name: declaration.name, line: declaration.sourceLine })),
+    ...result.counters.map(declaration => ({ name: declaration.name, line: declaration.sourceLine })),
+    ...allNodes.flatMap(node => node.type === 'add' ? [{ name: node.counter, line: node.sourceLine }]
+      : node.type === 'choice' || node.type === 'set' ? [{ name: node.decision, line: node.sourceLine }] : []),
+  ]
+  const reported = new Set<string>()
+  const clashing = named.filter(entry => {
+    const key = normalizeName(entry.name)
+    const isNew = askedElsewhere.has(key) && !reported.has(key)
+    reported.add(key)
+    return isNew
+  }).map((entry): ImportProblem => ({ severity: 'error', code: 'nameIsAsked', line: entry.line, subject: entry.name }))
+  return [...unknown, ...taken, ...clashing]
 }
 
 /**

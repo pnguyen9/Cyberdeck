@@ -6,8 +6,10 @@ text editor), import it, and get pages ready to play, without cutting dialogue b
 - **Cyberdeck**: the engine and editor, where stories are imported and arranged.
 - **Datajack**: the player, which plays a published story in a browser or as a desktop app.
 
-Authors start with the illustrated guide, [docs/guide/index.html](docs/guide/index.html): the
-basics of the interface first, then each feature. This README is the complete reference.
+Authors start with the illustrated guide: the basics of the interface first, then each feature.
+Open [docs/guide/index.html](docs/guide/index.html) in a browser, or read
+[docs/guide/guide.md](docs/guide/guide.md), the same guide as Markdown, where HTML is not shown as a
+page (on GitHub, in an editor). This README is the complete reference.
 
 ## Why this exists
 
@@ -79,7 +81,9 @@ and run only by name or with `npm run checks:desktop`.
 documents as a word processor writes them; `node checks/make-test-assets.mjs <folder>` writes backgrounds, sprites and a tone to
 try the Cast & files screen with.
 The guide's screenshots come from `checks/guide-images.check.mjs`: after a change to the
-interface, `npm run guide:images` takes them again and copies them into `docs/guide/images/`.
+interface, `npm run guide:images` takes them again and copies them into `docs/guide/images/`. The
+guide is written in `docs/guide/index.html` only: `npm run guide:markdown` (also run by
+`guide:images` and `release`) makes `docs/guide/guide.md` from it.
 
 Import behaviour is specified by examples: each `packages/core/tests/import/<name>.txt` is imported
 and compared with `<name>.expected.json`, written by hand **before** the code. To add a behaviour,
@@ -151,7 +155,7 @@ npm run release   # → release/v<version>/
 ```
 
 builds every download in one go: both applications for Windows and, on Linux, for Linux, both as
-files for a browser, and `Cyberdeck-<version>-documentation.zip`, with the guide and its images, this
+files for a browser, and `Cyberdeck-<version>-documentation.zip`, with the guide (HTML and Markdown) and its images, this
 README, the changes and the licence; then `SHA256SUMS`, the checksum of each. It needs the `zip`
 command, which keeps the executable bit the Linux builds need.
 
@@ -205,11 +209,13 @@ one per language, of the same shape: another language is one more table each.
 | `> The library = Library [if: Visited is not Library]` | An option offered only while its condition holds. A choice none of whose options holds is skipped; one with no option always offered is reported. |
 | `[choice: Answer 10s]` with `> … = Silent [timeout]` | A timed choice: a bar shows the time running out, then the option marked `[timeout]`, never shown, is taken. A timed choice has exactly one. Players may ask choices to wait for them (Settings, Accessibility). Needs Datajack 1.3. |
 | `[ask: Hero = Alex]`, then `{Hero}` | Asks the player for a name, at most 12 characters, which `{Hero}` then shows in the text, in options and as a speaker, `— {Hero}: Hi.`; `Alex` until they give one, and if they give none. Pages are cut as if each name were as long as the longest allowed, so that they always fit. Saves keep it. Needs Datajack 1.3. |
+| `It is {Hour} o'clock.`, `{Clues}`, `{{` | Shows a value the story keeps: a counter's number, a decision's values (separated by commas, nothing until it holds one), a name asked for. Each `{…}` must name something the story knows, or the import reports it; `{{` writes a brace. One name means one thing: a name asked for cannot also be a counter's or a decision's, in any chapter. Pages are cut as if each value were as wide as it may get (a name given, a counter's longest number, a decision's widest value, those the text itself declares included), and a page never breaks inside a `{…}`. Needs Datajack 1.4, except for names asked for. |
 | `[if: Confession is Accept]` … `[else if: …]` … `[else]` … `[end]` | Plays the first branch whose condition holds. Conditions use `is`, `is not`, `and`, `or`. |
 | `[loop]` … `[break]` … `[end]` | Plays what is inside again and again; `[break]`, usually in a branch, leaves the innermost loop and goes on after its `[end]`. A loop with nothing inside to leave it (no `[break]` or `[ending]`) is reported. |
 | `[set: Clues = Letter]` | Sets a decision without a choice. |
 | `[counter: Trust = 2]`, `[counter: Trust]` | Declares a counter, a whole number the story counts with, and what it starts at (0 when not given). Optional: an `[add]` makes the counter it names. |
 | `[add: Trust]`, `[add: Trust 2]`, `[add: Trust -1]` | Adds to a counter: 1, or the amount after its name. `[set: Trust = 0]` gives it a value. |
+| `[set: Weather = random 1 6]` | Gives a counter a whole number drawn between the two, both included, so that the same choices may lead elsewhere. A save keeps the draws, and going back does not draw again: a player cannot draw until it suits them. Needs Datajack 1.4. |
 | `[if: Trust >= 3]`, `Trust < 2`, `Trust is 3`, `Trust is not 0` | Compares a counter with a number: `>`, `>=`, `<`, `<=`, `is`, `is not`; combines with the rest by `and` / `or`. |
 | `[unset: Clues = Key]`, `[unset: Clues]` | Takes a value away from a decision, or every value: tests of it no longer hold, as if it had never been set. |
 | `[ending: The Empty Room]` | Ends the path here: the player has reached this ending (named endings are counted). |
@@ -265,16 +271,25 @@ looks is kept: colours, fonts (the project's own, or those on the player's compu
 1.5 times the text's, spacing, shadows, borders and padding up to a quarter of the text's size,
 transforms, filters, transitions and animations with their `@keyframes`. Rules on anything but class names, positions, anything that loads or computes
 (`url()`, `var()`, `attr()`, `@import`) and escapes are left out, and the tab lists what was left
-out and why. The classes are renamed `author-<name>`, so that they reach the story's text and title
-cards and never the player's own buttons and panels; players check a game's CSS again, and the
+out and why. The classes are renamed `author-<name>`, so that they reach the story's text, title
+cards, text box and name plate, and never the player's own buttons and panels; players check a game's CSS again, and the
 content security policy refuses anything from outside whatever happens. A paragraph holding a style
 that draws text larger is cut into pages as if all of it were that large, so that its pages always
-fit; pages cut before their style grew are listed in the tab, and editing one cuts it again.
+fit; pages cut before their style grew, or before a value they show grew longer, are listed in the tab, and editing one cuts it again.
 
 **Title cards.** With *Show each chapter's title* on (Definitions), each chapter's title comes over
 the stage as the chapter starts, before its text; moving on passes it, or it goes by itself. The
 title takes the style `chapter title`, and the ending's name on the end screen the style `ending`:
 declared like any style (`[style: Chapter title = gold, large, fade-in]`), or a class of the CSS.
+
+**Text box and name plate.** The style `text box` draws the box the text is in, and `name plate`
+the plate of the speaker's name: their colours, borders, rounded corners and shadows, declared as a
+style or written as the classes `.text-box` and `.name-plate` of the CSS. A style or class named
+after a character draws her plate alone (`.marie`), and a colour given to a character in Cast & files
+colours her name. Two images, `text-box.png` and `name-plate.png` dropped in Cast & files, frame the
+box and the plate, stretched by their edges so that their corners stay whole at any size. Stronger
+contrast, in the player's settings, still puts a plain box behind the text, and the menus stay
+Datajack's own. Needs Datajack 1.4.
 
 **Branching.** A story is made of blocks, which keeps it readable however many routes it has. A
 branch that reaches an `[ending]` stops there; one that does not
@@ -353,11 +368,15 @@ defaults: entrances and exits fade over 0.4 s, moves glide over 0.6 s.
 
 Characters, expressions, backgrounds, music, sounds, illustrations and videos are created by being
 named in the text, as are endings, memories and counters: nothing needs declaring but decisions and
-styles. A
+styles. They go away once nothing names them any more (`calm` replaced by `loud`, the values of
+options renamed), and no undo could bring them back; one with a file or a setting of the author's is
+offered for removal in Cast & files instead, so that no file is lost unasked (removing it forgets the
+undo steps that would bring back what named it). A
 directive whose name looks like a misspelled keyword (`[backgound: …]`) is reported rather than
 taken for a new character. Images and sounds are then given to these entries by file name:
 `rooftop.jpg`, `marie-smile.png` (Marie's `smile`), `marie.png` (her `normal`), `calm.mp3`,
-`door.wav`, `opening.webm` and its captions `opening.vtt`; case, spaces, hyphens and underscores do not matter. An entry without a file shows as
+`door.wav`, `opening.webm` and its captions `opening.vtt`, the frames `text-box.png` and
+`name-plate.png`; case, spaces, hyphens and underscores do not matter. An entry without a file shows as
 a placeholder.
 
 A paragraph longer than the textbox is cut into several pages: between sentences first, then
@@ -367,13 +386,19 @@ after `,` `;` `:` or a spaced dash, then between words as a last resort.
 
 A **project** holds the whole game. Its screens:
 
-- **Chapters**: in playing order, with their page count and where they were imported from;
-  move, rename, remove, or preview from one. Scenes follow, with the chapters and scenes playing
-  each, which removing one warns about; a scene exported as text and imported again replaces itself.
-  **New chapter** and **New scene** begin one with no page yet (`Chapter 2`, `Scene 1`, renamed at
-  will), opened in the storyboard to be written page by page: a story needs no text to start from.
-  **Start without a text**, in the Import tab of a new project, does the same for its first chapter.
-- **Storyboard**: the chapter, or scene, as a grid of cards, read left to right and top to bottom, like a
+- **Storyboard**, first at the **story's level**: every chapter as a card in playing order, with its
+  page count and endings; chapters following one another under the same `[only if]` framed together
+  as a route, the condition written once. A chapter's panel opens it, previews from it, exports it as
+  text, renames or removes it (Ctrl+Z puts it back), and sets its condition, for it alone or for its
+  whole route. The arrows move the focus, Enter opens, Ctrl+Shift+arrows and Ctrl+X, Ctrl+V move
+  chapters, Delete removes, N adds one, P previews. Scenes follow, with the chapters and scenes
+  playing each, which removing one warns about; a scene exported as text and imported again replaces
+  itself. **New chapter** and **New scene** begin one with no page yet (`Chapter 2`, `Scene 1`,
+  renamed at will), to be written page by page: a story needs no text to start from. **Start without
+  a text**, in the Import tab of a new project, does the same for its first chapter. **↑ Story**, or
+  Esc at a chapter's top level, goes back up.
+
+  Inside, the chapter, or scene, as a grid of cards, read left to right and top to bottom, like a
   slide sorter. Pages and choices are numbered; pages inside branches carry the branch letters and
   colour (12a, 12b, 12ab when nested), the main line resuming after the longest branch. Endings,
   memories, breaks, plays of a scene (▷), assignments, definitions (◇) and
@@ -382,7 +407,7 @@ A **project** holds the whole game. Its screens:
   selects, drags and moves as a whole: small, it shows its branches inside its frame; holding more
   pages than the limit set above the grid (5 by default, kept in the browser), it is a single
   stacked card giving its routes and pages, so that it never passes for a page. A block says when
-  routes end inside it (★ every route ends, ★ 1 route ends, ★ by each branch). Pages that no path
+  paths end inside it (★ every path ends, ★ 1 path ends, ★ by each branch). Pages that no path
   reaches are faded, explained in the panel, counted on the blocks holding them (⚠ 1 never
   reached, even on a block shown as one card) and above the grid. **Enter** or a
   double-click opens a block: its branches become lanes, the path above the grid leads back
@@ -404,20 +429,31 @@ A **project** holds the whole game. Its screens:
   on the selection, or on the first card selected when there is none; from a page being edited,
   it goes to its card, and back. The
   **Tree** view shows each condition's branches side by side, to read the progression; its cards
-  are edited, not moved.
+  are edited, not moved. The **Graph** view draws the whole story as a map, laid out by itself:
+  chapters one under the other, each choice and block forking into its branches and joining again,
+  loops, endings where paths stop, and scenes apart, linked to each `[play]` that calls them. Drag or
+  the arrows move it, the wheel or + and − zoom, Tab goes from box to box; a box selected opens its
+  card in the grid, adds a branch to its block or an option to its choice, or moves its branch.
+  **B** adds a block after the focused card, written as text (`[if: ]`, `[else]`, `[end]`, ready for
+  its condition); **E** edits a block's own text, its conditions and branches, as a page is edited,
+  while Enter keeps opening it. A block's panel says how to do each.
   **Enter** on a card edits it, page or assignment, staging, ending, memory, break, as the text
   that imports into it, tags drawn as chips coloured by kind (red when the import would object,
   the reason shown under the text). Typing `[` suggests directives, then what each one takes as the
   tag goes: characters, expressions, positions, backgrounds, music, sounds, illustrations, scenes,
   styles, decisions and their values, endings and memories; **Insert tag** offers them by group,
-  blocks (`[if]`, `[loop]`) written whole with the caret inside; Backspace and Delete remove a chip whole and the arrows step over it, while a click into
-  one edits it. The text field stays underneath, so undo, copy and paste work as anywhere: problems show as you type, a page grown too long is
+  blocks (`[if]`, `[loop]`) written whole with the caret inside; a suggestion picked in the middle of a
+  tag adds the space that follows. Backspace and Delete remove a chip whole and the arrows step over
+  it, while a click into one, or **Alt+←** / **Alt+→** beside it, steps inside to change what it says;
+  a line under the text says so whenever the caret is beside a tag. The text field stays underneath, so undo, copy and paste work as anywhere: problems show as you type, a page grown too long is
   cut as an import would, a new speaker becomes a character, and the page keeps its identifier so
   that saves on it stay valid. **N** writes new pages after the focused card the same way.
   **P** previews from the focused page or choice: Cyberdeck finds a way a player could get there
   (from the start of its chapter, then of the story, trying options at each choice), so that the
   preview opens with the stage and decisions of that path, as a save made there would. A page only
   reached through memories or endings of earlier playthroughs is previewed taking them as known.
+  The preview's **State** button shows, beside the stage, each decision, counter and name as they
+  stand on the page shown, what the profile remembers and the endings it has seen.
   Ctrl+Enter saves, Esc cancels, Ctrl+Z undoes. The card being edited is marked (✎), the panel's
   title too while changes are not saved (●). Nothing written is thrown away unasked: opening
   another card, Esc, another chapter, another tab or leaving the project first asks to **Save**,
@@ -425,11 +461,14 @@ A **project** holds the whole game. Its screens:
 - **Definitions**: the project's own decisions, counters and styles, edited as their declarations; those
   declared in chapters, each with where it is, to show or to **Move to Definitions**; those made
   by use, to declare here. Then the CSS of the styles, and title cards.
-- **Index**: every decision, counter and memory, each with its values and every place that declares, gives,
-  empties or tests it (`Chapter 2 · page 7a`, `after 5`), a click away. Above them, what looks
-  forgotten across the whole story, as an IDE would point it out: a decision or value tested but
-  never given (that condition never holds), a memory tested but never remembered, an ending no
-  path reaches, a scene never played; and, less pressing, what is declared or given but never used.
+- **Index**: every decision, counter and memory, by kind in sections folded until opened, with a
+  filter by kind; each with its values and every place that declares, gives, empties, tests or shows it
+  (`Chapter 2 · page 7a`, `after 5`), grouped by use, a click away. The search finds names and
+  values: `Truth` finds the decision `Answer`. First, what looks forgotten across the whole story,
+  as an IDE would point it out, each with what to do: a decision or value tested but never given
+  (that condition never holds), a memory tested but never remembered, an ending no path reaches, a
+  scene never played; and, less pressing, what is declared or given but never used (tested nor shown), a
+  value given but never tested. With nothing to look at, it says what it checked.
 - **Shortcuts** (the header button, or `?`): every shortcut by screen; click one and press the new
   keys to change it, Cyberdeck asking before taking keys another action uses. Changes are kept in
   the browser; *Default* and *Reset every shortcut* bring the defaults back. **Alt+PageUp** and
@@ -449,8 +488,11 @@ A **project** holds the whole game. Its screens:
   the project replaces it, `[import: pages]` goes at the end of the last chapter, anything else
   makes new chapters. Scenes (`# Scene: Name`) go in whatever the choice, one named like a scene of
   the project replacing it.
-- **Cast & files**: drop images, music, sounds and videos (illustrations and voices included); each file goes to the entry it is named after,
-  replacing the file it had (the old one is deleted). Characters say which way their sprites were
+- **Cast & files**: drop images, music, sounds and videos (illustrations, voices and frames
+  included); each file goes to the entry it is named after, replacing the file it had (the old one
+  is deleted). Each kind is a section folded until opened, saying how many entries lack a file,
+  with a filter by kind; names the story no longer uses but that keep a file come last, to remove.
+  Each character may be given a colour for its name. Characters say which way their sprites were
   drawn looking. A font file (`.woff2`, `.woff`, `.ttf`, `.otf`) becomes a font of its name, which
   the CSS names: `font-family: "Cinzel"` for `Cinzel.woff2`. It is measured as it is added, how
   much wider or narrower than the text box's font it draws text, and pages in it are cut by that.
@@ -464,7 +506,7 @@ Cyberdeck: each page its own paragraph (so that the import cuts pages where they
 written before a page on their own lines, those fired during its text where the typewriter reaches
 them, conditions as `and` / `or` without parentheses. Importing it gives the same story: the tests
 export, import, export again and compare. The whole story declares its decisions first and can
-become a new project; a chapter (*Export as text* in Chapters) leaves them out and, edited in Word
+become a new project; a chapter (*Export as text* in its panel, on the story's level) leaves them out and, edited in Word
 or any editor, comes back with **Import → In place of a chapter**, chosen by default when an
 `[import: chapter]` text bears the title of a chapter. The chapter keeps its place and identifier
 (saves inside it resume at its start). Files are UTF-8 with the mark Word and Notepad recognise.
@@ -510,6 +552,7 @@ assets/sounds/door.ogg
 assets/illustrations/Sunrise.png
 assets/videos/Opening.webm
 assets/videos/Opening.vtt
+assets/frames/text-box.png     the frames of the text box and the name plate, in every archive
 ```
 
 Assets are named after their entries; content used by several entries is stored once. Datajack
@@ -523,9 +566,11 @@ Each document says the format it is written in. An archive takes the oldest form
 game, so that players who have not updated Datajack still play it: format 1.1, which Datajack 1.0
 reads; 1.2, which Datajack 1.1 reads, when a style uses `fade-in`, `rise` or `glow` or the project
 has fonts; 1.3, for Datajack 1.2, when the game uses counters, voices or videos; 1.4, for Datajack
-1.3, when it asks for names, times its choices or has captions. An older Datajack
+1.3, when it asks for names, times its choices or has captions; 1.5, for Datajack 1.4, when it draws
+numbers, shows counters or decisions in its text (or writes `{{`), frames its text box or name plate,
+or colours a character's name. An older Datajack
 says a newer game needs an update rather than failing on it, and Datajack 1.0 shows a game's text
-without the CSS and title cards it does not know of. Projects are written in the current format, 1.4.
+without the CSS and title cards it does not know of. Projects are written in the current format, 1.5.
 
 When an archive is installed, the newer export (by date) brings the project, the release, the
 chapter list and the scenes; an older archive only adds chapters still missing. Asset files go first and
@@ -553,6 +598,7 @@ the desktop, games live in the application's data folder (`library/games/<game>/
 | Go back one step (a choice can be picked again) | ←, Backspace, Page Up, mouse back button, wheel up, the ◀ Back button |
 | Log of past pages and choices (click a line to go back to it) | L, the Log button |
 | Skip text already read | S, the Skip button |
+| Auto mode: move on by itself, until any other input | A, the Auto ▶ button |
 | Hide the text and the menu, to look at the picture (any input shows them again) | H, right click |
 | Settings | O, the Settings button |
 | Full screen | F |
@@ -561,7 +607,7 @@ the desktop, games live in the application's data folder (`library/games/<game>/
 ### Settings
 
 The **Settings** screen has three categories. **General** sets the text speed (or each page shown
-at once), the volumes of the music (and videos), the sound effects and the voices, full screen and
+at once), the speed of auto mode, the volumes of the music (and videos), the sound effects and the voices, full screen and
 the language. **Accessibility** sets the size of the text (100, 125 or 150 %, the text box growing
 to hold it), a plainer font, a stronger contrast behind the text, pages and options read aloud by
 the voice of the browser or the system (a page with a voice of its own is heard instead), timed
@@ -598,7 +644,10 @@ path for the autosave to follow. Two paths reaching the same choice merge on the
 they agree on the stage and on the decisions the story still tests from there on; otherwise
 characters could react differently ahead, and they stay apart.
 
-**Skip** (`S`) passes pages already read, and stops at new text, a choice or an end.
+**Skip** (`S`) passes pages already read, and stops at new text, a choice or an end. **Auto** (`A`)
+moves on by itself: a page with a voice waits for its line to end, another for a reading time
+counted from the length of its text once it is all shown; videos are waited for, and choices, the
+end and any other input stop it.
 
 ### Profiles
 
@@ -615,7 +664,8 @@ application's data folder.
 
 ### Saves
 
-The game autosaves at every page and choice; Save and Load offer six slots more. The Save panel also
+The game autosaves at every page and choice; Save and Load offer six slots more, each with a small
+picture of the stage as it was saved. The Save panel also
 offers the playthrough as a file (`<game> <date> <time>.json`), and the library's **Load a save…**
 (or dropping the `.json` on it) opens such a file in the current profile, on the web as on the
 desktop, provided its game is installed. Saves are plain
@@ -629,89 +679,13 @@ chapter, or of the story, keeping the decisions. Save files are checked field by
 
 The page runs only its own scripts and loads nothing from elsewhere (content security policy, as a
 header on the desktop and a meta tag on the web). A game's CSS is checked before use and reaches
-only the story's text (see Styles and CSS).
+only the story's text, its text box and name plate (see Styles and CSS).
 
 On the desktop it runs sandboxed, without Node, served from a private `datajack://` scheme;
 navigation, new windows, web views and permission requests are refused. It reaches the disk only
 through a short list of channels whose arguments the main process checks again: strings, bytes and
 lists of strings only; identifiers that cannot leave their folder; asset files whose content matches
 the SHA-256 in their name; and only save folders the player picked in the system dialog.
-
-## Planned for 1.4
-
-- **Auto mode**: pages move on by themselves. A page with a voice waits for its line to end; other
-  pages wait a reading time counted from the length of their text, once the whole page is shown,
-  so that text shown at once is given the same time. Videos are waited for, choices and the end
-  stop it, and any key or click takes over again. A speed of its own in Settings.
-- **A state panel in Cyberdeck's preview**: the values of the decisions, counters and names, and
-  what the profile remembers, as they stand on the page shown, for checking what a condition will do.
-- **A colour for each character's name**, on their name plate: either a style, as for text
-  (`[style: Marie = gold]` or a class of the CSS), or a colour given to the character in Cast & files.
-- **The look of the text box and the name plate**: two reserved styles, `text box` and
-  `name plate` (or the classes `.text-box` and `.name-plate` of the CSS), for their colour, border,
-  rounded corners, shadow and gradient, with the properties the CSS of text already allows; and a
-  picture frame, an image of the project dropped in Cast & files as `text-box.png` or
-  `name-plate.png`, stretched by its edges so that its corners stay whole whatever the size of the
-  box (a floral frame, for instance). Stronger contrast, in the player's settings, still puts a plain
-  box behind the text, and the menus stay Datajack's own.
-- **Save slots with a picture**: each slot shows the stage as it was when the game was saved, the
-  same shape as the game's cover, beside the chapter and the excerpt it shows today.
-- **Blocks made and edited from the storyboard**: a *New block* action, beside *New page*, to add an
-  `[if]` or a `[loop]` without typing it into a page; and a way to edit a block's own text, its
-  conditions and branches, as a page is edited, from the keyboard as well as the mouse: Enter keeps
-  opening the block, and *Edit* (with keys of its own) edits it. The panel of a block selected says
-  how to do each: open it, edit it, move it, delete it.
-- **Names nothing uses any more go away**: a track, a sound, a background or a character the text
-  stopped naming (`calm` replaced by `loud`, for instance), and the values of a decision made by its
-  choices that no option gives any more (the `A` and `B` of options renamed since), are taken out of
-  the project once nothing refers to them, rather than staying in Cast & files, the Index and the
-  suggestions. One with a file of its own is offered for removal instead, so that no file is lost
-  unasked.
-- **Index and Cast & files easier to read**: each kind of name, and each kind of file, in a section
-  of its own, folded until opened, with a filter by kind; for a decision or a counter, where it is
-  set and where it is tested kept apart, each place a link to its card; and the problems to look
-  at shown first, apart from the lists, each with a sentence saying why it matters and what to do.
-  The Index also points out a value given but never tested (the `A` and `B` of a new choice, while
-  its decision is tested elsewhere), not only a decision never tested as a whole; its "Nothing to
-  look at" says what it checked, and a line at the top says what the tab is for.
-- **The Index's search finds values too**: `Truth` finds the decision `Answer`, its value shown.
-- **Suggestions that leave room to go on**: picking a suggestion in the middle of a tag, a decision
-  in `[if: …]` or `[set: …]`, adds the space that follows, as `if: ` already does; one that ends the
-  tag still closes it with `]`.
-- **Editing inside a tag from the keyboard**: a tag stays one piece for Backspace, Delete and the
-  arrows, as today, but Alt+← and Alt+→ (keys of their own in Shortcuts) step into the tag next to
-  the caret, at the end of what it says, `[transition: black|]`, to change it without the mouse;
-  and a line under the text says so whenever the caret is beside a tag.
-- **The story as a level of the storyboard**: one level above the chapters, each chapter a block,
-  its `[only if]` shown as its heading, with how many pages and endings it holds. Esc goes up from a
-  chapter to the story, Enter opens one, and chapters move, cut and paste as cards do. A route is a
-  block of chapters under one condition, folded until opened: the six chapters of one pairing beside
-  the six of the next, the condition written once. It replaces the Chapters tab's own way of
-  working; chapters stay documents of their own underneath, exported, imported and saved as today.
-- **A graph of the whole story**: a view beside the grid and the tree, drawing the same levels
-  (story, chapters, blocks), where the story reads as a map, laid out by itself: chapters one after the other, each choice and block forking into its
-  branches and joining again after it, endings where routes stop, and scenes apart, linked to each
-  `[play]` that calls them. Zoom and drag to move around, a click opens the card in the storyboard.
-  From there, adding a branch to a block or an option to a choice, and reordering branches; moving
-  pages between blocks stays the storyboard's.
-- **Values in the text**: `{…}` shows any value the story keeps, as `{Hero}` shows a name given:
-  a counter's number, `{Hour}`, so that "It is {Hour} o'clock" follows the time of day; a decision's
-  value, `{Mood}`; a name the player gave, as today. Every `{…}` must name something the story knows,
-  or the import reports it with its line, so that a typo or a stray brace is never shown nor lost
-  silently; `{{` writes a brace itself. A name is one thing only: an asked name cannot bear the name
-  of a counter or a decision, as counters and decisions already cannot share theirs. Pages are cut
-  as if each value were as long as the longest it may be.
-- **Chance**: `[set: Weather = random 1 6]` gives a counter a number drawn between two, so that the
-  same choices may lead elsewhere (who is met in the park, the weather of the day). A save keeps what
-  was drawn, and going back does not draw again, so that a player cannot draw until it suits them.
-- **A "Going further" section in the guide**: what is possible once one thinks like a programmer,
-  shown as recipes for what visual novels often need and the engine does not make obvious: routes
-  that meet again at a shared ending, a hub the player roams with the time of day running out,
-  affection deciding a route, a choice that remembers what was already picked, an epilogue that
-  depends on several routes, scenes used as functions, a game that changes on the second playthrough.
-- **A pass over the editor with a fresh eye**: every action reachable from the keyboard as from the
-  mouse, every panel saying what it is for, and the small things that do not behave as they read,
-  found by going through each tab as a new writer would.
 
 ## License
 

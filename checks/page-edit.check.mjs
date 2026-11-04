@@ -1,13 +1,13 @@
 // Editing in the storyboard: a page opened as its text, saved and undone; new pages, their problems
 // listed as they are typed, their page count, and a new speaker becoming a character.
-import { createProjectWithSample, pause } from './harness.mjs'
+import { createProjectWithSample, openChapterBoard, pause } from './harness.mjs'
 
 export default async function check(page, { url }) {
   const cardSelector = '.grid .lane > .elements > .element.card'
   const typeInEditor = text => page.evaluate(`(() => { const editor = document.querySelector('.tag-editor .field'); editor.value = ${JSON.stringify(text)}; editor.dispatchEvent(new Event('input')); editor.focus(); return true })()`)
   const cardTexts = () => page.evaluate(`[...document.querySelectorAll(${JSON.stringify(cardSelector)})].map(card => card.querySelector('.number').textContent + ' ' + (card.querySelector('.speaker')?.textContent ?? '') + '|' + (card.querySelector('.text')?.textContent ?? 'choice'))`)
   const openStoryboard = async () => {
-    await page.clickButton('Storyboard', '.tab')
+    await openChapterBoard(page)
     await page.waitFor('.grid')
   }
 

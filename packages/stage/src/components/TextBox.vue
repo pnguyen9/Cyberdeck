@@ -19,7 +19,22 @@ const props = defineProps<{
   styles?: readonly StyledPart[]
   /** Where the speaker stands on stage, in percent of its width: the name plate sits above; null at the left. */
   speakerX?: number | null
+  /** The game's looks for the box and the plate: classes of its styles and CSS, a picture frame, the speaker's colour. */
+  boxClasses?: readonly string[]
+  boxFrame?: string | null
+  plateClasses?: readonly string[]
+  plateFrame?: string | null
+  plateColor?: string | null
 }>()
+
+/** A picture stretched by its edges, its corners whole: a frame of any size from one image. */
+const frameStyle = (url: string | null | undefined, width: number) => url == null ? {} : {
+  borderImage: `url("${url}") 30% fill / ${width}px stretch`,
+  background: 'none',
+  borderColor: 'transparent',
+  boxShadow: 'none',
+}
+const boxStyle = computed(() => frameStyle(props.boxFrame, 48))
 
 /** The box is centred on the stage, as wide as its text and padding. */
 const BOX_WIDTH = TEXTBOX_TEXT_WIDTH + 2 * 72
@@ -28,11 +43,12 @@ const BOX_LEFT = (STAGE_WIDTH - BOX_WIDTH) / 2
 const PLATE_MARGIN = 160
 
 const plateStyle = computed(() => {
-  if (props.speakerX == null) {
-    return undefined
+  const centre = props.speakerX == null ? null : Math.min(Math.max(props.speakerX / 100 * STAGE_WIDTH - BOX_LEFT, PLATE_MARGIN), BOX_WIDTH - PLATE_MARGIN)
+  return {
+    ...(centre === null ? {} : { left: `${centre}px`, transform: 'translateX(-50%)' }),
+    ...frameStyle(props.plateFrame, 20),
+    ...(props.plateColor == null ? {} : { color: props.plateColor }),
   }
-  const centre = Math.min(Math.max(props.speakerX / 100 * STAGE_WIDTH - BOX_LEFT, PLATE_MARGIN), BOX_WIDTH - PLATE_MARGIN)
-  return { left: `${centre}px`, transform: 'translateX(-50%)' }
 })
 
 const runs = computed(() => textRuns(props.text, props.visibleLength, props.styles ?? []))
@@ -45,9 +61,9 @@ const lineHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT}px`
 </script>
 
 <template>
-  <div class="textbox" aria-hidden="true">
+  <div class="textbox" :class="boxClasses" :style="boxStyle" aria-hidden="true">
     <!-- Typed a letter at a time: screen readers hear the page whole from the player's announcements instead. -->
-    <div v-if="speaker !== null" class="speaker" :style="plateStyle">{{ speaker }}</div>
+    <div v-if="speaker !== null" class="speaker" :class="plateClasses" :style="plateStyle">{{ speaker }}</div>
     <p class="text">
       <span v-for="run in runs" :key="run.start" :class="run.classes">{{ run.text }}</span>
     </p>
@@ -64,10 +80,15 @@ const lineHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT}px`
   box-sizing: content-box;
   width: v-bind(textWidth);
   padding: 44px 72px 40px;
+}
+
+/* How the box and the plate look, below anything a game's CSS says: `.text-box`, `.name-plate`, a character's class. */
+:where(.textbox) {
   border-radius: 20px;
   background: rgb(8 10 16 / 0.82);
   border: 2px solid rgb(120 220 255 / 0.35);
   box-shadow: 0 0 40px rgb(0 200 255 / 0.12);
+  color: #f2f4f8;
 }
 
 .speaker {
@@ -75,6 +96,9 @@ const lineHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT}px`
   transition: left 0.3s ease;
   top: -30px;
   left: 56px;
+}
+
+:where(.speaker) {
   padding: 8px 28px;
   border-radius: 10px;
   background: #0e2a36;
@@ -94,7 +118,6 @@ const lineHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT}px`
   font-family: v-bind(TEXTBOX_FONT_FAMILY);
   font-size: calc(v-bind(fontSize) * var(--text-scale, 1));
   line-height: calc(v-bind(lineHeight) * var(--text-scale, 1));
-  color: #f2f4f8;
   overflow-wrap: normal;
 }
 

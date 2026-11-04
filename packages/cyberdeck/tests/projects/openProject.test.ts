@@ -77,6 +77,44 @@ describe('projects', () => {
     expect(chapters.size).toBe(2)
   })
 
+  it('apply a condition to a whole route as one change, undone at once', async () => {
+    const { open } = await projectWith('# One\n[choice: Route]\n> Marie = Marie\n> Jules = Jules\n# Two\nA.\n# Three\nB.')
+    const [, two, three] = open.chapters
+    const condition = { type: 'is' as const, decisionId: open.project.decisions[0]!.id, valueId: open.project.decisions[0]!.values[0]!.id, negated: false }
+    await open.setChapterConditions([two!.id, three!.id], condition)
+    expect(open.chapters.map(chapter => chapter.condition !== undefined)).toEqual([false, true, true])
+    await open.undo()
+    expect(open.chapters.map(chapter => chapter.condition !== undefined)).toEqual([false, false, false])
+  })
+
+  it('add a chapter where it is asked', async () => {
+    const { open } = await projectWith('# One\nA.\n# Two\nB.\n# Three\nC.')
+    await open.addEmptyDocument('chapter', 'New', 1)
+    expect(open.chapters.map(chapter => chapter.title)).toEqual(['One', 'New', 'Two', 'Three'])
+  })
+
+  it('forget the undo that would bring back a name removed with its file', async () => {
+    const { open, assets } = await projectWith('# One\nA.\n# Two\n[bg: street]\nB.')
+    await open.addFiles([file('street.png', 'image/png', 1)])
+    await open.removeChapter(open.chapters[1]!.id)
+    expect(open.unusedNamesKept.map(name => name.name)).toEqual(['street'])
+    await open.removeUnusedName(open.unusedNamesKept[0]!)
+    expect([assets.size, open.canUndo]).toEqual([0, false])
+  })
+
+  it('put a removed chapter back where it stood with undo', async () => {
+    const { open, chapters } = await projectWith('# One\nHello.\n# Two\nGoodbye.\n# Three\nAgain.')
+    const two = open.chapters[1]!
+
+    await open.removeChapter(two.id)
+    expect(await open.undo()).toBe(two.id)
+
+    expect(open.chapters.map(chapter => chapter.title)).toEqual(['One', 'Two', 'Three'])
+    expect(open.chapters[1]!.nodes).toEqual(two.nodes)
+    expect(chapters.size).toBe(3)
+    expect(open.canUndo).toBe(false)
+  })
+
   it('append imported pages to a chapter', async () => {
     const { open } = await projectWith('# One\nHello.')
     const preview = previewImport('[import: pages]\nGoodbye.', open.project, layout)
@@ -146,6 +184,34 @@ describe('projects', () => {
     expect(pageTexts(chapter())).toEqual(['A.', 'B.', 'C.'])
     expect(open.canUndo).toBe(false)
     expect(await open.undo()).toBeNull()
+  })
+
+  it('forget the names the text no longer uses, once no undo can bring them back, and offer those with a file', async () => {
+    const { open } = await projectWith('# One\n[music: calm] [bg: street]\nA.\n[choice: Answer]\n> Yes\n> No\nB.')
+    await open.addFiles([file('street.png', 'image/png', 1)])
+    const chapter = () => open.chapters[0]!
+    const page = flattenStoredNodes(chapter().nodes).find(node => node.type === 'page' && node.text === 'A.')!
+    const choice = flattenStoredNodes(chapter().nodes).find(node => node.type === 'choice')!
+    const pageTarget = { type: 'replace' as const, nodeId: page.id }
+    await open.editNodes(chapter().id, previewNodeEdit('[music: loud]\nA.', open.project, open.chapters, chapter().id, pageTarget, layout), pageTarget)
+    const choiceTarget = { type: 'replace' as const, nodeId: choice.id }
+    await open.editNodes(chapter().id, previewNodeEdit('[choice: Answer]\n> Yes = Accept\n> No = Refuse', open.project, open.chapters, chapter().id, choiceTarget, layout), choiceTarget)
+
+    // The undo steps still name calm, A and B: they stay until those steps go.
+    expect(open.project.music.map(track => track.name)).toEqual(['calm', 'loud'])
+    while (open.canUndo) {
+      await open.undo()
+    }
+    await open.editNodes(chapter().id, previewNodeEdit('A, at last.', open.project, open.chapters, chapter().id, pageTarget, layout), pageTarget)
+    expect(open.project.music.map(track => track.name)).toEqual(['calm'])
+    expect(open.project.decisions[0]?.values.map(value => value.name)).toEqual(['A', 'B'])
+
+    // A background with a file is not thrown away unasked: it is offered.
+    const street = { type: 'replace' as const, nodeId: page.id }
+    await open.editNodes(chapter().id, previewNodeEdit('A, without the street.', open.project, open.chapters, chapter().id, street, layout), street)
+    expect(open.unusedNamesKept.map(name => `${name.kind} ${name.name}`)).toEqual(['background street'])
+    await open.removeUnusedName(open.unusedNamesKept[0]!)
+    expect([open.project.backgrounds, open.project.assets]).toEqual([[], []])
   })
 
   it('store pages edited as text, new characters included, and undo them', async () => {

@@ -1,12 +1,15 @@
 // The editor end to end: projects, import, problems, cast and files, details, chapters, preview,
 // reload, partial export, backup and restore, a copy without the story; then the partial export installed in Datajack.
 import { readdirSync } from 'node:fs'
-import { createProfile, createProject, installGame, pause, shownStep } from './harness.mjs'
+import { createProfile, createProject, focusStoryCard, installGame, pause, showStory, shownStep } from './harness.mjs'
 
 export default async function check(page, { url, assets, serve }) {
-  const chapterTitles = () => page.evaluate(`[...document.querySelectorAll('.chapter .title')].map(title => title.textContent).join(' | ')`)
-  /** Clicks an action of the chapter at that position in the list. */
-  const chapterAction = (index, label) => page.evaluate(`[...[...document.querySelectorAll('.chapter')][${index}].querySelectorAll('.actions .link-button')].find(button => button.textContent.trim() === ${JSON.stringify(label)}).click()`)
+  const chapterTitles = () => page.evaluate(`[...document.querySelectorAll('.story-level .chapter:not(.scene) .title')].map(title => title.textContent).join(' | ')`)
+  /** Clicks an action of the story's panel for the chapter of that title. */
+  const chapterAction = async (title, label) => {
+    await focusStoryCard(page, title)
+    await page.evaluate(`[...document.querySelectorAll('.story-level .inspector .button')].find(button => button.textContent.trim().startsWith(${JSON.stringify(label)})).click()`)
+  }
 
   await page.navigate(url)
   await page.waitFor('.new-project')
@@ -21,8 +24,8 @@ export default async function check(page, { url, assets, serve }) {
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)
   page.check('importing reports the chapters', await page.statusText(), 'Imported 1 chapter: Chapter 1 — The Letter.')
-  page.check('and lists them', await chapterTitles(), 'Chapter 1 — The Letter')
-  page.check('a chapter tells where it came from', (await page.evaluate(`document.querySelector('.chapter .details')?.textContent`))?.includes('Imported on'), true)
+  page.check('and shows the story, its chapters as cards', await chapterTitles(), 'Chapter 1 — The Letter')
+  page.check('a chapter tells where it came from', (await page.evaluate(`document.querySelector('.story-level .inspector')?.textContent`))?.includes('Imported on'), true)
 
   await page.clickButton('Import', '.tab')
   await pause(300)
@@ -63,14 +66,14 @@ export default async function check(page, { url, assets, serve }) {
   await pause(800)
   page.check('the cover is shown', await page.evaluate(`(() => { const image = document.querySelector('.cover img'); return image !== null && image.complete && image.naturalWidth > 0 })()`), true)
 
-  await page.clickButton('Chapters', '.tab')
-  await pause(300)
-  await chapterAction(1, 'Move up')
+  await showStory(page)
+  await focusStoryCard(page, 'Chapter 2 — The Rooftop')
+  await page.press('ArrowLeft', { ctrl: true, shift: true })
   await pause(500)
-  page.check('a chapter moves up', await chapterTitles(), 'Chapter 2 — The Rooftop | Chapter 1 — The Letter')
-  await chapterAction(0, 'Move down')
+  page.check('a chapter moves as a card does', await chapterTitles(), 'Chapter 2 — The Rooftop | Chapter 1 — The Letter')
+  await page.press('ArrowRight', { ctrl: true, shift: true })
   await pause(500)
-  await chapterAction(1, 'Preview from here ▶')
+  await chapterAction('Chapter 2 — The Rooftop', 'Preview from here')
   await page.waitFor('.viewport .text')
   await pause(500)
   page.check('previewing from a chapter plays it', await shownStep(page), 'Here again.')
@@ -78,7 +81,7 @@ export default async function check(page, { url, assets, serve }) {
   await page.screenshot('editor-preview')
   await page.evaluate(`document.querySelector('.leave-button').click()`)
   await pause(500)
-  page.check('leaving the preview comes back to the same tab', await page.evaluate(`document.querySelector('.tab.current')?.textContent.trim()`), 'Chapters')
+  page.check('leaving the preview comes back to the same tab', await page.evaluate(`document.querySelector('.tab.current')?.textContent.trim()`), 'Storyboard')
   page.check('no content security violation', await page.violations(), '[]')
 
   await page.reload()
@@ -124,7 +127,7 @@ export default async function check(page, { url, assets, serve }) {
     await page.clickButton('Cast & files', '.tab')
     await page.waitFor('.cast')
     await pause(300)
-    return page.evaluate(`[...document.querySelectorAll('.cast .entry')].map(entry => entry.textContent.replace(/\\s+/g, ' ').trim()).join(' | ')`)
+    return page.evaluate(`[...document.querySelectorAll('.cast .cast-section:not(.unused) .entry')].map(entry => entry.textContent.replace(/\\s+/g, ' ').trim()).join(' | ')`)
   }
   const originalCast = await castOf()
   await page.clickButton('← Projects')
@@ -143,8 +146,7 @@ export default async function check(page, { url, assets, serve }) {
   await pause(400)
   page.check('the copy opens on its Import tab', await page.evaluate(`document.querySelector('h1').firstChild.textContent.trim()`), 'La Lettre')
   page.check('with the characters and files of the project it was made from', await castOf(), originalCast)
-  await page.clickButton('Chapters', '.tab')
-  await pause(300)
+  await showStory(page)
   page.check('and no chapter', await chapterTitles(), '')
   await page.clickButton('← Projects')
   await pause(800)

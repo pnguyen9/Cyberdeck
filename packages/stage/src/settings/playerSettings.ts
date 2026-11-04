@@ -9,6 +9,8 @@ export interface PlayerSettings {
   soundVolume: number
   /** Lines spoken, `[voice]`. */
   voiceVolume: number
+  /** How fast auto mode reckons the player reads, in characters per second. */
+  autoSpeed: number
   /** How much larger the text is drawn; the text box grows to hold it. */
   textScale: TextScale
   /** The text in a plain, open font, whatever the game's styles name. */
@@ -26,6 +28,8 @@ export interface PlayerSettings {
 
 export const TEXT_SPEED_RANGE = { slowest: 10, fastest: 150 } as const
 
+export const AUTO_SPEED_RANGE = { slowest: 6, fastest: 40 } as const
+
 export const TEXT_SCALES = [1, 1.25, 1.5] as const
 export type TextScale = (typeof TEXT_SCALES)[number]
 
@@ -34,6 +38,7 @@ export const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
   musicVolume: 0.6,
   soundVolume: 0.8,
   voiceVolume: 1,
+  autoSpeed: 18,
   textScale: 1,
   readableFont: false,
   strongContrast: false,
@@ -58,6 +63,7 @@ export function parsePlayerSettings(value: unknown): PlayerSettings {
     musicVolume: isVolume(fields.musicVolume) ? fields.musicVolume : DEFAULT_PLAYER_SETTINGS.musicVolume,
     soundVolume: isVolume(fields.soundVolume) ? fields.soundVolume : DEFAULT_PLAYER_SETTINGS.soundVolume,
     voiceVolume: isVolume(fields.voiceVolume) ? fields.voiceVolume : DEFAULT_PLAYER_SETTINGS.voiceVolume,
+    autoSpeed: isNumber(fields.autoSpeed) && fields.autoSpeed >= AUTO_SPEED_RANGE.slowest && fields.autoSpeed <= AUTO_SPEED_RANGE.fastest ? fields.autoSpeed : DEFAULT_PLAYER_SETTINGS.autoSpeed,
     textScale: (TEXT_SCALES as readonly unknown[]).includes(fields.textScale) ? fields.textScale as TextScale : DEFAULT_PLAYER_SETTINGS.textScale,
     readableFont: fields.readableFont === true,
     strongContrast: fields.strongContrast === true,

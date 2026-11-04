@@ -1,6 +1,7 @@
 import { alwaysStops, readingFlow } from '../format/readingFlow'
 import { flattenStoredNodes, type ChapterDocument, type ProjectDocument, type StoredCondition, type StoredNode } from '../format/storyFormat'
 import { normalizeName } from '../importer/storyNodes'
+import { placeholdersIn } from '../format/textValues'
 import { isPropertyAlone, RESERVED_STYLE_NAMES } from '../format/textStyles'
 import { storyboardEntries } from '../storyboard/storyboard'
 import { ENGLISH_STORY_WORDS, type StoryWords } from '../storyboard/storyWords'
@@ -18,9 +19,9 @@ export type NameKind = 'decision' | 'counter' | 'memory' | 'ending' | 'style' | 
  * How a place uses a name: a decision is declared, given a value by a choice or a `[set]`, emptied by
  * `[unset]`, tested by a condition; a counter declared, changed by `[add]` or `[set]`, tested; a
  * memory remembered or tested; an ending reached or tested; a style declared or used by a page; a
- * scene played.
+ * scene played. A decision or a counter is also shown by a text, `{Mood}`.
  */
-export type UseRole = 'declared' | 'chosen' | 'set' | 'unset' | 'changed' | 'tested' | 'remembered' | 'reached' | 'used' | 'played'
+export type UseRole = 'declared' | 'chosen' | 'set' | 'unset' | 'changed' | 'tested' | 'shown' | 'remembered' | 'reached' | 'used' | 'played'
 
 export interface NameUse {
   role: UseRole
@@ -29,6 +30,8 @@ export interface NameUse {
   nodeId: string | null
   /** The value of a decision concerned, when one is: the option picked, the value set or tested. */
   valueId?: string
+  /** A test in a block with an `[else]`: the decision's other values lead there. */
+  withElse?: true
 }
 
 export interface IndexedName {
@@ -84,10 +87,23 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
   add('scene', documents.filter(document => project.sceneOrder.includes(document.id)).map(scene => ({ id: scene.id, name: scene.title ?? '' })))
 
   const use = (kind: NameKind, id: string, entry: NameUse) => names.get(`${kind}:${id}`)?.uses.push(entry)
-  const tested = (condition: StoredCondition, documentId: string, nodeId: string | null): void => {
+  // `{…}` names a decision or a counter as written; a name asked for, also shown so, is no name of the index.
+  const shownNames = new Map<string, { kind: NameKind; id: string }>([
+    ...project.decisions.map(decision => [normalizeName(decision.name), { kind: 'decision' as const, id: decision.id }] as const),
+    ...project.counters.map(counter => [normalizeName(counter.name), { kind: 'counter' as const, id: counter.id }] as const),
+  ])
+  const shown = (texts: readonly string[], documentId: string, nodeId: string) => {
+    for (const name of new Set(texts.flatMap(placeholdersIn).map(normalizeName))) {
+      const target = shownNames.get(name)
+      if (target !== undefined) {
+        use(target.kind, target.id, { role: 'shown', documentId, nodeId })
+      }
+    }
+  }
+  const tested = (condition: StoredCondition, documentId: string, nodeId: string | null, withElse = false): void => {
     switch (condition.type) {
       case 'is':
-        use('decision', condition.decisionId, { role: 'tested', documentId, nodeId, valueId: condition.valueId })
+        use('decision', condition.decisionId, { role: 'tested', documentId, nodeId, valueId: condition.valueId, ...(withElse ? { withElse: true as const } : {}) })
         break
       case 'counter':
         use('counter', condition.counterId, { role: 'tested', documentId, nodeId })
@@ -100,7 +116,7 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
         break
       case 'and':
       case 'or':
-        condition.conditions.forEach(part => tested(part, documentId, nodeId))
+        condition.conditions.forEach(part => tested(part, documentId, nodeId, withElse))
     }
   }
 
@@ -116,6 +132,7 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
           use(node.kind, node.definedId, { role: 'declared', documentId, nodeId })
           break
         case 'choice':
+          shown(node.options.map(option => option.text), documentId, nodeId)
           for (const option of node.options) {
             use('decision', node.decisionId, { role: 'chosen', documentId, nodeId, valueId: option.valueId })
             if (option.condition !== null) {
@@ -123,9 +140,11 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
             }
           }
           break
-        case 'condition':
-          node.branches.forEach(branch => branch.condition !== null && tested(branch.condition, documentId, nodeId))
+        case 'condition': {
+          const hasElse = node.branches.some(branch => branch.condition === null)
+          node.branches.forEach(branch => branch.condition !== null && tested(branch.condition, documentId, nodeId, hasElse))
           break
+        }
         case 'set':
           use('decision', node.decisionId, { role: 'set', documentId, nodeId, valueId: node.valueId })
           break
@@ -145,6 +164,7 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
           use('scene', node.sceneId, { role: 'played', documentId, nodeId })
           break
         case 'page':
+          shown([node.text], documentId, nodeId)
           for (const styleId of new Set((node.styles ?? []).map(span => span.styleId))) {
             use('style', styleId, { role: 'used', documentId, nodeId })
           }
@@ -175,6 +195,7 @@ export type NameWarningCode =
   | 'testedNeverGiven'
   | 'valueTestedNeverGiven'
   | 'givenNeverTested'
+  | 'valueGivenNeverTested'
   | 'counterTestedNeverChanged'
   | 'counterChangedNeverTested'
   | 'memoryTestedNeverRemembered'
@@ -211,15 +232,21 @@ export function nameWarnings(index: readonly IndexedName[], project: ProjectDocu
           warnings.push({ severity: 'warning', code: 'testedNeverGiven', name })
           break
         }
-        if (isGiven && !has(name, 'tested')) {
+        if (isGiven && !has(name, 'tested', 'shown')) {
           warnings.push({ severity: 'notice', code: 'givenNeverTested', name })
         }
         const decision = project.decisions.find(candidate => candidate.id === name.id)
         const givenValueIds = new Set(name.uses.filter(entry => entry.role === 'chosen' || entry.role === 'set').map(entry => entry.valueId))
         const testedValueIds = new Set(name.uses.filter(entry => entry.role === 'tested').map(entry => entry.valueId))
+        // Of a decision holding one value, those an `[else]` takes need no test of their own.
+        const isTested = has(name, 'tested') && !(decision?.multiple !== true && name.uses.some(entry => entry.role === 'tested' && entry.withElse === true))
         for (const value of decision?.values ?? []) {
           if (isGiven && testedValueIds.has(value.id) && !givenValueIds.has(value.id)) {
             warnings.push({ severity: 'warning', code: 'valueTestedNeverGiven', name, valueName: value.name })
+          }
+          // A decision tested as a whole may still have values nothing tests: an option renamed, a value left over.
+          if (isTested && givenValueIds.has(value.id) && !testedValueIds.has(value.id)) {
+            warnings.push({ severity: 'notice', code: 'valueGivenNeverTested', name, valueName: value.name })
           }
         }
         break
@@ -228,8 +255,11 @@ export function nameWarnings(index: readonly IndexedName[], project: ProjectDocu
         if (!usedBeyondDeclaration) {
           warnings.push({ severity: 'notice', code: 'declaredNeverUsed', name })
         } else if (!has(name, 'changed')) {
-          warnings.push({ severity: 'warning', code: 'counterTestedNeverChanged', name })
-        } else if (!has(name, 'tested')) {
+          // Shown and never changed, it shows what it starts at: nothing forgotten.
+          if (has(name, 'tested')) {
+            warnings.push({ severity: 'warning', code: 'counterTestedNeverChanged', name })
+          }
+        } else if (!has(name, 'tested', 'shown')) {
           warnings.push({ severity: 'notice', code: 'counterChangedNeverTested', name })
         }
         break

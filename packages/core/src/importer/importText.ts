@@ -1,7 +1,7 @@
 import { DEFAULT_POSITION_PRESETS } from '../format/storyFormat'
 import { alwaysStops, readingFlow } from '../format/readingFlow'
 import { styleClassName } from '../format/authorCss'
-import { isAskableName, MAXIMUM_ASKED_NAME_LENGTH, measuringAskedNames } from '../format/askedNames'
+import { addPossibleValue, counterTexts, isAskableName, MAXIMUM_ASKED_NAME_LENGTH, measuringValues, type PossibleValues } from '../format/textValues'
 import { LARGE_WIDTH_SCALE, readStyleProperty } from '../format/textStyles'
 import { paginate, type PageLayout } from '../pagination/paginate'
 import type { TextRange } from '../pagination/textRange'
@@ -31,6 +31,7 @@ import {
   readCondition,
   readCounterDeclaration,
   readDecisionDeclaration,
+  readRandom,
 } from './readControl'
 
 export interface ImportOptions {
@@ -48,6 +49,8 @@ export interface ImportOptions {
    * a paragraph holding one is cut as if all of it were that wide, so that its pages always fit.
    */
   styleWidthScales?: ReadonlyMap<string, number>
+  /** What each value of the project may show (`possibleValues`), for the `{…}` of pages. */
+  possibleValues?: PossibleValues
 }
 
 const CHAPTER_HEADING = /^#+\s*(.*)$/
@@ -86,6 +89,52 @@ export function importText(input: string, options: ImportOptions): ImportResult 
   return new TextImporter(options).run(input)
 }
 
+/**
+ * What each value may show once the text is read: the project's, and what the text declares, sets
+ * or offers anywhere in it, above its first use or below, since pages are cut as lines are read.
+ */
+function valuesDeclaredIn(input: string, known: PossibleValues = new Map()): Map<string, string[]> {
+  const possible = new Map([...known].map(([name, texts]) => [name, [...texts]]))
+  let choiceName: string | null = null
+  for (const line of input.split(/\r\n?|\n/)) {
+    const trimmed = line.trim()
+    const option = trimmed.startsWith('>') ? OPTION_WITH_VALUE.exec(trimmed.slice(1).replace(/\[[^\]]*\]/g, '').trim()) : null
+    if (option !== null && choiceName !== null) {
+      addPossibleValue(possible, choiceName, asInTags(option[2]!))
+    }
+    for (const tag of trimmed.matchAll(/\[\s*([a-z ]+?)\s*:([^\]]*)\]/gi)) {
+      const name = tag[1]!.toLowerCase()
+      const text = tag[2]!.trim()
+      if (name === 'choice') {
+        choiceName = readChoiceHeading(text).decision
+      } else if (name === 'decision' || name === 'decision multi') {
+        const declaration = readDecisionDeclaration(text)
+        if (declaration !== null) {
+          for (const shown of name === 'decision multi' ? [declaration.values.join(', ')] : declaration.values) {
+            addPossibleValue(possible, declaration.name, shown)
+          }
+        }
+      } else if (name === 'counter') {
+        const declaration = readCounterDeclaration(text)
+        if (declaration !== null) {
+          for (const shown of counterTexts(declaration.initial)) {
+            addPossibleValue(possible, declaration.name, shown)
+          }
+        }
+      } else if (name === 'set') {
+        const assignment = readAssignment(text)
+        const draw = assignment === null ? null : readRandom(assignment.value)
+        if (assignment !== null) {
+          for (const shown of draw === null ? [assignment.value] : [String(draw.minimum), String(draw.maximum)]) {
+            addPossibleValue(possible, assignment.name, shown)
+          }
+        }
+      }
+    }
+  }
+  return possible
+}
+
 class TextImporter {
   private readonly result: ImportResult = { kind: null, decisions: [], counters: [], styles: [], chapters: [], scenes: [], problems: [] }
   private currentChapter: ImportedChapter | null = null
@@ -103,8 +152,12 @@ class TextImporter {
   /** Checked once the whole text is read, when every speaker is known. */
   private readonly stageDirectives: { directive: Directive; line: number }[] = []
   private readonly speakers = new Set<string>()
+  /** Pages are measured with each `{…}` as wide as the widest it may show. */
+  private measureText: PageLayout['measureText']
 
-  constructor(private readonly options: ImportOptions) {}
+  constructor(private readonly options: ImportOptions) {
+    this.measureText = options.layout.measureText
+  }
 
   run(input: string): ImportResult {
     // Styles declared large anywhere in the text, above their first use or below: pages are cut before declarations are all read.
@@ -113,6 +166,7 @@ class TextImporter {
         this.largeStyles.add(normalizeName(declaration[1]!))
       }
     }
+    this.measureText = measuringValues(this.options.layout.measureText, valuesDeclaredIn(input, this.options.possibleValues))
     input.replace(/\r\n?/g, '\n').split('\n').forEach((rawLine, lineIndex) => {
       this.readLine(rawLine.replace(/\t/g, ' ').trim(), lineIndex + 1)
     })
@@ -514,7 +568,7 @@ class TextImporter {
     this.pendingDirectivesLine = null
 
     const scale = Math.max(1, ...styleSpans.map(span => this.widthScaleOf(span.style)))
-    const measureText = measuringAskedNames(this.options.layout.measureText)
+    const measureText = this.measureText
     const layout = { ...this.options.layout, measureText: scale === 1 ? measureText : (text: string) => measureText(text) * scale }
     const pageRanges = paginate(parsedLine.text, layout, this.options.locale)
     pageRanges.forEach((pageRange, pageIndex) => {

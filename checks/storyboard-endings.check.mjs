@@ -1,6 +1,6 @@
-// Endings in the storyboard: blocks and branches say when their routes end, and what no path reaches
+// Endings in the storyboard: blocks and branches say when their paths end, and what no path reaches
 // is warned about at import and shown faded, until moved where it can be read.
-import { pause } from './harness.mjs'
+import { openChapterBoard, pause } from './harness.mjs'
 
 const STORY = `# Endings
 [choice: Door]
@@ -34,12 +34,12 @@ export default async function check(page, { url }) {
   ])
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)
-  await page.clickButton('Storyboard', '.tab')
+  await openChapterBoard(page)
   await page.waitFor('.grid')
 
   const unreachable = () => page.evaluate(`[...document.querySelectorAll('.grid .element.unreachable')].map(${DESCRIBE}).join()`)
   page.check('the page shows faded', await unreachable(), 'Nobody reads this.')
-  page.check('the block says its routes all end', await page.evaluate(`document.querySelector('.element.block .ending-mark')?.textContent.trim()`), '★ every route ends')
+  page.check('the block says its routes all end', await page.evaluate(`document.querySelector('.element.block .ending-mark')?.textContent.trim()`), '★ every path ends')
   page.check('the block counts the page it hides that no path reaches', await page.evaluate(`document.querySelector('.element.block .unreachable-mark')?.textContent.trim()`), '⚠ 1 never reached')
   page.check('the chapter says how many pages are never reached', (await page.evaluate(`document.querySelector('.storyboard > p.warning')?.textContent`))?.includes('2 pages of this chapter are never reached'), true)
   await page.evaluate(`(() => { const input = document.querySelector('.block-limit input'); input.value = '1'; input.dispatchEvent(new Event('input')) })()`)

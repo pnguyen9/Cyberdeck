@@ -4,7 +4,7 @@ import { useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, nextTick, ref, useTemplateRef } from 'vue'
 import { tagTextMessages, type TagTextMessages } from '../i18n/tagTextMessages'
 import { useShortcuts } from '../shortcuts/shortcutStore'
-import { actionFor } from '../shortcuts/shortcuts'
+import { actionFor, firstKeysOf } from '../shortcuts/shortcuts'
 import { completionAt, tagEndingAt, tagKind, tagProblem, tagsIn, tagStartingAt, type Completion, type TagVocabulary } from './tagText'
 
 /**
@@ -120,6 +120,17 @@ const pieces = computed((): Piece[] => {
   return result
 })
 
+/** Beside a tag, how to step into it: the arrows alone step over it. */
+const tagHint = computed(() => {
+  if (!hasFocus.value || caretProblem.value !== null) {
+    return null
+  }
+  if (tagEndingAt(text.value, caret.value) !== null) {
+    return messages.value.enterTagHint(firstKeysOf(shortcuts.value, 'enterTagBefore', locale.value))
+  }
+  return tagStartingAt(text.value, caret.value) === null ? null : messages.value.enterTagHint(firstKeysOf(shortcuts.value, 'enterTagAfter', locale.value))
+})
+
 /** The problem of the tag the caret is in or next to, said under the text. */
 const caretProblem = computed(() => {
   if (!hasFocus.value) {
@@ -232,6 +243,16 @@ function onKeydown(event: KeyboardEvent) {
     }
   }
   const action = actionFor(shortcuts.value, event, 'Editing a page')
+  if ((action === 'enterTagBefore' || action === 'enterTagAfter') && element.selectionStart === element.selectionEnd) {
+    // Into the tag beside the caret, at the end of what it says: `[transition: black|]`.
+    const tag = action === 'enterTagBefore' ? tagEndingAt(element.value, element.selectionStart) : tagStartingAt(element.value, element.selectionStart)
+    if (tag !== null) {
+      event.preventDefault()
+      element.setSelectionRange(tag.end - 1, tag.end - 1)
+      void refreshCaret()
+      return
+    }
+  }
   if (action === 'save' || action === 'cancel') {
     event.preventDefault()
     if (action === 'save') {
@@ -339,6 +360,7 @@ defineExpose({ focus: () => field.value?.focus() })
       </ul>
     </div>
     <p v-if="caretProblem !== null" class="chip-problem" role="status">{{ caretProblem }}</p>
+    <p v-else-if="tagHint !== null" class="muted hint tag-hint">{{ tagHint }}</p>
   </div>
 </template>
 

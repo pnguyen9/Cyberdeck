@@ -92,6 +92,29 @@ export function tagStartingAt(text: string, position: number): TagRange | null {
   return tagsIn(text).find(tag => tag.start === position) ?? null
 }
 
+/**
+ * A block's text, `[if: …]` … `[end]`, with a new `[else if: ]` branch to complete: before its own
+ * `[else]`, which stays last, or else before its `[end]`. Blocks inside it are passed over.
+ */
+export function withNewBranch(blockText: string): string {
+  const lines = blockText.split('\n')
+  let depth = 0
+  let elseLine = -1
+  lines.forEach((line, index) => {
+    const tags = tagsIn(line.trim())
+    const name = tags.length === 1 && tags[0]!.start === 0 && tags[0]!.end === line.trim().length ? directiveName(tags[0]!.content) : null
+    if (name === 'if' || name === 'loop') {
+      depth++
+    } else if (name === 'end') {
+      depth--
+    } else if (name === 'else' && depth === 1) {
+      elseLine = index
+    }
+  })
+  const at = elseLine === -1 ? lines.length - 1 : elseLine
+  return [...lines.slice(0, at), '[else if: ]', '', ...lines.slice(at)].join('\n')
+}
+
 export function tagKind(content: string): TagKind {
   const name = directiveName(content)
   if (CONTROL_DIRECTIVE_NAMES.has(name)) {
@@ -153,7 +176,6 @@ export function completionAt(text: string, caret: number, vocabulary: TagVocabul
   const lastWord = /\S*$/.exec(argumentText)?.[0] ?? ''
   const wordFrom = caret - lastWord.length
   const previousWords = argumentText.slice(0, argumentText.length - lastWord.length).trim().split(/\s+/).filter(word => word !== '')
-  const words = (candidates: readonly string[], detail: string) => candidates.map(candidate => ({ label: candidate, insert: candidate, detail }))
   /** Names that are all the directive takes: choosing one closes the tag. */
   const closing = (candidates: readonly string[], detail: string) => candidates.map(candidate => ({ label: candidate, insert: `${candidate}]`, detail }))
   const characterNames = vocabulary.characters.map(character => character.name)
@@ -234,9 +256,13 @@ export function completionAt(text: string, caret: number, vocabulary: TagVocabul
   }
 }
 
+/** Words in the middle of a tag: the space that follows comes with them, to go on typing. */
+function words(candidates: readonly string[], detail: string): Completion['items'] {
+  return candidates.map(candidate => ({ label: candidate, insert: `${candidate} `, detail }))
+}
+
 /** What may follow in a condition: a decision, then `is`, then one of its values; a counter, then a comparison; or a memory or ending. */
 function conditionWords(previousWords: readonly string[], vocabulary: TagVocabulary, details: TagTextMessages['details']): Completion['items'] {
-  const words = (candidates: readonly string[], detail: string) => candidates.map(candidate => ({ label: candidate, insert: candidate, detail }))
   const last = previousWords.at(-1)?.toLowerCase()
   if (last === 'is' || (last === 'not' && previousWords.at(-2)?.toLowerCase() === 'is')) {
     const isIndex = previousWords.map(word => word.toLowerCase()).lastIndexOf('is')

@@ -10,7 +10,10 @@ import type {
   StoredPage,
 } from '../format/storyFormat'
 import { flattenStoredNodes, innerListsOf, type AskedName, type StoredAsk } from '../format/storyFormat'
-import { givenName, nameLookup, pageWithNames, withNames, type NameOf } from '../format/askedNames'
+import { givenName, pageWithValues, withValues, type ValueOf } from '../format/textValues'
+import { normalizeName } from '../importer/storyNodes'
+import { drawFrom, newSeed } from './chance'
+import { valuesReader, type HeldValues } from './storyValues'
 import { chaptersInOrder, scenesOf, type PlayableStory } from './playableStory'
 import { applyStageCommand, createStageContext, EMPTY_STAGE, showPage, type StageContext, type StageState } from './stageState'
 
@@ -44,6 +47,8 @@ export interface PlayerSnapshot {
   decisions: DecisionState
   counters: CounterState
   names: NameState
+  /** Where the draws of `random` stand: going back to a stop draws again what was drawn from it. */
+  seed: number
   /** Every option picked so far: the playthrough itself, from which it could be replayed. */
   choices: readonly ChoiceRecord[]
 }
@@ -63,6 +68,8 @@ export interface RuntimeState {
   decisions: DecisionState
   counters: CounterState
   names: NameState
+  /** Where the draws of `random` stand, so that a save resumed draws what it would have drawn. */
+  seed: number
   stage: StageState
   choices: readonly ChoiceRecord[]
 }
@@ -75,7 +82,7 @@ export type BacklogEntry =
   | { type: 'page'; page: StoredPage; stopIndex: number }
   | { type: 'choice'; choice: StoredChoice; optionText: string; stopIndex: number }
 
-const START_SNAPSHOT: PlayerSnapshot = { step: { type: 'end', endingId: null }, stage: EMPTY_STAGE, decisions: {}, counters: {}, names: {}, choices: [] }
+const START_SNAPSHOT: PlayerSnapshot = { step: { type: 'end', endingId: null }, stage: EMPTY_STAGE, decisions: {}, counters: {}, names: {}, seed: 0, choices: [] }
 
 /** A list of nodes being played, and the index of the next node to play in it. */
 interface Frame {
@@ -110,7 +117,8 @@ export class StoryRuntime {
   private readonly chapters: ChapterDocument[]
   private readonly decisionsById: Map<string, Decision>
   private readonly initialCounts: ReadonlyMap<string, number>
-  private readonly askedNames: readonly AskedName[]
+  /** What `{…}` may name, by name normalised: a name the player gives, a counter, a decision. */
+  private readonly readValues: (held: HeldValues) => ValueOf
   private readonly stageContext: StageContext
   private chapterIndex = -1
   private readonly scenes: ReadonlyMap<string, ChapterDocument>
@@ -133,7 +141,7 @@ export class StoryRuntime {
     this.scenes = scenesOf(story)
     this.decisionsById = new Map(story.project.decisions.map(decision => [decision.id, decision]))
     this.initialCounts = new Map(story.project.counters.map(counter => [counter.id, counter.initial]))
-    this.askedNames = story.project.askedNames
+    this.readValues = valuesReader(story.project)
     this.stageContext = createStageContext(story.project)
   }
 
@@ -166,13 +174,19 @@ export class StoryRuntime {
     return [...this.rememberedIds]
   }
 
-  start() {
+  /** Endings the profile has reached, those of this game included. */
+  get endingIds(): string[] {
+    return [...this.endingsSeenIds]
+  }
+
+  /** Plays from the start of the story, its draws from `seed`: a new one each game unless told. */
+  start(seed = newSeed()) {
     this.isReplaying = false
     this.queuedCues = []
     this.chapterIndex = -1
     this.frames = []
     this.history = []
-    this.currentSnapshot = START_SNAPSHOT
+    this.currentSnapshot = { ...START_SNAPSHOT, seed }
     this.playUntilStop()
   }
 
@@ -186,6 +200,7 @@ export class StoryRuntime {
       decisions: this.currentSnapshot.decisions,
       counters: this.currentSnapshot.counters,
       names: this.currentSnapshot.names,
+      seed: this.currentSnapshot.seed,
       stage: this.currentSnapshot.stage,
       choices: this.currentSnapshot.choices,
     }
@@ -234,6 +249,7 @@ export class StoryRuntime {
       decisions: state.decisions,
       counters: state.counters,
       names: state.names,
+      seed: state.seed,
       choices: state.choices,
     }
     this.playUntilStop()
@@ -323,16 +339,22 @@ export class StoryRuntime {
     this.pagesById ??= new Map([...this.chapters, ...this.scenes.values()]
       .flatMap(document => flattenStoredNodes(document.nodes))
       .flatMap(node => node.type === 'page' ? [[node.id, node] as const] : []))
-    const nameOf = this.nameOf()
+    // Each page as it was shown, its values as they were then; after loading a save, with those of now.
+    const shownPages = new Map(this.history.flatMap(stop => stop.snapshot.step.type === 'page' ? [[stop.snapshot.step.page.id, stop.snapshot.step.page] as const] : []))
+    const valueOf = this.valueOf()
     return stage.screenfulPageIds.flatMap(pageId => {
+      const shown = shownPages.get(pageId)
+      if (shown !== undefined) {
+        return [shown]
+      }
       const page = this.pagesById?.get(pageId)
-      return page === undefined ? [] : [pageWithNames(page, nameOf)]
+      return page === undefined ? [] : [pageWithValues(page, valueOf)]
     })
   }
 
-  /** A text with the names the player gave in place of `{Name}`: a speaker's name, for instance. */
-  withNames(text: string): string {
-    return withNames(text, this.nameOf())
+  /** A text with the values the story keeps in place of `{…}`: a speaker named `{Hero}`, for instance. */
+  withValues(text: string): string {
+    return withValues(text, this.valueOf())
   }
 
   /** Gives the name asked for, cut to the longest allowed; nothing typed keeps the default. */
@@ -414,7 +436,7 @@ export class StoryRuntime {
           node.commandsBefore.forEach(command => this.applyToStage(command))
           this.currentSnapshot = { ...this.currentSnapshot, stage: showPage(this.currentSnapshot.stage, node.id) }
           this.appliedInlineCommandCount = 0
-          this.setStep({ type: 'page', page: pageWithNames(node, this.nameOf()) })
+          this.setStep({ type: 'page', page: pageWithValues(node, this.valueOf()) })
           return
         case 'choice': {
           // The step carries the choice as offered: options whose condition does not hold are left out.
@@ -423,8 +445,8 @@ export class StoryRuntime {
           if (!options.some(option => option.timeout !== true)) {
             break
           }
-          const nameOf = this.nameOf()
-          const shown = options.map(option => option.text.includes('{') ? { ...option, text: withNames(option.text, nameOf) } : option)
+          const valueOf = this.valueOf()
+          const shown = options.map(option => option.text.includes('{') ? { ...option, text: withValues(option.text, valueOf) } : option)
           const isUnchanged = shown.length === node.options.length && shown.every((option, index) => option === node.options[index])
           this.setStep({ type: 'choice', choice: isUnchanged ? node : { ...node, options: shown } })
           return
@@ -442,8 +464,14 @@ export class StoryRuntime {
           this.undecide(node.decisionId, node.valueId)
           break
         case 'count': {
-          const count = node.operation === 'add' ? this.countOf(node.counterId) + node.amount : node.amount
-          this.currentSnapshot = { ...this.currentSnapshot, counters: { ...this.currentSnapshot.counters, [node.counterId]: count } }
+          let count = node.operation === 'add' ? this.countOf(node.counterId) + node.amount : node.amount
+          let seed = this.currentSnapshot.seed
+          if (node.operation === 'random') {
+            const draw = drawFrom(seed)
+            seed = draw.seed
+            count = node.amount + Math.floor(draw.fraction * ((node.maximum ?? node.amount) - node.amount + 1))
+          }
+          this.currentSnapshot = { ...this.currentSnapshot, seed, counters: { ...this.currentSnapshot.counters, [node.counterId]: count } }
           break
         }
         case 'condition': {
@@ -509,8 +537,9 @@ export class StoryRuntime {
     return Object.hasOwn(this.currentSnapshot.decisions, decisionId) ? this.currentSnapshot.decisions[decisionId] ?? [] : []
   }
 
-  private nameOf(): NameOf {
-    return nameLookup(this.askedNames, this.currentSnapshot.names)
+  /** What `{…}` shows, from the values held now. */
+  private valueOf(): ValueOf {
+    return this.readValues(this.currentSnapshot)
   }
 
   /** Own entries only, as for decisions. */

@@ -1,4 +1,4 @@
-import type { Facing } from '../format/storyFormat'
+import type { Facing, Frames } from '../format/storyFormat'
 import type { PlayableStory } from './playableStory'
 
 /** Names and file addresses of what the stage shows, looked up by identifier. */
@@ -17,6 +17,10 @@ export interface StageCatalog {
   captionsUrl: (videoId: string) => string | null
   illustrationName: (illustrationId: string) => string
   illustrationUrl: (illustrationId: string) => string | null
+  /** The picture frame of the text box or the name plate, null when the game has none. */
+  frameUrl: (frame: keyof Frames) => string | null
+  /** The colour of a character's name, `#rrggbb`, null for the plate's own. */
+  nameColor: (characterId: string) => string | null
   /** The game's fonts that have a file, for the player to load before the CSS names them. */
   fonts: readonly { name: string; url: string }[]
 }
@@ -47,6 +51,8 @@ export function createStageCatalog(story: PlayableStory): StageCatalog {
     captionsUrl: videoId => urlOf(videos.get(videoId)?.captionsAssetId),
     illustrationName: illustrationId => illustrations.get(illustrationId)?.name ?? '',
     illustrationUrl: illustrationId => urlOf(illustrations.get(illustrationId)?.assetId),
+    frameUrl: frame => urlOf(project.frames[frame]),
+    nameColor: characterId => characters.get(characterId)?.nameColor ?? null,
     fonts: project.fonts.flatMap(font => {
       const url = urlOf(font.assetId)
       return url === null ? [] : [{ name: font.name, url }]

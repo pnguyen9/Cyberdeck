@@ -181,7 +181,9 @@ class TextWriter {
         }
         case 'count': {
           const name = this.counterName(node.counterId)
-          this.line(node.operation === 'add' ? `[add: ${name} ${node.amount}]` : `[set: ${name} = ${node.amount}]`)
+          this.line(node.operation === 'add' ? `[add: ${name} ${node.amount}]`
+            : node.operation === 'random' ? `[set: ${name} = random ${node.amount} ${node.maximum ?? node.amount}]`
+              : `[set: ${name} = ${node.amount}]`)
           break
         }
         case 'unset': {

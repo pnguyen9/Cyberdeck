@@ -179,6 +179,13 @@ describe('the definitions tab', () => {
 })
 
 describe('the index of names', () => {
+  it('counts a value shown in the text as a use', () => {
+    const { project, chapters } = projectFrom('[counter: Score]\n[add: Score]\n[decision: Mood = Calm | Angry]\n[set: Mood = Calm]\nScore {Score}, mood {Mood}.')
+    const index = indexNames(project, chapters)
+    expect(index.find(name => name.name === 'Score')!.uses.map(entry => entry.role)).toEqual(['declared', 'changed', 'shown'])
+    expect(nameWarnings(index, project, storyFlow(chapters, [])).map(warning => warning.code)).toEqual([])
+  })
+
   it('never takes the styles of title cards and the end screen for unused', () => {
     const { project, chapters } = projectFrom('[style: Chapter title = gold]\n[style: Ending = red]\n[style: Unused = bold]\nA page.')
     expect(nameWarnings(indexNames(project, chapters), project, storyFlow(chapters, [])).map(warning => warning.name.name)).toEqual(['Unused'])
@@ -194,9 +201,17 @@ describe('the index of names', () => {
     const warnings = nameWarnings(index, project, storyFlow(chapters, []))
     expect(warnings.map(warning => `${warning.severity} ${warning.code} ${warning.name.name}${warning.valueName === undefined ? '' : `: ${warning.valueName}`}`)).toEqual([
       'warning testedNeverGiven Route',
+      'notice valueGivenNeverTested Clues: Letter',
       'warning valueTestedNeverGiven Clues: Key',
       'notice declaredNeverUsed Unused',
+      'notice valueGivenNeverTested Answer: No',
     ])
+  })
+
+  it('lets an [else] stand for the values a test of a decision leaves out', () => {
+    const { project, chapters } = projectFrom('[choice: Answer]\n> Yes = Yes\n> No = No\n[if: Answer is Yes]\nGood.\n[else]\nPity.\n[end]')
+    const index = indexNames(project, chapters)
+    expect(nameWarnings(index, project, storyFlow(chapters, [])).map(warning => warning.code)).toEqual([])
   })
 })
 

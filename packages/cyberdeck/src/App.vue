@@ -58,6 +58,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :save-store="previewSaves"
       :resume-from="previewing.resumeFrom"
       :leave-label="text.leaveLabel"
+      can-inspect
       @leave="previewing = null"
     />
   </template>
