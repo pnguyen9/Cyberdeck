@@ -715,6 +715,15 @@ Datajack 2.0, which an older one says rather than failing. Datajack 2.0 keeps re
     seen the same in every language.
   - The Export tab ships the chapters chosen in every language ticked; a language where one of them
     is still hollow cannot be ticked, and says which.
+  - Any language, not only English and French: a language is its standard code (`es`, `ja`, `pt-BR`),
+    which cuts sentences, picks the read-aloud voice and tells screen readers what they read. The
+    editor carries the list of the two-letter codes (ISO 639-1); the browser names each one, in the
+    editor's language and in its own ("Spanish", "español"). The author picks it in a field that
+    suggests as they type, found by either name or by its code, or types a regional code; written
+    in the text, `[import: story es]`, an unknown code is reported. The words the player writes
+    itself (the end, the endings count) fall back to English in a language they are not translated
+    into. Languages written without spaces between words (Chinese, Japanese) break their lines where
+    the browser's word splitter allows, rather than only at spaces.
   - *Copy without the story* goes, and the README and the guide's translation section are rewritten.
 - **What waiting means, shown.** `[timeout]` marks the option taken when the time runs out, and that
   option is offered as a button like the others: any option may carry it, `> Yes. = Accept
