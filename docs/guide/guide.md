@@ -431,6 +431,8 @@ The grid keeps each block folded, to see the whole chapter at a glance and move 
 
 The **Graph** view draws the whole story as a map: chapters one under the other, blocks forking into their branches and joining again, endings where routes stop, and scenes on the side, linked to each `[play]` that calls them. Drag it to move around, use the wheel to zoom, and click a box: its panel opens it in the grid, adds a branch to a block or an option to a choice, or moves a branch.
 
+From the keyboard, <kbd>Tab</kbd> goes from box to box, bringing each into view, and <kbd>Enter</kbd> selects the one reached and moves to its panel, where <kbd>Tab</kbd> goes through its buttons; <kbd>Esc</kbd> comes back to the box. On the map itself, the arrows move it around, and <kbd>+</kbd> and <kbd>−</kbd> zoom in and out.
+
 ![The graph of the story: its two chapters one under the other, their pages and choices, the blocks forking into branches that join again, the loop of the fair and its ending.](images/graph.png)
 
 **Shortcuts** (or <kbd>?</kbd>) lists every key by screen; click one to change it.

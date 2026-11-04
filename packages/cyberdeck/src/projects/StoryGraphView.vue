@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useLocale, useMessages } from '@cyberdeck/stage'
-import { computed, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { storyboardMessages } from '../i18n/storyboardMessages'
 import { storyWords } from '../i18n/storyWords'
@@ -103,6 +103,21 @@ function onBoxFocus(box: GraphBox) {
   pan.value = { x: pan.value.x + dx, y: pan.value.y + dy }
 }
 
+/**
+ * Enter on a box selects it and moves to its panel, whose buttons are then a Tab away rather than
+ * past every box after it; Esc in the panel comes back to the box.
+ */
+const panel = useTemplateRef<HTMLElement>('panel')
+let boxLeft: SVGElement | null = null
+function selectFromKeyboard(box: GraphBox, event: KeyboardEvent) {
+  selectedId.value = box.id
+  boxLeft = event.currentTarget as SVGElement
+  void nextTick(() => panel.value?.querySelector('button')?.focus())
+}
+function backToBox() {
+  boxLeft?.focus()
+}
+
 /** On the map itself: the arrows move it, + and − zoom around its middle. */
 const PAN_STEP = 80
 function onKeydown(event: KeyboardEvent) {
@@ -161,8 +176,8 @@ const pathOf = (points: readonly { x: number; y: number }[]) => points.map((poin
             :aria-label="[box.label, ...box.lines].join(', ')"
             :aria-pressed="box.id === selectedId"
             @focus="onBoxFocus(box)"
-            @keydown.enter.stop.prevent="selectedId = box.id"
-            @keydown.space.stop.prevent="selectedId = box.id"
+            @keydown.enter.stop.prevent="selectFromKeyboard(box, $event)"
+            @keydown.space.stop.prevent="selectFromKeyboard(box, $event)"
           >
             <rect :x="box.x" :y="box.y" :width="box.width" :height="box.height" rx="8" />
             <text :x="box.x + 12" :y="box.y + 22" class="label">{{ box.label }}</text>
@@ -172,7 +187,7 @@ const pathOf = (points: readonly { x: number; y: number }[]) => points.map((poin
       </svg>
       <p class="muted graph-help">{{ text.graphHelp }}</p>
     </div>
-    <aside v-if="selected !== null" class="graph-panel">
+    <aside v-if="selected !== null" ref="panel" class="graph-panel" @keydown.esc.stop="backToBox">
       <h3>{{ selected.label }}</h3>
       <p v-for="(line, lineIndex) in selected.lines" :key="lineIndex" class="muted">{{ line }}</p>
       <div class="actions">

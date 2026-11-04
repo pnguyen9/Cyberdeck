@@ -432,7 +432,8 @@ A **project** holds the whole game. Its screens:
   are edited, not moved. The **Graph** view draws the whole story as a map, laid out by itself:
   chapters one under the other, each choice and block forking into its branches and joining again,
   loops, endings where paths stop, and scenes apart, linked to each `[play]` that calls them. Drag or
-  the arrows move it, the wheel or + and − zoom, Tab goes from box to box; a box selected opens its
+  the arrows move it, the wheel or + and − zoom, Tab goes from box to box and Enter selects one and moves to
+  its panel (Esc comes back); a box selected opens its
   card in the grid, adds a branch to its block or an option to its choice, or moves its branch.
   **B** adds a block after the focused card, written as text (`[if: ]`, `[else]`, `[end]`, ready for
   its condition); **E** edits a block's own text, its conditions and branches, as a page is edited,
