@@ -750,6 +750,13 @@ Datajack 2.0, which an older one says rather than failing. Datajack 2.0 keeps re
   their line the same way; a speaker starts a new paragraph; a note alone on its line (a scene
   change, an entrance) stands on its own line, and notes inside the text stay inside it. Nothing new
   is stored, so it works for every project.
+- **The guide brought along.** Each of these explained where it belongs, and the recipes for bigger
+  stories extended with what they open: a key or money carried into the next playthrough with
+  lasting values; a character who notices the player went back, with `[remember]`, and a memory the
+  story clears with `[forget]`; when to use which; a timed choice where waiting means an answer; a
+  bag shown in the collected window, items appearing and going as they are found and used; endings
+  that unlock what players may see; and a story written in two languages, from the first chapter
+  to a translation shipped beside it.
 
 ## License
 
