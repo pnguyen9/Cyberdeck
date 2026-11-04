@@ -716,6 +716,11 @@ Datajack 2.0, which an older one says rather than failing. Datajack 2.0 keeps re
   - The Export tab ships the chapters chosen in every language ticked; a language where one of them
     is still hollow cannot be ticked, and says which.
   - *Copy without the story* goes, and the README and the guide's translation section are rewritten.
+- **Remaining silent without waiting.** The option marked `[timeout]` of a timed choice is offered as
+  a button among the others, with its own text (`> … = Silent [timeout]` shows "…"), so that a
+  player who means to say nothing need not wait for the time to run out; it is still what happens
+  when the time does. With *Choices wait for me* on, it is the way to that outcome at all, which a
+  player could otherwise never reach.
 - **What the player has collected.** A window players open from the menu, showing only what the
   author chose, so that a story which says nothing keeps its secrets (and the menu shows no button):
   `[shown: Bag, Clues]` shows decisions and counters while they hold something, a `[decision multi]`
