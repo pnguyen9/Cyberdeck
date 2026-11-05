@@ -42,7 +42,7 @@ export default async function check(page, { url, serve }) {
   // Exporting: French cannot go while a chapter is hollow in it.
   await page.clickButton('Export', '.tab')
   await page.waitFor('.export')
-  page.check('the Export tab says which chapter French still lacks', await page.evaluate(`[...document.querySelectorAll('.export .chapter')].map(label => label.textContent.replace(/\\s+/g, ' ').trim()).filter(text => text.includes('français'))`), ['French — français (fr) · not written yet in it: The Roof. Translate it, or untick it above, for this language to go'])
+  page.check('the Export tab says which chapter French still lacks', await page.evaluate(`[...document.querySelectorAll('.export .chapter')].map(label => label.textContent.replace(/\\s+/g, ' ').trim()).filter(text => text.includes('français'))`), ['French — français (fr) · not written yet in it: The Roof. Translate it, or untick it above, for this language to be in the game'])
 
   await page.clickButton('Import', '.tab')
   await page.waitFor('.import .source')

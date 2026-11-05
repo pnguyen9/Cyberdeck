@@ -46,7 +46,7 @@ type StoryLevelMessages = typeof en
 const fr: StoryLevelMessages = {
   writtenHere: 'Écrit dans Cyberdeck',
   notWrittenIn: language => `pas encore écrit en ${language}`,
-  hollowHelp: language => `Pas encore écrit en ${language}\u00a0: son titre en attendant, et le jeu ne peut pas sortir en ${language} tant qu’il manque. Ouvrez-le pour l’écrire ici, ou importez son texte avec «\u00a0À la place d’un chapitre\u00a0».`,
+  hollowHelp: language => `Pas encore écrit en ${language}\u00a0: son titre d’origine le remplace en attendant, et le jeu ne peut pas sortir en ${language} tant qu’il manque. Ouvrez-le pour l’écrire ici, ou importez son texte avec «\u00a0À la place d’un chapitre\u00a0».`,
   confirmRemoveChapter: (title, languages) => languages === null ? `Supprimer ${title}\u00a0?` : `Supprimer ${title}, dans toutes les langues (${languages})\u00a0?`,
   confirmRemoveScene: (title, languages) => languages === null ? `Supprimer la scène ${title}\u00a0?` : `Supprimer la scène ${title}, dans toutes les langues (${languages})\u00a0?`,
   chapterTextHelp: '· modifiez-le, puis importez-le avec «\u00a0À la place d’un chapitre\u00a0».',

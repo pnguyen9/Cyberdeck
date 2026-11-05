@@ -168,7 +168,7 @@ const fr: StoryboardMessages = {
   grid: 'Grille',
   tree: 'Arbre',
   graph: 'Graphe',
-  hollowChapter: (language: string) => `Pas encore écrit en ${language}\u00a0: les pages ajoutées ici en sont le texte en ${language}.`,
+  hollowChapter: (language: string) => `Pas encore écrit en ${language}\u00a0: les pages ajoutées ici formeront son texte en ${language}.`,
   graphHelp: 'Faites glisser pour vous déplacer, la molette pour zoomer\u00a0; un clic sélectionne une case.',
   graphKeys: 'Tab passe d’une case à l’autre, Entrée en sélectionne une et passe à son panneau, Échap ramène à la case\u00a0; les flèches déplacent la carte, + et − zooment.',
   graphOnlyIf: condition => `seulement si ${condition}`,

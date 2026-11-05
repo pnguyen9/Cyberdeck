@@ -174,7 +174,7 @@ const fr: TagTextMessages = {
     decision: 'déclare une décision et ses valeurs',
     'decision multi': 'une décision qui peut avoir plusieurs valeurs à la fois',
     shown: 'liste ce que les joueurs voient dans leur journal',
-    'shown after an ending': 'pareil, une fois une fin atteinte',
+    'shown after an ending': 'de même, une fois une fin atteinte',
     counter: 'déclare un compteur et sa valeur de départ',
     'counter lasting': 'un compteur que le profil garde d’une partie à l’autre',
     'decision lasting': 'une décision que le profil garde d’une partie à l’autre',
