@@ -71,7 +71,7 @@ describe('where definitions live', () => {
   it('writes each where it lives, so that the text imports back the same', () => {
     const { project, chapters } = projectFrom(STORY)
     const text = exportText(project, chapters, { declareDecisions: true })
-    expect(text.split('\n').slice(0, 5)).toEqual(['[import: story]', '[decision: Route = Marie | Jules]', '[style: Whisper = italic, grey]', '# Chapter 1', '[decision multi: Clues = Letter | Key]'])
+    expect(text.split('\n').slice(0, 5)).toEqual(['[import: story en]', '[decision: Route = Marie | Jules]', '[style: Whisper = italic, grey]', '# Chapter 1', '[decision multi: Clues = Letter | Key]'])
     const again = projectFrom(text)
     expect(exportText(again.project, again.chapters, { declareDecisions: true })).toBe(text)
   })

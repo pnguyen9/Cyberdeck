@@ -23,7 +23,6 @@ export { default as LanguageSelect } from './components/LanguageSelect.vue'
 export { createStorageSettingsStore, DEFAULT_PLAYER_SETTINGS, parsePlayerSettings, TEXT_SPEED_RANGE, type PlayerSettings } from './settings/playerSettings'
 export {
   isLocale,
-  LOCALE_NAMES,
   LOCALES,
   localeOf,
   localeOfChoice,

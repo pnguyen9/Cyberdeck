@@ -1,6 +1,7 @@
 {
   "kind": null,
   "counters": [],
+  "language": null,
   "decisions": [
     {
       "sourceLine": 1,
@@ -9,7 +10,8 @@
         "Library",
         "Park"
       ],
-      "multiple": true
+      "multiple": true,
+      "lasting": false
     }
   ],
   "styles": [],
@@ -89,6 +91,7 @@
     }
   ],
   "scenes": [],
+  "shown": [],
   "problems": [
     {
       "severity": "warning",

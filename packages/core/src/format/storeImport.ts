@@ -1,4 +1,5 @@
-import type { Condition, Directive, ImportResult, StoryNode, StyleDeclaration } from '../importer/importTypes'
+import { firstLanguageOf } from './languages'
+import type { Condition, Directive, ImportResult, ShownDeclaration, StoryNode, StyleDeclaration } from '../importer/importTypes'
 import { readAmount, readRandom } from '../importer/readControl'
 import { flattenNodes, normalizeName } from '../importer/storyNodes'
 import { interpretStageDirective } from '../stage/stageDirectives'
@@ -11,9 +12,14 @@ import {
   type ChapterDocument,
   type Counter,
   type Decision,
+  type Ending,
   type DecisionValue,
   type Environment,
   type ProjectDocument,
+  ENDINGS_REACHED,
+  withShown,
+  type ShownToPlayers,
+  type ShownWhen,
   type StoredCondition,
   type StoredNode,
   type TextStyle,
@@ -44,15 +50,17 @@ export interface StoredImport {
 export function storeImport(
   result: ImportResult,
   project: ProjectDocument,
-  source: { fileName: string | null },
+  source: { fileName: string | null; language?: string },
   environment: Environment = defaultEnvironment,
   knownScenes: readonly { name: string; id: string }[] = [],
 ): StoredImport {
+  // The language the text is in: what it says, else what the import was told, else the story's first.
+  const language = result.language ?? source.language ?? firstLanguageOf(project)
   const now = environment.now()
   const decisions = new DecisionRegistry(project.decisions, environment)
 
   for (const declaration of result.decisions) {
-    decisions.declare(declaration.name, declaration.values, declaration.multiple)
+    decisions.declare(declaration.name, declaration.values, declaration.multiple, declaration.lasting)
   }
   const importedNodes = [...result.chapters, ...result.scenes].flatMap(chapter => flattenNodes(chapter.nodes))
   for (const node of importedNodes) {
@@ -62,7 +70,7 @@ export function storeImport(
   }
   const counters = new CounterRegistry(project.counters, environment)
   for (const declaration of result.counters) {
-    counters.declare(declaration.name, declaration.initial)
+    counters.declare(declaration.name, declaration.initial, declaration.lasting)
   }
   for (const node of importedNodes) {
     if (node.type === 'add') {
@@ -192,7 +200,7 @@ export function storeImport(
       case 'ending':
         return { type: 'ending', id, endingId: endings.idOf(node.name) }
       case 'remember':
-        return { type: 'remember', id, memoryId: memories.idOf(node.name) }
+        return { type: 'remember', id, memoryId: memories.idOf(node.name), ...(node.forget === true ? { forget: true as const } : {}) }
     }
   })
 
@@ -222,8 +230,9 @@ export function storeImport(
       ...project,
       decisions: decisions.all(),
       counters: counters.all(),
+      shown: shownWith(project.shown, result.shown, decisions.all(), counters.all()),
       askedNames: askedNames.all(),
-      endings: endings.all(),
+      endings: withEndingNames(endings.all(), importedNodes, language),
       memories: memories.all(),
       styles: styles.all(),
       characters: registry.characters,
@@ -240,6 +249,36 @@ export function storeImport(
     scenes,
     created: registry.created,
   }
+}
+
+/** Endings with what players read of them in a language, as `[ending: Name = shown as]` says. */
+function withEndingNames(endings: readonly Ending[], nodes: readonly StoryNode[], language: string): Ending[] {
+  const shownAs = new Map(nodes.flatMap(node => node.type === 'ending' && node.shownAs !== undefined ? [[normalizeName(node.name), node.shownAs] as const] : []))
+  return endings.map(ending => {
+    const name = shownAs.get(normalizeName(ending.name))
+    return name === undefined ? ending : { ...ending, translations: { ...ending.translations, [language]: name } }
+  })
+}
+
+/**
+ * What players may see, with what an import says: each name named again moves to what it says now.
+ * Names neither a decision nor a counter are left out, `checkReferences` having reported them.
+ */
+export function shownWith(shown: ShownToPlayers, declarations: readonly ShownDeclaration[], decisions: readonly Decision[], counters: readonly Counter[]): ShownToPlayers {
+  const idsByName = new Map([...decisions, ...counters].map(entry => [normalizeName(entry.name), entry.id]))
+  let result = shown
+  for (const declaration of declarations) {
+    const when: ShownWhen = declaration.afterAnEnding ? 'afterAnEnding' : 'always'
+    for (const name of declaration.names) {
+      const id = idsByName.get(normalizeName(name))
+      if (normalizeName(name) === ENDINGS_REACHED) {
+        result = { ...result, endings: when }
+      } else if (id !== undefined) {
+        result = withShown(result, id, when)
+      }
+    }
+  }
+  return result
 }
 
 /**
@@ -300,13 +339,13 @@ class DecisionRegistry {
    * A declaration: creates the decision, or gives one declared again its values, those it already
    * had keeping their identifiers. `checkReferences` made sure no value dropped is still used.
    */
-  declare(name: string, valueNames: string[], multiple: boolean) {
+  declare(name: string, valueNames: string[], multiple: boolean, lasting: boolean) {
     const index = this.decisions.findIndex(candidate => normalizeName(candidate.name) === normalizeName(name))
     const existing = this.decisions[index]
     // A value written twice, whatever its case, is one value.
     const distinctNames = valueNames.filter((valueName, valueIndex) => valueNames.findIndex(other => normalizeName(other) === normalizeName(valueName)) === valueIndex)
     const values = distinctNames.map(valueName => existing?.values.find(value => normalizeName(value.name) === normalizeName(valueName)) ?? { id: this.environment.createId(), name: valueName })
-    const decision: Decision = { id: existing?.id ?? this.environment.createId(), name, multiple, values }
+    const decision: Decision = { id: existing?.id ?? this.environment.createId(), name, multiple, values, ...(lasting ? { lasting: true as const } : {}) }
     if (existing === undefined) {
       this.decisions.push(decision)
     } else {
@@ -358,9 +397,9 @@ class CounterRegistry {
   }
 
   /** A declaration: creates the counter, or gives one declared again its initial value, keeping its identifier. */
-  declare(name: string, initial: number) {
+  declare(name: string, initial: number, lasting: boolean) {
     const existing = this.get(name)
-    const counter: Counter = { id: existing?.id ?? this.environment.createId(), name, initial }
+    const counter: Counter = { id: existing?.id ?? this.environment.createId(), name, initial, ...(lasting ? { lasting: true as const } : {}) }
     if (existing === undefined) {
       this.counters.push(counter)
     } else {

@@ -42,9 +42,9 @@ Write your story as you would in Word, with a few notes in brackets for the stag
 
 ## 1. Create a project
 
-A project holds one whole game: its chapters, characters, pictures and music. On the first screen, type the name of your game and choose the language it is written in, then press **Create**.
+A project holds one whole game: its chapters, characters, pictures and music. On the first screen, type the name of your game, then press **Create**. The language it is written in comes with its first text.
 
-![The projects screen: a name field holding “The Letter”, the language of the story, and the Create button.](images/projects.png)
+![The projects screen: a name field holding “The Letter”, and the Create button.](images/projects.png)
 
 *The projects screen. Your projects are listed above the form once you have some.*
 
@@ -52,7 +52,7 @@ Cyberdeck saves everything as you go: there is no Save button to remember.
 
 > **Tip**
 >
-> Cyberdeck speaks English and French. It follows your computer's language; the **Language** menu, on this screen or at the top of a project, changes it. Your players choose theirs in Datajack.
+> Cyberdeck speaks English and French. It follows your computer's language; the **Cyberdeck in** menu, on this screen or at the top of a project, changes it. Your players choose theirs in Datajack.
 
 ## 2. Write or paste your story
 
@@ -248,7 +248,21 @@ The story ends there, with that name on the end screen. Players see how many of 
 [end]
 ```
 
-Unlike decisions, what a player **remembers** stays across every new playthrough: for a story that knows you have been there before. `[if: seen ending Alone]` works the same way.
+Unlike decisions, what a player **remembers** stays across every new playthrough: for a story that knows you have been there before. `[if: seen ending Alone]` works the same way. `[forget: The ghost's name]` takes it away again, for good.
+
+A counter or a decision can last too: `[counter lasting: Coins = 0]`, or `[decision multi
+lasting: Bag = Key | Lamp]`. In a playthrough it behaves as any other, going back included, and the next playthrough starts with what the last one left. Use `[remember]` for what the game knows, whatever the player takes back; a lasting value for what the player carries.
+
+Players can see some of this in their **Journal**, but only what you choose:
+
+```text
+[shown: Bag, Coins]
+[shown after an ending: Trust, endings reached]
+```
+
+A decision shows while it holds something, a bag each item until it is taken away; a counter its number; `endings reached` the endings found. The second line waits until the player has reached an ending, for those hunting the others. Write these lines with your definitions, or choose in the Index, on a decision or a counter: **In the players’ journal**, and for the endings, at the top of the Index. Players read the names and values as you wrote them, in every language.
+
+![The Journal in the player: the answer given, Truth, and the endings reached, 0 of 1.](images/journal.png)
 
 ## 11. More about decisions, and counters
 
@@ -417,6 +431,8 @@ You can write your whole story in Word and open the `.docx` in the Import tab. T
 
 To edit in Word again later, **Export as text** (in a chapter's panel, on the story's level) writes the story back with every change you made in Cyberdeck. Import it again, and Cyberdeck chooses **In place of a chapter** by itself, for the chapter of the same title: its first line, `[import: chapter]`, says it is one. The chapter keeps its place, and players' saves inside it keep working.
 
+Exported as is, each page is a paragraph, so that it comes back cut the same. To send a text to a translator, choose **As written** under **Paragraphs**, in the Export tab: the pages cut from one paragraph are joined again, and the text reads as you wrote it.
+
 ## 21. Tree view, shortcuts and backups
 
 The grid keeps each block folded, to see the whole chapter at a glance and move things around. The storyboard's **Tree** view unfolds everything instead: one card per line, the branches of each block side by side, to follow how the story goes. Here is the fair of chapter 2 in both views.
@@ -447,7 +463,7 @@ Players have their own **Settings**, in three categories. **General**: text spee
 
 ![The Settings screen, Accessibility: text size at 100, 125 or 150 %, a plainer font, stronger contrast, reading aloud, and choices that wait.](images/accessibility.png)
 
-The **Log** shows what they read and picked. Clicking a line goes back to it.
+The **Log** shows what they read and picked. Clicking a line goes back to it. The **Journal** (<kbd>J</kbd>) shows what you chose to let them see (see section 10). A game in several languages asks which one, on its card in the library: **Play in**.
 
 ![The log: past lines with who said them, and the option picked, “Tell her the truth.”, in gold.](images/log.png)
 
@@ -469,7 +485,7 @@ Marie looked up. “{Hero}? Is that you?”
 
 The story stops on a small box to type the name, at most 12 letters. `Alex` stands in until they give one, or if they leave it empty.
 
-A choice can have a time limit. Write it after its name, and end one option with `[timeout]`: it is never shown, and it is what happens when time runs out.
+A choice can have a time limit. Write it after its name, and end one option with `[timeout]`: it is what happens when time runs out. Players see it among the others, the time running out along it, so they know what waiting means, and can pick it without waiting.
 
 ```text
 [choice: Answer 10s]
@@ -478,9 +494,11 @@ A choice can have a time limit. Write it after its name, and end one option with
 > … = Silent [timeout]
 ```
 
+Any option can be it: with `> Yes. = Accept [timeout]`, waiting means yes.
+
 > **Tip**
 >
-> Players who need more time can ask choices to wait for them, in their settings.
+> Players who need more time can ask choices to wait for them, in their settings: nothing is then taken by itself.
 
 ## 24. Values in the text, and chance
 
@@ -498,7 +516,24 @@ For a counter, `[set: Weather = random 1 6]` draws a number between the two, so 
 
 ## 25. Translating your story
 
-On the projects screen, **Copy without the story** makes a new project with your files, characters and settings, but none of your chapters. Give it a name and the language of the translation, then import the translated text into it, from Word or pasted. Keep the tags as they are, `[bg: rooftop]` or `[enter: marie]`: that is how the translation finds your pictures and sounds.
+A translation lives in the same project, beside your story: the same chapters, pictures and sounds, the same decisions, its own text. Say which language a text is in on its first line, with its standard code, and import it as usual:
+
+```text
+[import: story fr]
+# Chapitre 1 — La Lettre
+…
+```
+
+Or pick it under **Language of the text**, in the Import tab, by its name or its code. A whole story, `[import: story fr]`, lays its chapters over yours, in order: its first chapter is your first chapter in French. Chapters imported on their own fill the first places not translated yet, and the Import tab says which before you import; to put one elsewhere, choose **In place of a chapter**. A chapter not translated yet shows *hollow* on the story's level, your title standing in. Scenes go by their name, which stays as it is, as the tags do: `[bg: rooftop]`, `[enter:
+marie]`, the names of decisions and their values. What players read of an ending can be translated:
+
+```text
+[ending: The Empty Room = La Chambre vide]
+```
+
+**Story in**, at the top of the project, shows the story in one language at a time; **Add a language…** begins another, and **Remove this language** takes one out again while it has no text. While your story has only one language, **Change the story's language…** sets it right, if Cyberdeck guessed wrong. In the Export tab, tick the languages players get: one with a hollow chapter cannot go yet, and the tab says which chapter it lacks. Exporting the story as text writes its language on the first line, so that a translator's version comes back as one.
+
+![The story's level in French: the first chapter translated, the second hollow, its English title standing in, and Story in: French at the top.](images/languages.png)
 
 ## 26. Recipes for bigger stories
 
@@ -596,6 +631,58 @@ A scene can be played by many chapters, and test the story itself: one morning s
 — Ghost: You came back, and you know my name.
 [end]
 ```
+
+### What the game knows, and what the player carries
+
+A character can notice the player went back, because a memory stays whatever they take back:
+
+```text
+[remember: Saw the letter]
+…
+[if: remembered Saw the letter]
+— Marie: You read it, didn't you? Even if you pretend you didn't.
+[end]
+```
+
+A key found in one playthrough can be there in the next, with a lasting decision, and gone once used:
+
+```text
+[decision multi lasting: Bag = Key | Lamp]
+[shown: Bag]
+…
+[set: Bag = Key]
+…
+[if: Bag is Key]
+The door opens.
+[unset: Bag = Key]
+[end]
+```
+
+Money that adds up over playthroughs is a lasting counter, `[counter lasting: Coins = 0]`, and `[add: Coins 10]`. A promise broken for good is a memory forgotten: `[forget: Promised to
+stay]`.
+
+### Waiting as an answer
+
+Silence that means yes:
+
+```text
+[choice: Stay 8s]
+> I'll stay. = Yes [timeout]
+> I have to go. = No
+```
+
+### A journal that opens up
+
+Show little at first, and more once the player has seen an ending, for those hunting the others:
+
+```text
+[shown: Bag]
+[shown after an ending: Trust, endings reached]
+```
+
+### A story in two languages
+
+Write it in your language, then lay the translation over it, chapter by chapter, as section 25 shows. Ship it once every chapter has its translation: players pick their language on the game's card.
 
 ### A little chance
 

@@ -1,6 +1,7 @@
 {
   "kind": null,
   "counters": [],
+  "language": null,
   "decisions": [],
   "chapters": [
     {
@@ -161,6 +162,7 @@
       ]
     }
   ],
+  "shown": [],
   "problems": [
     {
       "severity": "warning",

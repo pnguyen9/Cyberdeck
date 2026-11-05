@@ -168,5 +168,6 @@ export function withoutNames(project: ProjectDocument, names: readonly UnusedNam
     characters: kept(project.characters).map(character => ({ ...character, expressions: kept(character.expressions) })),
     decisions: kept(project.decisions).map(decision => ({ ...decision, values: kept(decision.values) })),
     counters: kept(project.counters),
+    shown: { ...project.shown, always: project.shown.always.filter(id => !removed.has(id)), afterAnEnding: project.shown.afterAnEnding.filter(id => !removed.has(id)) },
   }
 }

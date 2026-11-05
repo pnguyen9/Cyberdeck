@@ -1,5 +1,5 @@
 // The editor end to end: projects, import, problems, cast and files, details, chapters, preview,
-// reload, partial export, backup and restore, a copy without the story; then the partial export installed in Datajack.
+// reload, partial export, backup and restore; then the partial export installed in Datajack.
 import { readdirSync } from 'node:fs'
 import { createProfile, createProject, focusStoryCard, installGame, pause, showStory, shownStep } from './harness.mjs'
 
@@ -121,37 +121,6 @@ export default async function check(page, { url, assets, serve }) {
   await page.evaluate(`document.querySelector('.open-project').click()`)
   await page.waitFor('.chapter')
   page.check('the restored project has its chapters', await chapterTitles(), 'Chapter 1 — The Letter | Chapter 2 — The Rooftop')
-
-  // A translation starts from a copy without the story: the files and characters, no chapter.
-  const castOf = async () => {
-    await page.clickButton('Cast & files', '.tab')
-    await page.waitFor('.cast')
-    await pause(300)
-    return page.evaluate(`[...document.querySelectorAll('.cast .cast-section:not(.unused) .entry')].map(entry => entry.textContent.replace(/\\s+/g, ' ').trim()).join(' | ')`)
-  }
-  const originalCast = await castOf()
-  await page.clickButton('← Projects')
-  await pause(800)
-  await page.clickButton('Copy without the story', '.link-button')
-  await pause(200)
-  await page.screenshot('copy-without-story')
-  await page.setValue('.copy .text-input', 'La Lettre')
-  await page.evaluate(`(() => {
-    const select = document.querySelector('.copy select')
-    select.value = 'fr'
-    select.dispatchEvent(new Event('change'))
-  })()`)
-  await page.clickButton('Create', '.copy .button')
-  await page.waitFor('.import .source')
-  await pause(400)
-  page.check('the copy opens on its Import tab', await page.evaluate(`document.querySelector('h1').firstChild.textContent.trim()`), 'La Lettre')
-  page.check('with the characters and files of the project it was made from', await castOf(), originalCast)
-  await showStory(page)
-  page.check('and no chapter', await chapterTitles(), '')
-  await page.clickButton('← Projects')
-  await pause(800)
-  await page.evaluate(`[...document.querySelectorAll('.project-name')].find(name => name.textContent === 'The Letter').closest('.open-project').click()`)
-  await page.waitFor('.chapter')
 
   await createProfile(page, await serve('datajack'), 'Pascal')
   await installGame(page, archive)

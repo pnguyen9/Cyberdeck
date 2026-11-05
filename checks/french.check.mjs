@@ -28,13 +28,13 @@ export default async function check(page, { url, serve }) {
   // A story written in French: its own words, on its end screen, are French.
   await page.navigate(url)
   await page.waitFor('.new-project .text-input')
-  await choose('.new-project select', 'fr')
   await page.evaluate(`document.querySelector('.new-project .text-input').focus()`)
   await page.typeText('Nuit')
   await page.clickButton('Create')
   await page.waitFor('.import .source')
   await page.evaluate(`document.querySelector('.import .source').focus()`)
-  await page.typeText(STORY)
+  // The text says it is French: the story, empty until now, takes its language.
+  await page.typeText(`[import: story fr]\n${STORY}`)
   await pause(600)
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)

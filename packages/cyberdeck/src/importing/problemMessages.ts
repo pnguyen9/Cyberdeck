@@ -29,6 +29,7 @@ type ProblemMessages = Record<ImportProblemCode, (subject: string, suggestion: s
 
 const en: ProblemMessages = {
   unknownImportKind: subject => `"${subject}" is not a kind of import: use story, chapter or pages.`,
+  unknownLanguage: subject => `"${subject}" is not a language code: after the kind, write a standard code, such as es for Spanish or pt-BR for Brazilian Portuguese: [import: story es].`,
   misplacedImportKind: () => '[import: …] must be on the first line.',
   emptyDirective: () => 'Empty brackets: write a directive inside, or remove them.',
   unclosedBracket: () => 'A bracket [ is never closed.',
@@ -93,6 +94,7 @@ const en: ProblemMessages = {
   unknownValue: subject => `Nothing in the story is called "${subject}": {…} shows a name asked with [ask], a counter or a decision. Check the spelling, or write {{ for a brace itself.`,
   askedNameTaken: subject => `${subject} is already a counter or a decision: a name asked for needs a name of its own, so that {${subject}} says which one it shows.`,
   nameIsAsked: subject => `${subject} is a name asked of the player: a counter or a decision needs a name of its own, so that {${subject}} says which one it shows.`,
+  unknownShown: subject => `${subject} is neither a decision nor a counter: [shown: …] lists decisions and counters, or endings reached for the endings found. Check the spelling.`,
   timedChoiceWithoutTimeout: subject => `The timed choice ${subject} needs an option for when time runs out: add one ending with [timeout].`,
   timeoutWithoutTime: subject => `[timeout] marks what happens when time runs out, but the choice ${subject} has no time: write it after its name, [choice: ${subject} 10s].`,
   severalTimeouts: subject => `The choice ${subject} has more than one option for when time runs out: keep one [timeout].`,
@@ -135,6 +137,7 @@ const quoted = (text: string) => `«\u00a0${text}\u00a0»`
 
 const fr: ProblemMessages = {
   unknownImportKind: subject => `${quoted(subject)} n’est pas un type d’import\u00a0: utilisez story, chapter ou pages.`,
+  unknownLanguage: subject => `${quoted(subject)} n’est pas un code de langue\u00a0: après le type, écrivez un code standard, comme es pour l’espagnol ou pt-BR pour le portugais du Brésil\u00a0: [import: story es].`,
   misplacedImportKind: () => '[import: …] doit être sur la première ligne.',
   emptyDirective: () => 'Crochets vides\u00a0: écrivez une directive à l’intérieur, ou retirez-les.',
   unclosedBracket: () => 'Un crochet [ n’est jamais fermé.',
@@ -199,6 +202,7 @@ const fr: ProblemMessages = {
   unknownValue: subject => `Rien dans l’histoire ne s’appelle ${quoted(subject)}\u00a0: {…} affiche un nom demandé avec [ask], un compteur ou une décision. Vérifiez l’orthographe, ou écrivez {{ pour une accolade.`,
   askedNameTaken: subject => `${subject} est déjà un compteur ou une décision\u00a0: un nom demandé a besoin d’un nom à lui, pour que {${subject}} dise lequel il affiche.`,
   nameIsAsked: subject => `${subject} est un nom demandé au joueur\u00a0: un compteur ou une décision a besoin d’un nom à lui, pour que {${subject}} dise lequel il affiche.`,
+  unknownShown: subject => `${subject} n’est ni une décision ni un compteur\u00a0: [shown: …] liste des décisions et des compteurs, ou endings reached pour les fins trouvées. Vérifiez l’orthographe.`,
   timedChoiceWithoutTimeout: subject => `Le choix minuté ${subject} a besoin d’une option pour quand le temps est écoulé\u00a0: ajoutez-en une qui se termine par [timeout].`,
   timeoutWithoutTime: subject => `[timeout] indique ce qui se passe quand le temps est écoulé, mais le choix ${subject} n’a pas de durée\u00a0: écrivez-la après son nom, [choice: ${subject} 10s].`,
   severalTimeouts: subject => `Le choix ${subject} a plusieurs options pour quand le temps est écoulé\u00a0: n’en gardez qu’une avec [timeout].`,

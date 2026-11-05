@@ -1,4 +1,5 @@
 import { DEFAULT_POSITION_PRESETS } from '../format/storyFormat'
+import { languageCode } from '../format/languages'
 import { alwaysStops, readingFlow } from '../format/readingFlow'
 import { styleClassName } from '../format/authorCss'
 import { addPossibleValue, counterTexts, isAskableName, MAXIMUM_ASKED_NAME_LENGTH, measuringValues, type PossibleValues } from '../format/textValues'
@@ -32,6 +33,7 @@ import {
   readCounterDeclaration,
   readDecisionDeclaration,
   readRandom,
+  declarationKind,
 } from './readControl'
 
 export interface ImportOptions {
@@ -103,18 +105,19 @@ function valuesDeclaredIn(input: string, known: PossibleValues = new Map()): Map
       addPossibleValue(possible, choiceName, asInTags(option[2]!))
     }
     for (const tag of trimmed.matchAll(/\[\s*([a-z ]+?)\s*:([^\]]*)\]/gi)) {
-      const name = tag[1]!.toLowerCase()
+      const name = tag[1]!.toLowerCase().replace(/\s+/g, ' ')
       const text = tag[2]!.trim()
+      const declared = declarationKind(name)
       if (name === 'choice') {
         choiceName = readChoiceHeading(text).decision
-      } else if (name === 'decision' || name === 'decision multi') {
+      } else if (declared?.kind === 'decision') {
         const declaration = readDecisionDeclaration(text)
         if (declaration !== null) {
-          for (const shown of name === 'decision multi' ? [declaration.values.join(', ')] : declaration.values) {
+          for (const shown of declared.multiple ? [declaration.values.join(', ')] : declaration.values) {
             addPossibleValue(possible, declaration.name, shown)
           }
         }
-      } else if (name === 'counter') {
+      } else if (declared?.kind === 'counter') {
         const declaration = readCounterDeclaration(text)
         if (declaration !== null) {
           for (const shown of counterTexts(declaration.initial)) {
@@ -136,7 +139,7 @@ function valuesDeclaredIn(input: string, known: PossibleValues = new Map()): Map
 }
 
 class TextImporter {
-  private readonly result: ImportResult = { kind: null, decisions: [], counters: [], styles: [], chapters: [], scenes: [], problems: [] }
+  private readonly result: ImportResult = { kind: null, language: null, decisions: [], counters: [], styles: [], chapters: [], scenes: [], shown: [], problems: [] }
   private currentChapter: ImportedChapter | null = null
   /** Names of the styles the text declares `large`. */
   private readonly largeStyles = new Set<string>()
@@ -155,8 +158,12 @@ class TextImporter {
   /** Pages are measured with each `{…}` as wide as the widest it may show. */
   private measureText: PageLayout['measureText']
 
+  /** The language pages are cut for: the one given, unless the text says its own on its first line. */
+  private locale: string
+
   constructor(private readonly options: ImportOptions) {
     this.measureText = options.layout.measureText
+    this.locale = options.locale
   }
 
   run(input: string): ImportResult {
@@ -393,22 +400,35 @@ class TextImporter {
 
     switch (directive.name) {
       case 'decision':
-      case 'decision multi': {
+      case 'decision multi':
+      case 'decision lasting':
+      case 'decision multi lasting': {
         const declaration = readDecisionDeclaration(text)
+        const { multiple, lasting } = declarationKind(directive.name)!
         if (declaration === null) {
           this.addProblem('error', 'invalidDecision', lineNumber, text)
         } else {
-          this.result.decisions.push({ sourceLine: lineNumber, ...declaration, multiple: directive.name === 'decision multi' })
+          this.result.decisions.push({ sourceLine: lineNumber, ...declaration, multiple, lasting })
           this.addNode({ type: 'definition', sourceLine: lineNumber, kind: 'decision', name: declaration.name })
         }
         return
       }
-      case 'counter': {
+      case 'shown':
+      case 'shown after an ending': {
+        // Names are listed with commas, `[shown: Bag, Trust]`, which no name in a tag holds.
+        const names = (directive.written ?? text).split(',').map(name => name.trim().replace(/\s+/g, ' ')).filter(name => name !== '')
+        if (names.length > 0) {
+          this.result.shown.push({ sourceLine: lineNumber, names, afterAnEnding: directive.name === 'shown after an ending' })
+        }
+        return
+      }
+      case 'counter':
+      case 'counter lasting': {
         const declaration = readCounterDeclaration(text)
         if (declaration === null) {
           this.addProblem('error', 'invalidCounter', lineNumber, text)
         } else {
-          this.result.counters.push({ sourceLine: lineNumber, ...declaration })
+          this.result.counters.push({ sourceLine: lineNumber, ...declaration, lasting: declarationKind(directive.name)!.lasting })
           this.addNode({ type: 'definition', sourceLine: lineNumber, kind: 'counter', name: declaration.name })
         }
         return
@@ -543,12 +563,14 @@ class TextImporter {
         return
       case 'ending':
       case 'remember':
+      case 'forget':
         if (text === '') {
           this.addProblem('error', directive.name === 'ending' ? 'missingEndingName' : 'missingMemoryName', lineNumber)
           return
         }
         this.flushPendingDirectives()
-        this.addNode({ type: directive.name, sourceLine: lineNumber, name: text })
+        this.addNode(directive.name === 'ending' ? endingNode(text, lineNumber)
+          : { type: 'remember', sourceLine: lineNumber, name: text, ...(directive.name === 'forget' ? { forget: true as const } : {}) })
         return
     }
   }
@@ -570,7 +592,7 @@ class TextImporter {
     const scale = Math.max(1, ...styleSpans.map(span => this.widthScaleOf(span.style)))
     const measureText = this.measureText
     const layout = { ...this.options.layout, measureText: scale === 1 ? measureText : (text: string) => measureText(text) * scale }
-    const pageRanges = paginate(parsedLine.text, layout, this.options.locale)
+    const pageRanges = paginate(parsedLine.text, layout, this.locale)
     pageRanges.forEach((pageRange, pageIndex) => {
       const isLastPage = pageIndex === pageRanges.length - 1
       this.addNode(buildPage(parsedLine, pageRange, isLastPage, lineNumber, pageIndex === 0 ? directivesBefore : [], styleSpans))
@@ -618,7 +640,7 @@ class TextImporter {
       this.addProblem('error', 'severalTimeouts', timeouts[1]!.sourceLine, choice.decision)
     }
     // The player skips a choice none of whose options holds: one always offered rules that out.
-    if (choice.options.filter(option => option.timeout !== true).every(option => option.condition !== undefined)) {
+    if (choice.options.every(option => option.condition !== undefined)) {
       this.addProblem('warning', 'everyOptionConditional', choice.sourceLine)
     }
     this.addNode(choice)
@@ -672,11 +694,21 @@ class TextImporter {
         this.addProblem('error', 'misplacedImportKind', lineNumber)
         continue
       }
-      const declaredKind = argumentText(importDirective).toLowerCase()
+      // `[import: story fr]`: the kind, then the language the text is written in, if it says.
+      const [declaredKind = '', declaredLanguage] = importDirective.arguments.map(argument => argument.toLowerCase())
       if (isImportKind(declaredKind)) {
         this.result.kind = declaredKind
       } else {
-        this.addProblem('error', 'unknownImportKind', lineNumber, declaredKind)
+        this.addProblem('error', 'unknownImportKind', lineNumber, argumentText(importDirective))
+      }
+      if (declaredLanguage !== undefined) {
+        const language = languageCode(declaredLanguage)
+        if (language === null) {
+          this.addProblem('error', 'unknownLanguage', lineNumber, declaredLanguage)
+        } else {
+          this.result.language = language
+          this.locale = language
+        }
       }
     }
   }
@@ -693,6 +725,14 @@ class TextImporter {
   private addProblem(severity: ImportProblem['severity'], code: ImportProblem['code'], line: number, subject?: string) {
     this.result.problems.push(subject === undefined ? { severity, code, line } : { severity, code, line, subject })
   }
+}
+
+/** `[ending: Name]`, or `[ending: Name = what players read]`, the name before `=` the one the story knows it by. */
+function endingNode(text: string, lineNumber: number): StoryNode {
+  const equals = text.indexOf('=')
+  const name = equals === -1 ? text : text.slice(0, equals).trim()
+  const shownAs = equals === -1 ? '' : text.slice(equals + 1).trim()
+  return { type: 'ending', sourceLine: lineNumber, name, ...(shownAs === '' ? {} : { shownAs }) }
 }
 
 function isImportKind(value: string): value is ImportKind {

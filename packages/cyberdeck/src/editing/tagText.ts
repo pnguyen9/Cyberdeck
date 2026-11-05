@@ -213,11 +213,19 @@ export function completionAt(text: string, caret: number, vocabulary: TagVocabul
     case 'play':
       return completion(wholeFrom, closing(vocabulary.scenes, details.scene).filter(item => startsWith(item.label, wholeArgument)))
     case 'remember':
+    case 'forget':
       return completion(wholeFrom, closing(vocabulary.memories, details.memory).filter(item => startsWith(item.label, wholeArgument)))
     case 'choice':
       return completion(wholeFrom, closing(vocabulary.decisions.map(decision => decision.name), details.decision).filter(item => startsWith(item.label, wholeArgument)))
     case 'add':
       return completion(wholeFrom, words(vocabulary.counters, details.counter).filter(item => startsWith(item.label, wholeArgument)))
+    case 'shown':
+    case 'shown after an ending': {
+      // Names listed with commas: what follows the last comma is the name being typed.
+      const listed = argumentText.slice(argumentText.lastIndexOf(',') + 1).trimStart()
+      const names = [...vocabulary.decisions.map(decision => decision.name), ...vocabulary.counters, 'endings reached']
+      return completion(caret - listed.length, closing(names, details.decision).filter(item => startsWith(item.label, listed)))
+    }
     case 'set':
     case 'unset': {
       const equals = argumentText.indexOf('=')

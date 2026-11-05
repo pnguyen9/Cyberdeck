@@ -7,6 +7,8 @@ import {
   playsOf,
   previewChapterCondition,
   type ChapterDocument,
+  languageName as languageName_,
+  languagesOf,
 } from '@cyberdeck/core'
 import { createTextboxLayout, useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue'
@@ -15,6 +17,7 @@ import { commonMessages } from '../i18n/commonMessages'
 import { problemMessage } from '../importing/problemMessages'
 import { actionFor, firstKeysOf, type ShortcutId } from '../shortcuts/shortcuts'
 import { useShortcuts } from '../shortcuts/shortcutStore'
+import { useEditorSettings } from '../settings/editorSettings'
 import { useEditor } from './editorContext'
 import { safeFileName, usePreparedDownload } from './preparedDownload'
 
@@ -24,12 +27,17 @@ import { safeFileName, usePreparedDownload } from './preparedDownload'
  * what chapters call. Enter opens a chapter, and chapters move as cards do.
  */
 const emit = defineEmits<{ open: [documentId: string]; import: [] }>()
-const { open, project, chapters, scenes, documents, act, preview, startEmptyDocument } = useEditor()
+const { open, project, chapters, scenes, documents, language, act, preview, startEmptyDocument } = useEditor()
+/** The language shown, by its name in the editor's language. */
+const languageName = computed(() => languageName_(language.value, locale.value) ?? language.value)
+/** Every language of the story, named, when there are several: removing a chapter removes it in all of them. */
+const everyLanguage = computed(() => languagesOf(project.value).length > 1 ? languagesOf(project.value).map(code => languageName_(code, locale.value) ?? code).join(', ') : null)
 const locale = useLocale()
 const text = useMessages(storyLevelMessages)
 const common = useMessages(commonMessages)
 const { shortcuts } = useShortcuts()
 const layout = createTextboxLayout()
+const settings = useEditorSettings()
 const keysOf = (actionId: ShortcutId) => firstKeysOf(shortcuts.value, actionId, locale.value)
 
 const titleOf = (document: ChapterDocument) => document.title ?? common.value.untitledChapter
@@ -119,7 +127,7 @@ async function confirmRemove(document: ChapterDocument) {
 
 function exportText(document: ChapterDocument) {
   textChapterId.value = document.id
-  textDownload.offer(`${safeFileName(titleOf(document), locale.value)}.txt`, open.exportText([document.id]))
+  textDownload.offer(`${safeFileName(titleOf(document), locale.value)}.txt`, open.exportText([document.id], settings.value.paragraphsAsWritten ? layout : null))
 }
 
 /** The condition written for the focused chapter, or its route, checked as it is typed. */
@@ -252,7 +260,7 @@ function onKeydown(event: KeyboardEvent) {
               :id="`story-${entry.chapter.id}`"
               :key="entry.chapter.id"
               class="card chapter"
-              :class="{ focused: focusedId === entry.chapter.id, cut: cutId === entry.chapter.id }"
+              :class="{ focused: focusedId === entry.chapter.id, cut: cutId === entry.chapter.id, hollow: entry.chapter.hollow === true }"
               role="option"
               tabindex="-1"
               :aria-selected="focusedId === entry.chapter.id"
@@ -261,7 +269,8 @@ function onKeydown(event: KeyboardEvent) {
             >
               <span class="number">{{ entry.index + 1 }}</span>
               <span class="title">{{ titleOf(entry.chapter) }}</span>
-              <span class="muted">{{ common.pageCount(pageCountOf(entry.chapter)) }}<template v-if="endingCountOf(entry.chapter) > 0"> · ★ {{ endingCountOf(entry.chapter) }}</template></span>
+              <span v-if="entry.chapter.hollow === true" class="muted">{{ text.notWrittenIn(languageName) }}</span>
+              <span v-else class="muted">{{ common.pageCount(pageCountOf(entry.chapter)) }}<template v-if="endingCountOf(entry.chapter) > 0"> · ★ {{ endingCountOf(entry.chapter) }}</template></span>
             </button>
           </div>
         </section>
@@ -275,7 +284,7 @@ function onKeydown(event: KeyboardEvent) {
             :id="`story-${row.scene.id}`"
             :key="row.scene.id"
             class="card chapter scene"
-            :class="{ focused: focusedId === row.scene.id }"
+            :class="{ focused: focusedId === row.scene.id, hollow: row.scene.hollow === true }"
             role="option"
             tabindex="-1"
             :aria-selected="focusedId === row.scene.id"
@@ -284,7 +293,8 @@ function onKeydown(event: KeyboardEvent) {
           >
             <span class="number">▷</span>
             <span class="title">{{ row.scene.title }}</span>
-            <span class="muted">{{ row.playedBy.length === 0 ? text.playedNowhere : text.playedBy(row.playedBy.join(', ')) }}</span>
+            <span v-if="row.scene.hollow === true" class="muted">{{ text.notWrittenIn(languageName) }}</span>
+            <span v-else class="muted">{{ row.playedBy.length === 0 ? text.playedNowhere : text.playedBy(row.playedBy.join(', ')) }}</span>
           </button>
         </div>
       </template>
@@ -302,14 +312,15 @@ function onKeydown(event: KeyboardEvent) {
         <span v-if="renameProblem !== null" class="error">{{ renameProblem }}</span>
       </form>
       <h3 v-else>{{ isScene ? focused.title : titleOf(focused) }}</h3>
-      <p class="muted">
+      <p v-if="focused.hollow === true" class="muted">{{ text.hollowHelp(languageName) }}</p>
+      <p v-else class="muted">
         {{ common.pageCount(pageCountOf(focused)) }} ·
         {{ focused.importedFrom === undefined ? text.writtenHere : text.importedFrom(focused.importedFrom.fileName, new Date(focused.importedFrom.importedAt).toLocaleDateString(locale, { dateStyle: 'medium' })) }}
       </p>
 
       <div v-if="removingId === focused.id" class="confirmation">
         <p>
-          {{ isScene ? text.confirmRemoveScene(focused.title ?? '') : text.confirmRemoveChapter(titleOf(focused)) }}
+          {{ isScene ? text.confirmRemoveScene(focused.title ?? '', everyLanguage) : text.confirmRemoveChapter(titleOf(focused), everyLanguage) }}
           <template v-if="focused.importedFrom !== undefined">{{ text.importedTextKept }}</template>
         </p>
         <p v-if="isScene && focusedPlayers.length > 0" class="warning">{{ text.scenePlayedBy(focusedPlayers.join(', '), focusedPlayers.length) }}</p>
@@ -440,6 +451,17 @@ function onKeydown(event: KeyboardEvent) {
 .card.focused {
   border-color: #9eeaff;
   box-shadow: 0 0 0 1px #9eeaff;
+}
+
+/* A chapter not written in the language shown: there, but hollow. */
+.card.hollow {
+  border-style: dotted;
+  background: none;
+}
+
+.card.hollow .title {
+  font-style: italic;
+  color: #a3acbb;
 }
 
 .card.cut {

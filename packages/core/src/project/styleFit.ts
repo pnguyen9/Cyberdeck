@@ -1,3 +1,4 @@
+import { firstLanguageOf } from '../format/languages'
 import { styleClassName } from '../format/authorCss'
 import { flattenStoredNodes, type ChapterDocument, type ProjectDocument } from '../format/storyFormat'
 import type { PageLayout } from '../pagination/paginate'
@@ -20,7 +21,8 @@ export function pagesTooLong(project: ProjectDocument, documents: readonly Chapt
       return []
     }
     const scale = Math.max(1, ...styles.map(span => scales.get(styleClassName(stylesById.get(span.styleId)?.name ?? '')) ?? 1))
-    const fits = wrapLines(node.text, layout.lineWidth, text => measureText(text) * scale).length <= layout.maxLines
+    const language = 'language' in document && typeof document.language === 'string' ? document.language : firstLanguageOf(project)
+    const fits = wrapLines(node.text, layout.lineWidth, text => measureText(text) * scale, language).length <= layout.maxLines
     return fits ? [] : [{ documentId: document.id, nodeId: node.id }]
   }))
 }

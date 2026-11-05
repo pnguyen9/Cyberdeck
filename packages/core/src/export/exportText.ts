@@ -1,6 +1,12 @@
+import { firstLanguageOf } from '../format/languages'
 import { effectText } from '../storyboard/describeNodes'
-import { flattenStoredNodes } from '../format/storyFormat'
+import { ENDINGS_REACHED, flattenStoredNodes } from '../format/storyFormat'
 import { isPropertyAlone } from '../format/textStyles'
+import { measuringValues, possibleValues } from '../format/textValues'
+import type { PageLayout } from '../pagination/paginate'
+import { splitClauses, splitSentences } from '../pagination/splitText'
+import { textOfRange, wholeTextRange } from '../pagination/textRange'
+import { chunkRanges, isWrittenWithoutSpaces, wrapLines } from '../pagination/wrapLines'
 import type {
   AnimationSpec,
   ChapterDocument,
@@ -24,6 +30,14 @@ export interface TextExportOptions {
   scenes?: readonly ChapterDocument[]
   /** The project's scenes, to name those the chapters play when they are not written. */
   allScenes?: readonly ChapterDocument[]
+  /**
+   * The text box the pages were cut for: given, the pages the import cut from one paragraph are
+   * joined again, for a text that reads as written (to send to a translator). Without it, each page
+   * is its own paragraph, which imports back cut exactly as it is.
+   */
+  paragraphsAsWrittenFor?: PageLayout
+  /** The language the chapters are written in, for the names players read; the story's first by default. */
+  language?: string
 }
 
 /**
@@ -33,15 +47,17 @@ export interface TextExportOptions {
  * during its text are written where the typewriter reaches them.
  */
 export function exportText(project: ProjectDocument, chapters: readonly ChapterDocument[], options: TextExportOptions): string {
-  const writer = new TextWriter(project, [...(options.allScenes ?? []), ...(options.scenes ?? [])])
+  const language = options.language ?? firstLanguageOf(project)
+  const writer = new TextWriter(project, [...(options.allScenes ?? []), ...(options.scenes ?? [])], options.paragraphsAsWrittenFor === undefined ? null : pageJoiner(project, options.paragraphsAsWrittenFor, language), language)
   if (options.declareDecisions) {
-    writer.line('[import: story]')
+    // The language is always written, so that a text sent to a translator comes back as a translation.
+    writer.line(`[import: story ${language}]`)
     // Those of no chapter, above the first heading; those of a chapter are written where they are in it.
     for (const line of definitionLinesOfStory(project, [...chapters, ...(options.scenes ?? []), ...(options.allScenes ?? [])])) {
       writer.line(line)
     }
   } else {
-    writer.line(chapters.length === 1 ? '[import: chapter]' : '[import: story]')
+    writer.line(`[import: ${chapters.length === 1 ? 'chapter' : 'story'} ${language}]`)
   }
   for (const chapter of chapters) {
     writer.line(chapter.title === null ? '#' : `# ${chapter.title}`)
@@ -61,11 +77,11 @@ export function exportText(project: ProjectDocument, chapters: readonly ChapterD
 export function definitionLine(project: ProjectDocument, kind: DefinitionKind, definedId: string): string | null {
   if (kind === 'decision') {
     const decision = project.decisions.find(candidate => candidate.id === definedId)
-    return decision === undefined ? null : `[decision${decision.multiple ? ' multi' : ''}: ${decision.name} = ${decision.values.map(value => value.name).join(' | ')}]`
+    return decision === undefined ? null : `[decision${decision.multiple ? ' multi' : ''}${decision.lasting === true ? ' lasting' : ''}: ${decision.name} = ${decision.values.map(value => value.name).join(' | ')}]`
   }
   if (kind === 'counter') {
     const counter = project.counters.find(candidate => candidate.id === definedId)
-    return counter === undefined ? null : `[counter: ${counter.name} = ${counter.initial}]`
+    return counter === undefined ? null : `[counter${counter.lasting === true ? ' lasting' : ''}: ${counter.name} = ${counter.initial}]`
   }
   const style = project.styles.find(candidate => candidate.id === definedId)
   return style === undefined ? null : `[style: ${style.name} = ${style.properties.length === 0 ? 'plain' : style.properties.join(', ')}]`
@@ -84,6 +100,19 @@ export function globalDefinitionLines(project: ProjectDocument, documents: reado
     ...project.decisions.filter(decision => !homed.has(decision.id) && !(decision.implicit === true && chosen.has(decision.id))).map(decision => definitionLine(project, 'decision', decision.id)!),
     ...project.counters.filter(counter => !homed.has(counter.id) && !(counter.implicit === true && added.has(counter.id))).map(counter => definitionLine(project, 'counter', counter.id)!),
     ...project.styles.filter(style => style.implicit !== true && !homed.has(style.id) && !isPropertyAlone(style)).map(style => definitionLine(project, 'style', style.id)!),
+    ...shownLines(project),
+  ]
+}
+
+/** `[shown: …]` and `[shown after an ending: …]`, as the definitions write what players may see. */
+function shownLines(project: ProjectDocument): string[] {
+  const nameOf = new Map([...project.decisions, ...project.counters].map(entry => [entry.id, entry.name]))
+  const names = (ids: readonly string[], endings: boolean) => [...ids.flatMap(id => nameOf.get(id) ?? []), ...(endings ? [ENDINGS_REACHED] : [])]
+  const always = names(project.shown.always, project.shown.endings === 'always')
+  const afterAnEnding = names(project.shown.afterAnEnding, project.shown.endings === 'afterAnEnding')
+  return [
+    ...(always.length === 0 ? [] : [`[shown: ${always.join(', ')}]`]),
+    ...(afterAnEnding.length === 0 ? [] : [`[shown after an ending: ${afterAnEnding.join(', ')}]`]),
   ]
 }
 
@@ -97,16 +126,98 @@ function definitionLinesOfStory(project: ProjectDocument, documents: readonly Ch
 }
 
 /** Nodes as the lines that import back into them: what the storyboard shows for editing a page or a marker. */
-export function nodesText(project: ProjectDocument, nodes: readonly StoredNode[], scenes: readonly ChapterDocument[] = []): string {
-  const writer = new TextWriter(project, scenes)
+export function nodesText(project: ProjectDocument, nodes: readonly StoredNode[], scenes: readonly ChapterDocument[] = [], language: string = firstLanguageOf(project)): string {
+  const writer = new TextWriter(project, scenes, null, language)
   writer.nodes(nodes)
   return writer.text().replace(/\n$/, '')
+}
+
+/**
+ * Whether a page continues the paragraph of the one before it, by the import's own rules in reverse:
+ * the import fills a page sentence after sentence and starts the next only when the next sentence
+ * does not fit. So two pages of the same voice, the second with no note alone on a line before it,
+ * were one paragraph when the second's first sentence would not have fitted on the first; had it
+ * fitted, the import would have put it there, and they were two paragraphs.
+ */
+type PageJoiner = (previous: StoredPage, next: StoredPage) => boolean
+
+/** The end of a sentence: its mark, then any closing quote or bracket. */
+const SENTENCE_END = /[.!?…。！？][)"'»”’」』]*\s*$/u
+
+function pageJoiner(project: ProjectDocument, layout: PageLayout, language: string): PageJoiner {
+  const measureText = measuringValues(layout.measureText, possibleValues(project))
+  return (previous, next) => {
+    if (next.commandsBefore.length > 0 || previous.kind !== next.kind || previous.speakerId !== next.speakerId) {
+      return false
+    }
+    const separator = isWrittenWithoutSpaces(language) ? '' : ' '
+    const fits = (text: string) => wrapLines(text.trim(), layout.lineWidth, measureText, language).length <= layout.maxLines
+    // The piece the import would have tried to add: the first sentence, or when it is longer than a
+    // page, its first clause, or when that is too, its first word.
+    const firstSentence = splitSentences(next.text, language)[0] ?? wholeTextRange(next.text)
+    const firstClause = splitClauses(next.text, firstSentence)[0] ?? firstSentence
+    // A first sentence running to the end of the page without ending was longer than a page: the
+    // import cut it, and tried its first clause on the page before.
+    const isCutSentence = firstSentence.end >= next.text.trimEnd().length && !SENTENCE_END.test(next.text)
+    const piece = [...(isCutSentence ? [] : [firstSentence]), firstClause, chunkRanges(next.text, firstClause, language)[0] ?? firstClause]
+      .map(range => textOfRange(next.text, range))
+      .find(fits) ?? next.text
+    return !fits(`${previous.text}${separator}${piece.trim()}`)
+  }
+}
+
+/** Two pages as the paragraph they were cut from: the text joined as the language writes it, styles and notes moved along with it. */
+function joinedPages(first: StoredPage, second: StoredPage, separator: string): StoredPage {
+  const offset = first.text.length + separator.length
+  const shifted = (second.styles ?? []).map(span => ({ ...span, start: span.start + offset, end: span.end + offset }))
+  // A style running to the end of the first page and from the start of the second is one span.
+  const styles = [...(first.styles ?? [])]
+  for (const span of shifted) {
+    const last = styles.at(-1)
+    if (last !== undefined && last.styleId === span.styleId && last.end === first.text.length && span.start === offset) {
+      styles[styles.length - 1] = { ...last, end: span.end }
+    } else {
+      styles.push(span)
+    }
+  }
+  return {
+    ...first,
+    text: `${first.text}${separator}${second.text}`,
+    inlineCommands: [...first.inlineCommands, ...second.inlineCommands.map(command => ({ ...command, offset: command.offset + offset }))],
+    ...(styles.length === 0 ? {} : { styles }),
+  }
 }
 
 class TextWriter {
   private readonly lines: string[] = []
 
-  constructor(private readonly project: ProjectDocument, private readonly scenes: readonly ChapterDocument[]) {}
+  constructor(
+    private readonly project: ProjectDocument,
+    private readonly scenes: readonly ChapterDocument[],
+    private readonly joins: PageJoiner | null = null,
+    private readonly language: string = firstLanguageOf(project),
+  ) {}
+
+  /** The nodes with the pages of one paragraph joined, when the text is written as it was. */
+  private paragraphs(nodes: readonly StoredNode[]): readonly StoredNode[] {
+    const joins = this.joins
+    if (joins === null) {
+      return nodes
+    }
+    const result: StoredNode[] = []
+    // The last page as stored, which the next is measured against; the one written may already be joined.
+    let lastPage: StoredPage | null = null
+    for (const node of nodes) {
+      const written = result.at(-1)
+      if (node.type === 'page' && written?.type === 'page' && lastPage !== null && joins(lastPage, node)) {
+        result[result.length - 1] = joinedPages(written, node, isWrittenWithoutSpaces(this.language) ? '' : ' ')
+      } else {
+        result.push(node)
+      }
+      lastPage = node.type === 'page' ? node : null
+    }
+    return result
+  }
 
   line(text: string) {
     this.lines.push(text)
@@ -117,7 +228,7 @@ class TextWriter {
   }
 
   nodes(nodes: readonly StoredNode[]) {
-    for (const node of nodes) {
+    for (const node of this.paragraphs(nodes)) {
       switch (node.type) {
         case 'page': {
           const text = this.page(node)
@@ -193,10 +304,10 @@ class TextWriter {
           break
         }
         case 'ending':
-          this.line(`[ending: ${this.project.endings.find(ending => ending.id === node.endingId)?.name ?? '?'}]`)
+          this.line(this.endingLine(node.endingId))
           break
         case 'remember':
-          this.line(`[remember: ${this.project.memories.find(memory => memory.id === node.memoryId)?.name ?? '?'}]`)
+          this.line(`[${node.forget === true ? 'forget' : 'remember'}: ${this.project.memories.find(memory => memory.id === node.memoryId)?.name ?? '?'}]`)
           break
         case 'definition': {
           const line = definitionLine(this.project, node.kind, node.definedId)
@@ -234,6 +345,13 @@ class TextWriter {
       position = insertion.offset
     }
     return opening + text + page.text.slice(position)
+  }
+
+  /** `[ending: Name]`, with what players read of it in the language written, when it has its own. */
+  private endingLine(endingId: string): string {
+    const ending = this.project.endings.find(candidate => candidate.id === endingId)
+    const shownAs = ending?.translations?.[this.language]
+    return `[ending: ${ending?.name ?? '?'}${shownAs === undefined ? '' : ` = ${shownAs}`}]`
   }
 
   private directive(command: StageCommand | InlineStageCommand): string {

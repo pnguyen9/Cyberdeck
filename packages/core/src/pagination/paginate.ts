@@ -18,7 +18,7 @@ export interface PageLayout {
  */
 export function paginate(text: string, layout: PageLayout, locale: string): TextRange[] {
   const fitsOnOnePage = (range: TextRange) =>
-    wrapLines(textOfRange(text, range).trim(), layout.lineWidth, layout.measureText).length <= layout.maxLines
+    wrapLines(textOfRange(text, range).trim(), layout.lineWidth, layout.measureText, locale).length <= layout.maxLines
 
   const wholeText = wholeTextRange(text)
   if (fitsOnOnePage(wholeText)) {
@@ -32,7 +32,7 @@ export function paginate(text: string, layout: PageLayout, locale: string): Text
       continue
     }
     for (const clause of splitClauses(text, sentence)) {
-      pieces.push(...(fitsOnOnePage(clause) ? [clause] : chunkRanges(text, clause)))
+      pieces.push(...(fitsOnOnePage(clause) ? [clause] : chunkRanges(text, clause, locale)))
     }
   }
 

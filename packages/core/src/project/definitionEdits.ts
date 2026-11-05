@@ -1,8 +1,9 @@
 import { globalDefinitionLines } from '../export/exportText'
-import { storeImport } from '../format/storeImport'
-import { defaultEnvironment, flattenStoredNodes, type ChapterDocument, type Environment, type ProjectDocument } from '../format/storyFormat'
+import { shownWith, storeImport } from '../format/storeImport'
+import { defaultEnvironment, flattenStoredNodes, NOTHING_SHOWN, type ChapterDocument, type Environment, type ProjectDocument } from '../format/storyFormat'
 import type { ImportProblem } from '../importer/importTypes'
 import { flattenNodes, normalizeName } from '../importer/storyNodes'
+import { declarationKind } from '../importer/readControl'
 import type { PageLayout } from '../pagination/paginate'
 import type { KnownNames } from '../importer/checkReferences'
 import { homeOf, indexNames, type IndexedName } from './nameIndex'
@@ -29,12 +30,20 @@ const KIND_LISTS = { decision: 'decisions', counter: 'counters', style: 'styles'
 
 /** Names declared by a text, decisions, counters and styles apart, ignoring case. */
 function declaredNamesIn(text: string): Record<keyof DefinitionIds, Set<string>> {
-  const namesOf = (pattern: RegExp) => new Set([...text.matchAll(pattern)].map(match => normalizeName(match[1]!)))
-  return {
-    decisions: namesOf(/\[\s*decision(?:\s+multi)?\s*:([^=\]]+)=/gi),
-    counters: namesOf(/\[\s*counter\s*:([^=\]]+)[=\]]/gi),
-    styles: namesOf(/\[\s*style\s*:([^=\]]+)=/gi),
+  const declared: Record<keyof DefinitionIds, Set<string>> = { decisions: new Set(), counters: new Set(), styles: new Set() }
+  for (const tag of text.matchAll(/\[\s*([a-z ]+?)\s*:([^=\]]+)([=\]])/gi)) {
+    const directiveName = tag[1]!.toLowerCase().replace(/\s+/g, ' ')
+    const name = normalizeName(tag[2]!)
+    const kind = declarationKind(directiveName)?.kind
+    if (kind === 'decision' && tag[3] === '=') {
+      declared.decisions.add(name)
+    } else if (kind === 'counter') {
+      declared.counters.add(name)
+    } else if (directiveName === 'style' && tag[3] === '=') {
+      declared.styles.add(name)
+    }
   }
+  return declared
 }
 
 /**
@@ -95,13 +104,17 @@ export function applyDefinitions(preview: DefinitionsPreview, project: ProjectDo
   const removedDecisions = new Set(preview.removedIds.decisions)
   const removedCounters = new Set(preview.removedIds.counters)
   const removedStyles = new Set(preview.removedIds.styles)
+  const decisions = stored.project.decisions.filter(decision => !removedDecisions.has(decision.id))
+  const counters = stored.project.counters.filter(counter => !removedCounters.has(counter.id))
   return {
     ...stored.project,
     // The text is written in no chapter: whatever storing it opened is not kept.
     chapterOrder: project.chapterOrder,
     sceneOrder: project.sceneOrder,
-    decisions: stored.project.decisions.filter(decision => !removedDecisions.has(decision.id)),
-    counters: stored.project.counters.filter(counter => !removedCounters.has(counter.id)),
+    decisions,
+    counters,
+    // The definitions hold every `[shown]` line: what they no longer say is no longer shown.
+    shown: shownWith(NOTHING_SHOWN, preview.result.shown, decisions, counters),
     styles: stored.project.styles.filter(style => !removedStyles.has(style.id)),
     updatedAt: environment.now(),
   }

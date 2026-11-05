@@ -7,6 +7,7 @@ export type { TextRange } from './pagination/textRange'
 export { chunkRanges, wrapLines, type MeasureText } from './pagination/wrapLines'
 export { storeImport, type StoredImport } from './format/storeImport'
 export * from './format/storyFormat'
+export { chapterIn, firstLanguageOf, languageCode, languageName, languagesOf, projectIn, withTextOf, type ChapterView } from './format/languages'
 export { alwaysStops, readingFlow, unreachableNodes, type FlowNode, type ReadingFlow } from './format/readingFlow'
 export { addFontFile, assignAsset, captionsMediaTypeOf, fontMediaTypeOf, matchAssetFile, type AssetTarget } from './assets/matchAssets'
 export type { RegistryCreations } from './format/stageRegistry'
@@ -55,6 +56,7 @@ export {
   type Cue,
   type ChoiceRecord,
   type CounterState,
+  type LastingValues,
   type NameState,
   type DecisionState,
   type PlayerSnapshot,
@@ -63,6 +65,7 @@ export {
   type RuntimeState,
 } from './runtime/storyRuntime'
 export { valuesReader, type HeldValues } from './runtime/storyValues'
+export { hasJournal, journalOf, type Journal, type JournalEntry } from './runtime/journal'
 export { parseSave, stateFromSave, toSave, type SaveData } from './saves/saveData'
 export {
   addEmptyDocument,
@@ -75,12 +78,14 @@ export {
   previewChapterCondition,
   withChapterCondition,
   playsOf,
-  projectWithoutStory,
   removeChapter,
   renameChapter,
   renameProject,
   setDrawnFacing,
   setNameColor,
+  setShown,
+  setShownEndings,
+  shownWhen,
   unusedAssetIds,
   updateDetails,
   withoutAssets,
@@ -122,11 +127,13 @@ export {
   choicesOf,
   decisionsTestedFrom,
   emptyProgress,
+  emptyProgressOf,
   parseProgress,
   pointKeyOf,
   recordChoiceReached,
   recordEndReached,
   recordIllustrationSeen,
+  recordLasting,
   recordMemories,
   recordPageRead,
   type PendingOption,

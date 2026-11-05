@@ -58,6 +58,7 @@ describe('GameLibrary', () => {
       endingCount: 0,
       illustrationCount: 0,
       chapters: [{ id: game.one.id, title: 'One', included: true }, { id: game.two.id, title: 'Two', included: true }],
+      languages: ['en'],
     }])
     const story = await library.open('id-1')
     expect(story.assetUrls.size).toBe(2)

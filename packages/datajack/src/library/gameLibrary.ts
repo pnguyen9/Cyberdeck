@@ -5,6 +5,9 @@ import {
   type ArchivedChapter,
   type ChapterDocument,
   type GameManifest,
+  chapterIn,
+  languagesOf,
+  projectIn,
   type PlayableStory,
 } from '@cyberdeck/core'
 
@@ -42,6 +45,8 @@ export interface LibraryEntry {
   illustrationCount: number
   /** Every chapter of the game; `included` tells whether it is installed. */
   chapters: ArchivedChapter[]
+  /** The languages the game can be played in, the story's first first. */
+  languages: readonly string[]
 }
 
 export interface InstallOutcome {
@@ -76,6 +81,7 @@ export class GameLibrary {
         credits: project.details.credits,
         coverUrl: coverFile === undefined ? null : await this.storage.assetUrl(storedAssetFileName(coverFile)),
         endingCount: project.endings.length,
+        languages: languagesOf(project),
         illustrationCount: project.illustrations.length,
         chapters,
       }
@@ -134,7 +140,8 @@ export class GameLibrary {
     await this.storage.removeAssetsExcept(kept)
   }
 
-  async open(gameId: string): Promise<PlayableStory> {
+  /** The game ready to play in a language it has; in the story's first otherwise. */
+  async open(gameId: string, language: string | null = null): Promise<PlayableStory> {
     const manifest = checkGameManifest(await this.storage.readManifest(gameId))
     const chapters: ChapterDocument[] = []
     for (const archived of manifest.chapters.filter(chapter => chapter.included)) {
@@ -148,7 +155,9 @@ export class GameLibrary {
     for (const [assetId, file] of Object.entries(manifest.assetFiles)) {
       assetUrls.set(assetId, await this.storage.assetUrl(storedAssetFileName(file)))
     }
-    return { project: manifest.project, chapters, assetUrls }
+    const languages = languagesOf(manifest.project)
+    const played = language !== null && languages.includes(language) ? language : languages[0]!
+    return { project: projectIn(manifest.project, played), chapters: chapters.map(chapter => chapterIn(chapter, played, manifest.project)), assetUrls }
   }
 }
 

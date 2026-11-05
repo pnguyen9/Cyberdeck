@@ -1,6 +1,7 @@
 {
   "kind": null,
   "counters": [],
+  "language": null,
   "decisions": [
     {
       "sourceLine": 1,
@@ -9,7 +10,8 @@
         "Letter",
         "Key"
       ],
-      "multiple": true
+      "multiple": true,
+      "lasting": false
     }
   ],
   "styles": [],
@@ -73,6 +75,7 @@
     }
   ],
   "scenes": [],
+  "shown": [],
   "problems": [
     {
       "severity": "error",

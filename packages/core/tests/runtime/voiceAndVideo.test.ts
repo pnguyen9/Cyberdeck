@@ -29,7 +29,7 @@ describe('voices and videos', () => {
 
   it('are written back as they are imported', () => {
     const story = storyFromText(['[video: Opening]', '[voice: marie-01]— Marie: Hello.'])
-    expect(exportText(story.project, story.chapters, { declareDecisions: false })).toBe('[import: chapter]\n#\n[video: Opening]\n[voice: marie-01]\n— Marie: Hello.\n')
+    expect(exportText(story.project, story.chapters, { declareDecisions: false })).toBe('[import: chapter en]\n#\n[video: Opening]\n[voice: marie-01]\n— Marie: Hello.\n')
   })
 
   it('make a game for Datajack 1.2 or later', () => {

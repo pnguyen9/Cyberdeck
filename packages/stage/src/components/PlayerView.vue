@@ -18,6 +18,8 @@ import {
   recordChoiceReached,
   recordEndReached,
   recordIllustrationSeen,
+  hasJournal,
+  recordLasting,
   recordMemories,
   recordPageRead,
   checkAuthorCss,
@@ -45,6 +47,7 @@ import { AUTOSAVE_SLOT, MANUAL_SLOTS, type SaveStore } from '../saveStore'
 import { stagePicture } from '../stagePicture'
 import { STAGE_HEIGHT, STAGE_WIDTH } from '../textboxLayout'
 import BacklogPanel, { type BacklogLine } from './BacklogPanel.vue'
+import JournalPanel from './JournalPanel.vue'
 import ChoiceMenu from './ChoiceMenu.vue'
 import SaveLoadPanel, { type SlotSummary } from './SaveLoadPanel.vue'
 import SettingsPanel from './SettingsPanel.vue'
@@ -93,7 +96,7 @@ const catalog = createStageCatalog(props.story)
 const snapshot = shallowRef<PlayerSnapshot>(runtime.snapshot)
 const canGoBack = ref(false)
 const errorMessage = ref<string | null>(null)
-const openPanel = ref<'none' | 'log' | 'save' | 'load' | 'settings'>('none')
+const openPanel = ref<'none' | 'log' | 'journal' | 'save' | 'load' | 'settings'>('none')
 /** The text box and the menu hidden, to look at the picture; any input shows them again. */
 const isTextHidden = ref(false)
 /** The video over the whole screen, and its captions: the text waits until it ends, or the player passes it. */
@@ -206,7 +209,7 @@ const announcement = computed(() => {
     case 'page':
       return speakerName.value === null ? step.page.text : `${speakerName.value}: ${step.page.text}`
     case 'choice':
-      return step.choice.options.filter(option => option.timeout !== true).map(option => option.text).join(' / ')
+      return step.choice.options.map(option => option.text).join(' / ')
     case 'ask':
       return asked.value?.name ?? ''
     case 'end':
@@ -304,6 +307,8 @@ const remembered = computed(() => {
   void snapshot.value
   return { memoryIds: runtime.memoryIds, endingIds: runtime.endingIds }
 })
+/** The journal is offered once the story shows the player anything. */
+const isJournalOffered = computed(() => hasJournal(props.story.project, remembered.value.endingIds))
 let autoTimer: ReturnType<typeof setTimeout> | undefined
 const AUTO_PAUSE_AFTER_VOICE_MILLISECONDS = 700
 const AUTO_PAUSE_MILLISECONDS = 1000
@@ -426,7 +431,7 @@ function readAloud() {
   }
   const step = runtime.snapshot.step
   const parts = step.type === 'page' ? [speakerName.value ?? '', step.page.text]
-    : step.type === 'choice' ? step.choice.options.filter(option => option.timeout !== true).map(option => option.text)
+    : step.type === 'choice' ? step.choice.options.map(option => option.text)
       : step.type === 'ask' ? [asked.value?.name ?? ''] : []
   const spoken = parts.filter(part => part !== '').join('. ')
   if (spoken !== '') {
@@ -558,7 +563,8 @@ function recordProgress() {
     recorded = recordEndReached(recorded, step.endingId, pendingOption)
     pendingOption = null
   }
-  recorded = recordMemories(recorded, runtime.memoryIds)
+  recorded = recordMemories(recorded, runtime.memoryIds, runtime.forgottenMemoryIds)
+  recorded = recordLasting(recorded, runtime.lastingValues)
   recorded = recordIllustrationSeen(recorded, runtime.snapshot.stage.illustrationId)
   if (recorded !== progress.value) {
     progress.value = recorded
@@ -802,7 +808,8 @@ let choiceTimerStartedAt = 0
 
 watch([() => snapshot.value.step, isHudShown, () => settings.value.untimedChoices], ([step, isShown, untimed]) => {
   pauseChoiceTimer()
-  if (step.type !== 'choice' || step.choice.timeLimitMs === undefined || untimed) {
+  // Time runs only towards an option offered: one whose condition does not hold leaves the choice untimed.
+  if (step.type !== 'choice' || step.choice.timeLimitMs === undefined || untimed || !step.choice.options.some(option => option.timeout === true)) {
     choiceTime.value = null
     return
   }
@@ -883,6 +890,11 @@ function perform(action: PlayerAction) {
     case 'log':
       openLog()
       break
+    case 'journal':
+      if (isJournalOffered.value) {
+        openPanel.value = 'journal'
+      }
+      break
     case 'skip':
       toggleSkipping()
       break
@@ -912,7 +924,7 @@ function onKeydown(event: KeyboardEvent) {
   }
   // A panel takes the keyboard: Escape (or the log key for the log) closes it, its buttons do the rest.
   if (openPanel.value !== 'none') {
-    if (action === 'leave' || (action === 'log' && openPanel.value === 'log') || (action === 'settings' && openPanel.value === 'settings')) {
+    if (action === 'leave' || (action === 'log' && openPanel.value === 'log') || (action === 'journal' && openPanel.value === 'journal') || (action === 'settings' && openPanel.value === 'settings')) {
       event.preventDefault()
       openPanel.value = 'none'
     }
@@ -1030,6 +1042,7 @@ onMounted(async () => {
   }
   progress.value = await props.saveStore.readProgress(props.story.project.id) ?? progress.value
   runtime.useMemory(progress.value)
+  runtime.useLasting(progress.value.lasting ?? { decisions: {}, counters: {} })
   if (props.resumeFrom === null) {
     playForward(() => runtime.start())
   } else {
@@ -1128,6 +1141,7 @@ onUnmounted(() => {
       <div v-if="isHudShown" class="quick-menu" :class="{ low: fullScreenPages !== null }" :style="fullScreenPages === null ? { bottom: `${quickMenuBottom}px` } : undefined">
         <button class="quick-button" :disabled="!canGoBack" @click.stop="fromMenu(goBack)">{{ text.back }}</button>
         <button class="quick-button" @click.stop="fromMenu(openLog)">{{ text.log }}</button>
+        <button v-if="isJournalOffered" class="quick-button" @click.stop="fromMenu(() => { openPanel = 'journal' })">{{ text.journal }}</button>
         <button class="quick-button" @click.stop="fromMenu(() => openSlots('save'))">{{ text.save }}</button>
         <button class="quick-button" @click.stop="fromMenu(() => openSlots('load'))">{{ text.load }}</button>
         <button v-if="canInspect" class="quick-button" :class="{ active: isStateShown }" :aria-pressed="isStateShown" @click.stop="fromMenu(() => { isStateShown = !isStateShown })">{{ text.state }}</button>
@@ -1144,6 +1158,7 @@ onUnmounted(() => {
         :ending-ids="remembered.endingIds"
         @close="isStateShown = false"
       />
+      <JournalPanel v-if="openPanel === 'journal'" :story="story" :snapshot="snapshot" :ending-ids="remembered.endingIds" @close="openPanel = 'none'" />
       <BacklogPanel v-if="openPanel === 'log'" :lines="backlogLines" @close="openPanel = 'none'" @go-back="goBackTo" />
       <SettingsPanel
         v-if="openPanel === 'settings'"

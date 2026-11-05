@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { ProjectDocument } from '@cyberdeck/core'
-import { LOCALE_NAMES, useLocale, useMessages } from '@cyberdeck/stage'
+import { languageName, languagesOf, type ProjectDocument } from '@cyberdeck/core'
+import { useLocale, useMessages } from '@cyberdeck/stage'
 import { onMounted, ref, shallowRef } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { errorText } from '../i18n/errorMessages'
 import { projectsMessages } from '../i18n/projectsMessages'
 import LanguageSelect from '../settings/LanguageSelect.vue'
-import { createNewProject, createProjectWithoutStory, listProjects, restoreBackup } from './openProject'
+import { createNewProject, listProjects, restoreBackup } from './openProject'
 import type { ProjectStore } from './projectStore'
 
 const props = defineProps<{ store: ProjectStore }>()
@@ -15,10 +15,7 @@ const emit = defineEmits<{ open: [projectId: string] }>()
 const projects = shallowRef<ProjectDocument[]>([])
 const isLoaded = ref(false)
 const newName = ref('')
-const newLocale = ref('en')
 const deletingId = ref<string | null>(null)
-/** The project being copied without its story, for a translation, with the name and language of the copy. */
-const copying = ref<{ projectId: string; name: string; locale: string } | null>(null)
 /** Where the projects are, on the desktop; null in the browser, which keeps them itself. */
 const projectsFolder = ref<string | null>(null)
 const message = ref<string | null>(null)
@@ -57,7 +54,8 @@ async function attempt(change: () => Promise<void>) {
 
 function create() {
   return attempt(async () => {
-    const project = await createNewProject(props.store, newName.value, newLocale.value)
+    // The language of the first text imported becomes the story's; until then, the editor's.
+    const project = await createNewProject(props.store, newName.value, locale.value)
     emit('open', project.id)
   })
 }
@@ -74,23 +72,6 @@ function restore(fileList: FileList | null) {
   })
 }
 
-function startCopy(project: ProjectDocument) {
-  deletingId.value = null
-  copying.value = { projectId: project.id, name: project.name, locale: project.locale }
-}
-
-function copyWithoutStory(project: ProjectDocument) {
-  const copy = copying.value
-  if (copy === null) {
-    return
-  }
-  return attempt(async () => {
-    const created = await createProjectWithoutStory(props.store, project, copy.name, copy.locale)
-    copying.value = null
-    emit('open', created.id)
-  })
-}
-
 function remove(project: ProjectDocument) {
   return attempt(async () => {
     await props.store.deleteProject(project.id)
@@ -100,8 +81,6 @@ function remove(project: ProjectDocument) {
   })
 }
 
-/** The languages a story may be written in, each in its own words. */
-const LANGUAGES: Record<string, string> = LOCALE_NAMES
 const formatDate = (date: string) => new Date(date).toLocaleString(locale.value, { dateStyle: 'medium', timeStyle: 'short' })
 </script>
 
@@ -128,33 +107,15 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
             <button class="button" @click="deletingId = null">{{ common.cancel }}</button>
           </div>
         </div>
-        <form v-else-if="copying?.projectId === project.id" class="copy" @submit.prevent="copyWithoutStory(project)">
-          <p class="muted">{{ text.copyHelp(project.name) }}</p>
-          <div class="new-project">
-            <label class="field name">
-              <span>{{ text.name }}</span>
-              <input v-model="copying.name" class="text-input" autocomplete="off">
-            </label>
-            <label class="field">
-              <span>{{ text.storyLanguage }}</span>
-              <select v-model="copying.locale" class="text-input">
-                <option v-for="(label, code) in LANGUAGES" :key="code" :value="code">{{ label }}</option>
-              </select>
-            </label>
-            <button class="button primary" type="submit" :disabled="copying.name.trim() === ''">{{ text.create }}</button>
-            <button class="button" type="button" @click="copying = null">{{ common.cancel }}</button>
-          </div>
-        </form>
         <template v-else>
           <button class="open-project" @click="emit('open', project.id)">
             <span class="project-name">{{ project.name }}</span>
             <span class="muted">
               {{ common.chapterCount(project.chapterOrder.length) }}
-              · {{ LANGUAGES[project.locale] ?? project.locale }} · {{ text.changedOn(formatDate(project.updatedAt)) }}
+              · {{ languagesOf(project).map(code => languageName(code, locale) ?? code).join(', ') }} · {{ text.changedOn(formatDate(project.updatedAt)) }}
             </span>
           </button>
-          <button class="link-button" @click="startCopy(project)">{{ text.copyWithoutStory }}</button>
-          <button class="link-button" @click="deletingId = project.id; copying = null">{{ text.delete }}</button>
+          <button class="link-button" @click="deletingId = project.id">{{ text.delete }}</button>
         </template>
       </li>
     </ul>
@@ -165,14 +126,9 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
         <span>{{ text.name }}</span>
         <input v-model="newName" class="text-input" autocomplete="off">
       </label>
-      <label class="field">
-        <span>{{ text.storyLanguage }}</span>
-        <select v-model="newLocale" class="text-input">
-          <option v-for="(label, code) in LANGUAGES" :key="code" :value="code">{{ label }}</option>
-        </select>
-      </label>
       <button class="button primary" type="submit" :disabled="newName.trim() === ''">{{ text.create }}</button>
     </form>
+    <p class="muted">{{ text.languageComesWithText }}</p>
 
     <h2 class="section-title">{{ text.backups }}</h2>
     <label class="button file-button">
@@ -187,6 +143,10 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
 </template>
 
 <style scoped>
+.confirmation p {
+  margin: 0;
+}
+
 .page-header {
   display: flex;
   flex-wrap: wrap;
@@ -237,17 +197,6 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
 .open-project:hover .project-name,
 .open-project:focus-visible .project-name {
   color: #9eeaff;
-}
-
-.copy {
-  flex: 1;
-  display: grid;
-  gap: 10px;
-}
-
-.copy p,
-.confirmation p {
-  margin: 0;
 }
 
 .folder {

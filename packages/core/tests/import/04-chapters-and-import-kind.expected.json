@@ -1,6 +1,7 @@
 {
   "kind": "story",
   "counters": [],
+  "language": null,
   "decisions": [],
   "chapters": [
     {
@@ -43,5 +44,6 @@
   ],
   "styles": [],
   "scenes": [],
+  "shown": [],
   "problems": []
 }

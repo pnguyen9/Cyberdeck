@@ -1,5 +1,50 @@
 # Changelog
 
+## 2.0.0 — 2026-11-05
+
+A story in several languages, things the profile carries from one playthrough to the next, a journal
+for players, and timed choices whose waiting is shown. A major version, because translating works
+differently; nothing old stops working: Cyberdeck opens 1.x projects as stories of one language, and a
+game of one language that uses none of what is new here keeps opening in Datajack 1.4. Datajack 2.0
+reads every 1.x game.
+
+### Cyberdeck, the editor
+- Several languages in one game: one story, each language a text laid over it. The language of a text
+  is what its first line says, `[import: story fr]`, or what the Import tab picks; chapters correspond
+  by their place, scenes by their name, and a chapter a language has no text for yet shows hollow,
+  its title standing in. **Story in**, at the top of the project, shows one language at a time, or adds
+  one; the Export tab ships the languages that have every chapter chosen. Ending names are translated
+  with `[ending: The Empty Room = La Chambre vide]`. Any language, picked by its name or its code;
+  lines of languages written without spaces (Chinese, Japanese…) break between words.
+- *Copy without the story* is gone: a translation is a language of the same project. A new project no
+  longer asks for a language: its first text says it.
+- `[forget: …]` takes a memory away, as `[remember]` gives it.
+- `[counter lasting: …]` and `[decision lasting: …]`: values the profile keeps into the next
+  playthrough.
+- `[shown: …]` and `[shown after an ending: …]` choose what players see in their journal; the Index
+  writes them too.
+- Timed choices: any option may be the one waiting takes, and it is offered as the others.
+- Text export may join the pages cut from one paragraph, to read as written (for a translator).
+
+### Datajack, the player
+- Plays a game in the language picked on its card, Datajack's own first when the game has it.
+- The Journal (J): what the author shows of what the player holds, and the endings reached.
+- Timed choices offer the option waiting takes, the time running out along it.
+- Carries lasting values into the next playthrough, and forgets what the story forgets.
+
+### Downloads
+As before, nothing to install: unpack a download and start the application inside.
+- `Cyberdeck-2.0.0-windows-x64.zip` and `Datajack-2.0.0-windows-x64.zip`: for Windows; start
+  `Cyberdeck.exe` or `Datajack.exe` (*More info → Run anyway* the first time: they are not signed).
+- `Cyberdeck-2.0.0-linux-x64.zip` and `Datajack-2.0.0-linux-x64.zip`: for Linux; start `cyberdeck`
+  or `datajack`.
+- `Cyberdeck-2.0.0-web.zip` and `Datajack-2.0.0-web.zip`: for any computer with a browser; open
+  `index.html`, without a server.
+- `Cyberdeck-2.0.0-documentation.zip`: the illustrated guide for authors (open
+  `docs/guide/index.html` in a browser, or read `docs/guide/guide.md`), the README, these changes
+  and the licence.
+- `SHA256SUMS`: the checksum of each download.
+
 ## 1.4.0 — 2026-11-04
 
 The story as a map, values and chance in the text, the look of the text box, auto mode and save

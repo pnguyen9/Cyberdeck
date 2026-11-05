@@ -47,7 +47,7 @@ export default async function check(page, { url }) {
 
   await page.press(' ')
   await pause(700)
-  page.check('a timed choice shows its time running out, not the option of the timeout', await page.evaluate(`[[...document.querySelectorAll('.viewport .option')].map(option => option.textContent.trim()), !!document.querySelector('.viewport .time-left')]`), [['Speak up'], true])
+  page.check('a timed choice offers every option, the time running out on the one waiting takes', await page.evaluate(`[[...document.querySelectorAll('.viewport .option')].map(option => option.textContent.trim()), document.querySelector('.viewport .option.waited')?.textContent.trim(), !!document.querySelector('.viewport .option.waited .time-left')]`), [['Speak up', '⏱ …'], '⏱ …', true])
   await page.screenshot('timed-choice')
   await pause(1600)
   page.check('when time runs out, the option of the timeout is taken', await shownStep(page), 'You said nothing.')

@@ -12,12 +12,13 @@ const USE_GROUPS: Readonly<Record<UseRole, UseGroup>> = {
   tested: 'tested',
   shown: 'shown',
   remembered: 'remembered',
+  forgotten: 'forgotten',
   reached: 'reached',
   used: 'used',
   played: 'played',
 }
 /** In the order a story does it: declared, given, changed, emptied, tested, shown. */
-const GROUP_ORDER: readonly UseGroup[] = ['declared', 'given', 'changed', 'emptied', 'tested', 'shown', 'remembered', 'reached', 'used', 'played']
+const GROUP_ORDER: readonly UseGroup[] = ['declared', 'given', 'changed', 'emptied', 'tested', 'shown', 'remembered', 'forgotten', 'reached', 'used', 'played']
 
 /** A name's places by what they do, in that order. */
 export function usesByGroup(name: IndexedName): { group: UseGroup; uses: NameUse[] }[] {

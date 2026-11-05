@@ -2,7 +2,7 @@ import type { Locale } from '../i18n/locale'
 import { inputMessages } from '../i18n/inputMessages'
 
 /** What the player can do with an input. */
-export type PlayerAction = 'advance' | 'back' | 'log' | 'skip' | 'auto' | 'hideText' | 'settings' | 'fullscreen' | 'leave'
+export type PlayerAction = 'advance' | 'back' | 'log' | 'journal' | 'skip' | 'auto' | 'hideText' | 'settings' | 'fullscreen' | 'leave'
 
 /**
  * An input that triggers an action. Keys are identified by physical position (`KeyboardEvent.code`),
@@ -43,6 +43,9 @@ export const DEFAULT_BINDINGS: Bindings = {
   ],
   auto: [
     { type: 'key', code: 'KeyA' },
+  ],
+  journal: [
+    { type: 'key', code: 'KeyJ' },
   ],
   hideText: [
     { type: 'key', code: 'KeyH' },

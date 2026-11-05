@@ -7,6 +7,9 @@ const en = {
   skip: 'Skip ⏩',
   auto: 'Auto ▶',
   state: 'State',
+  journal: 'Journal',
+  journalEmpty: 'Nothing yet.',
+  endingsReached: (reached: number, total: number) => `Endings reached: ${reached} of ${total}`,
   stateDecisions: 'Decisions',
   stateCounters: 'Counters',
   stateNames: 'Names given',
@@ -30,6 +33,7 @@ const en = {
   },
   skipsReadTextOnly: 'Skipping passes only text already read.',
   confirmName: 'OK',
+  takenWhenTimeRunsOut: (option: string) => `${option}, taken when the time runs out`,
   fullscreenUnavailable: 'Full screen is not available here.',
 }
 
@@ -43,6 +47,9 @@ const fr: PlayerMessages = {
   skip: 'Passer ⏩',
   auto: 'Auto ▶',
   state: 'État',
+  journal: 'Journal',
+  journalEmpty: 'Rien pour l’instant.',
+  endingsReached: (reached, total) => `Fins atteintes\u00a0: ${reached} sur ${total}`,
   stateDecisions: 'Décisions',
   stateCounters: 'Compteurs',
   stateNames: 'Noms donnés',
@@ -65,6 +72,7 @@ const fr: PlayerMessages = {
   },
   skipsReadTextOnly: 'Seul le texte déjà lu peut être passé.',
   confirmName: 'Valider',
+  takenWhenTimeRunsOut: option => `${option}, choisi quand le temps est écoulé`,
   fullscreenUnavailable: 'Le plein écran n’est pas disponible ici.',
 }
 

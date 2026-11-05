@@ -18,10 +18,10 @@ export type NameKind = 'decision' | 'counter' | 'memory' | 'ending' | 'style' | 
 /**
  * How a place uses a name: a decision is declared, given a value by a choice or a `[set]`, emptied by
  * `[unset]`, tested by a condition; a counter declared, changed by `[add]` or `[set]`, tested; a
- * memory remembered or tested; an ending reached or tested; a style declared or used by a page; a
+ * memory remembered, forgotten or tested; an ending reached or tested; a style declared or used by a page; a
  * scene played. A decision or a counter is also shown by a text, `{Mood}`.
  */
-export type UseRole = 'declared' | 'chosen' | 'set' | 'unset' | 'changed' | 'tested' | 'shown' | 'remembered' | 'reached' | 'used' | 'played'
+export type UseRole = 'declared' | 'chosen' | 'set' | 'unset' | 'changed' | 'tested' | 'shown' | 'remembered' | 'forgotten' | 'reached' | 'used' | 'played'
 
 export interface NameUse {
   role: UseRole
@@ -158,7 +158,7 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
           use('ending', node.endingId, { role: 'reached', documentId, nodeId })
           break
         case 'remember':
-          use('memory', node.memoryId, { role: 'remembered', documentId, nodeId })
+          use('memory', node.memoryId, { role: node.forget === true ? 'forgotten' : 'remembered', documentId, nodeId })
           break
         case 'play':
           use('scene', node.sceneId, { role: 'played', documentId, nodeId })

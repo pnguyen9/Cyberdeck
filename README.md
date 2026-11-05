@@ -180,7 +180,7 @@ one per language, of the same shape: another language is one more table each.
 | `# Chapter 1 — The Classroom` | Starts a chapter. |
 | `[only if: Route is Marie]` right under a chapter heading | The chapter is played only when this holds, and passed by otherwise: the chapters of a route. |
 | `# Scene: Caught`, then `[play: Caught]` anywhere | A scene: pages of no chapter, played where `[play]` names it, after which the story goes on, unless the scene ended it. Scenes may play scenes, never themselves. A scene imported with the name of one of the project replaces it. |
-| `[import: story]` on the first line | Declares what the text is: `story`, `chapter` or `pages`. |
+| `[import: story]` on the first line, `[import: story fr]` | Declares what the text is: `story`, `chapter` or `pages`; then, if wished, the language it is written in, as a standard code (`es`, `pt-BR`), which cuts its pages and says where it goes in a story of several languages. An unknown code is reported. |
 | `[bg: rooftop]` alone on a line, or before the text | Applies when the next page appears. |
 | `Wait, you mean [marie: surprised] the letter?` | Applies when the text reaches that point. |
 | `[bg: rooftop]` (or `background`), `[transition: fade]` | Changes the background; a transition applies to the next background change: `fade` (cross-fade), `black` or `white` (through that colour), with a duration if wished (`[transition: black 1.5s]`, 0.8 s by default). Without one, the background changes at once. |
@@ -207,19 +207,22 @@ one per language, of the same shape: another language is one more table each.
 | `[decision multi: Clues = Letter \| Key]` | A decision where several values can hold at once. |
 | `[choice: Confession]` then `> Yes = Accept` lines | Offers a choice; the option picked becomes the decision's value. Without `= Value`, an option's value is its letter: `A`, `B`, `C`… |
 | `> The library = Library [if: Visited is not Library]` | An option offered only while its condition holds. A choice none of whose options holds is skipped; one with no option always offered is reported. |
-| `[choice: Answer 10s]` with `> … = Silent [timeout]` | A timed choice: a bar shows the time running out, then the option marked `[timeout]`, never shown, is taken. A timed choice has exactly one. Players may ask choices to wait for them (Settings, Accessibility). Needs Datajack 1.3. |
+| `[choice: Answer 10s]` with `> Yes. = Accept [timeout]` or `> … = Silent [timeout]` | A timed choice: the option marked `[timeout]` is the one waiting takes, offered as the others, the time running out along it; any option may be it, so waiting may mean yes, and silence is an option written when there should be one. A timed choice has exactly one. Players may ask choices to wait for them (Settings, Accessibility): every outcome is then a button away. Needs Datajack 2.0. |
 | `[ask: Hero = Alex]`, then `{Hero}` | Asks the player for a name, at most 12 characters, which `{Hero}` then shows in the text, in options and as a speaker, `— {Hero}: Hi.`; `Alex` until they give one, and if they give none. Pages are cut as if each name were as long as the longest allowed, so that they always fit. Saves keep it. Needs Datajack 1.3. |
 | `It is {Hour} o'clock.`, `{Clues}`, `{{` | Shows a value the story keeps: a counter's number, a decision's values (separated by commas, nothing until it holds one), a name asked for. Each `{…}` must name something the story knows, or the import reports it; `{{` writes a brace. One name means one thing: a name asked for cannot also be a counter's or a decision's, in any chapter. Pages are cut as if each value were as wide as it may get (a name given, a counter's longest number, a decision's widest value, those the text itself declares included), and a page never breaks inside a `{…}`. Needs Datajack 1.4, except for names asked for. |
 | `[if: Confession is Accept]` … `[else if: …]` … `[else]` … `[end]` | Plays the first branch whose condition holds. Conditions use `is`, `is not`, `and`, `or`. |
 | `[loop]` … `[break]` … `[end]` | Plays what is inside again and again; `[break]`, usually in a branch, leaves the innermost loop and goes on after its `[end]`. A loop with nothing inside to leave it (no `[break]` or `[ending]`) is reported. |
 | `[set: Clues = Letter]` | Sets a decision without a choice. |
 | `[counter: Trust = 2]`, `[counter: Trust]` | Declares a counter, a whole number the story counts with, and what it starts at (0 when not given). Optional: an `[add]` makes the counter it names. |
+| `[counter lasting: Coins = 0]`, `[decision multi lasting: Bag = Key \| Lamp]` | A counter or a decision the profile keeps from one playthrough to the next: within one it behaves as any other, going back undoing what was added or taken, and a new playthrough starts with what the last one left. What the player carries, apart from what the game knows (`[remember]`). Needs Datajack 2.0. |
+| `[shown: Bag, Coins]`, `[shown after an ending: Trust, endings reached]` | What players see in their **Journal**: decisions while they hold something (a bag its items, until taken away), counters their number, and with `endings reached` the endings reached; always, or once the profile has reached any ending. Nothing unless the author says so. Lines among the definitions, names separated by commas; the Index writes them too. |
 | `[add: Trust]`, `[add: Trust 2]`, `[add: Trust -1]` | Adds to a counter: 1, or the amount after its name. `[set: Trust = 0]` gives it a value. |
 | `[set: Weather = random 1 6]` | Gives a counter a whole number drawn between the two, both included, so that the same choices may lead elsewhere. A save keeps the draws, and going back does not draw again: a player cannot draw until it suits them. Needs Datajack 1.4. |
 | `[if: Trust >= 3]`, `Trust < 2`, `Trust is 3`, `Trust is not 0` | Compares a counter with a number: `>`, `>=`, `<`, `<=`, `is`, `is not`; combines with the rest by `and` / `or`. |
 | `[unset: Clues = Key]`, `[unset: Clues]` | Takes a value away from a decision, or every value: tests of it no longer hold, as if it had never been set. |
-| `[ending: The Empty Room]` | Ends the path here: the player has reached this ending (named endings are counted). |
+| `[ending: The Empty Room]`, `[ending: The Empty Room = La Chambre vide]` | Ends the path here: the player has reached this ending (named endings are counted). After `=`, what players read of it in the text's language, the name before it being how the story knows it. |
 | `[remember: The ghost's name]` | The profile remembers it for good, in every later playthrough; going back or loading an older save does not forget. |
+| `[forget: The ghost's name]` | The profile forgets it, for good: a lasting flag the story can also clear, a key used up or a promise broken. Going back does not undo it either. Needs Datajack 2.0. |
 | `[if: remembered The ghost's name]`, `[if: not seen ending Departure]` | Tests what the profile remembers, or the endings it has reached in any playthrough; combines with decisions by `and` / `or`. A memory or ending may be tested before the place naming it; one named nowhere is reported as a typo. |
 
 Story directives (`decision`, `counter`, `choice`, `if`, `else`, `end`, `loop`, `break`, `play`,
@@ -469,7 +472,9 @@ A **project** holds the whole game. Its screens:
   as an IDE would point it out, each with what to do: a decision or value tested but never given
   (that condition never holds), a memory tested but never remembered, an ending no path reaches, a
   scene never played; and, less pressing, what is declared or given but never used (tested nor shown), a
-  value given but never tested. With nothing to look at, it says what it checked.
+  value given but never tested. With nothing to look at, it says what it checked. A decision or a
+  counter opened says whether players see it **in their journal**: never, always, or once an
+  ending is reached, the menu writing the `[shown]` line among the definitions.
 - **Shortcuts** (the header button, or `?`): every shortcut by screen; click one and press the new
   keys to change it, Cyberdeck asking before taking keys another action uses. Changes are kept in
   the browser; *Default* and *Reset every shortcut* bring the defaults back. **Alt+PageUp** and
@@ -500,10 +505,17 @@ A **project** holds the whole game. Its screens:
   Every game archive carries all the project's fonts; the player loads them from the archive, as
   bytes, never from elsewhere.
 - **Details**: description, credits and cover, shown in players' libraries.
-- **Export**: the release label and the chapters to include; and the whole story **as text**.
+- **Export**: the release label, the chapters to include and, in a story of several languages, the
+  languages players get (the first always; another only once it has a text for every chapter
+  included and every scene, the tab naming those it lacks); and the whole story **as text**, in the
+  language shown, its paragraphs one page each or as written.
 
 **Text export** writes the story back in the syntax it was written in, with everything changed in
-Cyberdeck: each page its own paragraph (so that the import cuts pages where they were), directives
+Cyberdeck: each page its own paragraph (so that the import cuts pages where they were), or, chosen in
+the Export tab, its **paragraphs as written**, the pages the import cut from one paragraph joined again
+by its own rules in reverse (a page of narration, or of the same speaker, goes on the one before it
+when the import could not have fitted its first sentence there), for a text that reads like the one
+written, to send to a translator; directives
 written before a page on their own lines, those fired during its text where the typewriter reaches
 them, conditions as `and` / `or` without parentheses. Importing it gives the same story: the tests
 export, import, export again and compare. The whole story declares its decisions first and can
@@ -523,12 +535,27 @@ In the browser, projects live in IndexedDB (the browser is asked to keep them). 
 **Back up** downloads the project folder zipped, and **Restore a backup** reads it back, on this
 computer or another.
 
-**Copy without the story**, on the projects screen, starts a translation: a new project with all a
-text cannot hold (the files, characters and the way they were drawn looking, backgrounds, music,
-sounds, illustrations, videos, fonts, positions, animation defaults, the CSS, title cards and the
-game's details) and none of the story, in a language of its own. Importing the translated text then
-declares its decisions, counters and styles again, and cuts its pages by the rules of its language.
-Tags stay as they were written, so that the text finds the characters and files it names.
+**Several languages.** A story has one structure, its chapters in order, its scenes and its names
+(decisions and their values, counters, endings, memories), and each language is a text laid over it;
+no language is the main one, the first is only the first written. A project with nothing yet takes
+the language of its first text. The language of a text is what its first line says, `[import: story
+fr]`, or what the Import tab's **Language of the text** picks (a field that opens every language,
+narrowed as one types a name in the editor's language or the language's own, or a code; a regional
+code, `pt-BR`, is taken typed in full). In it, chapters correspond by their place: a new chapter of a
+text goes to the first place its language has no text for yet, then to a new place, which the other
+languages then show hollow, the title it has standing in; scenes correspond by their name, which
+`[play]` uses and players never see; names are the same in every language, so they are declared from
+any. **Story in**, at the top of the project, shows the story in one of its languages, nothing of the
+others, or begins a new one (**Add a language…**); **Remove this language** takes out one that has no
+text yet, and while the story has one language, **Change the story's language…** sets it right. A whole
+story in a language other than the first (`[import: story fr]`) lays its chapters over the story's by
+their place, those already translated included; the Import tab says where chapters go before importing.
+Text exports always write their language, so that a text sent to a translator comes back as a
+translation. Removing a chapter removes it in every language, as its confirmation says.
+Pages are cut by each language's rules; in languages written without spaces between words (Chinese,
+Japanese, Thai…), lines break between the words the browser finds, never before a closing mark nor
+after an opening one. The words players read that the player itself writes (the end, the endings
+count) are English in a language Datajack does not speak.
 
 ## Game archives
 
@@ -567,11 +594,14 @@ Each document says the format it is written in. An archive takes the oldest form
 game, so that players who have not updated Datajack still play it: format 1.1, which Datajack 1.0
 reads; 1.2, which Datajack 1.1 reads, when a style uses `fade-in`, `rise` or `glow` or the project
 has fonts; 1.3, for Datajack 1.2, when the game uses counters, voices or videos; 1.4, for Datajack
-1.3, when it asks for names, times its choices or has captions; 1.5, for Datajack 1.4, when it draws
+1.3, when it asks for names or has captions; 1.5, for Datajack 1.4, when it draws
 numbers, shows counters or decisions in its text (or writes `{{`), frames its text box or name plate,
-or colours a character's name. An older Datajack
+or colours a character's name; 2.0, for Datajack 2.0, when it has several languages, times its
+choices, forgets memories or keeps lasting values, which an older player would play wrongly. A game
+of one language that uses none of those keeps opening in Datajack 1.4. An older Datajack
 says a newer game needs an update rather than failing on it, and Datajack 1.0 shows a game's text
-without the CSS and title cards it does not know of. Projects are written in the current format, 1.5.
+without the CSS and title cards it does not know of. Projects are written in the current format, 2.0, and Datajack 2.0 reads every
+1.x game.
 
 When an archive is installed, the newer export (by date) brings the project, the release, the
 chapter list and the scenes; an older archive only adds chapters still missing. Asset files go first and
@@ -587,7 +617,10 @@ and selected chapters; the last two are this archive, made from a project's *Exp
 After the profile, Datajack opens the library: the installed games with their cover, description,
 release and chapters (those not installed are named), *Continue* from the profile's autosave, *New
 game*, credits, the *Map* and the *Gallery* of illustrations seen, and removal (saves are kept).
-*Add a game…* or dropping an archive installs it. On
+*Add a game…* or dropping an archive installs it. A game in several languages has **Play in** on
+its card: the language picked is kept for that game, by each profile; Datajack's own is taken first when
+the game has it. A save resumes in the language it was played in; one loaded in another language from
+the game's own Load panel resumes at the start of its chapter, with its decisions. On
 the desktop, games live in the application's data folder (`library/games/<game>/…`, assets in
 `library/assets/<sha-256>.<extension>`, shared by every game); in the browser, in IndexedDB.
 
@@ -598,6 +631,7 @@ the desktop, games live in the application's data folder (`library/games/<game>/
 | Show the whole page, then move on | Space, Enter, →, left click, mouse forward button, wheel down |
 | Go back one step (a choice can be picked again) | ←, Backspace, Page Up, mouse back button, wheel up, the ◀ Back button |
 | Log of past pages and choices (click a line to go back to it) | L, the Log button |
+| Journal: what the author shows of what the player holds, and the endings reached | J, the Journal button (when the story shows anything) |
 | Skip text already read | S, the Skip button |
 | Auto mode: move on by itself, until any other input | A, the Auto ▶ button |
 | Hide the text and the menu, to look at the picture (any input shows them again) | H, right click |
@@ -633,7 +667,8 @@ pressing on to get through text never picks one.
 ### Endings, map and skipping
 
 An `[ending: …]` names the ending on the end screen, with how many of the story's endings this
-profile has reached. Each profile keeps, per game, its progress beside its saves
+profile has reached. Each profile keeps, per game, its progress beside its saves, the values of
+lasting counters and decisions with it
 (`<game>/progress.json`): the choices reached, where each option taken led, the endings, the pages
 read, and what it remembers. The story reads only the memories and endings, through `remembered` and
 `seen ending` conditions; decisions stay per playthrough.
@@ -687,86 +722,6 @@ navigation, new windows, web views and permission requests are refused. It reach
 through a short list of channels whose arguments the main process checks again: strings, bytes and
 lists of strings only; identifiers that cannot leave their folder; asset files whose content matches
 the SHA-256 in their name; and only save folders the player picked in the system dialog.
-
-## Planned for 2.0
-
-A major version: the way of working changes for translations, though nothing old stops working.
-Cyberdeck opens 1.x projects as stories of one language, the one they were created in; a game of a
-single language stays in a format Datajack 1.4 reads, and only a game with several languages needs
-Datajack 2.0, which an older one says rather than failing. Datajack 2.0 keeps reading every 1.x game.
-
-- **Several languages in one game.** A story has one structure, its chapters in order, its scenes and
-  its names (decisions and their values, counters, endings, memories), and each language is a set of
-  texts laid over it. No language is the main one: the first is only the first written.
-  - The language belongs to the text: written in it (`[import: story fr]`), or chosen in the Import
-    tab. A new project no longer asks for one. Each language's pages are cut by its own rules.
-  - Importing in any language works as today. Chapters correspond by their place (the third `#`
-    heading is the third chapter), scenes by their name, which `[play: …]` uses and players never see.
-    New chapters or scenes from any language join the structure and show as hollow blocks in the
-    others, the original title standing in until a translated one is given; a whole text with fewer
-    chapters leaves the others hollow in its language. Names are declared from any language, since
-    they are the same in all.
-  - What players read of a name is translated as option values already are: `[ending: The Empty
-    Room = La Chambre vide]`, the first name being how the story knows the ending. A chapter's title
-    is the `#` heading of each language's text.
-  - The editor shows one language at a time, nothing of the others. Players choose a language as they
-    choose a game, and see nothing of the others; switching in the middle of a game resumes at the
-    start of the same chapter, with the same decisions, which keeps progress, the map and endings
-    seen the same in every language.
-  - The Export tab ships the chapters chosen in every language ticked; a language where one of them
-    is still hollow cannot be ticked, and says which.
-  - Any language, not only English and French: a language is its standard code (`es`, `ja`, `pt-BR`),
-    which cuts sentences, picks the read-aloud voice and tells screen readers what they read. The
-    editor carries the list of the two-letter codes (ISO 639-1); the browser names each one, in the
-    editor's language and in its own ("Spanish", "español"). The author picks it in a combo box: a
-    field that opens the whole list, narrowed as they type by either name or by the code, which also
-    takes a regional code typed in full; written
-    in the text, `[import: story es]`, an unknown code is reported. The words the player writes
-    itself (the end, the endings count) fall back to English in a language they are not translated
-    into. Languages written without spaces between words (Chinese, Japanese) break their lines where
-    the browser's word splitter allows, rather than only at spaces.
-  - *Copy without the story* goes, and the README and the guide's translation section are rewritten.
-- **What waiting means, shown.** `[timeout]` marks the option taken when the time runs out, and that
-  option is offered as a button like the others: any option may carry it, `> Yes. = Accept
-  [timeout]` making waiting the same as saying yes, and silence is simply an option the author writes
-  when there should be one, `> … = Silent [timeout]`, which a player who means to say nothing picks
-  without waiting. The time bar runs towards the option it will take, so that players see what
-  waiting means. With *Choices wait for me* on, nothing is taken by itself, and every outcome stays
-  a button away.
-- **Forgetting.** `[forget: Found the key]` takes a memory away from the profile, for good, as
-  `[remember]` gives it: a flag that lasts from one playthrough to the next, and that the story can
-  also clear, a key used up or a promise broken.
-- **Lasting counters and decisions.** `[counter lasting: Coins = 0]`, `[decision multi lasting: Bag =
-  Key | Lamp]`: within a playthrough they behave as any other, going back undoing what was added or
-  taken, and the profile keeps what they hold whenever the game moves on, so that a new playthrough
-  starts with what the last one left: money, trust, a bag carried from one game to the next. They
-  differ from `[remember]` in what they are for. A memory is what the game knows, which even going
-  back or loading an older save does not unlearn: a character noticing the player reloaded, a name
-  heard in a branch taken back. A lasting value is what the player carries, which follows ordinary
-  play and then carries over. Both are kept per profile, beside the endings seen.
-- **What the player has collected.** A window players open from the menu, showing only what the
-  author chose, so that a story which says nothing keeps its secrets (and the menu shows no button):
-  `[shown: Bag, Clues]` shows decisions and counters while they hold something, a `[decision multi]`
-  used as a bag showing each item while held and none once `[unset]`; `[shown after an ending:
-  Trust]` shows them once the profile has reached any ending, for players hunting the others; and
-  the endings reached may be shown the same way. Lines among the definitions, one name or several
-  separated by commas; in the Index, a menu by name ("Players see it: never, always, after an ending")
-  writes them for the author. Values show under their own names.
-- **Paragraphs as written, in text export.** Besides one page per paragraph, which imports back cut
-  exactly as it is, an export that rejoins the pages the import cut, by the import's own rules in
-  reverse, so that a text sent to a translator reads like the one written: a narration page goes on
-  the paragraph before it when that was narration and the import would not have fitted its first
-  sentence on the page before (otherwise they were two paragraphs); a page of the same speaker joins
-  their line the same way; a speaker starts a new paragraph; a note alone on its line (a scene
-  change, an entrance) stands on its own line, and notes inside the text stay inside it. Nothing new
-  is stored, so it works for every project.
-- **The guide brought along.** Each of these explained where it belongs, and the recipes for bigger
-  stories extended with what they open: a key or money carried into the next playthrough with
-  lasting values; a character who notices the player went back, with `[remember]`, and a memory the
-  story clears with `[forget]`; when to use which; a timed choice where waiting means an answer; a
-  bag shown in the collected window, items appearing and going as they are found and used; endings
-  that unlock what players may see; and a story written in two languages, from the first chapter
-  to a translation shipped beside it.
 
 ## License
 

@@ -6,6 +6,7 @@ const project: ProjectDocument = {
   id: 'project',
   name: 'Rain City',
   locale: 'en',
+  languages: ['en'],
   chapterOrder: [],
   sceneOrder: [],
   styles: [],
@@ -34,6 +35,7 @@ const project: ProjectDocument = {
   css: '',
   chapterTitleCards: false,
   frames: { textBox: null, namePlate: null },
+  shown: { always: [], afterAnEnding: [], endings: null },
   createdAt: '2026-10-26T10:00:00.000Z',
   updatedAt: '2026-10-26T10:00:00.000Z',
 }

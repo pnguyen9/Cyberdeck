@@ -184,7 +184,7 @@ describe('counters', () => {
 
   it('are written back as they are imported', () => {
     const text = [
-      '[import: story]',
+      '[import: story en]',
       '[counter: Trust = 2]',
       '#',
       '[add: Trust 1]',

@@ -2,7 +2,7 @@
 // page to Datajack's library. `npm run guide:images` runs it and copies the screenshots into the guide;
 // `npm run checks` runs it too, leaving the guide as it is.
 import { readdirSync } from 'node:fs'
-import { advanceUntil, createProfile, createProject, exportGame, installGame, openChapterBoard, pause, shownStep } from './harness.mjs'
+import { advanceUntil, createProfile, createProject, exportGame, installGame, openChapterBoard, pause, showStory, shownStep } from './harness.mjs'
 
 const HUB = `# Chapter 2 — The Fair
 [style: Whisper = italic, small, grey]
@@ -134,7 +134,7 @@ export default async function check(page, { url, assets, serve }) {
   await page.waitFor('.definitions .tag-editor .field')
   await page.evaluate(`(() => {
     const field = document.querySelector('.definitions .tag-editor .field')
-    field.value = (field.value === '' ? '' : field.value + '\\n') + '[style: Chapter title = gold, large, fade-in]'
+    field.value = (field.value === '' ? '' : field.value + '\\n') + '[style: Chapter title = gold, large, fade-in]\\n[shown: Answer, endings reached]'
     field.dispatchEvent(new Event('input'))
   })()`)
   await pause(300)
@@ -154,8 +154,32 @@ export default async function check(page, { url, assets, serve }) {
   await page.waitFor('.viewport .title-card')
   await pause(900)
   await page.screenshot('title-card')
+  // Past the first choice, the journal shows the answer given, as the definitions ask.
+  await page.press(' ')
+  await pause(400)
+  await advanceUntil(page, step => step === 'CHOICE')
+  await pause(800)
+  await page.evaluate(`document.querySelector('.viewport .option').click()`)
+  await pause(500)
+  await page.press('j')
+  await pause(400)
+  await page.screenshot('journal')
+  await page.press('Escape')
+  await pause(300)
   await page.press('Escape')
   await pause(400)
+
+  // A French translation of the first chapter, the second hollow until translated.
+  await page.clickButton('Import', '.tab')
+  await page.waitFor('.import .source')
+  await page.setValue('.import .source', '[import: story fr]\n# Chapitre 1 — La Lettre\nLa salle de classe était vide.')
+  await pause(600)
+  await page.clickButton('Import', '.import-actions .button')
+  await pause(800)
+  await showStory(page)
+  await page.screenshot('languages')
+  await page.clickButton('English', '.story-language .button')
+  await pause(600)
 
   await page.clickButton('Details', '.tab')
   await page.waitFor('.cover-actions input[type=file]')

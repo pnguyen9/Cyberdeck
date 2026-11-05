@@ -18,9 +18,16 @@ const en = {
   noChapters: 'No chapters yet.',
   scenesToo: (count: number, names: string) => `Every archive carries the ${count === 1 ? 'scene' : `${count} scenes`} too (${names}): any chapter may play them.`,
   export: 'Export',
+  firstLanguage: 'the story’s first language: always in the game',
+  firstLanguageLacks: (titles: readonly string[]) => `still to write in this language: ${titles.join(', ')}. Write ${titles.length === 1 ? 'it' : 'them'}, or untick ${titles.length === 1 ? 'it' : 'them'} above`,
+  notWrittenYet: (titles: readonly string[]) => `not written yet in it: ${titles.join(', ')}. Translate ${titles.length === 1 ? 'it' : 'them'}, or untick ${titles.length === 1 ? 'it' : 'them'} above, for this language to go`,
+  exportStoryText: (language: string) => `Export the story as text, in ${language}`,
+  paragraphs: 'Paragraphs, for every text export (here and in a chapter’s panel)',
+  onePagePerParagraph: 'One page per paragraph: imported again, it is cut exactly the same',
+  paragraphsAsWritten: 'As written: a paragraph’s pages joined again, to send to a translator',
+  languages: 'Languages',
   asText: 'As text',
   asTextIntro: 'The story in the syntax it was written in, with every change made here: to edit it in Word or any text editor, then import it again, as a new project or chapter by chapter.',
-  exportStoryText: 'Export the story as text',
 }
 
 type DetailsMessages = typeof en
@@ -46,9 +53,16 @@ const fr: DetailsMessages = {
     ? `Chaque archive contient aussi la scène ${names}, que n’importe quel chapitre peut jouer.`
     : `Chaque archive contient aussi les ${count} scènes (${names}), que n’importe quel chapitre peut jouer.`,
   export: 'Exporter',
+  firstLanguage: 'la première langue de l’histoire\u00a0: toujours dans le jeu',
+  firstLanguageLacks: titles => `reste à écrire dans cette langue\u00a0: ${titles.join(', ')}. Écrivez-${titles.length <= 1 ? 'le' : 'les'}, ou décochez-${titles.length <= 1 ? 'le' : 'les'} plus haut`,
+  notWrittenYet: titles => `pas encore écrit${titles.length <= 1 ? '' : 's'} dans cette langue\u00a0: ${titles.join(', ')}. Traduisez-${titles.length <= 1 ? 'le' : 'les'}, ou décochez-${titles.length <= 1 ? 'le' : 'les'} plus haut, pour que cette langue parte`,
+  exportStoryText: language => `Exporter l’histoire en texte, en ${language}`,
+  paragraphs: 'Paragraphes, pour tout export en texte (ici et dans le panneau d’un chapitre)',
+  onePagePerParagraph: 'Une page par paragraphe\u00a0: réimporté, il est découpé exactement pareil',
+  paragraphsAsWritten: 'Tels qu’écrits\u00a0: les pages d’un même paragraphe réunies, à envoyer à un traducteur',
+  languages: 'Langues',
   asText: 'En texte',
   asTextIntro: 'L’histoire réécrite dans sa syntaxe d’origine, avec toutes les modifications faites ici : retravaillez-la dans Word ou dans un autre éditeur de texte, puis réimportez-la, comme nouveau projet ou chapitre par chapitre.',
-  exportStoryText: 'Exporter l’histoire en texte',
 }
 
 export const detailsMessages = { en, fr }

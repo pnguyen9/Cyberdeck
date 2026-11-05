@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ChapterDocument, NameKind, PlayableStory, ProjectDocument, SaveData } from '@cyberdeck/core'
+import { languageName, languagesOf, type ChapterDocument, type ChapterView, type NameKind, type PlayableStory, type ProjectDocument, type SaveData } from '@cyberdeck/core'
 import { useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
@@ -14,6 +14,7 @@ import { EDITOR } from './editorContext'
 import ExportTab from './ExportTab.vue'
 import ImportTab from './ImportTab.vue'
 import IndexTab from './IndexTab.vue'
+import LanguagePicker from './LanguagePicker.vue'
 import StoryboardTab from './StoryboardTab.vue'
 import type { OpenProject, PreviewNote } from './openProject'
 import { useShortcuts } from '../shortcuts/shortcutStore'
@@ -34,6 +35,45 @@ const project = shallowRef<ProjectDocument>(props.open.project)
 const chapters = shallowRef<ChapterDocument[]>(props.open.chapters)
 const scenes = shallowRef<ChapterDocument[]>(props.open.scenes)
 const documents = computed(() => [...chapters.value, ...scenes.value])
+/** The language the story is shown and written in; the others stay out of sight. */
+const language = ref(props.open.language)
+const everyText = shallowRef<ChapterView[]>(props.open.everyText)
+/** A language being picked: to add to the story, or to set right the one a story of one language is in. */
+const pickingLanguage = ref<'add' | 'change' | null>(null)
+const languagePicked = ref('')
+/** A language added by mistake, with no text yet, can be taken out again. */
+const isShownLanguageEmpty = computed(() => language.value !== languagesOf(project.value)[0]
+  && !everyText.value.some(text => text.language === language.value && text.hollow !== true))
+
+/** Shows the story in another of its languages, or in a new one; nothing unsaved is lost on the way. */
+function showLanguage(code: string) {
+  pickingLanguage.value = null
+  whenFree(() => void act(() => props.open.showLanguage(code)))
+}
+
+function startPicking(purpose: 'add' | 'change') {
+  languagePicked.value = ''
+  pickingLanguage.value = purpose
+}
+
+function confirmLanguage() {
+  const code = languagePicked.value
+  if (code === '') {
+    return
+  }
+  if (pickingLanguage.value === 'change') {
+    pickingLanguage.value = null
+    void act(() => props.open.changeLanguage(code))
+  } else {
+    showLanguage(code)
+  }
+}
+
+function removeShownLanguage() {
+  const code = language.value
+  whenFree(() => void act(() => props.open.removeLanguage(code)))
+}
+
 const tab = ref<TabId>(chapters.value.length === 0 ? 'import' : 'storyboard')
 const renaming = ref<string | null>(null)
 const message = ref<string | null>(null)
@@ -45,6 +85,8 @@ function showStored() {
   project.value = props.open.project
   chapters.value = props.open.chapters
   scenes.value = props.open.scenes
+  everyText.value = props.open.everyText
+  language.value = props.open.language
 }
 
 async function act(change: () => Promise<unknown>, successMessage?: string | (() => string)) {
@@ -201,7 +243,7 @@ function openIndex(kind: NameKind, id: string) {
     showTab('index')
   })
 }
-provide(EDITOR, { open: props.open, project, chapters, scenes, documents, act, preview, previewFrom, importDraft, storyboardChapterId, openStoryboard, setLeaveGuard, storyboardRequest, indexFocus, openIndex, startEmptyDocument })
+provide(EDITOR, { open: props.open, project, chapters, scenes, documents, language, everyText, act, preview, previewFrom, importDraft, storyboardChapterId, openStoryboard, setLeaveGuard, storyboardRequest, indexFocus, openIndex, startEmptyDocument })
 </script>
 
 <template>
@@ -225,6 +267,29 @@ provide(EDITOR, { open: props.open, project, chapters, scenes, documents, act, p
           <button class="button primary" :disabled="chapters.length === 0" @click="preview(null)">{{ text.preview }}</button>
         </div>
       </div>
+      <div class="story-language" role="group" :aria-label="text.storyLanguage" aria-describedby="story-language-help">
+        <span class="muted">{{ text.storyLanguage }}</span>
+        <button
+          v-for="code in languagesOf(project)"
+          :key="code"
+          class="button small"
+          :class="{ primary: code === language }"
+          :aria-pressed="code === language"
+          @click="code !== language && showLanguage(code)"
+        >
+          {{ languageName(code, locale) ?? code }}
+        </button>
+        <button class="link-button" @click="startPicking('add')">{{ text.addLanguage }}</button>
+        <button v-if="languagesOf(project).length === 1" class="link-button" @click="startPicking('change')">{{ text.changeLanguage }}</button>
+        <button v-if="isShownLanguageEmpty" class="link-button" @click="removeShownLanguage">{{ text.removeLanguage }}</button>
+        <span id="story-language-help" class="muted">{{ text.storyLanguageHelp }}</span>
+      </div>
+      <form v-if="pickingLanguage !== null" class="add-language" @submit.prevent="confirmLanguage">
+        <LanguagePicker v-model="languagePicked" :label="pickingLanguage === 'add' ? text.languageToAdd : text.languageOfStory" :is-focused="true" />
+        <button class="button primary small" type="submit" :disabled="languagePicked === ''">{{ pickingLanguage === 'add' ? text.addThisLanguage : text.changeToThisLanguage }}</button>
+        <button class="button small" type="button" @click="pickingLanguage = null">{{ common.cancel }}</button>
+        <span class="muted">{{ pickingLanguage === 'add' ? text.addLanguageHelp : text.changeLanguageHelp }}</span>
+      </form>
       <p v-if="backupDownload.prepared.value !== null" class="backup">
         <a class="download" :href="backupDownload.prepared.value.url" :download="backupDownload.prepared.value.fileName">
           {{ common.download(backupDownload.prepared.value.fileName) }}
@@ -300,6 +365,26 @@ h1 .link-button {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.story-language {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.add-language {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.add-language .language-picker {
+  min-width: 320px;
 }
 
 .backup {

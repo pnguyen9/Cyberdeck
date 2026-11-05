@@ -241,14 +241,15 @@ turns it into pages, characters and choices. Your players play it in Datajack.</
 
 <h2 id="project">1. Create a project</h2>
 <p>A project holds one whole game: its chapters, characters, pictures and music. On the first screen, type
-the name of your game and choose the language it is written in, then press <strong>Create</strong>.</p>
+the name of your game, then press <strong>Create</strong>. The language it is written in comes with its
+first text.</p>
 <figure>
-  <a href="images/projects.png"><img src="images/projects.png" alt="The projects screen: a name field holding “The Letter”, the language of the story, and the Create button." loading="lazy"></a>
+  <a href="images/projects.png"><img src="images/projects.png" alt="The projects screen: a name field holding “The Letter”, and the Create button." loading="lazy"></a>
   <figcaption>The projects screen. Your projects are listed above the form once you have some.</figcaption>
 </figure>
 <p>Cyberdeck saves everything as you go: there is no Save button to remember.</p>
 <div class="tip"><p>Cyberdeck speaks English and French. It follows your computer's language; the
-<strong>Language</strong> menu, on this screen or at the top of a project, changes it. Your players choose
+<strong>Cyberdeck in</strong> menu, on this screen or at the top of a project, changes it. Your players choose
 theirs in Datajack.</p></div>
 
 <h2 id="writing">2. Write or paste your story</h2>
@@ -440,7 +441,23 @@ several branches can share one ending: just write it after the block.</p>
 — Marie: I know who you are.
 [end]</pre>
 <p>Unlike decisions, what a player <strong>remembers</strong> stays across every new playthrough: for a story
-that knows you have been there before. <code>[if: seen ending Alone]</code> works the same way.</p>
+that knows you have been there before. <code>[if: seen ending Alone]</code> works the same way.
+<code>[forget: The ghost's name]</code> takes it away again, for good.</p>
+<p>A counter or a decision can last too: <code>[counter lasting: Coins = 0]</code>, or <code>[decision multi
+lasting: Bag = Key | Lamp]</code>. In a playthrough it behaves as any other, going back included, and the next
+playthrough starts with what the last one left. Use <code>[remember]</code> for what the game knows, whatever
+the player takes back; a lasting value for what the player carries.</p>
+<p>Players can see some of this in their <strong>Journal</strong>, but only what you choose:</p>
+<pre>[shown: Bag, Coins]
+[shown after an ending: Trust, endings reached]</pre>
+<p>A decision shows while it holds something, a bag each item until it is taken away; a counter its
+number; <code>endings reached</code> the endings found. The second line waits until the player has reached
+an ending, for those hunting the others. Write these lines with your definitions, or choose in the Index,
+on a decision or a counter: <strong>In the players’ journal</strong>, and for the endings, at the top of
+the Index. Players read the names and values as you wrote them, in every language.</p>
+<figure>
+  <a href="images/journal.png"><img src="images/journal.png" alt="The Journal in the player: the answer given, Truth, and the endings reached, 0 of 1." loading="lazy"></a>
+</figure>
 
 <h2 id="decisions">11. More about decisions, and counters</h2>
 <p>Until a choice sets it, a decision has no value: <code>[if: Answer is Truth]</code> is false, and
@@ -599,6 +616,9 @@ story back with every change you made in Cyberdeck. Import it again, and Cyberde
 <strong>In place of a chapter</strong> by itself, for the chapter of the same title: its first line,
 <code>[import: chapter]</code>, says it is one. The chapter keeps its place, and players' saves inside it
 keep working.</p>
+<p>Exported as is, each page is a paragraph, so that it comes back cut the same. To send a text to a
+translator, choose <strong>As written</strong> under <strong>Paragraphs</strong>, in the Export tab: the
+pages cut from one paragraph are joined again, and the text reads as you wrote it.</p>
 
 <h2 id="tools">21. Tree view, shortcuts and backups</h2>
 <p>The grid keeps each block folded, to see the whole chapter at a glance and move things around. The
@@ -639,7 +659,9 @@ videos. Players with a screen reader hear each page whole as it appears.
 <figure>
   <a href="images/accessibility.png"><img src="images/accessibility.png" alt="The Settings screen, Accessibility: text size at 100, 125 or 150 %, a plainer font, stronger contrast, reading aloud, and choices that wait." loading="lazy"></a>
 </figure>
-<p>The <strong>Log</strong> shows what they read and picked. Clicking a line goes back to it.</p>
+<p>The <strong>Log</strong> shows what they read and picked. Clicking a line goes back to it. The
+<strong>Journal</strong> (<kbd>J</kbd>) shows what you chose to let them see (see section 10). A game in several
+languages asks which one, on its card in the library: <strong>Play in</strong>.</p>
 <figure>
   <a href="images/log.png"><img src="images/log.png" alt="The log: past lines with who said them, and the option picked, “Tell her the truth.”, in gold." loading="lazy"></a>
 </figure>
@@ -665,12 +687,15 @@ Marie looked up. “{Hero}? Is that you?”</pre>
 <p>The story stops on a small box to type the name, at most 12 letters. <code>Alex</code> stands in until
 they give one, or if they leave it empty.</p>
 <p>A choice can have a time limit. Write it after its name, and end one option with <code>[timeout]</code>:
-it is never shown, and it is what happens when time runs out.</p>
+it is what happens when time runs out. Players see it among the others, the time running out along it,
+so they know what waiting means, and can pick it without waiting.</p>
 <pre>[choice: Answer 10s]
 > Tell her the truth. = Truth
 > Lie. = Lie
 > … = Silent [timeout]</pre>
-<div class="tip"><p>Players who need more time can ask choices to wait for them, in their settings.</p></div>
+<p>Any option can be it: with <code>> Yes. = Accept [timeout]</code>, waiting means yes.</p>
+<div class="tip"><p>Players who need more time can ask choices to wait for them, in their settings: nothing is
+then taken by itself.</p></div>
 
 <h2 id="values">24. Values in the text, and chance</h2>
 <p>Braces show a value the story keeps: a counter, a decision, a name the player gave.</p>
@@ -684,11 +709,29 @@ also be a counter's. To write a brace itself, double it: <code>{{</code>.</p>
 choices may lead elsewhere. A save keeps what was drawn, and going back draws the same again.</p>
 
 <h2 id="translating">25. Translating your story</h2>
-<p>On the projects screen, <strong>Copy without the story</strong> makes a new project with your files,
-characters and settings, but none of your chapters. Give it a name and the language of the
-translation, then import the translated text into it, from Word or pasted. Keep the tags as they are,
-<code>[bg: rooftop]</code> or <code>[enter: marie]</code>: that is how the translation finds your pictures and
-sounds.</p>
+<p>A translation lives in the same project, beside your story: the same chapters, pictures and sounds, the
+same decisions, its own text. Say which language a text is in on its first line, with its standard code,
+and import it as usual:</p>
+<pre>[import: story fr]
+# Chapitre 1 — La Lettre
+…</pre>
+<p>Or pick it under <strong>Language of the text</strong>, in the Import tab, by its name or its code. A
+whole story, <code>[import: story fr]</code>, lays its chapters over yours, in order: its first chapter is your
+first chapter in French. Chapters imported on their own fill the first places not translated yet, and the
+Import tab says which before you import; to put one elsewhere, choose <strong>In place of a chapter</strong>.
+A chapter not translated yet shows <em>hollow</em> on the story's level, your title standing in.
+Scenes go by their name, which stays as it is, as the tags do: <code>[bg: rooftop]</code>, <code>[enter:
+marie]</code>, the names of decisions and their values. What players read of an ending can be translated:</p>
+<pre>[ending: The Empty Room = La Chambre vide]</pre>
+<p><strong>Story in</strong>, at the top of the project, shows the story in one language at a time;
+<strong>Add a language…</strong> begins another, and <strong>Remove this language</strong> takes one out
+again while it has no text. While your story has only one language, <strong>Change the story's
+language…</strong> sets it right, if Cyberdeck guessed wrong. In the Export tab, tick the languages players
+get: one with a hollow chapter cannot go yet, and the tab says which chapter it lacks. Exporting the story
+as text writes its language on the first line, so that a translator's version comes back as one.</p>
+<figure>
+  <a href="images/languages.png"><img src="images/languages.png" alt="The story's level in French: the first chapter translated, the second hollow, its English title standing in, and Story in: French at the top." loading="lazy"></a>
+</figure>
 
 <h2 id="further">26. Recipes for bigger stories</h2>
 <p>A few ways to put the pieces together, for stories that branch more than once.</p>
@@ -766,6 +809,42 @@ character notice:</p>
 <pre>[if: remembered The ghost's name]
 — Ghost: You came back, and you know my name.
 [end]</pre>
+
+<h3>What the game knows, and what the player carries</h3>
+<p>A character can notice the player went back, because a memory stays whatever they take back:</p>
+<pre>[remember: Saw the letter]
+…
+[if: remembered Saw the letter]
+— Marie: You read it, didn't you? Even if you pretend you didn't.
+[end]</pre>
+<p>A key found in one playthrough can be there in the next, with a lasting decision, and gone once used:</p>
+<pre>[decision multi lasting: Bag = Key | Lamp]
+[shown: Bag]
+…
+[set: Bag = Key]
+…
+[if: Bag is Key]
+The door opens.
+[unset: Bag = Key]
+[end]</pre>
+<p>Money that adds up over playthroughs is a lasting counter, <code>[counter lasting: Coins = 0]</code>, and
+<code>[add: Coins 10]</code>. A promise broken for good is a memory forgotten: <code>[forget: Promised to
+stay]</code>.</p>
+
+<h3>Waiting as an answer</h3>
+<p>Silence that means yes:</p>
+<pre>[choice: Stay 8s]
+> I'll stay. = Yes [timeout]
+> I have to go. = No</pre>
+
+<h3>A journal that opens up</h3>
+<p>Show little at first, and more once the player has seen an ending, for those hunting the others:</p>
+<pre>[shown: Bag]
+[shown after an ending: Trust, endings reached]</pre>
+
+<h3>A story in two languages</h3>
+<p>Write it in your language, then lay the translation over it, chapter by chapter, as section 25 shows.
+Ship it once every chapter has its translation: players pick their language on the game's card.</p>
 
 <h3>A little chance</h3>
 <p>A random draw lets the same choices lead to different evenings:</p>

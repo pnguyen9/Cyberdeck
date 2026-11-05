@@ -8,7 +8,6 @@ import {
   importText,
   parseSave,
   playerFormatVersion,
-  projectWithoutStory,
   StoryRuntime,
   stateFromSave,
   toSave,
@@ -115,10 +114,15 @@ describe('timed choices', () => {
     expect(shownText(runtime)).toBe('You said nothing.')
   })
 
-  it('are skipped when only the option of the timeout is left', () => {
-    const runtime = new StoryRuntime(storyFromText(['[choice: Answer 5s]', '> Yes = Yes [if: Answer is Yes]', '> … = Silent [timeout]', 'After.']))
+  it('offer the option of the timeout as the others, even alone, and let any option be it', () => {
+    const alone = new StoryRuntime(storyFromText(['[choice: Answer 5s]', '> Yes = Yes [if: Answer is Yes]', '> … = Silent [timeout]', 'After.']))
+    alone.start()
+    expect(shownText(alone)).toBe('choice')
+    const yes = storyFromText(['[choice: Answer 5s]', '> Yes. = Accept [timeout]', '> No. = Refuse', 'After.'])
+    const runtime = new StoryRuntime(yes)
     runtime.start()
-    expect(shownText(runtime)).toBe('After.')
+    const step = runtime.snapshot.step
+    expect(step.type === 'choice' ? step.choice.options.map(option => `${option.text}${option.timeout === true ? ' (waited)' : ''}`) : []).toEqual(['Yes. (waited)', 'No.'])
   })
 
   it('need exactly one option for the timeout', () => {
@@ -130,23 +134,10 @@ describe('timed choices', () => {
     ])
   })
 
-  it('make a game for Datajack 1.3 or later, as names asked for do', () => {
+  it('make a game for Datajack 2.0, which offers the option of waiting; names asked for, for 1.3', () => {
     const timed = storyFromText(TIMED)
-    expect(playerFormatVersion(timed.project, timed.chapters)).toBe('1.4')
+    expect(playerFormatVersion(timed.project, timed.chapters)).toBe('2.0')
     const named = storyFromText(['[ask: Hero]', 'Hi {Hero}.'])
     expect(playerFormatVersion(named.project, named.chapters)).toBe('1.4')
-  })
-})
-
-describe('a project made from another for a translation', () => {
-  it('keeps what a text cannot hold, and none of the story', () => {
-    const story = storyFromText(['[decision: Mood = Calm | Angry]', '[counter: Trust]', '[enter: Marie left]', '— Marie: Hello.', '[ending: Gone]'])
-    const source = { ...story.project, chapterOrder: story.chapters.map(chapter => chapter.id), css: '.ghost { color: red }', characters: story.project.characters.map(character => ({ ...character, drawnFacing: 'left' as const })) }
-    const copy = projectWithoutStory(source, { name: ' Bonjour ', locale: 'fr' }, { createId: () => 'copy', now: () => '2026-10-28T10:00:00.000Z' })
-    expect([copy.id, copy.name, copy.locale, copy.createdAt]).toEqual(['copy', 'Bonjour', 'fr', '2026-10-28T10:00:00.000Z'])
-    expect([copy.chapterOrder, copy.sceneOrder, copy.decisions, copy.counters, copy.endings, copy.memories, copy.styles]).toEqual([[], [], [], [], [], [], []])
-    expect(copy.characters).toEqual(source.characters)
-    expect(copy.css).toBe(source.css)
-    expect(copy.positions).toEqual(createProject({ name: 'x', locale: 'en' }).positions)
   })
 })

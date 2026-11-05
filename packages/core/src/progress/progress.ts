@@ -1,6 +1,6 @@
 import { flattenStoredNodes, testedIdsIn, type StoredChoice } from '../format/storyFormat'
 import { chaptersInOrder, scenesOf, type PlayableStory } from '../runtime/playableStory'
-import type { RuntimeState } from '../runtime/storyRuntime'
+import type { LastingValues, RuntimeState } from '../runtime/storyRuntime'
 import { parseSave, toSave, type SaveData } from '../saves/saveData'
 
 /**
@@ -24,6 +24,10 @@ export interface ProgressData {
   readPageIds: string[]
   /** Illustrations seen in any playthrough, for the gallery. */
   illustrationIds: string[]
+  /** What the decisions and counters declared `lasting` held when the profile last played. Since 2.0. */
+  lasting?: LastingValues
+  /** The language the profile plays a game of several languages in. Since 2.0. */
+  language?: string
 }
 
 export interface ProgressPoint {
@@ -47,17 +51,40 @@ export interface PendingOption {
 }
 
 export function emptyProgress(story: PlayableStory): ProgressData {
-  return { progressFormat: 1, game: { id: story.project.id, name: story.project.name }, points: [], endingIds: [], memoryIds: [], readPageIds: [], illustrationIds: [] }
+  return emptyProgressOf({ id: story.project.id, name: story.project.name })
 }
 
-/** Adds what the profile now remembers; unchanged progress is returned as is. */
+/** The progress of a game nothing was played of yet. */
+export function emptyProgressOf(game: { id: string; name: string }): ProgressData {
+  return { progressFormat: 1, game, points: [], endingIds: [], memoryIds: [], readPageIds: [], illustrationIds: [] }
+}
+
+/** Adds an illustration seen; unchanged progress is returned as is. */
 export function recordIllustrationSeen(progress: ProgressData, illustrationId: string | null): ProgressData {
   return illustrationId === null || progress.illustrationIds.includes(illustrationId) ? progress : { ...progress, illustrationIds: [...progress.illustrationIds, illustrationId] }
 }
 
-export function recordMemories(progress: ProgressData, memoryIds: readonly string[]): ProgressData {
-  const added = memoryIds.filter(memoryId => !progress.memoryIds.includes(memoryId))
-  return added.length === 0 ? progress : { ...progress, memoryIds: [...progress.memoryIds, ...added] }
+/** Keeps what the lasting decisions and counters hold now; a story with none keeps nothing. */
+export function recordLasting(progress: ProgressData, values: LastingValues): ProgressData {
+  const isEmpty = Object.keys(values.decisions).length === 0 && Object.keys(values.counters).length === 0
+  if (isEmpty && progress.lasting === undefined) {
+    return progress
+  }
+  return progress.lasting !== undefined && sameLastingValues(progress.lasting, values) ? progress : { ...progress, lasting: values }
+}
+
+function sameLastingValues(first: LastingValues, second: LastingValues): boolean {
+  const same = <Value>(left: Readonly<Record<string, Value>>, right: Readonly<Record<string, Value>>, equal: (one: Value, other: Value) => boolean) =>
+    Object.keys(left).length === Object.keys(right).length && Object.entries(left).every(([key, value]) => Object.hasOwn(right, key) && equal(value, right[key]!))
+  return same(first.counters, second.counters, (one, other) => one === other)
+    && same(first.decisions, second.decisions, (one, other) => one.length === other.length && one.every((value, index) => value === other[index]))
+}
+
+/** Adds what the profile now remembers, and takes away what it forgot; unchanged progress is returned as is. */
+export function recordMemories(progress: ProgressData, memoryIds: readonly string[], forgottenIds: readonly string[] = []): ProgressData {
+  const kept = progress.memoryIds.filter(memoryId => !forgottenIds.includes(memoryId))
+  const added = memoryIds.filter(memoryId => !kept.includes(memoryId) && !forgottenIds.includes(memoryId))
+  return added.length === 0 && kept.length === progress.memoryIds.length ? progress : { ...progress, memoryIds: [...kept, ...added] }
 }
 
 /** Unchanged progress is returned as is, so that callers can skip writing it. */
@@ -167,7 +194,22 @@ export function parseProgress(value: unknown): ProgressData | null {
     })
     return [{ key, chapterId, choiceId, reachedAt, save, taken }]
   })
-  return { progressFormat: 1, game: { id: game.id, name: game.name }, points, endingIds: strings(fields.endingIds), memoryIds: strings(fields.memoryIds), readPageIds: strings(fields.readPageIds), illustrationIds: strings(fields.illustrationIds) }
+  const lasting = parseLasting(fields.lasting)
+  const language = typeof fields.language === 'string' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8}){0,3}$/.test(fields.language) ? fields.language : null
+  return { progressFormat: 1, game: { id: game.id, name: game.name }, points, endingIds: strings(fields.endingIds), memoryIds: strings(fields.memoryIds), readPageIds: strings(fields.readPageIds), illustrationIds: strings(fields.illustrationIds), ...(lasting === null ? {} : { lasting }), ...(language === null ? {} : { language }) }
+}
+
+/** Lasting values as a progress file holds them, every field checked: anything else is left out. */
+function parseLasting(value: unknown): LastingValues | null {
+  if (typeof value !== 'object' || value === null) {
+    return null
+  }
+  const fields = value as Record<string, unknown>
+  const entries = (record: unknown) => typeof record === 'object' && record !== null && !Array.isArray(record) ? Object.entries(record) : []
+  return {
+    decisions: Object.fromEntries(entries(fields.decisions).filter((entry): entry is [string, string[]] => Array.isArray(entry[1]) && entry[1].every(item => typeof item === 'string'))),
+    counters: Object.fromEntries(entries(fields.counters).filter((entry): entry is [string, number] => Number.isSafeInteger(entry[1]))),
+  }
 }
 
 function parseTarget(value: unknown): ProgressTarget | null {

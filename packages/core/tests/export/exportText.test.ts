@@ -26,7 +26,7 @@ function projectFrom(text: string) {
 }
 
 const EVERYTHING = [
-  '[import: story]',
+  '[import: story en]',
   '[decision: Mood = Calm | Angry]',
   '[decision multi: Clues = Letter | Key]',
   '[style: Whisper = italic, small, grey]',
@@ -103,7 +103,7 @@ describe('exportText', () => {
 
     // Answer is made by its choice: declared nowhere, it is not written as a declaration.
     expect(lines.slice(0, 13)).toEqual([
-      '[import: story]',
+      '[import: story en]',
       '[decision: Mood = Calm | Angry]',
       '[decision multi: Clues = Letter | Key]',
       '[style: Whisper = italic, small, grey]',

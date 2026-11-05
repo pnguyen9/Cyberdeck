@@ -4,7 +4,10 @@ import type { Condition, Directive } from './importTypes'
 export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
   'decision',
   'decision multi',
+  'decision lasting',
+  'decision multi lasting',
   'counter',
+  'counter lasting',
   'add',
   'ask',
   'timeout',
@@ -24,7 +27,23 @@ export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
   'jump',
   'ending',
   'remember',
+  'forget',
+  'shown',
+  'shown after an ending',
 ])
+
+/**
+ * What a declaration's directive declares, and how: `decision multi lasting` a decision of several
+ * values the profile keeps; null for a directive that declares no decision nor counter.
+ */
+export function declarationKind(directiveName: string): { kind: 'decision' | 'counter'; multiple: boolean; lasting: boolean } | null {
+  const [kind, ...words] = directiveName.split(' ')
+  const allowed = kind === 'decision' ? ['multi', 'lasting'] : kind === 'counter' ? ['lasting'] : null
+  if (allowed === null || words.some((word, index) => !allowed.includes(word) || words.indexOf(word) !== index)) {
+    return null
+  }
+  return { kind: kind as 'decision' | 'counter', multiple: words.includes('multi'), lasting: words.includes('lasting') }
+}
 
 export function isControlDirective(directive: Directive): boolean {
   return CONTROL_DIRECTIVE_NAMES.has(directive.name)

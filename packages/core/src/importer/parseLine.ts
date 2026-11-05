@@ -111,6 +111,9 @@ function tokenize(line: string, problems: LineProblem[]): Token[] {
   return tokens
 }
 
+/** Directives whose argument is a list of names, separated by commas. */
+const LISTING_DIRECTIVES: ReadonlySet<string> = new Set(['shown', 'shown after an ending'])
+
 /** `enter: marie left smile` → name `enter`, arguments `marie`, `left`, `smile`. Null when the name is missing. */
 function readDirective(content: string): Directive | null {
   const colonIndex = content.indexOf(':')
@@ -122,7 +125,9 @@ function readDirective(content: string): Directive | null {
     return null
   }
 
-  return { name, arguments: argumentsPart.split(/[\s,]+/).filter(argument => argument !== '') }
+  const directive = { name, arguments: argumentsPart.split(/[\s,]+/).filter(argument => argument !== '') }
+  // Directives listing names keep them as written: names are separated by commas, which arguments drop.
+  return LISTING_DIRECTIVES.has(name) ? { ...directive, written: argumentsPart.trim() } : directive
 }
 
 /**

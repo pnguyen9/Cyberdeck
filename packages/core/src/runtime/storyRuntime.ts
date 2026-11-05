@@ -32,6 +32,12 @@ export type DecisionState = Readonly<Record<string, readonly string[]>>
 /** Values of the counters changed so far, by identifier; one never changed holds its initial value. */
 export type CounterState = Readonly<Record<string, number>>
 
+/** What the lasting decisions and counters held when the profile last played, which a new game starts with. */
+export interface LastingValues {
+  decisions: DecisionState
+  counters: CounterState
+}
+
 /** Names the player gave, by identifier of the asked name. */
 export type NameState = Readonly<Record<string, string>>
 
@@ -134,7 +140,13 @@ export class StoryRuntime {
   private history: Stop[] = []
   /** What the profile remembers and the endings it has reached, over every playthrough: going back never forgets them. */
   private readonly rememberedIds = new Set<string>()
+  /** Memories `[forget]` took away during this game, which the profile forgets too. */
+  private readonly forgottenIds = new Set<string>()
   private readonly endingsSeenIds = new Set<string>()
+  /** Decisions and counters declared `lasting`: a new game starts with what the profile kept of them. */
+  private readonly lastingDecisionIds: ReadonlySet<string>
+  private readonly lastingCounterIds: ReadonlySet<string>
+  private lastingStart: LastingValues = { decisions: {}, counters: {} }
 
   constructor(story: PlayableStory) {
     this.chapters = chaptersInOrder(story)
@@ -142,6 +154,8 @@ export class StoryRuntime {
     this.decisionsById = new Map(story.project.decisions.map(decision => [decision.id, decision]))
     this.initialCounts = new Map(story.project.counters.map(counter => [counter.id, counter.initial]))
     this.readValues = valuesReader(story.project)
+    this.lastingDecisionIds = new Set(story.project.decisions.filter(decision => decision.lasting === true).map(decision => decision.id))
+    this.lastingCounterIds = new Set(story.project.counters.filter(counter => counter.lasting === true).map(counter => counter.id))
     this.stageContext = createStageContext(story.project)
   }
 
@@ -174,6 +188,28 @@ export class StoryRuntime {
     return [...this.rememberedIds]
   }
 
+  /** Memories this game took away, so that the profile forgets them as well. */
+  get forgottenMemoryIds(): string[] {
+    return [...this.forgottenIds]
+  }
+
+  /** Gives the runtime the lasting values the profile kept, which the next `start` begins with. */
+  useLasting(values: LastingValues) {
+    this.lastingStart = this.lastingOf(values)
+  }
+
+  /** What the lasting decisions and counters hold now, for the profile to keep. */
+  get lastingValues(): LastingValues {
+    return this.lastingOf(this.currentSnapshot)
+  }
+
+  private lastingOf(values: LastingValues): LastingValues {
+    return {
+      decisions: Object.fromEntries(Object.entries(values.decisions).filter(([decisionId]) => this.lastingDecisionIds.has(decisionId))),
+      counters: Object.fromEntries(Object.entries(values.counters).filter(([counterId]) => this.lastingCounterIds.has(counterId))),
+    }
+  }
+
   /** Endings the profile has reached, those of this game included. */
   get endingIds(): string[] {
     return [...this.endingsSeenIds]
@@ -186,7 +222,7 @@ export class StoryRuntime {
     this.chapterIndex = -1
     this.frames = []
     this.history = []
-    this.currentSnapshot = { ...START_SNAPSHOT, seed }
+    this.currentSnapshot = { ...START_SNAPSHOT, seed, decisions: { ...this.lastingStart.decisions }, counters: { ...this.lastingStart.counters } }
     this.playUntilStop()
   }
 
@@ -439,10 +475,10 @@ export class StoryRuntime {
           this.setStep({ type: 'page', page: pageWithValues(node, this.valueOf()) })
           return
         case 'choice': {
-          // The step carries the choice as offered: options whose condition does not hold are left out.
-          // The option taken when time runs out is never shown: without another, the choice is skipped.
+          // The step carries the choice as offered: options whose condition does not hold are left out,
+          // and a choice none of whose options holds is skipped.
           const options = node.options.filter(option => option.condition === null || this.holds(option.condition))
-          if (!options.some(option => option.timeout !== true)) {
+          if (options.length === 0) {
             break
           }
           const valueOf = this.valueOf()
@@ -504,7 +540,14 @@ export class StoryRuntime {
           this.setStep({ type: 'end', endingId: node.endingId })
           return
         case 'remember':
-          this.rememberedIds.add(node.memoryId)
+          // Neither is undone by going back: what the game knows, it knows whatever the player takes back.
+          if (node.forget === true) {
+            this.rememberedIds.delete(node.memoryId)
+            this.forgottenIds.add(node.memoryId)
+          } else {
+            this.rememberedIds.add(node.memoryId)
+            this.forgottenIds.delete(node.memoryId)
+          }
           break
       }
     }

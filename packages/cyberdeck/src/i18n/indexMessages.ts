@@ -1,7 +1,7 @@
 import type { NameKind, NameWarning } from '@cyberdeck/core'
 
 /** What a place does with a name, grouped as the Index lists them. */
-export type UseGroup = 'declared' | 'given' | 'emptied' | 'changed' | 'tested' | 'shown' | 'remembered' | 'reached' | 'used' | 'played'
+export type UseGroup = 'declared' | 'given' | 'emptied' | 'changed' | 'tested' | 'shown' | 'remembered' | 'forgotten' | 'reached' | 'used' | 'played'
 
 /** The Index, and how the uses of names read wherever they are listed. */
 const en = {
@@ -65,6 +65,12 @@ const en = {
   madeByChoices: 'made by its choices',
   madeByAdd: 'made by its [add]',
   startsAt: (amount: number) => `starts at ${amount}`,
+  shownToPlayers: 'In the players’ journal',
+  shownNever: 'never',
+  shownAlways: 'always',
+  shownAfterAnEnding: 'after a first ending',
+  shownHelp: 'What players see of what they hold: a decision while it holds a value, a counter its number. They read its name and values as written here, in every language. Written as [shown: …] among the definitions.',
+  endingsInJournal: 'The endings reached, in the players’ journal',
 }
 
 type IndexMessages = typeof en
@@ -81,6 +87,7 @@ const FRENCH_USE_WORDS: Readonly<Record<UseGroup, string>> = {
   tested: 'testé',
   shown: 'affiché',
   remembered: 'retenu',
+  forgotten: 'oublié',
   reached: 'atteint',
   used: 'utilisé',
   played: 'joué',
@@ -146,6 +153,12 @@ const fr: IndexMessages = {
   madeByChoices: 'créée par ses choix',
   madeByAdd: 'créé par ses [add]',
   startsAt: amount => `commence à ${amount}`,
+  shownToPlayers: 'Dans le journal des joueurs',
+  shownNever: 'jamais',
+  shownAlways: 'toujours',
+  shownAfterAnEnding: 'après une première fin',
+  shownHelp: 'Ce que les joueurs voient de ce qu’ils détiennent\u00a0: une décision tant qu’elle a une valeur, un compteur son nombre. Ils lisent son nom et ses valeurs tels qu’écrits ici, dans toutes les langues. Écrit [shown: …] parmi les définitions.',
+  endingsInJournal: 'Les fins atteintes, dans le journal des joueurs',
 }
 
 export const indexMessages = { en, fr }

@@ -72,14 +72,21 @@ function object<Shape extends object>(shape: { [Key in keyof Shape]: Check<Shape
   }
 }
 
-/** The shape's fields, plus `implicit` when it is true: the mark of a name declared nowhere, kept apart from the shape. */
-function withImplicit<Shape extends object>(check: Check<Shape>): Check<Shape & { implicit?: true }> {
-  return (value, path) => record(value, path).implicit === true ? { ...check(value, path), implicit: true } : check(value, path)
+/**
+ * The shape's fields, plus a mark that is only ever true when present: `implicit` for a name declared
+ * nowhere, `timeout` for the option a timed choice takes when time runs out, `forget` for a memory
+ * taken away. Kept apart from the shape, which then never holds it false.
+ */
+function withFlag<Shape extends object, Field extends string>(field: Field, check: Check<Shape>): Check<Shape & { [Key in Field]?: true }> {
+  return (value, path) => (record(value, path)[field] === true ? { ...check(value, path), [field]: true } : check(value, path)) as Shape & { [Key in Field]?: true }
 }
 
-/** The fields of an option, plus `timeout` when it is true: the option a timed choice takes when time runs out. */
-function withTimeout<Shape extends object>(check: Check<Shape>): Check<Shape & { timeout?: true }> {
-  return (value, path) => record(value, path).timeout === true ? { ...check(value, path), timeout: true } : check(value, path)
+/** A language code, as a key or a value: letters, then subtags, nothing that could leave a folder. */
+const languageCode: Check<string> = (value, path) => typeof value === 'string' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8}){0,3}$/.test(value) ? value : fail(path, 'a language code')
+
+/** An object whose keys are language codes, each value checked. */
+function byLanguage<Value>(check: Check<Value>): Check<Record<string, Value>> {
+  return (value, path) => Object.fromEntries(Object.entries(record(value, path)).map(([key, item]) => [languageCode(key, `${path} key`), check(item, `${path}.${key}`)]))
 }
 
 /** Properties this version draws; those a newer version adds are dropped, the text shown without them. */
@@ -194,7 +201,7 @@ function node(value: unknown, path: string, depth: number): StoredNode {
         type: oneOf('choice'),
         id: string,
         decisionId: string,
-        options: array(withTimeout(object({ id: string, text: string, valueId: string, condition: (option, optionPath) => option === null ? null : condition(option, optionPath, 0) }))),
+        options: array(withFlag('timeout', object({ id: string, text: string, valueId: string, condition: (option, optionPath) => option === null ? null : condition(option, optionPath, 0) }))),
       })(value, path)
       if (fields.timeLimitMs !== undefined) {
         choice.timeLimitMs = duration(fields.timeLimitMs, `${path}.timeLimitMs`)
@@ -218,7 +225,7 @@ function node(value: unknown, path: string, depth: number): StoredNode {
     case 'ending':
       return object({ type: oneOf('ending'), id: string, endingId: string })(value, path)
     case 'remember':
-      return object({ type: oneOf('remember'), id: string, memoryId: string })(value, path)
+      return withFlag('forget', object({ type: oneOf('remember'), id: string, memoryId: string }))(value, path)
     case 'definition':
       return object({ type: oneOf('definition'), id: string, kind: oneOf('decision', 'counter', 'style'), definedId: string })(value, path)
     case 'break':
@@ -275,6 +282,8 @@ const LATER_PROJECT_FIELDS = {
   css: '',
   chapterTitleCards: false,
   frames: { textBox: null, namePlate: null },
+  shown: { always: [], afterAnEnding: [], endings: null },
+  languages: [],
 }
 
 /** Far beyond any project's styles; low enough that checking it stays quick. */
@@ -290,14 +299,19 @@ const checkProjectFields: Check<ProjectDocument> = object({
   id: string,
   name: string,
   locale: string,
+  languages: array(languageCode),
   chapterOrder: array(string),
   sceneOrder: array(string),
-  decisions: array(withImplicit(object({ id: string, name: string, multiple: boolean, values: array(object({ id: string, name: string })) }))),
-  counters: array(withImplicit(object({ id: string, name: string, initial: integer }))),
+  decisions: array(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, multiple: boolean, values: array(object({ id: string, name: string })) })))),
+  counters: array(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, initial: integer })))),
   askedNames: array(object({ id: string, name: string, defaultName: string })),
-  endings: array(object({ id: string, name: string })),
+  endings: array((ending, endingPath) => {
+    const checked = object({ id: string, name: string })(ending, endingPath)
+    const translations = record(ending, endingPath).translations
+    return translations === undefined ? checked : { ...checked, translations: byLanguage(string)(translations, `${endingPath}.translations`) }
+  }),
   memories: array(object({ id: string, name: string })),
-  styles: array(withImplicit(object({ id: string, name: string, properties: styleProperties }))),
+  styles: array(withFlag('implicit', object({ id: string, name: string, properties: styleProperties }))),
   characters: array((value, path) => {
     const character: Character = object({ id: string, name: string, expressions: array(withAssetId), drawnFacing: nullable(facing) })(value, path)
     const color = record(value, path).nameColor
@@ -324,6 +338,7 @@ const checkProjectFields: Check<ProjectDocument> = object({
   css,
   chapterTitleCards: boolean,
   frames: object({ textBox: nullable(string), namePlate: nullable(string) }),
+  shown: object({ always: array(string), afterAnEnding: array(string), endings: nullable(oneOf('always', 'afterAnEnding')) }),
   createdAt: string,
   updatedAt: string,
 })
@@ -345,6 +360,20 @@ export const checkChapterDocument: Check<ChapterDocument> = (value, path) => {
   // Kept in project backups; game archives leave it out.
   if (fields.importedFrom !== undefined) {
     chapter.importedFrom = object({ fileName: nullable(string), importedAt: string })(fields.importedFrom, `${path}.importedFrom`)
+  }
+  if (fields.translations !== undefined) {
+    chapter.translations = byLanguage((translation, translationPath) => {
+      const translationFields = record(translation, translationPath)
+      const translatedNodes = Array.isArray(translationFields.nodes) ? translationFields.nodes : fail(`${translationPath}.nodes`, 'a list')
+      return {
+        title: nullable(string)(translationFields.title, `${translationPath}.title`),
+        nodes: translatedNodes.map((inner, index) => node(inner, `${translationPath}.nodes[${index}]`, 0)),
+        ...(translationFields.importedFrom === undefined ? {} : { importedFrom: object({ fileName: nullable(string), importedAt: string })(translationFields.importedFrom, `${translationPath}.importedFrom`) }),
+      }
+    })(fields.translations, `${path}.translations`)
+  }
+  if (fields.hollow === true) {
+    chapter.hollow = true
   }
   return chapter
 }

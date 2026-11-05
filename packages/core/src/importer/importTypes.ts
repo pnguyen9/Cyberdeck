@@ -14,6 +14,8 @@ export interface Directive {
   /** Lower-cased, so writers can type `[BG: …]` or `[bg: …]`. */
   name: string
   arguments: string[]
+  /** What follows the colon as written, commas included: for the few directives listing names. */
+  written?: string
 }
 
 /** A directive written after some text: it fires when the typewriter reaches `offset` in the page text. */
@@ -64,7 +66,7 @@ export interface ChoiceOption {
   value: string
   /** `[if: …]` on the option's line: it is offered only while this holds. */
   condition?: Condition
-  /** `[timeout]` on the option's line: never shown, taken when the time of the choice runs out. */
+  /** `[timeout]` on the option's line: offered as the others, and taken when the time of the choice runs out. */
   timeout?: true
 }
 
@@ -156,13 +158,16 @@ export interface EndingNode {
   type: 'ending'
   sourceLine: number
   name: string
+  /** `[ending: The Empty Room = La Chambre vide]`: what players read of it in the text's language. */
+  shownAs?: string
 }
 
-/** `[remember: Name]`: the profile remembers it for good, across every later playthrough. */
+/** `[remember: Name]`: the profile remembers it for good, across every later playthrough; `[forget: Name]` takes it away again. */
 export interface RememberNode {
   type: 'remember'
   sourceLine: number
   name: string
+  forget?: true
 }
 
 /** `[loop]` … `[end]`: plays its nodes again and again, until a `[break]` inside leaves it. */
@@ -186,19 +191,24 @@ export interface PlayNode {
 
 export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | AddNode | AskNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
 
-/** `[decision: Confession = Accept | Refuse]`, or `[decision multi: …]` when several values can hold at once. */
+/**
+ * `[decision: Confession = Accept | Refuse]`, or `[decision multi: …]` when several values can hold at
+ * once; `lasting` after either, its values kept from one playthrough to the next.
+ */
 export interface DecisionDeclaration {
   sourceLine: number
   name: string
   values: string[]
   multiple: boolean
+  lasting: boolean
 }
 
-/** `[counter: Trust = 2]`, or `[counter: Trust]` starting at 0. */
+/** `[counter: Trust = 2]`, or `[counter: Trust]` starting at 0; `[counter lasting: …]`, its number kept from one playthrough to the next. */
 export interface CounterDeclaration {
   sourceLine: number
   name: string
   initial: number
+  lasting: boolean
 }
 
 export interface ImportedChapter {
@@ -212,6 +222,7 @@ export interface ImportedChapter {
 
 export type ImportProblemCode =
   | 'unknownImportKind'
+  | 'unknownLanguage'
   | 'misplacedImportKind'
   | 'emptyDirective'
   | 'unclosedBracket'
@@ -264,6 +275,7 @@ export type ImportProblemCode =
   | 'unknownValue'
   | 'askedNameTaken'
   | 'nameIsAsked'
+  | 'unknownShown'
   | 'timedChoiceWithoutTimeout'
   | 'timeoutWithoutTime'
   | 'severalTimeouts'
@@ -291,11 +303,21 @@ export interface ImportProblem {
 export interface ImportResult {
   /** Declared by `[import: …]` on the first line, null when the writer left it to the interface. */
   kind: ImportKind | null
+  /** The language the text says it is written in, `[import: story fr]`, as a standard code; null when it says none. */
+  language: string | null
   decisions: DecisionDeclaration[]
   counters: CounterDeclaration[]
   styles: StyleDeclaration[]
   chapters: ImportedChapter[]
   /** `# Scene: Name`: pages of no chapter, played wherever a `[play: Name]` is. */
   scenes: ImportedChapter[]
+  /** `[shown: Bag, Trust]`, `[shown after an ending: …]`: what players may see, `endings reached` among the names for the endings. */
+  shown: ShownDeclaration[]
   problems: ImportProblem[]
+}
+
+export interface ShownDeclaration {
+  sourceLine: number
+  names: string[]
+  afterAnEnding: boolean
 }

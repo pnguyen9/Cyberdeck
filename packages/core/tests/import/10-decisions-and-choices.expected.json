@@ -1,6 +1,7 @@
 {
   "kind": null,
   "counters": [],
+  "language": null,
   "decisions": [
     {
       "sourceLine": 1,
@@ -10,7 +11,8 @@
         "Refuse",
         "Ignore"
       ],
-      "multiple": false
+      "multiple": false,
+      "lasting": false
     },
     {
       "sourceLine": 2,
@@ -20,7 +22,8 @@
         "Key",
         "Photo"
       ],
-      "multiple": true
+      "multiple": true,
+      "lasting": false
     }
   ],
   "styles": [],
@@ -82,5 +85,6 @@
     }
   ],
   "scenes": [],
+  "shown": [],
   "problems": []
 }

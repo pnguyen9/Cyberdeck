@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { parseSave, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
+import { emptyProgressOf, languageName, parseSave, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
 import { AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { describeError } from '../i18n/errorMessages'
@@ -25,6 +25,23 @@ const locale = useLocale()
 const text = useMessages(libraryMessages)
 const errorText = (error: unknown) => describeError(error, locale.value)
 
+/**
+ * The language each game is played in: the one the profile picked for it, kept in its progress; else
+ * Datajack's own, when the game has it; else the story's first.
+ */
+function languageOf(entry: LibraryEntry): string {
+  const kept = progressByGame.value.get(entry.id)?.language
+  if (kept !== undefined && entry.languages.includes(kept)) {
+    return kept
+  }
+  return entry.languages.find(language => language.split('-')[0] === locale.value) ?? entry.languages[0] ?? locale.value
+}
+async function pickLanguage(entry: LibraryEntry, language: string) {
+  const progress = { ...progressByGame.value.get(entry.id) ?? emptyProgressOf({ id: entry.id, name: entry.name }), language }
+  progressByGame.value = new Map([...progressByGame.value, [entry.id, progress]])
+  await props.saveStore.writeProgress(entry.id, progress)
+}
+
 const cards = computed(() => entries.value.map(entry => {
   const installed = entry.chapters.filter(chapter => chapter.included)
   const missing = entry.chapters.filter(chapter => !chapter.included).map(chapter => chapter.title ?? text.value.untitledChapter)
@@ -36,6 +53,9 @@ const cards = computed(() => entries.value.map(entry => {
     autosave: autosaves.value.get(entry.id) ?? null,
     hasMap: (progress?.points.length ?? 0) > 0,
     endingsReached: progress?.endingIds.length ?? 0,
+    language: languageOf(entry),
+    /** Each language by its own name, as players look for theirs. */
+    languageNames: entry.languages.map(language => ({ code: language, name: languageName(language, language) ?? language })),
     illustrationsSeen: progress?.illustrationIds.length ?? 0,
   }
 }))
@@ -81,7 +101,9 @@ async function install(fileList: FileList | null) {
 async function play(entry: LibraryEntry, resumeFrom: SaveData | null) {
   confirming.value = null
   try {
-    emit('play', await props.library.open(entry.id), resumeFrom)
+    // A save is resumed in the language it was played in, when the game still has it.
+    const language = resumeFrom?.language !== undefined && entry.languages.includes(resumeFrom.language) ? resumeFrom.language : languageOf(entry)
+    emit('play', await props.library.open(entry.id, language), resumeFrom)
   } catch (error) {
     errorMessage.value = text.value.cannotOpen(entry.name, errorText(error))
   }
@@ -89,7 +111,7 @@ async function play(entry: LibraryEntry, resumeFrom: SaveData | null) {
 
 async function openMap(entry: LibraryEntry, view: 'map' | 'gallery' = 'map') {
   try {
-    const story = await props.library.open(entry.id)
+    const story = await props.library.open(entry.id, languageOf(entry))
     if (view === 'map') {
       emit('map', story)
     } else {
@@ -208,6 +230,12 @@ function onDrop(event: DragEvent) {
         <div class="details">
           <h2>{{ card.entry.name }} <span class="release">{{ card.entry.release }}</span></h2>
           <p v-if="card.entry.description !== ''" class="description">{{ card.entry.description }}</p>
+          <label v-if="card.languageNames.length > 1" class="story-language">
+            <span>{{ text.storyLanguage }}</span>
+            <select :value="card.language" @change="pickLanguage(card.entry, ($event.target as HTMLSelectElement).value)">
+              <option v-for="language in card.languageNames" :key="language.code" :value="language.code">{{ language.name }}</option>
+            </select>
+          </label>
           <p class="chapters">
             <template v-if="card.missing.length === 0">{{ text.chapterCount(card.installedCount) }}</template>
             <template v-else>{{ text.someChapters(card.installedCount, card.entry.chapters.length, card.missing) }}</template>

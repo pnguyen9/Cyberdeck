@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { useLocale, useMessages } from '@cyberdeck/stage'
+import { languageName, languagesOf } from '@cyberdeck/core'
+import { createTextboxLayout, useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, ref } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { detailsMessages } from '../i18n/detailsMessages'
+import { useEditorSettings } from '../settings/editorSettings'
+import { languageLabel } from '../i18n/languageNames'
 import { useEditor } from './editorContext'
 import { formatSize, safeFileName, usePreparedDownload } from './preparedDownload'
 
-const { open, project, chapters, scenes, act } = useEditor()
+const { open, project, chapters, scenes, everyText, language, act } = useEditor()
 const release = ref('1.0')
 const excludedChapterIds = ref<string[]>([])
 const download = usePreparedDownload()
@@ -16,7 +19,29 @@ const text = useMessages(detailsMessages)
 const common = useMessages(commonMessages)
 
 const included = computed(() => chapters.value.filter(chapter => !excludedChapterIds.value.includes(chapter.id)))
-const canExport = computed(() => included.value.length > 0 && release.value.trim() !== '')
+
+/**
+ * The story's languages, each with the chapters shipped and scenes it has no text for yet: a
+ * language players get has every one. The first always goes.
+ */
+const excludedLanguages = ref<string[]>([])
+const languages = computed(() => {
+  const shippedIds = new Set([...included.value.map(chapter => chapter.id), ...scenes.value.map(scene => scene.id)])
+  return languagesOf(project.value).map((code, index) => {
+    const missing = everyText.value.filter(view => view.language === code && view.hollow === true && shippedIds.has(view.id)).map(view => view.title ?? common.value.untitledChapter)
+    return { code, isFirst: index === 0, missing }
+  })
+})
+/** The story's first language always goes: chapters it lacks must be written, or left out of the game. */
+const firstLanguageMissing = computed(() => languages.value[0]?.missing ?? [])
+const shippedLanguages = computed(() => languages.value.filter(entry => entry.isFirst || (entry.missing.length === 0 && !excludedLanguages.value.includes(entry.code))).map(entry => entry.code))
+
+function setLanguageShipped(code: string, isShipped: boolean) {
+  const others = excludedLanguages.value.filter(excluded => excluded !== code)
+  excludedLanguages.value = isShipped ? others : [...others, code]
+  download.forget()
+}
+const canExport = computed(() => included.value.length > 0 && release.value.trim() !== '' && firstLanguageMissing.value.length === 0)
 
 function setIncluded(chapterId: string, isIncluded: boolean) {
   const others = excludedChapterIds.value.filter(excluded => excluded !== chapterId)
@@ -24,8 +49,11 @@ function setIncluded(chapterId: string, isIncluded: boolean) {
   download.forget()
 }
 
+const settings = useEditorSettings()
+const layout = createTextboxLayout()
+
 function exportStoryText() {
-  textDownload.offer(`${safeFileName(project.value.name, locale.value)}.txt`, open.exportText(null))
+  textDownload.offer(`${safeFileName(project.value.name, locale.value)}.txt`, open.exportText(null, settings.value.paragraphsAsWritten ? layout : null))
 }
 
 function exportGame() {
@@ -33,7 +61,7 @@ function exportGame() {
   const wholeGame = included.value.length === chapters.value.length
   const suffix = wholeGame ? '' : ` - ${included.value.map(chapter => chapter.title ?? common.value.untitled).join(', ')}`
   return act(async () => {
-    const bytes = await open.exportGame(releaseLabel, included.value.map(chapter => chapter.id), new Date())
+    const bytes = await open.exportGame(releaseLabel, included.value.map(chapter => chapter.id), new Date(), shippedLanguages.value)
     download.offer(`${safeFileName(`${project.value.name} ${releaseLabel}${suffix}`, locale.value)}.zip`, bytes)
   })
 }
@@ -59,6 +87,20 @@ function exportGame() {
         {{ text.scenesToo(scenes.length, scenes.map(scene => scene.title).join(', ')) }}
       </p>
     </fieldset>
+    <fieldset v-if="languages.length > 1" class="chapters">
+      <legend>{{ text.languages }}</legend>
+      <label v-for="entry in languages" :key="entry.code" class="chapter">
+        <input
+          type="checkbox"
+          :checked="shippedLanguages.includes(entry.code)"
+          :disabled="entry.isFirst || entry.missing.length > 0"
+          @change="setLanguageShipped(entry.code, ($event.target as HTMLInputElement).checked)"
+        >
+        {{ languageLabel(entry.code, locale) }}
+        <span v-if="entry.missing.length > 0" :class="entry.isFirst ? 'warning' : 'muted'">· {{ entry.isFirst ? text.firstLanguageLacks(entry.missing) : text.notWrittenYet(entry.missing) }}</span>
+        <span v-else-if="entry.isFirst" class="muted">· {{ text.firstLanguage }}</span>
+      </label>
+    </fieldset>
     <div class="actions">
       <button class="button primary" :disabled="!canExport" @click="exportGame">{{ text.export }}</button>
       <a v-if="download.prepared.value !== null" class="download" :href="download.prepared.value.url" :download="download.prepared.value.fileName">
@@ -70,8 +112,13 @@ function exportGame() {
     <p class="muted">
       {{ text.asTextIntro }}
     </p>
+    <fieldset class="paragraphs" @change="textDownload.forget()">
+      <legend>{{ text.paragraphs }}</legend>
+      <label><input v-model="settings.paragraphsAsWritten" type="radio" :value="false"> {{ text.onePagePerParagraph }}</label>
+      <label><input v-model="settings.paragraphsAsWritten" type="radio" :value="true"> {{ text.paragraphsAsWritten }}</label>
+    </fieldset>
     <div class="actions">
-      <button class="button" :disabled="chapters.length === 0" @click="exportStoryText">{{ text.exportStoryText }}</button>
+      <button class="button" :disabled="chapters.length === 0" @click="exportStoryText">{{ text.exportStoryText(languageName(language, locale) ?? language) }}</button>
       <a v-if="textDownload.prepared.value !== null" class="download" :href="textDownload.prepared.value.url" :download="textDownload.prepared.value.fileName">
         {{ common.download(textDownload.prepared.value.fileName) }}
       </a>
@@ -91,11 +138,18 @@ function exportGame() {
   max-width: 240px;
 }
 
-.chapters {
+.chapters,
+.paragraphs {
   margin: 0;
   padding: 8px 16px 12px;
   border: 1px solid #2c3442;
   border-radius: 8px;
+}
+
+.paragraphs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 legend {

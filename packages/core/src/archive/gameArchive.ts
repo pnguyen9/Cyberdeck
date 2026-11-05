@@ -1,4 +1,5 @@
 import { checkChapterDocument, checkProjectDocument, DocumentError, isPlainIdentifier } from '../format/checkDocuments'
+import { chapterIn, languagesOf } from '../format/languages'
 import { flattenStoredNodes, mapInnerLists, type Asset, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredNode } from '../format/storyFormat'
 import { STYLE_PROPERTIES_OF_1_1 } from '../format/textStyles'
 import { isAskableName, placeholdersAsWritten } from '../format/textValues'
@@ -65,6 +66,8 @@ export interface GameArchiveSource {
   /** Every chapter of the project, and its scenes: chapters left out are still listed by title. */
   chapters: readonly ChapterDocument[]
   includedChapterIds: readonly string[]
+  /** The languages players get, the story's first always among them; every one of its languages by default. */
+  languages?: readonly string[]
   readAsset: (asset: Asset) => Promise<Uint8Array<ArrayBuffer>>
   release: string
   exportedAt: Date
@@ -146,6 +149,19 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
     return scene
   })
 
+  // Each language players get has a text for every chapter shipped and every scene: none hollow.
+  const storyLanguages = languagesOf(project)
+  const first = storyLanguages[0]!
+  const languages = storyLanguages.filter(language => (source.languages ?? storyLanguages).includes(language))
+  if (!languages.includes(first)) {
+    throw new Error(`A game always carries the story's first language, ${first}`)
+  }
+  const everyText = [...included, ...scenes].flatMap(document => languages.map(language => chapterIn(document, language, project)))
+  const hollow = everyText.find(text => text.hollow === true)
+  if (hollow !== undefined) {
+    throw new Error(`${hollow.title ?? hollow.id} is not written in ${hollow.language} yet`)
+  }
+
   const release = source.release.trim()
   if (release === '' || release.length > MAXIMUM_RELEASE_LENGTH) {
     throw new Error(`A release needs 1 to ${MAXIMUM_RELEASE_LENGTH} characters`)
@@ -155,7 +171,7 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
   const pathsByContent = new Map<string, string>()
   const takenPaths = new Set<string>()
   const assetEntries: ZipEntryToWrite[] = []
-  const usedAssetIds = assetsUsedBy(project, [...included, ...scenes])
+  const usedAssetIds = assetsUsedBy(project, everyText)
   if (project.details.coverAssetId !== null) {
     usedAssetIds.add(project.details.coverAssetId)
   }
@@ -175,12 +191,20 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
     assetFiles[asset.id] = { path, sha256: hash }
   }
 
-  const formatVersion = playerFormatVersion(project, [...included, ...scenes])
+  const shipped: ProjectDocument = {
+    ...project,
+    languages,
+    endings: project.endings.map(({ translations, ...rest }) => {
+      const shipped = onlyIn(translations ?? {}, languages)
+      return Object.keys(shipped).length === 0 ? rest : { ...rest, translations: shipped }
+    }),
+  }
+  const formatVersion = playerFormatVersion(shipped, everyText)
   const manifest: GameManifest = {
     archiveFormat: ARCHIVE_FORMAT,
     release,
     exportedAt: source.exportedAt.toISOString(),
-    project: { ...project, formatVersion },
+    project: { ...shipped, formatVersion },
     chapters: project.chapterOrder.map(chapterId => ({
       id: chapterId,
       title: chaptersById.get(chapterId)?.title ?? null,
@@ -190,8 +214,8 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
   }
   return writeZip([
     jsonEntry(MANIFEST_PATH, manifest),
-    ...included.map(chapter => jsonEntry(chapterPath(chapter.id), forPlayers(chapter, formatVersion))),
-    ...scenes.map(scene => jsonEntry(scenePath(scene.id), forPlayers(scene, formatVersion))),
+    ...included.map(chapter => jsonEntry(chapterPath(chapter.id), forPlayers(chapter, formatVersion, languages))),
+    ...scenes.map(scene => jsonEntry(scenePath(scene.id), forPlayers(scene, formatVersion, languages))),
     ...assetEntries,
   ], source.exportedAt)
 }
@@ -202,8 +226,9 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
  * rather than leave out: a style property it does not know or a font file need 1.2 (Datajack 1.1);
  * counters, voices and videos need 1.3 (Datajack 1.2); names asked for, timed choices and captions
  * need 1.4 (Datajack 1.3); numbers drawn at random, and values other than names in the text, need 1.5
- * (Datajack 1.4), which an older player would show as written. What an older player does not know besides,
- * the CSS and title cards for 1.0, it leaves out.
+ * (Datajack 1.4), which an older player would show as written; several languages, memories forgotten,
+ * lasting values, and timed choices, which offer the option waiting takes, need 2.0 (Datajack 2.0). What an older player
+ * does not know besides, the CSS and title cards for 1.0, the journal for 1.4, it leaves out.
  */
 export function playerFormatVersion(project: ProjectDocument, documents: readonly ChapterDocument[] = []): string {
   // An older Datajack refuses the nodes, conditions, commands and files it does not know: told the
@@ -212,6 +237,12 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   // Datajack 1.3 shows a name asked for, written `{Hero}` exactly; anything else in braces it shows as written.
   const showsNewerValues = (text: string) => text.includes('{{')
     || placeholdersAsWritten(text).some(name => !isAskableName(name) || !askedNames.has(normalizeName(name)))
+  // An older Datajack would read a forget as a remember, hide the option waiting takes, and carry nothing over.
+  const needsDatajack20 = languagesOf(project).length > 1 || project.decisions.some(decision => decision.lasting === true) || project.counters.some(counter => counter.lasting === true)
+    || documents.some(document => flattenStoredNodes(document.nodes).some(node => (node.type === 'remember' && node.forget === true) || (node.type === 'choice' && node.timeLimitMs !== undefined)))
+  if (needsDatajack20) {
+    return '2.0'
+  }
   const needsDatajack14 = project.frames.textBox !== null || project.frames.namePlate !== null
     || project.characters.some(character => character.nameColor !== undefined || showsNewerValues(character.name))
     || drawsNumbers(documents)
@@ -246,12 +277,22 @@ function commandsOf(node: StoredNode): readonly StageCommand[] {
   return node.type === 'page' ? [...node.commandsBefore, ...node.inlineCommands] : node.type === 'stage' ? node.commands : []
 }
 
-/** A chapter as players get it: without where it was imported from, nor where definitions are written, which play nothing. */
-function forPlayers({ importedFrom: _editorHistory, ...chapter }: ChapterDocument, formatVersion: string): ChapterDocument {
+/**
+ * A chapter as players get it, in the languages they get: without where it was imported from, nor
+ * where definitions are written, which play nothing.
+ */
+function forPlayers({ importedFrom: _editorHistory, translations, hollow: _hollow, ...chapter }: ChapterDocument, formatVersion: string, languages: readonly string[]): ChapterDocument {
   const withoutDefinitions = (nodes: readonly StoredNode[]): StoredNode[] => nodes
     .filter(node => node.type !== 'definition')
     .map(node => mapInnerLists(node, list => withoutDefinitions(list.nodes)))
-  return { ...chapter, formatVersion, nodes: withoutDefinitions(chapter.nodes) }
+  const shipped = Object.entries(onlyIn(translations ?? {}, languages))
+    .map(([language, translation]) => [language, { title: translation.title, nodes: withoutDefinitions(translation.nodes) }] as const)
+  return { ...chapter, formatVersion, nodes: withoutDefinitions(chapter.nodes), ...(shipped.length === 0 ? {} : { translations: Object.fromEntries(shipped) }) }
+}
+
+/** What a record by language holds for the languages players get. */
+function onlyIn<Value>(byLanguage: Readonly<Record<string, Value>>, languages: readonly string[]): Record<string, Value> {
+  return Object.fromEntries(Object.entries(byLanguage).filter(([language]) => languages.includes(language)))
 }
 
 /** Reads and checks a downloaded archive; throws an error worded for the player when it cannot be played. */

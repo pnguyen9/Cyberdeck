@@ -5,16 +5,17 @@ import type { StyleProperty } from './textStyles'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '1.5'
+export const FORMAT_VERSION = '2.0'
 
-/** True when this version of the code can read a document written in `version`. */
+/** True when this version of the code can read a document written in `version`: any version up to its own, every earlier major one included. */
 export function isSupportedFormatVersion(version: string): boolean {
-  const [currentMajor, currentMinor] = FORMAT_VERSION.split('.').map(Number)
+  const [currentMajor = 0, currentMinor = 0] = FORMAT_VERSION.split('.').map(Number)
   const parsedVersion = /^(\d+)\.(\d+)$/.exec(version)
   if (parsedVersion === null) {
     return false
   }
-  return Number(parsedVersion[1]) === currentMajor && Number(parsedVersion[2]) <= (currentMinor ?? 0)
+  const major = Number(parsedVersion[1])
+  return major >= 1 && (major < currentMajor || (major === currentMajor && Number(parsedVersion[2]) <= currentMinor))
 }
 
 /** Dates are ISO 8601 strings, in UTC. */
@@ -41,6 +42,8 @@ export interface Decision {
    * or in the project's definitions when no node declares it. Since 1.2.
    */
   implicit?: true
+  /** Its values are kept by the profile from one playthrough to the next. Since 2.0. */
+  lasting?: true
 }
 
 /**
@@ -53,6 +56,8 @@ export interface Counter {
   initial: number
   /** Declared nowhere: an `[add]` made it, starting at 0. */
   implicit?: true
+  /** Its number is kept by the profile from one playthrough to the next. Since 2.0. */
+  lasting?: true
 }
 
 /**
@@ -103,6 +108,35 @@ export interface Frames {
   textBox: string | null
   namePlate: string | null
 }
+
+/**
+ * What players may see of what they hold, in the window of what they collected: decisions and
+ * counters by identifier, shown always or once the profile has reached an ending; and the endings
+ * reached. Nothing, unless the author says so. Since 2.0.
+ */
+export interface ShownToPlayers {
+  always: string[]
+  afterAnEnding: string[]
+  endings: ShownWhen | null
+}
+
+export type ShownWhen = 'always' | 'afterAnEnding'
+
+export const NOTHING_SHOWN: ShownToPlayers = { always: [], afterAnEnding: [], endings: null }
+
+/** What players may see, with a decision or a counter moved to `when`: never (null), always, or after an ending. */
+export function withShown(shown: ShownToPlayers, id: string, when: ShownWhen | null): ShownToPlayers {
+  const always = shown.always.filter(candidate => candidate !== id)
+  const afterAnEnding = shown.afterAnEnding.filter(candidate => candidate !== id)
+  return {
+    ...shown,
+    always: when === 'always' ? [...always, id] : always,
+    afterAnEnding: when === 'afterAnEnding' ? [...afterAnEnding, id] : afterAnEnding,
+  }
+}
+
+/** In `[shown: …]`, the name that means the endings reached rather than a decision or a counter. */
+export const ENDINGS_REACHED = 'endings reached'
 
 /** A named spot on the stage, like a CSS position: `x` is the percentage of the stage width at the character's centre. */
 export interface PositionPreset {
@@ -205,6 +239,8 @@ export interface VideoClip {
 export interface Ending {
   id: string
   name: string
+  /** What players read of it in the project's other languages, by code: `[ending: The Empty Room = La Chambre vide]`. Since 2.0. */
+  translations?: Record<string, string>
 }
 
 /** Something a profile remembers across playthroughs once `[remember: …]` is reached. */
@@ -236,8 +272,10 @@ export interface ProjectDocument extends Audited {
   formatVersion: string
   id: string
   name: string
-  /** Language of the story, for sentence boundaries and typography. */
+  /** The first language of the story, the one it was started in, for sentence boundaries and typography. */
   locale: string
+  /** Every language the story is written in, the first one first. Since 2.0. */
+  languages: string[]
   chapterOrder: string[]
   /** Scenes: pages of no chapter, played wherever a `[play]` names them. Stored as chapters are. Since 1.1. */
   sceneOrder: string[]
@@ -268,6 +306,8 @@ export interface ProjectDocument extends Audited {
   chapterTitleCards: boolean
   /** Asset identifiers of the frames, null for none. Since 1.5. */
   frames: Frames
+  /** What the window of what players collected shows. Since 2.0. */
+  shown: ShownToPlayers
 }
 
 /** How close to the player a character stands: nearer is larger and in front. Since 1.1. */
@@ -330,6 +370,20 @@ export interface ChapterDocument extends Audited {
   /** Played only when this holds, passed by otherwise; absent for a chapter always played. Since 1.1. */
   condition?: StoredCondition
   nodes: StoredNode[]
+  /** Its text in the project's other languages, by code; a language absent here is hollow in it. Since 2.0. */
+  translations?: Record<string, ChapterTranslation>
+  /**
+   * No text in the project's first language yet: the chapter came from another one, whose title stands
+   * in. Since 2.0.
+   */
+  hollow?: true
+}
+
+/** A chapter's text in one of the project's other languages. Since 2.0. */
+export interface ChapterTranslation {
+  title: string | null
+  nodes: StoredNode[]
+  importedFrom?: { fileName: string | null; importedAt: string }
 }
 
 export interface StoredPage {
@@ -356,7 +410,7 @@ export interface StoredChoice {
   id: string
   decisionId: string
   options: StoredChoiceOption[]
-  /** The time the player has to pick, after which the option marked `timeout` is taken. Since 1.4. */
+  /** The time the player has to pick, after which the option marked `timeout` is taken. Since 1.4; that option offered as the others since 2.0. */
   timeLimitMs?: number
 }
 
@@ -444,11 +498,12 @@ export interface StoredAsk {
   askedNameId: string
 }
 
-/** The profile remembers this from now on, in every playthrough. */
+/** The profile remembers this from now on, in every playthrough; or, `forget`, no longer does. Forgetting since 2.0. */
 export interface StoredRemember {
   type: 'remember'
   id: string
   memoryId: string
+  forget?: true
 }
 
 /** Plays its nodes again and again, until a `[break]` inside leaves it. Since 1.1. */
@@ -544,6 +599,7 @@ export function createProject(settings: { name: string; locale: string }, enviro
     id: environment.createId(),
     name: settings.name,
     locale: settings.locale,
+    languages: [settings.locale],
     chapterOrder: [],
     sceneOrder: [],
     decisions: [],
@@ -566,6 +622,7 @@ export function createProject(settings: { name: string; locale: string }, enviro
     css: '',
     chapterTitleCards: false,
     frames: { textBox: null, namePlate: null },
+    shown: NOTHING_SHOWN,
     createdAt: now,
     updatedAt: now,
   }

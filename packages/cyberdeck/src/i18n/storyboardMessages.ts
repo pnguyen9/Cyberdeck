@@ -1,6 +1,11 @@
 import type { StoredNode } from '@cyberdeck/core'
 
-type MarkerKind = Exclude<StoredNode['type'], 'page' | 'choice' | 'condition' | 'loop'>
+/** What a marker is, a `[forget]` apart from a `[remember]`. */
+export type MarkerKind = Exclude<StoredNode['type'], 'page' | 'choice' | 'condition' | 'loop'> | 'forget'
+
+export function markerKindOf(node: Extract<StoredNode, { type: Exclude<MarkerKind, 'forget'> }>): MarkerKind {
+  return node.type === 'remember' && node.forget === true ? 'forget' : node.type
+}
 
 /** Keys of the storyboard's actions, as the line under its toolbar names them. */
 interface ShownKeys {
@@ -38,6 +43,7 @@ const en = {
   grid: 'Grid',
   tree: 'Tree',
   graph: 'Graph',
+  hollowChapter: (language: string) => `Not written in ${language} yet: the pages you add here are its ${language} text.`,
   graphHelp: 'Drag to move around, the wheel to zoom; a click selects a box.',
   graphKeys: 'Tab goes from box to box, Enter selects one and moves to its panel, Esc goes back to the box; the arrows move the map, + and − zoom.',
   graphOnlyIf: (condition: string) => `only if ${condition}`,
@@ -84,6 +90,7 @@ const en = {
     definition: 'definition',
     ending: 'ending',
     remember: 'remember',
+    forget: 'forget',
     break: 'break',
     play: 'play',
   } satisfies Record<MarkerKind, string>,
@@ -161,6 +168,7 @@ const fr: StoryboardMessages = {
   grid: 'Grille',
   tree: 'Arbre',
   graph: 'Graphe',
+  hollowChapter: (language: string) => `Pas encore écrit en ${language}\u00a0: les pages ajoutées ici en sont le texte en ${language}.`,
   graphHelp: 'Faites glisser pour vous déplacer, la molette pour zoomer\u00a0; un clic sélectionne une case.',
   graphKeys: 'Tab passe d’une case à l’autre, Entrée en sélectionne une et passe à son panneau, Échap ramène à la case\u00a0; les flèches déplacent la carte, + et − zooment.',
   graphOnlyIf: condition => `seulement si ${condition}`,
@@ -209,6 +217,7 @@ const fr: StoryboardMessages = {
     definition: 'définition',
     ending: 'fin',
     remember: 'souvenir',
+    forget: 'souvenir oublié',
     break: 'sortie de boucle',
     play: 'scène jouée',
   },

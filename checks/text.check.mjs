@@ -9,7 +9,7 @@ export default async function check(page, { url }) {
   const exportStoryText = async () => {
     await page.clickButton('Export', '.tab')
     await pause(300)
-    await page.clickButton('Export the story as text', '.button')
+    await page.clickButton('Export the story as text, in English', '.button')
     await pause(300)
   }
 
@@ -19,7 +19,7 @@ export default async function check(page, { url }) {
   await pause(400)
   page.check('a chapter is offered as a text file', await page.evaluate(`${lastDownload}?.getAttribute('download')`), 'Chapter 1 — The Letter.txt')
   const chapterText = await downloadedText()
-  page.check('the text starts as written', chapterText.replace('﻿', '').startsWith('[import: chapter]\n# Chapter 1 — The Letter\n'), true)
+  page.check('the text starts as written', chapterText.replace('﻿', '').startsWith('[import: chapter en]\n# Chapter 1 — The Letter\n'), true)
   page.check('the file is marked UTF-8 for Word', await page.evaluate(`fetch(${lastDownload}.href).then(response => response.arrayBuffer()).then(buffer => [...new Uint8Array(buffer).slice(0, 3)].join())`), '239,187,191')
   page.check('directives are written in the syntax', chapterText.includes('[enter: Jules slide-from-right 0.8s wait]'), true)
 

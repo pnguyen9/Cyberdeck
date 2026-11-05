@@ -2,6 +2,7 @@ import { checkAuthorCss, styleClassName } from '../format/authorCss'
 import { LARGE_WIDTH_SCALE } from '../format/textStyles'
 import { checkReferences, type KnownNames } from '../importer/checkReferences'
 import { possibleValues } from '../format/textValues'
+import { firstLanguageOf, languagesOf } from '../format/languages'
 import { homeOf, indexNames, placeDescriber } from './nameIndex'
 import type { StoryWords } from '../storyboard/storyWords'
 import { normalizeName } from '../importer/storyNodes'
@@ -15,12 +16,14 @@ import {
   flattenStoredNodes,
   FORMAT_VERSION,
   mapInnerLists,
+  withShown,
   type ChapterDocument,
   type DefinitionKind,
   type Environment,
   type Facing,
   type GameDetails,
   type ProjectDocument,
+  type ShownWhen,
   type StoredCondition,
   type StoredNode,
 } from '../format/storyFormat'
@@ -37,6 +40,8 @@ export interface ImportPreview {
   hasErrors: boolean
   /** The project's scenes, which plays may name and the import's scenes replace. */
   knownScenes: { name: string; id: string }[]
+  /** The language of the text: what it says on its first line, else the one it was imported in. */
+  language: string
 }
 
 /**
@@ -191,6 +196,8 @@ export function previewImport(
     knownNames?: KnownNames
     /** The words of places named in problems, in the editor's language. */
     words?: StoryWords
+    /** The language the text is imported in, unless it says its own; the story's first by default. */
+    language?: string
   } = {},
 ): ImportPreview {
   const scenes = (options.scenes ?? []).filter(scene => project.sceneOrder.includes(scene.id))
@@ -199,7 +206,7 @@ export function previewImport(
     styleWidthScales: styleWidthScales(project),
     possibleValues: possibleValues(project),
     layout,
-    locale: project.locale,
+    locale: options.language ?? firstLanguageOf(project),
     knownCharacterNames: project.characters.map(character => character.name),
     knownPositionNames: project.positions.map(position => position.name),
   })
@@ -216,6 +223,7 @@ export function previewImport(
     problems,
     hasErrors: problems.some(problem => problem.severity === 'error'),
     knownScenes: scenes.map(scene => ({ name: scene.title ?? '', id: scene.id })),
+    language: result.language ?? options.language ?? firstLanguageOf(project),
   }
 }
 
@@ -231,23 +239,52 @@ export function applyImport(
     throw new Error('The text has errors: fix them before importing')
   }
   const now = environment.now()
+  // A story with nothing yet takes the language of its first text; a text in a language it was not written in yet adds that language.
+  const isEmpty = project.chapterOrder.length === 0 && project.sceneOrder.length === 0
+  const languages = languagesOf(project)
+  const inLanguage = isEmpty ? { ...project, locale: preview.language, languages: [preview.language], updatedAt: now }
+    : languages.includes(preview.language) ? project : { ...project, languages: [...languages, preview.language], updatedAt: now }
+  const sourceInLanguage = { ...source, language: preview.language }
   if (target.type === 'replaceChapter') {
-    return replaceChapter(preview, project, chapters, target.chapterId, source, environment)
+    return withLanguage(replaceChapter(preview, inLanguage, chapters, target.chapterId, sourceInLanguage, environment), preview.language)
   }
-  const stored = storeImport(preview.result, project, source, environment, preview.knownScenes)
+  const stored = storeImport(preview.result, inLanguage, sourceInLanguage, environment, preview.knownScenes)
   if (target.type === 'newChapters') {
-    return { project: { ...stored.project, updatedAt: now }, chapters: [...stored.chapters, ...stored.scenes], created: stored.created }
+    // A whole story in another language than the first lays its chapters over the story's, by their
+    // place; other new chapters first fill the places the language has no text for yet, then take new ones.
+    const isWholeTranslation = preview.result.kind === 'story' && preview.language !== firstLanguageOf(inLanguage)
+    const placeIds = isWholeTranslation ? project.chapterOrder : project.chapterOrder.filter(chapterId => chapters.find(chapter => chapter.id === chapterId)?.hollow === true)
+    const filled = stored.chapters.slice(0, placeIds.length).map((chapter, index) => {
+      const place = chapters.find(candidate => candidate.id === placeIds[index])!
+      return { ...chapter, id: place.id, createdAt: place.createdAt, ...(place.condition === undefined ? {} : { condition: place.condition }) }
+    })
+    const added = stored.chapters.slice(placeIds.length)
+    const addedIds = new Set(added.map(chapter => chapter.id))
+    const storedIds = new Set(stored.chapters.map(chapter => chapter.id))
+    const chapterOrder = stored.project.chapterOrder.filter(chapterId => !storedIds.has(chapterId) || addedIds.has(chapterId))
+    return withLanguage({ project: { ...stored.project, chapterOrder, updatedAt: now }, chapters: [...filled, ...added, ...stored.scenes], created: stored.created }, preview.language)
   }
   const chapter = chapters.find(candidate => candidate.id === target.chapterId)
   if (chapter === undefined) {
     throw new Error(`No chapter ${target.chapterId} in the project`)
   }
   const newChapterIds = new Set(stored.chapters.map(storedChapter => storedChapter.id))
-  return {
+  const { hollow: _wasHollow, language: _language, ...extended } = chapter as ChapterDocument & { language?: string }
+  return withLanguage({
     project: { ...stored.project, chapterOrder: stored.project.chapterOrder.filter(chapterId => !newChapterIds.has(chapterId)), updatedAt: now },
-    chapters: [{ ...chapter, nodes: [...chapter.nodes, ...stored.chapters.flatMap(storedChapter => storedChapter.nodes)], updatedAt: now }, ...stored.scenes],
+    chapters: [{ ...extended, nodes: [...chapter.nodes, ...stored.chapters.flatMap(storedChapter => storedChapter.nodes)], updatedAt: now }, ...stored.scenes],
     created: stored.created,
-  }
+  }, preview.language)
+}
+
+/**
+ * The chapters an import gives back: in the story's first language, documents as stored; in another,
+ * views in that language, which the caller puts in their documents' translations (`withTextOf`).
+ */
+function withLanguage(applied: AppliedImport, language: string): AppliedImport {
+  return language === languagesOf(applied.project)[0]
+    ? applied
+    : { ...applied, chapters: applied.chapters.map(chapter => ({ ...chapter, language }) as ChapterDocument) }
 }
 
 /** The imported chapter takes the place and identifier of the replaced one, so that saves inside it resume at its start. */
@@ -339,34 +376,6 @@ export function renameChapter(chapter: ChapterDocument, title: string, now: stri
 }
 
 /**
- * A new project made from another for a translation: all a text cannot hold (files, characters and
- * the way they were drawn looking, backgrounds, music, sounds, illustrations, videos, fonts,
- * positions, animation defaults, the CSS, title cards, details) and none of the story (chapters,
- * scenes, decisions, counters, names asked for, endings, memories, styles), which the translated text
- * declares again as it is imported. Its files keep their identifiers: they are copied as they are.
- */
-export function projectWithoutStory(source: ProjectDocument, settings: { name: string; locale: string }, environment: Environment = defaultEnvironment): ProjectDocument {
-  const empty = createProject(settings, environment)
-  return {
-    ...source,
-    id: empty.id,
-    name: settings.name.trim(),
-    locale: settings.locale,
-    formatVersion: empty.formatVersion,
-    chapterOrder: [],
-    sceneOrder: [],
-    decisions: [],
-    counters: [],
-    askedNames: [],
-    endings: [],
-    memories: [],
-    styles: [],
-    createdAt: empty.createdAt,
-    updatedAt: empty.updatedAt,
-  }
-}
-
-/**
  * The condition a chapter is played under, read from what `[only if: …]` would say, checked as an
  * import checks it; `undefined` for an empty text, a chapter always played.
  */
@@ -413,6 +422,21 @@ export function setDrawnFacing(project: ProjectDocument, characterId: string, dr
     characters: project.characters.map(character => character.id === characterId ? { ...character, drawnFacing } : character),
     updatedAt: now,
   }
+}
+
+/** Whether players see a decision or a counter in their journal: never (null), always, or once an ending is reached. */
+export function setShown(project: ProjectDocument, id: string, when: ShownWhen | null, now: string): ProjectDocument {
+  return { ...project, shown: withShown(project.shown, id, when), updatedAt: now }
+}
+
+/** When players see a decision or a counter in their journal, as a menu shows it. */
+export function shownWhen(project: ProjectDocument, id: string): ShownWhen | null {
+  return project.shown.always.includes(id) ? 'always' : project.shown.afterAnEnding.includes(id) ? 'afterAnEnding' : null
+}
+
+/** Whether players see the endings they reached in their journal: never (null), always, or once they reached one. */
+export function setShownEndings(project: ProjectDocument, when: ShownWhen | null, now: string): ProjectDocument {
+  return { ...project, shown: { ...project.shown, endings: when }, updatedAt: now }
 }
 
 /** The colour of a character's name on their plate, `#rrggbb`, or null for the plate's own. */

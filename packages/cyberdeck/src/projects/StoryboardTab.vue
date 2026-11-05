@@ -24,6 +24,7 @@ import {
   type StoredCondition,
   type StoredNode,
   type StoryboardEntry,
+  languageName as languageName_,
 } from '@cyberdeck/core'
 import { createTextboxLayout, useLocale, useMessages } from '@cyberdeck/stage'
 import StoryLevel from './StoryLevel.vue'
@@ -32,7 +33,7 @@ import { storyWords } from '../i18n/storyWords'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { indexMessages } from '../i18n/indexMessages'
-import { storyboardMessages } from '../i18n/storyboardMessages'
+import { markerKindOf, storyboardMessages } from '../i18n/storyboardMessages'
 import { vocabularyOf, withNewBranch } from '../editing/tagText'
 import { useEditorSettings } from '../settings/editorSettings'
 import { useShortcuts } from '../shortcuts/shortcutStore'
@@ -47,7 +48,7 @@ import UnsavedQuestion from './UnsavedQuestion.vue'
 import { useUnsavedChanges } from './unsavedChanges'
 import StoryTree from './StoryTree.vue'
 
-const { open, project, chapters, scenes, documents, act, storyboardChapterId, previewFrom, storyboardRequest, openIndex, startEmptyDocument } = useEditor()
+const { open, project, chapters, scenes, documents, language, act, storyboardChapterId, previewFrom, storyboardRequest, openIndex, startEmptyDocument } = useEditor()
 const { shortcuts, isPanelOpen } = useShortcuts()
 const settings = useEditorSettings()
 const locale = useLocale()
@@ -207,7 +208,7 @@ function startEditing(entry: EditableEntry) {
     void nextTick(() => editor.value?.focus())
     return
   }
-  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'replace', nodeId: entry.node.id }, nodesText(project.value, [entry.node], scenes.value)))
+  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'replace', nodeId: entry.node.id }, nodesText(project.value, [entry.node], scenes.value, language.value)))
 }
 
 /** Right after the focused element; in an empty branch, its start; with no focus, at the end of the level's first list. */
@@ -237,7 +238,7 @@ function startEditingBlock(block: BlockElement) {
     void nextTick(() => editor.value?.focus())
     return
   }
-  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'replace', nodeId: block.node.id }, nodesText(project.value, [block.node], scenes.value)))
+  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'replace', nodeId: block.node.id }, nodesText(project.value, [block.node], scenes.value, language.value)))
 }
 
 async function saveEdit(): Promise<boolean> {
@@ -668,7 +669,7 @@ function editFromGraph(documentId: string, nodeId: string, withAddition: (text: 
     view.value = 'grid'
     void nextTick(() => {
       reveal(nodeId)
-      openEdit({ type: 'replace', nodeId }, withAddition(nodesText(project.value, [node], scenes.value)))
+      openEdit({ type: 'replace', nodeId }, withAddition(nodesText(project.value, [node], scenes.value, language.value)))
     })
   })
 }
@@ -985,6 +986,7 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
         </p>
       </div>
 
+      <p v-if="chapter.hollow === true" class="muted hollow-note" role="note">{{ text.hollowChapter(languageName_(language, locale) ?? language) }}</p>
       <p v-if="chapter.condition !== undefined" class="only-if">{{ text.playedOnlyIf(conditionText(chapter.condition)) }}</p>
       <p v-if="chapterUnreachableCount > 0" class="warning" role="note">
         {{ text.chapterUnreached(chapterUnreachableCount) }}
@@ -1116,7 +1118,7 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
             <p class="muted">{{ text.definitionHelp }}</p>
             <button class="button small" @click="moveToDefinitions(focusedEntry.node.id)">{{ text.moveToDefinitions }}</button>
           </template>
-          <p v-else-if="focusedEntry?.type === 'marker'" class="muted">{{ text.marker(text.markerKinds[focusedEntry.node.type], focusedEntry.text) }}</p>
+          <p v-else-if="focusedEntry?.type === 'marker'" class="muted">{{ text.marker(text.markerKinds[markerKindOf(focusedEntry.node)], focusedEntry.text) }}</p>
           <template v-else-if="focusedBlock?.node.type === 'loop'">
             <h3>{{ text.loopHeading(focusedBlock.numbers, pagesWord(focusedBlock.pageCount)) }}</h3>
             <p class="muted">{{ text.loopHelp }}</p>

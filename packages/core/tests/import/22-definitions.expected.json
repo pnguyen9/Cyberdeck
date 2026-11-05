@@ -1,10 +1,11 @@
 {
   "kind": "story",
   "counters": [],
+  "language": null,
   "decisions": [
-    { "sourceLine": 2, "name": "Route", "values": ["Marie", "Jules"], "multiple": false },
-    { "sourceLine": 5, "name": "Clues", "values": ["Letter", "Key"], "multiple": true },
-    { "sourceLine": 9, "name": "Route", "values": ["Marie"], "multiple": false }
+    { "sourceLine": 2, "name": "Route", "values": ["Marie", "Jules"], "multiple": false, "lasting": false },
+    { "sourceLine": 5, "name": "Clues", "values": ["Letter", "Key"], "multiple": true, "lasting": false },
+    { "sourceLine": 9, "name": "Route", "values": ["Marie"], "multiple": false, "lasting": false }
   ],
   "styles": [
     { "sourceLine": 3, "name": "Whisper", "properties": ["italic", "grey"] },
@@ -30,5 +31,6 @@
     }
   ],
   "scenes": [],
+  "shown": [],
   "problems": []
 }

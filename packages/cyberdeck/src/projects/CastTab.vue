@@ -10,7 +10,7 @@ import { useFoldedSections } from './foldedSections'
 import KindFilter from './KindFilter.vue'
 import { measureFontWidth } from './fontWidth'
 
-const { open, project, documents, act } = useEditor()
+const { open, project, everyText, act } = useEditor()
 const common = useMessages(commonMessages)
 const locale = useLocale()
 const text = useMessages(castMessages)
@@ -46,7 +46,7 @@ const missingCount = computed(() => [...characters.value.flatMap(character => ch
   .filter(candidate => candidate.file === null).length)
 
 /** Entries the story names no longer, which keep a file or a setting: removed only when the author says so. */
-const unusedKept = computed(() => unusedNames(project.value, documents.value).filter(name => name.isKept))
+const unusedKept = computed(() => unusedNames(project.value, everyText.value).filter(name => name.isKept))
 const characterNameOf = (characterId: string) => project.value.characters.find(character => character.id === characterId)?.name ?? '?'
 const describeUnused = (name: UnusedName) => name.kind === 'expression' ? text.value.unusedExpression(characterNameOf(name.characterId), name.name) : text.value.unusedEntry(name.kind, name.name)
 

@@ -1,4 +1,4 @@
-import type { ChapterDocument, NameKind, ProjectDocument } from '@cyberdeck/core'
+import type { ChapterDocument, ChapterView, NameKind, ProjectDocument } from '@cyberdeck/core'
 import { inject, type InjectionKey, type Ref, type ShallowRef } from 'vue'
 import type { GivenFile, OpenProject } from './openProject'
 
@@ -11,6 +11,10 @@ export interface EditorContext {
   scenes: Readonly<ShallowRef<ChapterDocument[]>>
   /** The chapters, then the scenes. */
   documents: Readonly<Ref<ChapterDocument[]>>
+  /** The language the story is shown in: chapters and scenes are its texts in it, hollow where it has none yet. */
+  language: Readonly<Ref<string>>
+  /** Every text of the story, in each of its languages: what names are used by. */
+  everyText: Readonly<ShallowRef<ChapterView[]>>
   /** Runs a change, then shows the project as stored; an error becomes the message shown. Resolves to whether it succeeded. */
   act: (change: () => Promise<unknown>, successMessage?: string | (() => string)) => Promise<boolean>
   preview: (fromChapterId: string | null) => void

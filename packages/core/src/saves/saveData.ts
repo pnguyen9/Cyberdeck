@@ -31,6 +31,8 @@ export interface SaveData {
   seed?: number
   /** The stage when it was saved, a small JPEG as a data URL, for the list of saves; absent when it could not be drawn. */
   picture?: string
+  /** The language the game was played in, for a game of several: resumed in it. Since 2.0. */
+  language?: string
   stage: {
     background: string | null
     music: string | null
@@ -86,6 +88,8 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
     ...(counters.length === 0 ? {} : { counters: Object.fromEntries(counters) }),
     ...(names.length === 0 ? {} : { names: Object.fromEntries(names) }),
     ...(drawsNumbers(story.chapters) ? { seed: state.seed } : {}),
+    // A game of several languages is played in one, which `projectIn` made the story's locale.
+    ...(story.project.languages.length > 1 ? { language: story.project.locale } : {}),
     stage: {
       background: project.backgrounds.find(background => background.id === state.stage.backgroundId)?.name ?? null,
       music: project.music.find(track => track.id === state.stage.musicId)?.name ?? null,
@@ -200,6 +204,7 @@ export function parseSave(value: unknown): SaveData | null {
     && (value.counters === undefined || (isRecord(value.counters) && Object.values(value.counters).every(count => Number.isSafeInteger(count))))
     && (value.names === undefined || (isRecord(value.names) && Object.values(value.names).every(isString)))
     && (value.seed === undefined || (Number.isSafeInteger(value.seed) && (value.seed as number) >= 0))
+    && (value.language === undefined || (typeof value.language === 'string' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8}){0,3}$/.test(value.language)))
     && (value.picture === undefined || (isString(value.picture) && value.picture.length <= MAXIMUM_PICTURE_LENGTH && value.picture.startsWith('data:image/jpeg;base64,')))
     && isRecord(stage)
     && (stage.background === null || isString(stage.background))

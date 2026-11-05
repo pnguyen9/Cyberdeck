@@ -2,6 +2,7 @@
 import {
   homeOf,
   indexNames,
+  shownWhen,
   nameWarnings,
   placeDescriber,
   normalizeName,
@@ -23,7 +24,16 @@ import { storyWords } from '../i18n/storyWords'
  * Every decision, counter and memory of the project with every place it is used, and above them, what looks
  * forgotten across the whole story: a condition that never holds, an ending nobody reaches.
  */
-const { project, chapters, scenes, documents, openStoryboard, indexFocus } = useEditor()
+const { open, project, chapters, scenes, documents, act, openStoryboard, indexFocus } = useEditor()
+
+/** Shown to players in their journal, or not: a `[shown]` line of the definitions, written for the author. */
+const shownChoice = (choice: string) => choice === 'always' || choice === 'afterAnEnding' ? choice : null
+function setShown(id: string, choice: string) {
+  void act(() => open.setShown(id, shownChoice(choice)))
+}
+function setShownEndings(choice: string) {
+  void act(() => open.setShownEndings(shownChoice(choice)))
+}
 const locale = useLocale()
 const text = useMessages(indexMessages)
 
@@ -157,6 +167,15 @@ onMounted(() => {
       <KindFilter :kinds="filterKinds" :shown="kindShown" :all-label="text.allKinds" :label="text.showOnly" @show="showKind" />
     </div>
 
+    <label class="field shown-choice endings-shown">
+      <span>{{ text.endingsInJournal }}</span>
+      <select class="text-input" :value="project.shown.endings ?? 'never'" @change="setShownEndings(($event.target as HTMLSelectElement).value)">
+        <option value="never">{{ text.shownNever }}</option>
+        <option value="always">{{ text.shownAlways }}</option>
+        <option value="afterAnEnding">{{ text.shownAfterAnEnding }}</option>
+      </select>
+    </label>
+
     <FoldedSection v-for="section in sections" :key="section.kind" class="names" :title="section.title" :count="section.names.length" :open="isSectionOpen(section.kind)" @toggle="toggleSection(section.kind, $event)">
       <p v-if="section.names.length === 0" class="muted">{{ filter === '' ? text.noneYet(section.kind) : text.noneOfThatName(section.kind) }}</p>
       <article v-for="{ name, matchedValue } in section.names" :id="`name-${keyOf(name)}`" :key="keyOf(name)" class="name-entry" :class="{ open: openKeys.has(keyOf(name)) }">
@@ -169,6 +188,17 @@ onMounted(() => {
           <p v-if="valuesOf(name).length > 0" class="values">
             <span v-for="value in valuesOf(name)" :key="value" class="value">{{ value }}</span>
           </p>
+          <div v-if="isDeclarable(name.kind)" class="shown">
+            <label class="field shown-choice">
+              <span>{{ text.shownToPlayers }}</span>
+              <select class="text-input" :value="shownWhen(project, name.id) ?? 'never'" :aria-describedby="`shown-help-${keyOf(name)}`" @change="setShown(name.id, ($event.target as HTMLSelectElement).value)">
+                <option value="never">{{ text.shownNever }}</option>
+                <option value="always">{{ text.shownAlways }}</option>
+                <option value="afterAnEnding">{{ text.shownAfterAnEnding }}</option>
+              </select>
+            </label>
+            <p :id="`shown-help-${keyOf(name)}`" class="muted">{{ text.shownHelp }}</p>
+          </div>
           <div v-for="group in usesByGroup(name)" :key="group.group" class="use-group">
             <h3 class="use-heading">{{ text.useWord(group.group, name.kind) }} · {{ group.uses.length }}</h3>
             <ul class="uses">
@@ -308,6 +338,20 @@ onMounted(() => {
 
 .name-body {
   padding: 0 12px 12px;
+}
+
+.shown {
+  margin: 0 0 10px;
+}
+
+.shown p {
+  margin: 4px 0 0;
+}
+
+.shown-choice {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
 }
 
 .values {

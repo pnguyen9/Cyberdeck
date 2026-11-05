@@ -1,6 +1,6 @@
-import { CHAPTER_START, flattenStoredNodes, moveNodes, previewImport, previewNodeEdit, readGameArchive, removeNodes, StoryRuntime, type ChapterDocument } from '@cyberdeck/core'
+import { CHAPTER_START, flattenStoredNodes, moveNodes, previewImport, previewNodeEdit, readGameArchive, readProjectBackup, removeNodes, StoryRuntime, type ChapterDocument } from '@cyberdeck/core'
 import { describe, expect, it } from 'vitest'
-import { createNewProject, createProjectWithoutStory, listProjects, OpenProject, restoreBackup } from '../../src/projects/openProject'
+import { createNewProject, listProjects, OpenProject, restoreBackup } from '../../src/projects/openProject'
 import { memoryProjectStore } from './memoryProjectStore'
 
 const layout = { lineWidth: 40, maxLines: 2, measureText: (text: string) => [...text].length }
@@ -102,6 +102,58 @@ describe('projects', () => {
     expect([assets.size, open.canUndo]).toEqual([0, false])
   })
 
+  it('show, import and edit the story in another language, leaving the first as it is', async () => {
+    const { open } = await projectWith('# One\n[bg: street]\nHello.\n# Two\nGoodbye.')
+    await open.showLanguage('fr')
+    expect([open.project.languages, open.chapters.map(chapter => [chapter.title, chapter.hollow === true])]).toEqual([['en', 'fr'], [['One', true], ['Two', true]]])
+
+    const preview = previewImport('[import: story fr]\n# Un\n[bg: rue]\nBonjour.', open.project, layout, { language: 'fr', documents: open.documents, scenes: open.scenes })
+    await open.importText(preview, { type: 'newChapters' }, 'un.txt')
+    expect(open.chapters.map(chapter => [chapter.title, chapter.hollow === true])).toEqual([['Un', false], ['Two', true]])
+    expect(open.project.backgrounds.map(background => background.name)).toEqual(['street', 'rue'])
+
+    const page = flattenStoredNodes(open.chapters[0]!.nodes).find(node => node.type === 'page')!
+    const target = { type: 'replace' as const, nodeId: page.id }
+    await open.editNodes(open.chapters[0]!.id, previewNodeEdit('Salut.', open.project, open.documents, open.chapters[0]!.id, target, layout), target)
+    expect(pageTexts(open.chapters[0])).toEqual(['Salut.'])
+    // A background only the French text named: gone from the text, kept while an undo could bring it back.
+    expect(open.project.backgrounds.map(background => background.name)).toEqual(['street', 'rue'])
+    await open.undo()
+    expect(pageTexts(open.chapters[0])).toEqual(['Bonjour.'])
+
+    await open.showLanguage('en')
+    expect([open.chapters[0]!.title, pageTexts(open.chapters[0])]).toEqual(['One', ['Hello.']])
+    const backup = await readProjectBackup(await open.backup(new Date('2026-11-05T10:00:00Z')))
+    expect(backup.chapters.find(chapter => chapter.id === open.chapters[0]!.id)?.translations?.fr?.title).toBe('Un')
+  })
+
+  it('keep a chapter hollow in a language when it is only renamed or given a condition, and act in the language shown', async () => {
+    const { open } = await projectWith('# One\n[decision: Brave = Yes | No]\nHello.')
+    await open.showLanguage('fr')
+    const chapterId = open.chapters[0]!.id
+    await open.renameChapter(chapterId, 'Un')
+    await open.setChapterConditions([chapterId], undefined)
+    expect([open.chapters[0]!.title, open.chapters[0]!.hollow]).toEqual(['Un', true])
+
+    const preview = previewImport('# Un\n[decision: Brave = Yes | No]\nBonjour.', open.project, layout, { language: 'fr', documents: open.documents, scenes: open.scenes, replacing: { documentId: chapterId } })
+    await open.importText(preview, { type: 'replaceChapter', chapterId }, null)
+    const definition = flattenStoredNodes(open.chapters[0]!.nodes).find(node => node.type === 'definition')!
+    await open.moveToDefinitions(chapterId, definition.id)
+    expect(flattenStoredNodes(open.chapters[0]!.nodes).map(node => node.type)).toEqual(['page'])
+    await open.showLanguage('en')
+    expect(flattenStoredNodes(open.chapters[0]!.nodes).map(node => node.type)).toEqual(['definition', 'page'])
+  })
+
+  it('take out a language added by mistake, and set right the language of a story of one', async () => {
+    const { open } = await projectWith('# One\nHello.')
+    await open.changeLanguage('fr')
+    expect([open.project.locale, open.project.languages, open.language]).toEqual(['fr', ['fr'], 'fr'])
+    await open.showLanguage('es')
+    await open.renameChapter(open.chapters[0]!.id, 'Uno')
+    await open.removeLanguage('es')
+    expect([open.project.languages, open.language, open.everyText.length]).toEqual([['fr'], 'fr', 1])
+  })
+
   it('put a removed chapter back where it stood with undo', async () => {
     const { open, chapters } = await projectWith('# One\nHello.\n# Two\nGoodbye.\n# Three\nAgain.')
     const two = open.chapters[1]!
@@ -148,17 +200,6 @@ describe('projects', () => {
     expect(reopened.chapters).toEqual(open.chapters)
     expect(await elsewhere.store.readAsset(restored.id, open.project.assets[0]!.id)).toEqual(new Uint8Array([1]))
     expect((await listProjects(elsewhere.store))).toHaveLength(1)
-  })
-
-  it('copy a project without its story, its files with it, for a translation', async () => {
-    const { open, store } = await projectWith('# One\n[bg: street]\nHello.')
-    await open.addFiles([file('street.png', 'image/png', 1)])
-    const copy = await createProjectWithoutStory(store, open.project, 'La Lettre', 'fr')
-    const reopened = await OpenProject.open(store, copy.id)
-    expect([reopened.project.name, reopened.project.locale, reopened.chapters.length]).toEqual(['La Lettre', 'fr', 0])
-    expect(reopened.project.backgrounds.map(background => background.name)).toEqual(['street'])
-    expect(await store.readAsset(copy.id, open.project.assets[0]!.id)).toEqual(new Uint8Array([1]))
-    expect(await listProjects(store)).toHaveLength(2)
   })
 
   it('preview from a chapter', async () => {

@@ -1,19 +1,22 @@
 <script setup lang="ts">
 import type { StoredChoice } from '@cyberdeck/core'
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
+import { useMessages } from '../i18n/locale'
+import { playerMessages } from '../i18n/playerMessages'
 
 const props = defineProps<{
   choice: StoredChoice
   /** For a timed choice: the time left and the whole time, which the bar shows running out. */
   time?: { leftMs: number; limitMs: number } | null
 }>()
-/** The option taken when time runs out is never offered. */
-const options = computed(() => props.choice.options.filter(option => option.timeout !== true))
+const text = useMessages(playerMessages)
 const timeBarStyle = computed(() => props.time == null ? undefined : {
   '--time-left': String(props.time.leftMs / props.time.limitMs),
   animationDuration: `${props.time.leftMs}ms`,
 })
 const emit = defineEmits<{ choose: [optionId: string] }>()
+/** The option taken when the time runs out, while it runs: it carries the bar and a clock, so that waiting says what it picks. */
+const waitedOptionId = computed(() => timeBarStyle.value === undefined ? null : props.choice.options.find(option => option.timeout === true)?.id ?? null)
 
 /**
  * Players press keys and click quickly to get through text. Options start unfocused and ignore
@@ -63,18 +66,20 @@ onUnmounted(() => {
 <template>
   <div class="choice-menu" :class="{ armed: isArmed }" role="menu">
     <button
-      v-for="option in options"
+      v-for="option in choice.options"
       ref="optionButtons"
       :key="option.id"
       class="option"
+      :class="{ waited: option.id === waitedOptionId }"
       role="menuitem"
+      :aria-label="option.id === waitedOptionId ? text.takenWhenTimeRunsOut(option.text) : undefined"
       @click.stop="choose(option.id)"
     >
-      {{ option.text }}
+      <span v-if="option.id === waitedOptionId" class="clock" aria-hidden="true">⏱ </span>{{ option.text }}
+      <span v-if="option.id === waitedOptionId" class="time" aria-hidden="true">
+        <span class="time-left" :style="timeBarStyle" />
+      </span>
     </button>
-    <div v-if="timeBarStyle !== undefined" class="time" aria-hidden="true">
-      <div class="time-left" :style="timeBarStyle" />
-    </div>
   </div>
 </template>
 
@@ -114,15 +119,27 @@ onUnmounted(() => {
   box-shadow: 0 0 30px rgb(0 200 255 / 0.25);
 }
 
-.time {
-  width: 900px;
-  height: 10px;
-  border-radius: 5px;
-  background: rgb(120 220 255 / 0.15);
+/* The option waiting takes: a clock before it, the time running out along its lower edge. */
+.clock {
+  opacity: 0.7;
+}
+
+.option.waited {
+  position: relative;
   overflow: hidden;
 }
 
+.time {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  background: rgb(120 220 255 / 0.15);
+}
+
 .time-left {
+  display: block;
   height: 100%;
   background: #9eeaff;
   transform-origin: left;

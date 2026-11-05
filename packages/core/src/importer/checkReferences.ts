@@ -1,3 +1,4 @@
+import { ENDINGS_REACHED } from '../format/storyFormat'
 import { styleClassName } from '../format/authorCss'
 import { placeholdersIn } from '../format/textValues'
 import { readStyleProperty } from '../format/textStyles'
@@ -120,7 +121,7 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     if (node.type === 'ending') {
       endings.add(normalizeName(node.name))
     }
-    if (node.type === 'remember') {
+    if (node.type === 'remember' && node.forget !== true) {
       memories.add(normalizeName(node.name))
     }
   }
@@ -184,8 +185,21 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
         problems.push({ severity: 'error', code: 'unknownDecision', line: node.sourceLine, subject: node.decision })
       }
     }
+    // A memory forgotten that nothing remembers is most likely misspelled, as one tested would be.
+    if (node.type === 'remember' && node.forget === true && !memories.has(normalizeName(node.name))) {
+      problems.push({ severity: 'error', code: 'unknownMemory', line: node.sourceLine, subject: node.name })
+    }
   }
 
+  // `[shown]` names decisions and counters, or the endings reached.
+  for (const declaration of result.shown) {
+    for (const name of declaration.names) {
+      const key = normalizeName(name)
+      if (key !== ENDINGS_REACHED && !decisionValues.has(key) && !counters.has(key)) {
+        problems.push({ severity: 'error', code: 'unknownShown', line: declaration.sourceLine, subject: name })
+      }
+    }
+  }
   problems.push(...checkPlaceholders(result, allNodes, knownNames.askedNames ?? [], new Set([...decisionValues.keys(), ...counters])))
   return problems.sort((first, second) => first.line - second.line)
 }
