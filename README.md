@@ -159,8 +159,9 @@ npm run release   # → release/v<version>/
 ```
 
 builds every download in one go: both applications for Windows and, on Linux, for Linux, both as
-files for a browser, and `Cyberdeck-<version>-documentation.zip`, with the guide (HTML and Markdown) and its images, this
-README, the changes and the licence; then `SHA256SUMS`, the checksum of each. It needs the `zip`
+files for a browser, `Cyberdeck-<version>-documentation.zip`, with the guide (HTML and Markdown) and
+its images, this README, the changes and the licence, and `Cyberdeck-<version>-sample-sakura-week.zip`,
+the sample story and its files; then `SHA256SUMS`, the checksum of each. It needs the `zip`
 command, which keeps the executable bit the Linux builds need.
 
 ## Languages

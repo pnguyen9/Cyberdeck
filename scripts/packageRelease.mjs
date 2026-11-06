@@ -66,6 +66,12 @@ for (const fileName of ['CHANGELOG.md', 'LICENSE']) {
 const readme = readFileSync(join(root, 'README.md'), 'utf8')
 writeFileSync(join(documentationFolder, 'README.md'), readme.replace(/^## Planned for [^\n]*\n[\s\S]*?(?=^## )/m, ''))
 zipFolder(workFolder, documentationName, `${documentationName}.zip`)
+
+// The sample story, to try the editor with: its text to import, and the zip of its files to drop in Cast & files.
+const sampleName = `Cyberdeck-${version}-sample-sakura-week`
+cpSync(join(root, 'docs', 'sample', 'sakura-week', 'sakura-week.txt'), join(workFolder, sampleName, 'sakura-week.txt'))
+cpSync(join(root, 'docs', 'sample', 'sakura-week', 'sakura-week-assets.zip'), join(workFolder, sampleName, 'sakura-week-assets.zip'))
+zipFolder(workFolder, sampleName, `${sampleName}.zip`)
 rmSync(workFolder, { recursive: true, force: true })
 
 const sums = readdirSync(releaseFolder).filter(fileName => fileName.endsWith('.zip')).sort()

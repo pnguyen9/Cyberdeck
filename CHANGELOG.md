@@ -22,6 +22,9 @@ As before, nothing to install: unpack a download and start the application insid
 - `Cyberdeck-2.0.1-documentation.zip`: the illustrated guide for authors (open
   `docs/guide/index.html` in a browser, or read `docs/guide/guide.md`), the README, these changes
   and the licence.
+- `Cyberdeck-2.0.1-sample-sakura-week.zip`: a sample story to try Cyberdeck with. Import
+  `sakura-week.txt`, then drop `sakura-week-assets.zip` in Cast & files (and its `cover.png` in
+  Details).
 - `SHA256SUMS`: the checksum of each download.
 
 ## 2.0.0 — 2026-11-05
