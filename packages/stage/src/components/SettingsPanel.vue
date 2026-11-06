@@ -391,11 +391,17 @@ input[type='range'] {
   gap: 4px;
   padding: 2px 4px 2px 12px;
   border: 1px solid rgb(120 220 255 / 0.3);
-  border-radius: 999px;
+  /*
+   * A radius just under half the chip's height rather than a huge one the browser must scale down:
+   * Firefox, drawing with the graphics card on a zoomed page, leaves seams where the halves meet.
+   */
+  border-radius: 14px;
   font-size: 20px;
 }
 
 .remove {
+  appearance: none;
+  padding: 0 4px;
   border: 0;
   background: none;
   font: inherit;

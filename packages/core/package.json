@@ -1,6 +1,6 @@
 {
   "name": "@cyberdeck/core",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "license": "Unlicense",
   "private": true,
   "description": "Story format, text import and pagination shared by Cyberdeck and Datajack",

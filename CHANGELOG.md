@@ -1,5 +1,35 @@
 # Changelog
 
+## 2.0.3 — 2026-11-06
+
+### Datajack, the player
+- *Save to a file*, in the Save panel, downloads the save again: clicking it closed the panel, which
+  threw the file away before the browser could download it, so that nothing happened.
+- The field for the player's name, and its OK button, glow when focused, rather than showing the
+  browser's square ring, whose corners stuck out of the rounded field.
+- The key chips of Settings, Controls, are drawn so that Firefox, zoomed and drawing with the
+  graphics card, no longer leaves stray lines on them.
+
+### Cyberdeck, the editor
+- In the tree view, a column is never narrower than the block it holds: branches of a block inside a
+  block no longer run into the next column.
+
+### Downloads
+As before, nothing to install: unpack a download and start the application inside.
+- `Cyberdeck-2.0.3-windows-x64.zip` and `Datajack-2.0.3-windows-x64.zip`: for Windows; start
+  `Cyberdeck.exe` or `Datajack.exe` (*More info → Run anyway* the first time: they are not signed).
+- `Cyberdeck-2.0.3-linux-x64.zip` and `Datajack-2.0.3-linux-x64.zip`: for Linux; start `cyberdeck`
+  or `datajack`.
+- `Cyberdeck-2.0.3-web.zip` and `Datajack-2.0.3-web.zip`: for any computer with a browser; open
+  `index.html`, without a server.
+- `Cyberdeck-2.0.3-documentation.zip`: the illustrated guide for authors (open
+  `docs/guide/index.html` in a browser, or read `docs/guide/guide.md`), the README, these changes
+  and the licence.
+- `Cyberdeck-2.0.3-sample-sakura-week.zip`: a sample story to try Cyberdeck with. Import
+  `sakura-week.txt`, then drop `sakura-week-assets.zip` in Cast & files (and its `cover.png` in
+  Details).
+- `SHA256SUMS`: the checksum of each download.
+
 ## 2.0.2 — 2026-11-06
 
 ### Datajack, the player

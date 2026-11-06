@@ -29,6 +29,8 @@ export default async function check(page, { url }) {
   await page.clickButton('Preview ▶', '.button')
   await page.waitFor('.viewport .ask-input')
   await pause(400)
+  page.check('the focused name field glows, without the browser\'s ring', await page.evaluate(`(() => { const style = getComputedStyle(document.querySelector('.viewport .ask-input')); return [style.outlineStyle, style.borderColor] })()`), ['none', 'rgb(158, 234, 255)'])
+  await page.screenshot('name-field')
   page.check('the player is asked for the name, its default shown', await page.evaluate(`[document.querySelector('.viewport .ask-label').textContent, document.querySelector('.viewport .ask-input').placeholder, document.activeElement?.className]`), ['Hero', 'Alex', 'ask-input'])
   for (const key of ['S', 'o', 'l', 'o', ' ']) {
     await page.press(key)

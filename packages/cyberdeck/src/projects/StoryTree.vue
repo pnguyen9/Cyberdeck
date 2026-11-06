@@ -178,9 +178,18 @@ const stateClasses = (entryId: string) => ({
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 200px;
   padding-left: 10px;
   border-left: 3px solid var(--branch-color, #7b8597);
+}
+
+/*
+ * At least 200 pixels wide, given by what the column holds rather than by `min-width`: a column then
+ * shrinks with the board, never below what it holds, so that a block inside it never runs into the next.
+ */
+.branch::before {
+  content: '';
+  width: 200px;
+  margin-bottom: -6px;
 }
 
 .test,

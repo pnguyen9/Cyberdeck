@@ -605,9 +605,16 @@ const slotSummaries = ref<SlotSummary[]>([])
 /** The playthrough as a file, offered while the Save panel is open: nothing moves in the meantime. */
 const saveFile = shallowRef<{ url: string; name: string } | null>(null)
 
+/**
+ * The file's address is freed a while after the panel closes, never at once: clicking its link closes
+ * the panel, and the browser starts the download only after the click, from that address.
+ */
+const SAVE_FILE_KEPT_MILLISECONDS = 60_000
+
 function forgetSaveFile() {
   if (saveFile.value !== null) {
-    URL.revokeObjectURL(saveFile.value.url)
+    const { url } = saveFile.value
+    setTimeout(() => URL.revokeObjectURL(url), SAVE_FILE_KEPT_MILLISECONDS)
     saveFile.value = null
   }
 }
@@ -1264,7 +1271,9 @@ onUnmounted(() => {
 }
 
 .quick-button:hover:not(:disabled),
-.quick-button:focus-visible {
+.quick-button:focus-visible,
+.ask-button:hover,
+.ask-button:focus-visible {
   outline: none;
   border-color: #9eeaff;
   background: #0e2a36;
@@ -1379,6 +1388,14 @@ onUnmounted(() => {
   font: 1em/1.3 Georgia, serif;
   color: #f2f4f8;
   text-align: center;
+}
+
+/* Focused, the field glows as a chosen option does, rather than taking the browser's square ring. */
+.ask-input:focus,
+.ask-input:focus-visible {
+  outline: none;
+  border-color: #9eeaff;
+  box-shadow: 0 0 24px rgb(0 200 255 / 0.25);
 }
 
 .ask-button {

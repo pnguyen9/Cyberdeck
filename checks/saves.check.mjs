@@ -65,6 +65,17 @@ export default async function check(page, { url, serve, output }) {
   page.check('the save is offered as a file, named after the game and the time', /^The Letter \d{4}-\d\d-\d\d \d\dh\d\d\.json$/.test(await page.evaluate(`document.querySelector('.file-link')?.getAttribute('download')`)), true)
   const saveFile = await page.saveDownload('saved.json', '.file-link')
   await page.screenshot('save-to-file')
+  // Clicked, the link closes the panel: the file must still be there for the browser to download it.
+  page.check('clicking the link leaves the file there for the download', await page.evaluate(`(async () => {
+    const link = document.querySelector('.file-link')
+    const href = link.href
+    link.click()
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const response = await fetch(href).catch(() => null)
+    return [document.querySelector('.file-link') === null, response?.ok === true]
+  })()`), [true, true])
+  await page.clickButton('Save', '.quick-button')
+  await pause(300)
   await page.press('Escape')
   await advanceUntil(page, step => step === 'CHOICE')
   await page.press('Escape')
