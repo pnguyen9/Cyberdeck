@@ -141,3 +141,11 @@ describe('timed choices', () => {
     expect(playerFormatVersion(named.project, named.chapters)).toBe('1.4')
   })
 })
+
+describe('long choices', () => {
+  it('are pointed out past eight options, still imported', () => {
+    const options = Array.from({ length: 9 }, (_, index) => `> Option ${index + 1}`)
+    const imported = importText(['[choice: Where]', ...options, 'After.'].join('\n'), { layout: { lineWidth: 40, maxLines: 2, measureText: (text: string) => [...text].length }, locale: 'en' })
+    expect(imported.problems.map(problem => `${problem.severity} ${problem.code} ${problem.subject}`)).toEqual(['warning manyOptions 9'])
+  })
+})

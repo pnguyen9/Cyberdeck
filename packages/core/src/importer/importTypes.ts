@@ -276,6 +276,7 @@ export type ImportProblemCode =
   | 'askedNameTaken'
   | 'nameIsAsked'
   | 'unknownShown'
+  | 'manyOptions'
   | 'timedChoiceWithoutTimeout'
   | 'timeoutWithoutTime'
   | 'severalTimeouts'

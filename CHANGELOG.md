@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.0.2 — 2026-11-06
+
+### Datajack, the player
+- Choices with many options fit the screen: from five on, options are drawn closer; a list still too
+  long scrolls in its place above the text box, its edges fading where more options lie, reached by
+  the keyboard and the wheel. Six options used to run off the top of the screen and under the menu
+  buttons.
+
+### Cyberdeck, the editor
+- The import points out a choice of more than eight options, which players see in a list that scrolls.
+
+### Downloads
+As before, nothing to install: unpack a download and start the application inside.
+- `Cyberdeck-2.0.2-windows-x64.zip` and `Datajack-2.0.2-windows-x64.zip`: for Windows; start
+  `Cyberdeck.exe` or `Datajack.exe` (*More info → Run anyway* the first time: they are not signed).
+- `Cyberdeck-2.0.2-linux-x64.zip` and `Datajack-2.0.2-linux-x64.zip`: for Linux; start `cyberdeck`
+  or `datajack`.
+- `Cyberdeck-2.0.2-web.zip` and `Datajack-2.0.2-web.zip`: for any computer with a browser; open
+  `index.html`, without a server.
+- `Cyberdeck-2.0.2-documentation.zip`: the illustrated guide for authors (open
+  `docs/guide/index.html` in a browser, or read `docs/guide/guide.md`), the README, these changes
+  and the licence.
+- `Cyberdeck-2.0.2-sample-sakura-week.zip`: a sample story to try Cyberdeck with. Import
+  `sakura-week.txt`, then drop `sakura-week-assets.zip` in Cast & files (and its `cover.png` in
+  Details).
+- `SHA256SUMS`: the checksum of each download.
+
 ## 2.0.1 — 2026-11-06
 
 ### Cyberdeck, the editor

@@ -73,6 +73,9 @@ function asInTags(text: string): string {
 
 /** `[if: …]` on an option's line, before or after its text. */
 const OPTION_CONDITION = /\[\s*if\s*:([^\]]*)\]/i
+/** More options than this fit on the screen only in a list that scrolls. */
+const MANY_OPTIONS = 8
+
 /** `[timeout]` on an option's line: the option taken when the time of the choice runs out. */
 const OPTION_TIMEOUT = /\[\s*timeout\s*\]/i
 
@@ -638,6 +641,10 @@ class TextImporter {
       this.addProblem('error', 'timeoutWithoutTime', timeouts[0]!.sourceLine, choice.decision)
     } else if (timeouts.length > 1) {
       this.addProblem('error', 'severalTimeouts', timeouts[1]!.sourceLine, choice.decision)
+    }
+    // Players read a long list in a list that scrolls: past this many, they are told it is long.
+    if (choice.options.length > MANY_OPTIONS) {
+      this.addProblem('warning', 'manyOptions', choice.sourceLine, String(choice.options.length))
     }
     // The player skips a choice none of whose options holds: one always offered rules that out.
     if (choice.options.every(option => option.condition !== undefined)) {

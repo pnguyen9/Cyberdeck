@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { StoredChoice } from '@cyberdeck/core'
-import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
 import { useMessages } from '../i18n/locale'
 import { playerMessages } from '../i18n/playerMessages'
 
@@ -23,6 +23,31 @@ const waitedOptionId = computed(() => timeBarStyle.value === undefined ? null : 
  * clicks for a moment, so that a press meant for the previous page never picks an option.
  */
 const ARMING_DELAY_MILLISECONDS = 400
+
+/** From five options on, they are drawn smaller and closer, so that more fit above the text box. */
+const COMPACT_FROM = 5
+const isCompact = computed(() => props.choice.options.length >= COMPACT_FROM)
+
+/**
+ * A list still longer than its place scrolls, its edges fading where more options lie beyond; the
+ * wheel scrolls it rather than going back or on, until it reaches an end.
+ */
+const menu = useTemplateRef<HTMLElement>('menu')
+const moreAbove = ref(false)
+const moreBelow = ref(false)
+function measureScroll() {
+  const element = menu.value
+  if (element === null) {
+    return
+  }
+  moreAbove.value = element.scrollTop > 1
+  moreBelow.value = element.scrollTop + element.clientHeight < element.scrollHeight - 1
+}
+function onWheel(event: WheelEvent) {
+  if ((event.deltaY < 0 && moreAbove.value) || (event.deltaY > 0 && moreBelow.value)) {
+    event.stopPropagation()
+  }
+}
 
 const optionButtons = useTemplateRef<HTMLButtonElement[]>('optionButtons')
 const isArmed = ref(false)
@@ -47,10 +72,19 @@ function onKeydown(event: KeyboardEvent) {
   event.preventDefault()
   const focusedIndex = buttons.findIndex(button => button === document.activeElement)
   const nextIndex = focusedIndex === -1 ? (step > 0 ? 0 : buttons.length - 1) : focusedIndex + step
-  buttons[(nextIndex + buttons.length) % buttons.length]?.focus()
+  const next = buttons[(nextIndex + buttons.length) % buttons.length]
+  next?.focus()
+  next?.scrollIntoView({ block: 'nearest' })
 }
 
+/** A larger text, or a smaller window, may make the list overflow: it is measured again then. */
+const resizeObserver = new ResizeObserver(measureScroll)
+
 onMounted(() => {
+  void nextTick(measureScroll)
+  if (menu.value !== null) {
+    resizeObserver.observe(menu.value)
+  }
   armingTimer = setTimeout(() => {
     isArmed.value = true
   }, ARMING_DELAY_MILLISECONDS)
@@ -58,13 +92,21 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  resizeObserver.disconnect()
   clearTimeout(armingTimer)
   window.removeEventListener('keydown', onKeydown)
 })
 </script>
 
 <template>
-  <div class="choice-menu" :class="{ armed: isArmed }" role="menu">
+  <div
+    ref="menu"
+    class="choice-menu"
+    :class="{ armed: isArmed, compact: isCompact, 'more-above': moreAbove, 'more-below': moreBelow }"
+    role="menu"
+    @scroll="measureScroll"
+    @wheel="onWheel"
+  >
     <button
       v-for="option in choice.options"
       ref="optionButtons"
@@ -86,15 +128,21 @@ onUnmounted(() => {
 <style scoped>
 .choice-menu {
   position: absolute;
-  inset: 0 0 360px;
+  inset: 24px 0 360px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* Centred while the options fit; from the top once they overflow, so that none is out of reach. */
+  justify-content: safe center;
   gap: 28px;
+  overflow-y: auto;
+  padding: 12px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(120 220 255 / 0.4) transparent;
 }
 
 .option {
+  flex: none;
   min-width: 900px;
   padding: 26px 48px;
   border-radius: 14px;
@@ -109,6 +157,28 @@ onUnmounted(() => {
 
 .armed .option {
   opacity: 1;
+}
+
+.compact {
+  gap: 14px;
+}
+
+.compact .option {
+  padding: 14px 40px;
+  font-size: calc(32px * var(--text-scale, 1));
+}
+
+/* Where more options lie beyond the edge, the list fades out there. */
+.more-below {
+  mask-image: linear-gradient(black calc(100% - 80px), transparent);
+}
+
+.more-above {
+  mask-image: linear-gradient(transparent, black 80px);
+}
+
+.more-above.more-below {
+  mask-image: linear-gradient(transparent, black 80px, black calc(100% - 80px), transparent);
 }
 
 .armed .option:hover,
