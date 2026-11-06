@@ -27,6 +27,20 @@ async function chooseCover(fileList: FileList | null) {
     await act(() => open.setCover(file), text.value.coverChanged)
   }
 }
+
+/**
+ * The cover's size when it is far from 16:9, the shape the library shows it in, cutting what overflows:
+ * the author is told so before players see only part of it. Null for a cover close enough, or none.
+ */
+const coverShape = ref<{ width: number; height: number } | null>(null)
+watch(coverUrl, () => {
+  coverShape.value = null
+})
+function measureCover(event: Event) {
+  const { naturalWidth: width, naturalHeight: height } = event.target as HTMLImageElement
+  const isCut = width > 0 && height > 0 && Math.abs(width / height - 16 / 9) / (16 / 9) > 0.05
+  coverShape.value = isCut ? { width, height } : null
+}
 </script>
 
 <template>
@@ -45,16 +59,17 @@ async function chooseCover(fileList: FileList | null) {
       <span>{{ text.cover }}</span>
       <div class="cover-row">
         <div class="cover" :class="{ empty: coverUrl === null }">
-          <img v-if="coverUrl !== null" :src="coverUrl" :alt="text.coverAlt">
+          <img v-if="coverUrl !== null" :src="coverUrl" :alt="text.coverAlt" @load="measureCover">
           <span v-else class="muted">{{ text.noCover }}</span>
         </div>
         <div class="cover-actions">
           <label class="button file-button">
             {{ text.chooseCover }}
-            <input type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif,image/svg+xml" @change="chooseCover(($event.target as HTMLInputElement).files)">
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif,image/svg+xml,.png,.jpg,.jpeg,.webp,.avif,.gif,.svg" @change="chooseCover(($event.target as HTMLInputElement).files)">
           </label>
           <button v-if="coverUrl !== null" class="link-button" @click="act(() => open.setCover(null), text.coverRemoved)">{{ text.removeCover }}</button>
           <span class="muted">{{ text.coverRatio }}</span>
+          <span v-if="coverShape !== null" class="warning" role="note">{{ text.coverCut(coverShape.width, coverShape.height) }}</span>
         </div>
       </div>
     </div>

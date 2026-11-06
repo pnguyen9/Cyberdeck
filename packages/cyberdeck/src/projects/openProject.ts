@@ -19,6 +19,8 @@ import {
   createProjectBackup,
   defaultEnvironment,
   isSupportedAssetMediaType,
+  mediaTypeOfFile,
+  readZip,
   matchAssetFile,
   moveChapter,
   withChapterCondition,
@@ -77,8 +79,38 @@ export type PreviewNote = 'reachedWithEarlierPlaythroughs' | 'unreached'
 
 export interface FileMatch {
   fileName: string
-  /** What the file went to, `Marie, smile`; null when no entry has its name. */
+  /** What the file went to, `Marie, smile`; null when it went nowhere. */
   entry: string | null
+  /** Why it went nowhere: no entry has its name, or Datajack plays no file of its kind. */
+  unused?: 'noEntry' | 'unknownKind'
+}
+
+/**
+ * The files given, a zip among them standing for the files it holds, as if they had been unzipped and
+ * dropped: its folders are passed over, and what systems add beside the files (`__MACOSX`, `._x`, `.DS_Store`).
+ */
+async function withZipsOpened(files: readonly GivenFile[]): Promise<GivenFile[]> {
+  const opened: GivenFile[] = []
+  for (const file of files) {
+    if (!/\.zip$/i.test(file.name)) {
+      opened.push(file)
+      continue
+    }
+    let entries
+    try {
+      entries = readZip(file.bytes)
+    } catch {
+      throw new AuthorError(text => text.zipUnreadable(file.name))
+    }
+    for (const entry of entries) {
+      const name = entry.path.split('/').pop() ?? ''
+      if (name === '' || name.startsWith('.') || entry.path.split('/').includes('__MACOSX') || /\.zip$/i.test(name)) {
+        continue
+      }
+      opened.push({ name, mediaType: '', bytes: await entry.read() })
+    }
+  }
+  return opened
 }
 
 /** Projects as listed: those whose document cannot be read are left out. */
@@ -266,14 +298,14 @@ export class OpenProject {
   async addFiles(files: readonly GivenFile[], measureFont: (bytes: Uint8Array<ArrayBuffer>) => Promise<number> = async () => 1, locale: Locale = 'en'): Promise<FileMatch[]> {
     let project = this.currentProject
     const matches: FileMatch[] = []
-    for (const file of files) {
+    for (const file of await withZipsOpened(files)) {
       const fontMediaType = fontMediaTypeOf(file.name)
       if (fontMediaType !== null) {
         let widthScale: number
         try {
           widthScale = await measureFont(file.bytes)
         } catch {
-          matches.push({ fileName: file.name, entry: null })
+          matches.push({ fileName: file.name, entry: null, unused: 'unknownKind' })
           continue
         }
         const assetId = this.environment.createId()
@@ -283,11 +315,15 @@ export class OpenProject {
         matches.push({ fileName: file.name, entry: describeTarget(project, { type: 'font', fontId: added.fontId }, locale) })
         continue
       }
-      // Systems name caption files many ways, or not at all: their extension says what they are.
-      const mediaType = captionsMediaTypeOf(file.name) ?? file.mediaType
-      const target = isSupportedAssetMediaType(mediaType) ? matchAssetFile(file.name, mediaType, project) : null
+      // Systems name files many ways, or not at all: their extension says what they are.
+      const mediaType = captionsMediaTypeOf(file.name) ?? mediaTypeOfFile(file.name, file.mediaType)
+      if (!isSupportedAssetMediaType(mediaType)) {
+        matches.push({ fileName: file.name, entry: null, unused: 'unknownKind' })
+        continue
+      }
+      const target = matchAssetFile(file.name, mediaType, project)
       if (target === null) {
-        matches.push({ fileName: file.name, entry: null })
+        matches.push({ fileName: file.name, entry: null, unused: 'noEntry' })
         continue
       }
       const assetId = this.environment.createId()
@@ -303,12 +339,13 @@ export class OpenProject {
   async setCover(file: GivenFile | null) {
     let project = this.currentProject
     if (file !== null) {
-      if (!file.mediaType.startsWith('image/') || !isSupportedAssetMediaType(file.mediaType)) {
+      const mediaType = mediaTypeOfFile(file.name, file.mediaType)
+      if (!mediaType.startsWith('image/') || !isSupportedAssetMediaType(mediaType)) {
         throw new AuthorError(text => text.coverNotAnImage(file.name))
       }
       const assetId = this.environment.createId()
-      await this.store.writeAsset(project.id, assetId, file.bytes, file.mediaType)
-      project = { ...project, assets: [...project.assets, { id: assetId, fileName: file.name, mediaType: file.mediaType, byteSize: file.bytes.length }] }
+      await this.store.writeAsset(project.id, assetId, file.bytes, mediaType)
+      project = { ...project, assets: [...project.assets, { id: assetId, fileName: file.name, mediaType, byteSize: file.bytes.length }] }
       project = updateDetails(project, { coverAssetId: assetId }, this.now())
     } else {
       project = updateDetails(project, { coverAssetId: null }, this.now())

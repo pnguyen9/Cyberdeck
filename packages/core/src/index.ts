@@ -27,6 +27,7 @@ export {
   isSupportedAssetMediaType,
   MANIFEST_PATH,
   MEDIA_TYPES_BY_EXTENSION,
+  mediaTypeOfFile,
   readGameArchive,
   safeFileName,
   type ArchivedAssetFile,

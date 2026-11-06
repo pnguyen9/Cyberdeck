@@ -120,7 +120,7 @@ In **Cast & files**, drop your images and sounds, or click to choose them. Each 
 | `opening.webm` | The video “opening” (`.webm` or `.mp4`) |
 | `opening.vtt` | Its captions, for players who want them |
 
-Capitals, spaces, hyphens and underscores don't matter. Dropping a new file replaces the old one.
+Capitals, spaces, hyphens and underscores don't matter. Dropping a new file replaces the old one. A `.zip` holding all your files can be dropped as it is: it goes in as if you had unzipped it.
 
 ![The Cast & files tab after dropping eight files, each listed with where it went, two files unused, then Marie's expressions with their pictures.](images/cast.png)
 

@@ -11,6 +11,10 @@ Open [docs/guide/index.html](docs/guide/index.html) in a browser, or read
 [docs/guide/guide.md](docs/guide/guide.md), the same guide as Markdown, where HTML is not shown as a
 page (on GitHub, in an editor). This README is the complete reference.
 
+A sample story to try it with, *Sakura Week*, is in [docs/sample/sakura-week](docs/sample/sakura-week):
+import `sakura-week.txt`, then drop `sakura-week-assets.zip` in Cast & files (and `cover.png`, inside
+it, in Details).
+
 ## Why this exists
 
 I wanted a simple tool for making visual novels that needs no programming knowledge at all: one
@@ -496,7 +500,10 @@ A **project** holds the whole game. Its screens:
   the project replacing it.
 - **Cast & files**: drop images, music, sounds and videos (illustrations, voices and frames
   included); each file goes to the entry it is named after, replacing the file it had (the old one
-  is deleted). Each kind is a section folded until opened, saying how many entries lack a file,
+  is deleted). A file's kind is known by its extension, whatever type the system gives it (`.ogg`
+  arrives as `audio/ogg`, `application/ogg` or nothing at all); a file Datajack does not play is
+  said so, apart from one no entry is named after. A `.zip` of files goes in as if unzipped and its
+  files dropped, its folders passed over and what systems add beside them left out. Each kind is a section folded until opened, saying how many entries lack a file,
   with a filter by kind; names the story no longer uses but that keep a file come last, to remove.
   Each character may be given a colour for its name. Characters say which way their sprites were
   drawn looking. A font file (`.woff2`, `.woff`, `.ttf`, `.otf`) becomes a font of its name, which
@@ -504,7 +511,8 @@ A **project** holds the whole game. Its screens:
   much wider or narrower than the text box's font it draws text, and pages in it are cut by that.
   Every game archive carries all the project's fonts; the player loads them from the archive, as
   bytes, never from elsewhere.
-- **Details**: description, credits and cover, shown in players' libraries.
+- **Details**: description, credits and cover, shown in players' libraries. The cover is shown at
+  16:9, cut to fill it; Details says when an image is far from that shape.
 - **Export**: the release label, the chapters to include and, in a story of several languages, the
   languages players get (the first always; another only once it has a text for every chapter
   included and every scene, the tab naming those it lacks); and the whole story **as text**, in the

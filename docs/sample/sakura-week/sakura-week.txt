@@ -1,0 +1,937 @@
+[import: story en]
+
+[style: Thought = italic, grey]
+[style: Chapter title = gold, large, fade-in]
+[style: Ending = gold, large, fade-in]
+
+[decision: Raining = No | Yes]
+[decision: Breakfast = Toast | Rice | Skip]
+[decision: Job = Decor | Cash | Helper]
+[decision: Swap = Trade | Keep | Split]
+[decision: Quiz = Careful | Guess | Cat]
+[decision: Wish = Week | Folding | Secret]
+[decision: Border = Pink | Blue | Gold]
+[decision: Dango = Sweet | Light | Perfect]
+[decision: Where = Library | Clubroom | Shop | Riverbank | Home]
+[decision multi: Visited = Library | Clubroom | Shop | Riverbank]
+[decision: Stall = Takoyaki | Goldfish | Dither]
+[decision: Evening = Mika | Sota | Hayashi | Mochi | Everyone | Alone]
+
+[counter: Day = 0]
+[counter: Slots = 0]
+[counter: Weather = 0]
+[counter: Pick = 0]
+[counter: MikaBond = 0]
+[counter: SotaBond = 0]
+[counter: HayashiBond = 0]
+[counter: MochiBond = 0]
+
+[shown: MikaBond, SotaBond, HayashiBond, MochiBond]
+[shown after an ending: endings reached]
+
+# Chapter 1 — Monday
+
+[bg: bedroom]
+[music: calm]
+[text: full]
+The first week of April.
+In this town, that means cherry blossoms, new notebooks, and one date circled on every calendar: Saturday, the Sakura Festival.
+[clear]
+[text: box]
+Morning light crawls across your ceiling, right on schedule.
+Downstairs, a pan clatters. Someone is calling for you.
+[ask: Hero = Haru]
+— Mom: {Hero}! Breakfast! It's a school day, not a museum of blankets!
+You untangle yourself and shuffle toward the smell of toast.
+[transition: fade]
+[bg: kitchen]
+Mom is already at the stove, humming along to the radio.
+[choice: Breakfast]
+> Toast with strawberry jam = Toast
+> Rice and miso soup = Rice
+> No time, I'll run = Skip
+[if: Breakfast is Toast]
+The jam is a little too generous. You regret nothing.
+[else if: Breakfast is Rice]
+Warm miso soup and steaming rice. The kind of breakfast that makes the whole day feel possible.
+[else]
+— Mom: Oh no you don't. Take this.
+She presses a foil-wrapped rice ball into your hands. It is still warm.
+[end]
+— Mom: Don't forget, the festival is on Saturday. Hayashi from the sweet shop was asking if any students could lend a hand.
+— {Hero}: I'll think about it.
+— Mom: Think about it on the way. Go, go!
+[play: Forecast]
+[transition: fade]
+[bg: street]
+Outside, the whole street has turned pink.
+Petals drift down like slow snow, and the air smells faintly sweet.
+[illustration: Blossoms]
+You stop for a second, just to look. Nobody ever stops on a Monday morning, which is exactly why it feels like a secret.
+[illustration: none]
+— ???: There you are! I've been standing here for, like, four whole minutes!
+[enter: mika center smile]
+— Mika: Morning! Don't look at me like that. Four minutes is a long time when you're excited.
+— {Hero}: Excited about what?
+[mika: surprised]
+— Mika: The festival! It's Saturday! The Art Club has the biggest banner in the history of the school, and I'm the one who has to paint it!
+[mika: smile]
+— Mika: Okay, okay, I'm the one who has to finish painting it. It's mostly white right now.
+— {Hero}: How mostly?
+— Mika: ...Completely.
+Mika laughs, and you laugh too, and somehow the walk to school takes no time at all.
+[exit: mika]
+[transition: fade]
+[bg: classroom]
+[sound: bell]
+Homeroom. The windows are open, and a single petal has landed on someone's desk.
+— Sensei: Quiet, everyone. Class 2-B will run a goldfish-scooping stall on Saturday, so I need volunteers for three jobs.
+— Sensei: Decorations, the cashier's table, and general helpers.
+[choice: Job]
+> Decorations = Decor
+> The cashier's table = Cash
+> Wherever I'm needed = Helper
+[if: Job is Decor]
+Paper and glue. You can already picture the ceiling covered in colour.
+[else if: Job is Cash]
+Numbers and coins. Someone has to keep the goldfish economy running.
+[else]
+Sensei writes your name under helpers with a satisfied nod. Flexible people make the world go round.
+[end]
+[sound: bell]
+Before you know it, the final bell rings.
+School is out. Two free hours before dinner, and a whole town to spend them in.
+[play: Afternoon]
+[transition: fade]
+[bg: bedroom]
+[tint: night]
+[music: dusk]
+By the time you get home, the sky has turned the colour of persimmons.
+Dinner, a bath, and then your bed, which welcomes you back like an old friend.
+Your phone buzzes.
+— Mika: Banner update: still white. Send help. Or snacks. Or both.
+— {Hero}: Tomorrow. I promise.
+Outside the window, one last petal drifts past the glass.
+[fade out: 1.5s]
+
+# Chapter 2 — Tuesday
+
+[fade out: 1s]
+[tint: none]
+[music: calm]
+[bg: bedroom]
+Tuesday.
+[fade in: 1.5s]
+[play: Forecast]
+[transition: fade]
+[if: Raining is Yes]
+[bg: streetrain]
+You stand in the doorway, watching the rain, until a bright yellow umbrella blooms at the end of the street.
+[enter: mika center smile]
+— Mika: Under here! Quick! I have exactly one umbrella and exactly one friend!
+You squeeze in together. Rain drums on the umbrella, and for a while neither of you says anything. It is nice.
+[add: MikaBond]
+[else]
+[bg: street]
+Clear skies again. Petals pile up in the gutters in soft pink drifts.
+[enter: mika center smile]
+— Mika: You're on time! I'm so proud I might cry.
+— {Hero}: Please don't cry before first period.
+[end]
+[mika: shy]
+— Mika: So, about the banner. I did some of it. The part with the letters. Please don't look at the letters.
+— {Hero}: Why not?
+— Mika: Because I wrote Sakura Festvial.
+[mika: surprised]
+— Mika: Festvial! Who writes festvial?
+— {Hero}: Someone very passionate.
+— Mika: Thank you. That's the kindest thing anyone has said all week.
+[exit: mika]
+[transition: fade]
+[if: Raining is Yes]
+[bg: classroom]
+Lunchtime. With the rain outside, the whole class eats at their desks while the windows fog up gently.
+[else]
+[bg: rooftop]
+Lunchtime on the rooftop. The fence rattles in the warm wind, and the whole town is spread out below you, pink and gold.
+[end]
+[enter: mika center normal]
+— Mika: Bento swap! I'll give you my tamagoyaki if you give me anything at all.
+[choice: Swap]
+> Trade lunches = Trade
+> Keep your own = Keep
+> Split everything = Split
+[if: Swap is Trade]
+[mika: smile]
+Her tamagoyaki is slightly sweet, slightly burnt, and entirely made with love. You eat all of it.
+[add: MikaBond]
+[else if: Swap is Keep]
+[mika: surprised]
+— Mika: Wow. Rejected. Betrayed. By my own friend.
+She steals a bite of your lunch anyway, with great dignity.
+[else]
+[mika: smile]
+You split everything down the middle with chopsticks and surgical precision. Mika calls it the fairest lunch in history.
+[add: MikaBond]
+[end]
+[exit: mika]
+[sound: bell]
+The afternoon bell rings, and the day finally belongs to you.
+[play: Afternoon]
+[transition: fade]
+[bg: bedroom]
+[tint: night]
+[music: dusk]
+Homework spreads across your desk like a slow flood.
+[if: SotaBond >= 1]
+A small paper crane sits beside your pencil case. You must have picked it up without noticing.
+[end]
+[if: HayashiBond >= 1]
+Your fingers still smell faintly of sweet red bean.
+[end]
+[if: MochiBond >= 1]
+A few cat hairs cling to your sleeve. You smile at them for no reason at all.
+[end]
+[if: MikaBond >= 1]
+Your phone buzzes with a photo: a banner, now with exactly one correctly spelled word.
+[end]
+You finish the last problem, turn off the lamp, and let the night settle in.
+[fade out: 1.5s]
+
+# Chapter 3 — Wednesday
+
+[fade out: 1s]
+[tint: none]
+[music: calm]
+[bg: bedroom]
+Wednesday. The middle of the week, when everyone secretly wishes it were Saturday already.
+[fade in: 1.5s]
+[play: Forecast]
+[transition: fade]
+[if: Raining is Yes]
+[bg: streetrain]
+Today you walk alone, boots splashing, blossoms plastered to the pavement like a pink mosaic.
+[else]
+[bg: street]
+Today you walk alone, taking your time. Petals curl around your shoes.
+[end]
+[if: HayashiBond >= 1]
+From the sweet shop on the corner, a hand waves through the glass. You wave back.
+[end]
+[if: MochiBond >= 1 and Raining is not Yes]
+On the riverside wall, a loaf-shaped silhouette watches you pass. You are almost certain it nods.
+[end]
+[if: SotaBond >= 1]
+At a library window, a pair of round glasses catches the light. Someone is already folding paper.
+[end]
+[transition: fade]
+[bg: classroom]
+[sound: bell]
+— Sensei: Surprise! A pop quiz on last week's reading. Pens up, please.
+Groans ripple through the room like wind through reeds.
+[choice: Quiz]
+> Answer carefully = Careful
+> Guess boldly = Guess
+> Draw a cat in the margin = Cat
+[if: Quiz is Careful]
+You read every question twice. Slow, steady, and slightly sweaty.
+— Sensei: Good focus, {Hero}. That is all I ask.
+[else if: Quiz is Guess]
+You circle answers with total confidence. Confidence is half the grade, you've heard.
+— Sensei: Bold. Wrong, but bold.
+[else]
+The quiz is a blur, but the margin now holds an excellent little cat.
+[if: MochiBond >= 1]
+— Sensei: Is that a calico? ...Why do I know that? Fine. Five points for the shading.
+[else]
+— Sensei: ...Is that a cat? Interesting. Please also answer the questions.
+[end]
+[end]
+[sound: bell]
+When the last bell rings, the whole class groans in relief.
+The afternoon is yours again.
+[play: Afternoon]
+[transition: fade]
+[bg: kitchen]
+[tint: night]
+[music: dusk]
+Dinner is curry, which is the correct answer to every question.
+— Mom: So, how is the festival preparation going?
+[if: MikaBond >= 1]
+You tell her about Mika's banner and its spelling troubles. Mom laughs until she needs a napkin.
+[end]
+[if: SotaBond >= 1]
+You mention the library and its cranes. Mom's eyes soften. She says she folded a few herself, long ago.
+[end]
+[if: HayashiBond >= 1]
+— Mom: Oh, you've been helping Hayashi? Tell her I say hello. She once gave me an extra candy for being polite.
+[end]
+[if: MochiBond >= 1]
+You do not mention the cat. Some friendships deserve to stay private.
+[end]
+— Mom: Your yukata is ready for Saturday, by the way. I ironed it. Don't grow before then.
+— {Hero}: I'll try my best.
+[fade out: 1.5s]
+
+# Chapter 4 — Thursday
+
+[fade out: 1s]
+[tint: none]
+[music: calm]
+[bg: bedroom]
+Thursday. Two days to go.
+[fade in: 1.5s]
+[play: Forecast]
+[transition: fade]
+[if: Raining is Yes]
+[bg: streetrain]
+The street is a river of puddles. You leap over three of them and fall dramatically into the fourth.
+[else]
+[bg: street]
+The street is quiet and golden, and every window seems to be open to let the spring in.
+[end]
+[enter: mika center surprised]
+— Mika: Oh, thank goodness. You're alive. I need you.
+— {Hero}: What happened?
+— Mika: Nothing yet. But class prep is today, and I have a feeling about the glitter.
+[mika: smile]
+— Mika: Come on! Be brave with me!
+[exit: mika]
+[transition: fade]
+[bg: classroom]
+Desks are pushed against the walls. Class 2-B has become a workshop: plastic tubs for goldfish, rolls of tape, rivers of paper streamers.
+[sound: paper]
+[enter: mika center normal]
+[if: Job is Decor]
+You and Mika string paper lanterns across the ceiling, standing on wobbling chairs and shouting directions at each other.
+— Mika: Left! Your other left! Up! A little more up!
+By the end, the room glows like the inside of a paper moon.
+[else if: Job is Cash]
+You set up the cashier's table, counting play coins into neat towers. Mika appoints herself Chief Fish Inspector.
+— Mika: This fish looks suspicious. This one looks innocent. This one is definitely plotting something.
+[else]
+You carry tubs, tape streamers, and fix a wobbly table leg. Everyone says thanks twice.
+Mika hands you a juice box for your trouble, which feels like a medal.
+[end]
+[mika: smile]
+— Mika: Tomorrow's the last day. Whatever you do after school, promise you'll be at the festival.
+— {Hero}: I promise.
+— Mika: Pinky promise. No take-backs.
+You hook little fingers, which is a very serious business in this school.
+[exit: mika]
+[sound: bell]
+The bell rings. The glitter, regrettably, will never leave you.
+[play: Afternoon]
+[transition: fade]
+[bg: bedroom]
+[tint: night]
+[music: dusk]
+There is glitter on your pillow. There is glitter, you suspect, on your soul.
+[if: MikaBond >= 2]
+Your phone lights up. Mika has sent a single photograph of the finished banner, no caption, only three exclamation marks.
+[end]
+[if: SotaBond >= 2]
+Under your door, a tiny folded note: Six hundred and ninety. Thank you for the help. The duck is still in the running.
+[end]
+[if: HayashiBond >= 2]
+On the desk sits a small paper bag. You have no idea how, but it contains warm dango. Mom just smiles.
+[end]
+[if: MochiBond >= 2]
+You open the window for some air. In the dark, something small and soft is purring on the garden wall.
+[end]
+You lie back and listen to the night. Tomorrow is nearly here.
+[fade out: 1.5s]
+
+# Chapter 5 — Friday
+
+[fade out: 1s]
+[tint: none]
+[music: calm]
+[bg: bedroom]
+Friday. The eve of the Sakura Festival.
+[fade in: 1.5s]
+[play: Forecast]
+[transition: fade]
+[bg: classroom]
+The whole school hums like a beehive. Nobody is listening to anything. Nobody is even pretending to.
+— Sensei: Settle down. Tomorrow, I want to see yukata, smiles, and nobody bringing a live fish home in their pocket.
+— Sensei: Today, you may enjoy the last afternoon of peace. Go. Be young.
+Laughter rolls across the room.
+[sound: bell]
+The final bell of the week rings, bright and clear.
+[play: Afternoon]
+[transition: fade]
+[bg: bedroom]
+[tint: night]
+[music: dusk]
+The last evening before the festival.
+You open the window and lean out. The night smells of petals and distant cooking, and across the roofs a few lanterns have already been lit.
+[style: Thought]Tomorrow is going to be good.[style: none]
+[if: MikaBond >= 2]
+You think of a banner, a pinky promise, and a friend who will be nervous and brilliant at the same time.
+[end]
+[if: SotaBond >= 2]
+You think of cranes, one slightly duck-shaped, waiting patiently on a tree.
+[end]
+[if: HayashiBond >= 2]
+You think of a warm paper bag and a sweet shop with a very long memory.
+[end]
+[if: MochiBond >= 2]
+You think of a small orange and black and white shape, curled up and waiting for you to come back.
+[end]
+[if: MikaBond < 2 and SotaBond < 2 and HayashiBond < 2 and MochiBond < 2]
+You think of the festival, the lanterns, and everything you still have to find out about this town.
+[end]
+You close your eyes. Somewhere, very far away, a firework test goes off, a soft bloom of sound.
+[fade out: 1.5s]
+
+# Chapter 6 — Saturday
+
+[fade out: 1s]
+[tint: none]
+[music: festival]
+[bg: bedroom]
+Saturday.
+[set: Raining = No]
+[fade in: 1.5s]
+Not a single cloud. The weather itself seems to have been told about the festival.
+— Mom: {Hero}! Arms up, don't wriggle!
+Mom ties your obi with the speed of someone who has done this a thousand times.
+— Mom: There. You look like a person who is going to have a wonderful day.
+[transition: fade]
+[bg: festival]
+The school grounds have been transformed. Paper lanterns hang between the trees, striped awnings line the path, and the smell of grilled everything drifts on the breeze.
+[enter: mika center smile]
+[if: MikaBond >= 2]
+— Mika: There you are! Look up. Go on, look up!
+Above the main gate hangs the banner.
+[if: Border is Pink]
+Its edge is a river of pink petals, brushed by two enthusiastic hands, one of them yours.
+[else if: Border is Blue]
+Its edge is a ripple of blue waves, as if the cherry blossoms were floating down a stream.
+[else if: Border is Gold]
+Its edge glitters with tiny gold stars, because apparently spring deserves a little glitter.
+[else]
+Its edge is covered in petals of every possible colour, because nobody could decide.
+[end]
+[mika: shy]
+— Mika: Every single letter is spelled right. I checked eleven times.
+— {Hero}: Congratulations.
+— Mika: I'm going to cry. Don't look. Okay, look a little.
+[else]
+— Mika: There you are! The banner is up! It says all the right words, mostly!
+[mika: shy]
+— Mika: I wish you had seen the painting. It was a lot more dramatic.
+[end]
+[exit: mika]
+Class 2-B's goldfish stall is already surrounded by tiny hands and screaming paper nets.
+[if: Job is Decor]
+Overhead, the lanterns you hung sway gently, and the little ones keep pointing at them. You feel a ridiculous swell of pride.
+[else if: Job is Cash]
+You man the cashier's table for ten glorious minutes. Nobody tries to cheat you, but one child tries to pay in acorns.
+[else]
+You spend ten minutes lifting tubs and refilling water. Nobody notices you, which, you realise, is exactly what doing a job well looks like.
+[end]
+[if: SotaBond >= 2]
+Beside the library tent stands the Wishing Tree: a young cherry, dressed head to toe in paper cranes of every colour.
+[enter: sota center smile]
+— Sota: One thousand and one. One of them is a duck, I believe.
+— {Hero}: I'm very proud of the duck.
+He hands you a slip of paper and a pencil.
+[if: Wish is Week]
+You write a good week and tie it to a branch. It already feels granted.
+[else if: Wish is Folding]
+You write better folding and tie it beside a crane that looks suspiciously expert.
+[else if: Wish is Secret]
+You write your secret and tie it to the farthest branch. Nobody will ever read it, but the tree knows.
+[else]
+You write the first wish that comes to mind and tie it on. The cranes sway as if they approve.
+[end]
+[exit: sota]
+[else]
+At the edge of the grounds, a young cherry tree is hung with paper cranes. A tall third-year in glasses ties on the last of them, quietly, with no audience at all.
+He looks perfectly content.
+[end]
+[if: HayashiBond >= 2]
+Hayashi's dango stall has a queue longer than the stalls on either side.
+[enter: hayashi center smile]
+— Hayashi: Kid! Don't just stand there. Quality control.
+You receive the first skewer of the day, still warm.
+[if: Dango is Sweet]
+It is sweeter than the others. She remembered.
+[else if: Dango is Light]
+It is lighter than the others, just the way you said. She remembered.
+[else]
+It tastes exactly like you said it should. She remembered that too.
+[end]
+[exit: hayashi]
+[else]
+The sweet shop has set up a stall with a handwritten sign. A line of children wait with coins clutched in their hands.
+[end]
+[if: MochiBond >= 2]
+Something orange and black and white weaves between the crowd's ankles.
+[enter: mochi center happy]
+[sound: meow]
+Mochi trots straight up to you, tail raised like a flag, ignoring the sign that clearly says no animals.
+The festival committee holds a very short meeting and decides that Mochi is a very large lucky charm.
+[exit: mochi]
+[end]
+[enter: mika center surprised]
+— Mika: There you are! Emergency! The takoyaki stall and the goldfish stall are both open, and I can only visit one first!
+— Mika: Quick, quick, quick! Which one?
+[choice: Stall 8s]
+> Takoyaki! = Takoyaki
+> Goldfish scooping! = Goldfish
+> Um... = Dither [timeout]
+[if: Stall is Takoyaki]
+[mika: smile]
+— Mika: Yes! Takoyaki! You understand me.
+You share a paper boat of piping-hot takoyaki, blowing on every bite and burning your tongues anyway.
+[else if: Stall is Goldfish]
+[mika: smile]
+— Mika: Goldfish! Bold. I like it.
+You scoop three times. The paper tears three times. The stall owner gives you a tiny goldfish out of pity, and Mika names it Gerald on the spot.
+[else]
+[mika: surprised]
+— Mika: Time's up! Which means... both!
+She grabs your sleeve and drags you through the crowd to do both, one after the other.
+[end]
+[exit: mika]
+[sound: bell]
+Time passes the way it always does at festivals: far too quickly, and all of it delicious.
+[transition: fade]
+[bg: festivalnight]
+[music: dusk]
+[illustration: Lanterns]
+The sun slips behind the hills, and the festival lights up.
+Hundreds of lanterns glow all at once, gold and red and white, and for a moment the whole world is made of warm light.
+[illustration: none]
+A voice crackles over the loudspeaker: the fireworks will begin in ten minutes.
+[style: Thought]Who do I want to see them with?[style: none]
+[if: MochiBond >= 2]
+[remember: Mochi trusts you]
+[end]
+[choice: Evening]
+> Find Mika for the fireworks = Mika [if: MikaBond >= 2]
+> Climb the library stairs with Sota = Sota [if: SotaBond >= 2]
+> Share tea at Hayashi's stall = Hayashi [if: HayashiBond >= 2]
+> Follow the little cat = Mochi [if: MochiBond >= 2]
+> Gather everyone together = Everyone [if: MikaBond >= 2 and SotaBond >= 2 and HayashiBond >= 2 and MochiBond >= 2]
+> Wander on your own = Alone
+[if: Evening is Mika]
+[transition: fade]
+[bg: hilltop]
+[enter: mika center smile]
+Mika has found the best spot on the hill, naturally, because she has been planning this since Monday.
+— Mika: Sit! Sit! You're going to miss it!
+[sound: firework]
+[illustration: Fireworks]
+The first firework blooms over the town, gold and green and then silver, and the whole sky seems to sigh.
+— Mika: I was so scared this week. About the banner, and the festival, and everything.
+— Mika: But you were there. So it was fun scared. Does that make sense?
+— {Hero}: It makes perfect sense.
+— Mika: Same time next year?
+— {Hero}: Same time next year.
+[illustration: none]
+[ending: Fireworks with Mika]
+[else if: Evening is Sota]
+[transition: fade]
+[bg: library]
+[enter: sota center smile]
+The library is empty and glowing, and Sota leads you up a narrow staircase to a window you never knew existed.
+— Sota: The best view in town. I don't tell anyone. The books would gossip.
+Below, the festival glitters. Above, the first firework opens, reflected in the glass of his round glasses.
+[sound: firework]
+— Sota: One thousand and one. Do you know what the extra one is for?
+— {Hero}: The duck?
+— Sota: The extra one is for whoever sat down across the table and tried.
+[sota: shy]
+— Sota: Thank you for sitting down.
+Neither of you says anything more. The fireworks say it for you.
+[ending: A Thousand Cranes]
+[else if: Evening is Hayashi]
+[transition: fade]
+[bg: shop]
+[enter: hayashi center smile]
+The stall is closed for the night. Hayashi has pulled out two stools and a small iron kettle, and the steam smells of roasted tea.
+— Hayashi: Sit. You've worked hard. Don't argue, I have candy.
+[sound: firework]
+[illustration: Porch]
+Behind the shop, on the little wooden porch, you watch the fireworks over the rooftops, a plate of dango between you and the tea going warm in your hands.
+— Hayashi: Fifty years I've made these. First time someone told me they were too sweet.
+— {Hero}: Was that bad?
+— Hayashi: Hmph. Best thing anyone's told me in years. Drink your tea.
+[illustration: none]
+[ending: Tea on the Porch]
+[else if: Evening is Mochi]
+[transition: fade]
+[bg: riverbank]
+[enter: mochi center happy]
+Mochi leads you away from the crowd, tail high, down the path to the riverbank.
+The river is full of floating lights tonight, tiny paper lanterns drifting on the water like stars that have decided to take a day off.
+[sound: meow]
+Mochi settles into your lap with a satisfied sigh.
+[mochi: sleepy]
+Far behind you, the fireworks begin. They sound distant and gentle, like a drum heard through water.
+[style: Thought]This might be the best seat in the whole town.[style: none]
+The cat purrs. The river glitters. The night goes on forever, just a little bit.
+[ending: The Cat Who Came to the Festival]
+[else if: Evening is Everyone]
+[transition: fade]
+[bg: hilltop]
+[enter: mika left smile]
+[enter: sota right smile]
+[enter: hayashi far-right smile]
+You find yourselves on the hill, somehow, all of you, as if the town had been planning it all along.
+— Mika: Okay, who brought snacks?
+— Hayashi: Me. Obviously. Take one and stop asking.
+— Sota: The best view, as promised. Please keep your voice down. The fireworks are shy.
+[enter: mochi center happy]
+[sound: meow]
+Mochi hops onto your shoulder, uninvited and completely welcome.
+[sound: firework]
+[illustration: Fireworks]
+The sky explodes with light, and everyone is quiet, and everyone is smiling.
+— Mika: This is the best week ever.
+— {Hero}: It really was.
+[illustration: none]
+[ending: Everyone Together]
+[else]
+[transition: fade]
+[bg: festivalnight]
+You wander the stalls by yourself, buying a small bag of candied fruit and a paper fan you don't need.
+It is lovely, in a quiet way. Strangers smile at you, children run past with goldfish, and the lanterns follow wherever you go.
+[sound: firework]
+When the fireworks begin, you sit on the school steps and watch them bloom over the rooftops.
+Your phone buzzes, again and again: little messages from people who noticed you were not there, and wanted you to know they thought of you.
+[style: Thought]Next year, I will find all of them.[style: none]
+[ending: A Quiet Festival]
+[end]
+
+# Scene: Forecast
+
+[add: Day]
+[set: Weather = random 1 6]
+[if: Day is 1 or Weather >= 3]
+[set: Raining = No]
+Blue sky and soft light. A good day, on the whole.
+[else]
+[set: Raining = Yes]
+Rain is tapping on the window, soft and steady. Today will be a quiet one.
+[end]
+
+# Scene: Afternoon
+
+[music: breeze]
+[set: Slots = 0]
+[unset: Visited]
+[if: Day is 1]
+You have time for two stops before dinner, so choose wisely. Or at random. Nobody is judging.
+[else if: Day is 5]
+The last free afternoon before the festival. Make it count.
+[end]
+[loop]
+[if: Slots is 0]
+Where to first?
+[else]
+One more stop before the sun gets low?
+[end]
+[choice: Where]
+> The library = Library [if: Visited is not Library]
+> The Art Club room = Clubroom [if: Visited is not Clubroom]
+> Hayashi's sweet shop = Shop [if: Visited is not Shop]
+> The riverbank = Riverbank [if: Raining is not Yes and Visited is not Riverbank]
+> Head straight home = Home
+[if: Where is Library]
+[set: Visited = Library]
+[play: Library]
+[else if: Where is Clubroom]
+[set: Visited = Clubroom]
+[play: Clubroom]
+[else if: Where is Shop]
+[set: Visited = Shop]
+[play: Shop]
+[else if: Where is Riverbank]
+[set: Visited = Riverbank]
+[play: Riverbank]
+[else]
+You decide to call it an afternoon and take the long way home, past the blossoms.
+[break]
+[end]
+[add: Slots]
+[if: Slots >= 2]
+You look at the sky. It is turning gold at the edges, and your stomach has opinions about dinner.
+[break]
+[end]
+[end]
+
+# Scene: Library
+
+[transition: fade]
+[bg: library]
+[sound: door]
+[if: SotaBond is 0]
+The library is so quiet you can hear the dust settling.
+Sunlight slants through tall windows, and at the long table by the window, a tall third-year in round glasses is folding a tiny square of paper with the focus of a surgeon.
+[enter: sota center normal]
+He doesn't look up. Next to his elbow sits a shoebox, and the box is full of paper cranes.
+— Sota: Please keep your voice down. The books are sleeping.
+— {Hero}: Sorry. That's a lot of cranes.
+[sota: smile]
+— Sota: Four hundred and twelve. I'm aiming for a thousand by Saturday, for the Wishing Tree at the festival.
+— {Hero}: Can I try one?
+He slides a square of pale blue paper across the table.
+— Sota: Corner to corner. Gently. The paper can tell when you're nervous.
+[sound: paper]
+You fold. You unfold. You fold again. What emerges looks less like a crane and more like a surprised duck.
+[sota: surprised]
+— Sota: ...It has character.
+— {Hero}: It's a duck.
+[sota: smile]
+— Sota: Every wish needs a ride, even a duck. I'll hang it at the very end.
+[add: SotaBond]
+[else if: SotaBond is 1]
+Sota is already at the window table, folding. He nods at the empty chair without a word.
+[enter: sota center normal]
+— Sota: Back again. Good. Sit. We'll improve the duck.
+Folding is easier with someone patient across the table. He talks you through every crease in a voice as soft as turning pages.
+[sound: paper]
+— {Hero}: Why a thousand cranes?
+[sota: smile]
+— Sota: My grandmother says a crane carries a wish for a thousand years. I figure a thousand cranes can carry the whole town's wishes.
+— Sota: Everyone writes one on a slip of paper, and we tie it to the Wishing Tree. What would you write?
+[choice: Wish]
+> A good week = Week
+> To be better at folding = Folding
+> That's a secret = Secret
+[if: Wish is Week]
+— {Hero}: Just a good week. Simple.
+— Sota: Simple wishes fly the farthest.
+[else if: Wish is Folding]
+— {Hero}: To be better at folding.
+— Sota: That one I can help with. Hold the paper like this.
+[else]
+— {Hero}: That's a secret.
+[sota: surprised]
+— Sota: Ah. Then it's the most important kind.
+[end]
+[add: SotaBond]
+[else if: SotaBond is 2]
+The window table is covered in paper now: stacks of colour, strings of finished cranes, a thousand tiny wings.
+[enter: sota center smile]
+— Sota: Seven hundred and eleven. You're a good influence. Last week I was at four hundred.
+— {Hero}: What can I do?
+— Sota: Hold this string. Don't breathe. Thank you.
+You thread cranes onto a long line of thread, one after another, red and gold and green and white.
+[illustration: Cranes]
+They hang in the window light like a slow, silent waterfall of colour.
+[sota: shy]
+— Sota: I never thought anyone would help. It's been a quiet project. I like this better.
+[illustration: none]
+[add: SotaBond]
+[else]
+[set: Pick = random 1 3]
+[enter: sota center normal]
+[if: Pick is 1]
+A first-year bursts in, drops a stack of books, and apologises very loudly. Sota catches the top book in mid-air without looking.
+[sota: smile]
+— Sota: Shh. Thank you. Welcome to the library.
+You hide your laugh in a very large dictionary.
+[else if: Pick is 2]
+Sota recommends a book with the air of someone handing over a family heirloom.
+— Sota: It's about a man who walks across a mountain with a very old umbrella. It's much better than it sounds.
+You borrow it. He writes your name in the register in careful, tidy letters.
+[else]
+Sota reads you a very short poem he wrote about cranes. It is terrible. It is wonderful.
+[sota: shy]
+— Sota: Please never repeat that to anyone.
+— {Hero}: Never.
+[end]
+[end]
+[exit: sota]
+
+# Scene: Clubroom
+
+[transition: fade]
+[bg: clubroom]
+[sound: door]
+[if: MikaBond is 0]
+The Art Club room smells like turpentine and poster paint. Easels crowd every corner, and in the middle of the floor, a banner ten metres long lies spread out like a sleeping dragon.
+[enter: mika center surprised]
+— Mika: Oh! A visitor! Don't step on the...
+You step in the red paint tray.
+— Mika: ...paint. Never mind. It's fine. It's washable. Mostly.
+[mika: smile]
+She hands you a brush before you can apologise.
+— Mika: Since you've already contributed a footprint, you can contribute a petal.
+You paint pink petals along the edge. Mika paints the letters. You both pretend not to notice that one of them is wrong.
+[add: MikaBond]
+[else if: MikaBond is 1]
+Mika is on her stomach in the middle of the banner, brush in her mouth, thinking.
+[enter: mika center normal]
+— Mika: Mmf! Mm-mm! ...Oh, hi. Help me decide. What colour should the border be?
+She waves a hand over three little paint samples.
+[choice: Border]
+> Pink petals = Pink
+> Blue waves = Blue
+> Gold stars = Gold
+[if: Border is Pink]
+— Mika: Pink! Classic. Cherry blossoms framing cherry blossoms. A bit much, but I love it.
+[else if: Border is Blue]
+— Mika: Blue! Like a stream carrying the petals away. Ooh. That's actually really nice.
+[else]
+— Mika: Gold stars?! Is that allowed? It's allowed now. I'm the artist.
+[end]
+You paint together until the paint is on your sleeves, your knees, and, somehow, Mika's ear.
+[add: MikaBond]
+[else if: MikaBond is 2]
+The banner is nearly finished. It stretches across the whole room, bright and a little crooked and absolutely alive.
+[enter: mika center normal]
+— Mika: It's done. I think it's done. Is it done?
+— {Hero}: It's done.
+[mika: shy]
+— Mika: I'm kind of scared about the unveiling. What if everyone looks at it and just... nobody says anything?
+— {Hero}: I'll say something. I'll be so loud.
+[mika: smile]
+— Mika: Promise? Louder than the loudspeaker?
+— {Hero}: Louder than the loudspeaker.
+[illustration: Banner]
+You roll the banner up together, one on each end, and carry it like a very long and very precious sleeping dragon.
+[illustration: none]
+[add: MikaBond]
+[else]
+[set: Pick = random 1 3]
+[enter: mika center normal]
+[if: Pick is 1]
+Mika flicks a drop of blue paint at you by accident. You flick one back on purpose. A short and extremely dignified paint war follows.
+[mika: smile]
+— Mika: Truce! Truce! We'll both be wearing this home.
+[else if: Pick is 2]
+Mika sketches your portrait in the corner of a notebook. In it, you have whiskers and a very serious expression.
+— Mika: It's you as a cat. It's your best look.
+[else]
+You find Mika asleep on a pile of canvases, brush still in her hand, a little blue paint on her nose.
+You carefully take the brush away and put a jacket over her. When she wakes up, she tells everyone she was just thinking very deeply.
+[end]
+[end]
+[exit: mika]
+
+# Scene: Shop
+
+[transition: fade]
+[bg: shop]
+[sound: chime]
+[if: HayashiBond is 0]
+Hayashi Sweets has stood on the corner for longer than anyone can remember: wooden shelves, glass jars of candy, and a calendar from years ago still hanging by the register.
+[enter: hayashi center normal]
+— Hayashi: Hmph. A student. Browsing or buying?
+— {Hero}: Um. Browsing?
+— Hayashi: Browsing is free. Don't touch the jars. ...You. Hands out.
+Before you can protest, she drops a warm, sticky dango skewer into your palm.
+— Hayashi: Tell me honestly. Sweet enough?
+[choice: Dango]
+> Sweeter, please = Sweet
+> A little less sweet = Light
+> Perfect as it is = Perfect
+[if: Dango is Sweet]
+— Hayashi: Hah! A sweet tooth, like my grandson. Noted.
+[else if: Dango is Light]
+— Hayashi: Hm. A refined palate. Rare. Noted.
+[else]
+[hayashi: smile]
+— Hayashi: Flattery, from a child. I'll allow it. Noted.
+[end]
+[add: HayashiBond]
+[else if: HayashiBond is 1]
+The bell above the door jingles, and Hayashi looks up from a tray of dough.
+[enter: hayashi center normal]
+— Hayashi: You again. Wash your hands. I need someone to skewer.
+You wash. You skewer. You discover that three dango per stick is harder than it looks.
+[hayashi: smile]
+— Hayashi: Not bad. Slow, but not bad. My grandson does six at a time and drops four.
+Flour covers you from elbow to nose. Hayashi pretends not to notice you are enjoying yourself.
+[add: HayashiBond]
+[else if: HayashiBond is 2]
+The shop is warm and quiet, and Hayashi leads you through the back to a little wooden porch overlooking a tiny garden.
+[enter: hayashi center smile]
+— Hayashi: Sit. I made too much tea. I always make too much tea.
+[illustration: Porch]
+She pours two cups. A plate of dango sits between you, and a small lantern glows on the porch rail.
+— Hayashi: Fifty years ago, I ran my first festival stall. The cherry trees were saplings then. Now look at them.
+— {Hero}: They're beautiful.
+— Hayashi: They are. So is the town, if you sit still long enough to notice.
+[illustration: none]
+[add: HayashiBond]
+[else]
+[set: Pick = random 1 3]
+[enter: hayashi center normal]
+[if: Pick is 1]
+Hayashi hands you a paper bag of mixed candy without a word. You open it later and find a note: Eat vegetables too.
+[else if: Pick is 2]
+A kid tries to sneak a candy into his pocket. Hayashi doesn't even turn around.
+— Hayashi: Put it back, or pay for it, or help me wash dishes. Your choice.
+The kid pays for it, with a very small bow.
+[else]
+Hayashi shows you how to pour tea properly: slowly, with two hands, with respect for the leaves.
+[hayashi: smile]
+— Hayashi: There. You'll be dangerous at any tea party now.
+[end]
+[end]
+[exit: hayashi]
+
+# Scene: Riverbank
+
+[transition: fade]
+[bg: riverbank]
+[if: MochiBond is 0]
+The river runs low and slow, glittering between rows of cherry trees.
+On the low stone wall, a round orange and black and white cat is pretending to be a loaf of bread.
+[enter: mochi center normal]
+A little tag on its collar reads MOCHI.
+[if: remembered Mochi trusts you]
+The cat opens one eye. Then, impossibly, it trots over as if it remembers you.
+[sound: meow]
+[else]
+The cat opens one eye, judges you thoroughly, and closes it again.
+[end]
+You sit on the grass a polite distance away. Neither of you says anything. It is the best conversation you've had all day.
+[add: MochiBond]
+[else if: MochiBond is 1]
+Mochi is on the same stone, sunning her belly, and does not move as you approach.
+[enter: mochi center normal]
+[if: HayashiBond >= 1]
+You take out the little paper twist of dried fish Hayashi pressed into your hand on the way out.
+[mochi: happy]
+[sound: meow]
+Mochi's whole body shifts. She stretches, trots to the edge of the wall, and eats from your palm with astonishing delicacy.
+[else]
+You hold out your hand, palm up, and wait. After a very long minute, a cold little nose bumps your fingers.
+[mochi: happy]
+[sound: meow]
+[end]
+The river murmurs. The blossoms fall. You sit with a cat on the first warm day of the year.
+[add: MochiBond]
+[else if: MochiBond is 2]
+Mochi sees you from far away and runs. Actually runs. Cats are not supposed to run.
+[enter: mochi center happy]
+[sound: meow]
+She climbs into your lap, kneads the fabric of your uniform for a while, and finally settles down with a great sigh.
+[illustration: Catnap]
+The sun is warm on your shoulders, the river is glittering, and the weight of a sleeping cat is the heaviest and most wonderful thing in the world.
+[mochi: sleepy]
+You do not move for twenty minutes. Your leg goes numb. It is worth it.
+[illustration: none]
+[add: MochiBond]
+[else]
+[set: Pick = random 1 3]
+[enter: mochi center happy]
+[if: Pick is 1]
+Mochi chases a butterfly along the stone wall, misses it by a wide margin, and pretends she meant to.
+[else if: Pick is 2]
+She presents you with a single cherry petal, placed carefully on your shoe. You decide it is the best gift you have ever received.
+[else]
+Mochi sits next to you while you do nothing at all, ears twitching at every sound, tail curled over your foot.
+[sound: meow]
+[end]
+[end]
+[exit: mochi]

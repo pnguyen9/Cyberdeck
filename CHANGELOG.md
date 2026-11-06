@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.0.1 — 2026-11-06
+
+### Cyberdeck, the editor
+- Files are known by their extension, whatever type the browser or the system gives them: `.ogg`
+  sounds and music dropped in Cast & files were refused in some browsers, said to have no entry of
+  their name. A file of a kind Datajack does not play now says so.
+- A `.zip` of files dropped in Cast & files goes in as if unzipped.
+- Details says when a cover is far from 16:9, the shape the library shows it in, cutting the rest.
+- French wording of 2.0 read again and made clearer, with some English alongside.
+- A sample story, *Sakura Week*, with its files and a 16:9 cover, in `docs/sample`.
+
+### Downloads
+As before, nothing to install: unpack a download and start the application inside.
+- `Cyberdeck-2.0.1-windows-x64.zip` and `Datajack-2.0.1-windows-x64.zip`: for Windows; start
+  `Cyberdeck.exe` or `Datajack.exe` (*More info → Run anyway* the first time: they are not signed).
+- `Cyberdeck-2.0.1-linux-x64.zip` and `Datajack-2.0.1-linux-x64.zip`: for Linux; start `cyberdeck`
+  or `datajack`.
+- `Cyberdeck-2.0.1-web.zip` and `Datajack-2.0.1-web.zip`: for any computer with a browser; open
+  `index.html`, without a server.
+- `Cyberdeck-2.0.1-documentation.zip`: the illustrated guide for authors (open
+  `docs/guide/index.html` in a browser, or read `docs/guide/guide.md`), the README, these changes
+  and the licence.
+- `SHA256SUMS`: the checksum of each download.
+
 ## 2.0.0 — 2026-11-05
 
 A story in several languages, things the profile carries from one playthrough to the next, a journal

@@ -4,6 +4,7 @@ import type { Locale } from '@cyberdeck/stage'
 const en = {
   projectWithoutName: 'A project needs a name',
   coverNotAnImage: (fileName: string) => `${fileName}: a cover must be a PNG, JPEG, WebP, AVIF, GIF or SVG image`,
+  zipUnreadable: (fileName: string) => `${fileName} could not be opened as a zip: unzip it and drop its files instead`,
   cssTooLong: (maximumLength: number) => `The CSS is too long: at most ${maximumLength.toLocaleString('en')} characters.`,
   storageRefused: 'The browser refused to store projects',
   saveFailed: 'The browser could not save the project',
@@ -15,6 +16,7 @@ export type ErrorMessages = typeof en
 const fr: ErrorMessages = {
   projectWithoutName: 'Un projet a besoin d’un nom',
   coverNotAnImage: fileName => `${fileName} : une couverture doit être une image PNG, JPEG, WebP, AVIF, GIF ou SVG`,
+  zipUnreadable: fileName => `${fileName} n’a pas pu être ouvert comme un zip\u00a0: décompressez-le et déposez plutôt ses fichiers`,
   cssTooLong: maximumLength => `Le CSS est trop long : ${maximumLength.toLocaleString('fr')} caractères au plus.`,
   storageRefused: 'Le navigateur refuse de stocker les projets',
   saveFailed: 'Le navigateur n’a pas pu enregistrer le projet',

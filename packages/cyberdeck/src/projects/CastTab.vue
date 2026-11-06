@@ -5,6 +5,7 @@ import { computed, ref, shallowRef, watch } from 'vue'
 import { castMessages } from '../i18n/castMessages'
 import { commonMessages } from '../i18n/commonMessages'
 import { readGivenFiles, useEditor } from './editorContext'
+import type { FileMatch } from './openProject'
 import FoldedSection from './FoldedSection.vue'
 import { useFoldedSections } from './foldedSections'
 import KindFilter from './KindFilter.vue'
@@ -86,10 +87,13 @@ async function addFiles(fileList: FileList | null | undefined) {
   await act(async () => {
     const matches = await open.addFiles(files, measureFontWidth, locale.value)
     const used = matches.filter(match => match.entry !== null)
-    const unused = matches.filter(match => match.entry === null).map(match => match.fileName)
+    const unused = (reason: FileMatch['unused']) => matches.filter(match => match.entry === null && match.unused === reason).map(match => match.fileName)
+    const noEntry = unused('noEntry')
+    const unknownKind = unused('unknownKind')
     report = [
       used.length === 0 ? '' : text.value.filesAdded(used.length, used.map(match => `${match.fileName} → ${match.entry}`).join(', ')),
-      unused.length === 0 ? '' : text.value.filesUnused(unused.join(', ')),
+      noEntry.length === 0 ? '' : text.value.filesUnused(noEntry.join(', ')),
+      unknownKind.length === 0 ? '' : text.value.filesNotPlayed(unknownKind.join(', ')),
     ].filter(sentence => sentence !== '').join(' ')
   }, () => report)
 }
@@ -125,7 +129,7 @@ function setDrawnFacing(characterId: string, value: string) {
       @dragleave="isDraggingOver = false"
       @drop.prevent="onDrop"
     >
-      <input class="file-input" type="file" multiple accept="image/*,audio/*,video/mp4,video/webm,.vtt,.woff2,.woff,.ttf,.otf" @change="addFiles(($event.target as HTMLInputElement).files)">
+      <input class="file-input" type="file" multiple accept="image/*,audio/*,video/mp4,video/webm,.png,.jpg,.jpeg,.webp,.avif,.gif,.svg,.ogg,.mp3,.wav,.flac,.m4a,.weba,.webm,.mp4,.vtt,.woff2,.woff,.ttf,.otf,.zip" @change="addFiles(($event.target as HTMLInputElement).files)">
       <strong>{{ text.dropTitle }}</strong>
       <span class="muted">{{ text.dropHelpStart }} <code>rooftop.jpg</code>, <code>marie-smile.png</code>, <code>calm.ogg</code>, <code>door.ogg</code>, <code>opening.webm</code> {{ text.dropHelpCaptions }} <code>opening.vtt</code>{{ text.dropHelpMiddle }}<code>.woff2</code>, <code>.woff</code>, <code>.ttf</code>, <code>.otf</code>{{ text.dropHelpEnd }}</span>
     </label>

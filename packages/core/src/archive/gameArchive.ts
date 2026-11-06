@@ -129,6 +129,16 @@ const MAXIMUM_RELEASE_LENGTH = 40
 const UNSAFE_FILE_NAME_CHARACTERS = /[<>:"/\\|?*\p{Cc}]/gu
 const RESERVED_WINDOWS_NAMES = /^(con|prn|aux|nul|com\d|lpt\d)$/i
 
+/**
+ * The media type of a file given by the author, by its extension when Datajack knows it: browsers and
+ * systems name some kinds many ways (`.ogg` as `audio/ogg`, `application/ogg`, `audio/x-vorbis+ogg`, or
+ * nothing at all). The type reported stands for extensions the table lacks.
+ */
+export function mediaTypeOfFile(fileName: string, reported: string): string {
+  const extension = fileName.split('.').pop()?.toLowerCase() ?? ''
+  return Object.hasOwn(MEDIA_TYPES_BY_EXTENSION, extension) ? MEDIA_TYPES_BY_EXTENSION[extension]! : reported
+}
+
 export function isSupportedAssetMediaType(mediaType: string): boolean {
   return Object.hasOwn(EXTENSIONS_BY_MEDIA_TYPE, mediaType)
 }

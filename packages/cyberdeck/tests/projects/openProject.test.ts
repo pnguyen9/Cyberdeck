@@ -1,4 +1,4 @@
-import { CHAPTER_START, flattenStoredNodes, moveNodes, previewImport, previewNodeEdit, readGameArchive, readProjectBackup, removeNodes, StoryRuntime, type ChapterDocument } from '@cyberdeck/core'
+import { CHAPTER_START, flattenStoredNodes, moveNodes, previewImport, previewNodeEdit, readGameArchive, readProjectBackup, removeNodes, writeZip, StoryRuntime, type ChapterDocument } from '@cyberdeck/core'
 import { describe, expect, it } from 'vitest'
 import { createNewProject, listProjects, OpenProject, restoreBackup } from '../../src/projects/openProject'
 import { memoryProjectStore } from './memoryProjectStore'
@@ -43,14 +43,40 @@ describe('projects', () => {
     expect(matches).toEqual([
       { fileName: 'street.png', entry: 'Background street' },
       { fileName: 'marie.png', entry: 'marie, normal' },
-      { fileName: 'notes.png', entry: null },
-      { fileName: 'script.js', entry: null },
+      { fileName: 'notes.png', entry: null, unused: 'noEntry' },
+      { fileName: 'script.js', entry: null, unused: 'unknownKind' },
     ])
     expect(assets.size).toBe(2)
 
     await open.addFiles([file('Street.webp', 'image/webp', 5)])
     expect(assets.size).toBe(2)
     expect(open.project.assets.map(asset => asset.fileName).sort()).toEqual(['Street.webp', 'marie.png'])
+  })
+
+  it('know a file by its extension whatever type the system gives it, and say why one goes nowhere', async () => {
+    const { open } = await projectWith('# One\n[music: calm]\n[sound: door]\n[bg: street]\nHello.')
+    const matches = await open.addFiles([file('calm.ogg', 'application/ogg', 1), file('door.ogg', '', 2), file('Street.PNG', 'image/x-png', 3), file('rain.ogg', 'audio/x-vorbis+ogg', 4), file('notes.txt', 'text/plain', 5)])
+    expect(matches.map(match => [match.fileName, match.entry, match.unused ?? null])).toEqual([
+      ['calm.ogg', 'Music calm', null],
+      ['door.ogg', 'Sound door', null],
+      ['Street.PNG', 'Background street', null],
+      ['rain.ogg', null, 'noEntry'],
+      ['notes.txt', null, 'unknownKind'],
+    ])
+    expect(open.project.assets.find(asset => asset.fileName === 'calm.ogg')?.mediaType).toBe('audio/ogg')
+  })
+
+  it('take a zip of files as the files it holds, leaving out what systems add beside them', async () => {
+    const { open } = await projectWith('# One\n[music: calm]\n[bg: street]\nHello.')
+    const zip = await writeZip([
+      { path: 'assets/calm.ogg', bytes: new Uint8Array([1]), compress: true },
+      { path: 'assets/street.png', bytes: new Uint8Array([2]), compress: true },
+      { path: '__MACOSX/assets/._calm.ogg', bytes: new Uint8Array([3]), compress: true },
+      { path: 'assets/.DS_Store', bytes: new Uint8Array([4]), compress: true },
+    ], new Date('2026-11-06T10:00:00Z'))
+    const matches = await open.addFiles([{ name: 'assets.zip', mediaType: 'application/zip', bytes: zip }])
+    expect(matches.map(match => [match.fileName, match.entry])).toEqual([['calm.ogg', 'Music calm'], ['street.png', 'Background street']])
+    await expect(open.addFiles([file('broken.zip', 'application/zip', 9)])).rejects.toThrow()
   })
 
   it('take a cover, and delete its file when it is removed', async () => {
