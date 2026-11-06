@@ -732,6 +732,20 @@ through a short list of channels whose arguments the main process checks again: 
 lists of strings only; identifiers that cannot leave their folder; asset files whose content matches
 the SHA-256 in their name; and only save folders the player picked in the system dialog.
 
+## Known problems, for the next version
+
+- **Chapter names give the story away.** A game exported with only some of its chapters lists the
+  names of the missing ones on its library card ("not installed: Chapter 2 — Tuesday, …"). An author
+  should be able to export without naming them: the missing chapters left out entirely, or counted
+  without their names.
+- **The map loses its order when the rest of a game is installed.** After playing a game with only
+  its first chapter, then installing the whole game, the map started rows over at its left edge:
+  Chapter 2 began a row of its own, and the last scene of Chapter 6 sat alone in the first column
+  instead of at the far right of its route.
+- **A story without an ending looks like it has one.** A game that runs out of chapters, such as one
+  exported with only its first, ends with "The end", and the map shows that as an ending box, although
+  the author wrote no ending there.
+
 ## License
 
 Released into the public domain under the [Unlicense](LICENSE): anyone may use, change and
