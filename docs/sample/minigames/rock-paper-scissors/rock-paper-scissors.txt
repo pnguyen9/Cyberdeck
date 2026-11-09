@@ -1,0 +1,65 @@
+[import: story en]
+
+[style: Ending = gold, large, fade-in]
+
+[decision: Hand = Rock | Paper | Scissors]
+[decision: Computer = Rock | Paper | Scissors]
+[decision: Again = Yes | No]
+
+[counter: Draw = 0]
+[counter: Wins = 0]
+[counter: Losses = 0]
+[counter: Draws = 0]
+[counter lasting: Total wins = 0]
+[counter lasting: Total losses = 0]
+[counter lasting: Total draws = 0]
+
+[shown: Wins, Losses, Draws, Total wins, Total losses, Total draws]
+
+# Rock, paper, scissors
+[ask: Player = You]
+Rock beats scissors, scissors beat paper, paper beats rock. The computer is ready when you are.
+Press J at any time to open the journal: this game's score, and the score of every game played.
+[loop]
+[choice: Hand]
+> Rock = Rock
+> Paper = Paper
+> Scissors = Scissors
+[sound: pick]
+[set: Draw = random 1 3]
+[if: Draw is 1]
+[set: Computer = Rock]
+[else if: Draw is 2]
+[set: Computer = Paper]
+[else]
+[set: Computer = Scissors]
+[end]
+[sound: reveal]
+{Player} chose {Hand}. The computer chose {Computer}.
+[if: Hand is Rock and Computer is Scissors or Hand is Paper and Computer is Rock or Hand is Scissors and Computer is Paper]
+[sound: win]
+[add: Wins 1]
+[add: Total wins 1]
+Round to {Player}!
+[else if: Hand is Rock and Computer is Rock or Hand is Paper and Computer is Paper or Hand is Scissors and Computer is Scissors]
+[sound: draw]
+[add: Draws 1]
+[add: Total draws 1]
+A draw.
+[else]
+[sound: lose]
+[add: Losses 1]
+[add: Total losses 1]
+Round to the computer.
+[end]
+Rounds so far — {Player} {Wins}, the computer {Losses}, draws {Draws}.
+[choice: Again]
+> Another round = Yes
+> Stop here = No
+[if: Again is No]
+[break]
+[end]
+[end]
+Final score — {Player} {Wins}, the computer {Losses}, draws {Draws}.
+Every game played — {Player} {Total wins}, the computer {Total losses}, draws {Total draws}.
+[ending: Final score]
