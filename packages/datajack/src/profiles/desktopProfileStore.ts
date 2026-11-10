@@ -38,6 +38,7 @@ export function createDesktopProfileStore(bridge: DesktopBridge): ProfileStore {
       return {
         read: async (gameId, slot) => parseSave(await readJson(gameId, slot)),
         write: (gameId, slot, save) => writeJson(gameId, slot, save),
+        eraseAll: () => invoke('saves:eraseAll', profileId),
         readProgress: async gameId => parseProgress(await readJson(gameId, PROGRESS_SLOT)),
         writeProgress: (gameId, progress) => writeJson(gameId, PROGRESS_SLOT, progress),
       }

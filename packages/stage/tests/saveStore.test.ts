@@ -16,6 +16,18 @@ function someSave() {
 }
 
 describe('createStorageSaveStore', () => {
+  it('erases every save and progress it keeps, and nothing else', async () => {
+    const storage = memoryStorage()
+    const store = createStorageSaveStore(() => storage, 'saves:')
+    await store.write('game', '1', someSave())
+    await store.write('other game', 'autosave', someSave())
+    storage.setItem('settings', 'mine')
+
+    await store.eraseAll()
+
+    expect([await store.read('game', '1'), await store.read('other game', 'autosave'), storage.getItem('settings')]).toEqual([null, null, 'mine'])
+  })
+
   it('reads back what it wrote, per game and slot', async () => {
     const storage = memoryStorage()
     const store = createStorageSaveStore(() => storage, 'saves:')

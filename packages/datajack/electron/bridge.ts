@@ -42,6 +42,7 @@ export interface DesktopChannels {
   'profiles:changeSaveFolder': (profileId: string, saveFolder: string) => SaveFolderChange
   'saves:read': (profileId: string, gameId: string, slot: string) => string | null
   'saves:write': (profileId: string, gameId: string, slot: string, text: string) => void
+  'saves:eraseAll': (profileId: string) => void
   'library:listManifests': () => string[]
   'library:readManifest': (gameId: string) => string | null
   'library:writeManifest': (gameId: string, text: string) => void

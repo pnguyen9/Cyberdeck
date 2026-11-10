@@ -154,6 +154,26 @@ export class ProfileFiles {
     })
   }
 
+  /**
+   * Erases the profile's saves and progress, of every game: only the files Datajack writes there,
+   * then the game folders left empty; anything else in the folder stays.
+   */
+  eraseSaves(profileId: string): Promise<void> {
+    return this.inTurn(async () => {
+      const profile = findProfile(await this.readSettings(), profileId)
+      for (const [gameId, slots] of await savesIn(profile.saveFolder)) {
+        for (const slot of slots) {
+          await unlink(saveFilePath(profile, gameId, slot)).catch(error => {
+            if (!isFileError(error, 'ENOENT')) {
+              throw error
+            }
+          })
+        }
+        await rmdir(join(profile.saveFolder, gameId)).catch(() => undefined)
+      }
+    })
+  }
+
   private inTurn<Result>(operation: () => Promise<Result>): Promise<Result> {
     const result = this.queue.then(operation)
     this.queue = result.catch(() => undefined)

@@ -12,6 +12,7 @@ const CHANNELS: Record<DesktopChannel, true> = {
   'profiles:changeSaveFolder': true,
   'saves:read': true,
   'saves:write': true,
+  'saves:eraseAll': true,
   'library:listManifests': true,
   'library:readManifest': true,
   'library:writeManifest': true,

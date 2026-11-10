@@ -141,6 +141,24 @@ async function remove(entry: LibraryEntry) {
   await refresh()
 }
 
+/** Erasing what Datajack keeps waits for the player to say what. */
+const isConfirmingErase = ref(false)
+
+async function eraseAll(withSaves: boolean) {
+  isConfirmingErase.value = false
+  confirming.value = null
+  try {
+    await props.library.removeAll()
+    if (withSaves) {
+      await props.saveStore.eraseAll()
+    }
+    message.value = withSaves ? text.value.erasedWithSaves : text.value.erased
+  } catch (error) {
+    errorMessage.value = errorText(error)
+  }
+  await refresh()
+}
+
 /** Opens a save from a file, from this computer or another: its game must be installed. */
 async function loadSave(file: File | undefined) {
   if (file === undefined) {
@@ -278,6 +296,18 @@ function onDrop(event: DragEvent) {
         </div>
       </li>
     </ul>
+
+    <section class="erase">
+      <button v-if="!isConfirmingErase" class="link-button" @click="isConfirmingErase = true">{{ text.eraseAll }}</button>
+      <div v-else class="confirmation">
+        <p>{{ text.confirmErase(profileName) }}</p>
+        <div class="actions">
+          <button class="button danger" @click="eraseAll(false)">{{ text.eraseGames }}</button>
+          <button class="button danger" @click="eraseAll(true)">{{ text.eraseGamesAndSaves }}</button>
+          <button class="button" @click="isConfirmingErase = false">{{ text.cancel }}</button>
+        </div>
+      </div>
+    </section>
   </main>
 </template>
 
@@ -483,6 +513,10 @@ h1 {
 
 .confirmation p {
   margin: 12px 0 0;
+}
+
+.erase {
+  margin-top: 40px;
 }
 
 .button {

@@ -5,6 +5,8 @@
 ### Datajack, the player
 - Settings scroll when a category is taller than the screen: in Datajack, the language, last of the
   General settings, was out of reach.
+- *Erase what Datajack keeps…*, below the games, removes every game, and if wished the profile's
+  saves and progress (removing games alone keeps them, for when the games come back).
 - **Settings** in the library opens the profile's settings without starting a game: players find the
   accessibility settings before they need them.
 - Settings, Accessibility: the name over the text box slides to the character speaking, as before,
@@ -17,6 +19,9 @@
   one passed counts. Stories that use it need Datajack 2.1 (format 2.1).
 
 ### Cyberdeck, the editor
+- *Erase what Cyberdeck keeps…*, below the projects, erases the saves and progress of the previews,
+  for a story played from a clean start, its lasting values back to what it declares; and if wished,
+  every project too (on the desktop, to the system's trash).
 - Exporting only some chapters, the author chooses what players see of those left out: their
   titles, only how many there are (the default, the titles giving nothing away), or nothing, the
   game seeming whole, for a story still being written or kept a mystery; the endings only those

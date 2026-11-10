@@ -14,6 +14,8 @@ export interface SaveStore {
   write: (gameId: string, slot: string, save: SaveData) => Promise<boolean>
   readProgress: (gameId: string) => Promise<ProgressData | null>
   writeProgress: (gameId: string, progress: ProgressData) => Promise<boolean>
+  /** Erases every save and the progress of every game, those of games no longer installed included. */
+  eraseAll: () => Promise<void>
 }
 
 /**
@@ -22,7 +24,7 @@ export interface SaveStore {
  * can be missing or refuse access: reads then find nothing and writes report failure, without
  * breaking the game.
  */
-export function createStorageSaveStore(getStorage: () => Pick<Storage, 'getItem' | 'setItem'>, keyPrefix: string): SaveStore {
+export function createStorageSaveStore(getStorage: () => Pick<Storage, 'getItem' | 'setItem' | 'removeItem' | 'key' | 'length'>, keyPrefix: string): SaveStore {
   const keyOf = (gameId: string, slot: string) => `${keyPrefix}${gameId}:${slot}`
   const readJson = (gameId: string, slot: string): unknown => {
     try {
@@ -45,5 +47,14 @@ export function createStorageSaveStore(getStorage: () => Pick<Storage, 'getItem'
     write: async (gameId, slot, save) => writeJson(gameId, slot, save),
     readProgress: async gameId => parseProgress(readJson(gameId, PROGRESS_SLOT)),
     writeProgress: async (gameId, progress) => writeJson(gameId, PROGRESS_SLOT, progress),
+    eraseAll: async () => {
+      try {
+        const storage = getStorage()
+        const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index)).filter(key => key?.startsWith(keyPrefix) === true) as string[]
+        keys.forEach(key => storage.removeItem(key))
+      } catch {
+        // Storage refused: there is nothing it lets us erase.
+      }
+    },
   }
 }

@@ -167,6 +167,18 @@ describe('GameLibrary', () => {
     expect(memory.assets.size).toBe(1)
   })
 
+  it('removes every game, and every file they kept', async () => {
+    const memory = memoryLibraryStorage()
+    const library = new GameLibrary(memory.storage)
+    await library.install(await buildGame().export({ exportedAt: '2026-10-01' }))
+    const other = buildGame('Another Letter', 'other')
+    await library.install(await other.export({ chapters: [other.one.id], exportedAt: '2026-10-01' }))
+
+    await library.removeAll()
+
+    expect([await library.list(), memory.assets.size]).toEqual([[], 0])
+  })
+
   it('refuses a file that is not a game, installing nothing', async () => {
     const memory = memoryLibraryStorage()
     const library = new GameLibrary(memory.storage)

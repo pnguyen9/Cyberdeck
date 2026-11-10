@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { languageName, languagesOf, type ProjectDocument } from '@cyberdeck/core'
-import { useLocale, useMessages } from '@cyberdeck/stage'
+import { useLocale, useMessages, type SaveStore } from '@cyberdeck/stage'
 import { onMounted, ref, shallowRef } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { errorText } from '../i18n/errorMessages'
@@ -9,7 +9,7 @@ import LanguageSelect from '../settings/LanguageSelect.vue'
 import { createNewProject, listProjects, restoreBackup } from './openProject'
 import type { ProjectStore } from './projectStore'
 
-const props = defineProps<{ store: ProjectStore }>()
+const props = defineProps<{ store: ProjectStore; previewSaves: SaveStore }>()
 const emit = defineEmits<{ open: [projectId: string] }>()
 
 const projects = shallowRef<ProjectDocument[]>([])
@@ -81,6 +81,23 @@ function remove(project: ProjectDocument) {
   })
 }
 
+/** Erasing what Cyberdeck keeps waits for the author to say what. */
+const isConfirmingErase = ref(false)
+
+function eraseAll(withProjects: boolean) {
+  isConfirmingErase.value = false
+  return attempt(async () => {
+    await props.previewSaves.eraseAll()
+    if (withProjects) {
+      for (const project of projects.value) {
+        await props.store.deleteProject(project.id)
+      }
+      await refresh()
+    }
+    message.value = withProjects ? text.value.everythingErased : text.value.previewsErased
+  })
+}
+
 const formatDate = (date: string) => new Date(date).toLocaleString(locale.value, { dateStyle: 'medium', timeStyle: 'short' })
 </script>
 
@@ -137,6 +154,18 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
     </label>
     <p class="muted">{{ text.backupReplaces }}</p>
 
+    <section class="erase">
+      <button v-if="!isConfirmingErase" class="link-button" @click="isConfirmingErase = true">{{ text.eraseAll }}</button>
+      <div v-else class="confirmation">
+        <p>{{ text.confirmErase }} {{ projectsFolder !== null ? text.confirmEraseFolders : text.confirmEraseBrowser }}</p>
+        <div class="actions">
+          <button class="button" @click="eraseAll(false)">{{ text.erasePreviews }}</button>
+          <button class="button danger" :disabled="projects.length === 0" @click="eraseAll(true)">{{ text.eraseEverything }}</button>
+          <button class="button" @click="isConfirmingErase = false">{{ common.cancel }}</button>
+        </div>
+      </div>
+    </section>
+
     <p v-if="message !== null" class="message" role="status">{{ message }}</p>
     <p v-if="errorMessage !== null" class="error" role="alert">{{ errorMessage }}</p>
   </main>
@@ -145,6 +174,10 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
 <style scoped>
 .confirmation p {
   margin: 0;
+}
+
+.erase {
+  margin-top: 40px;
 }
 
 .page-header {

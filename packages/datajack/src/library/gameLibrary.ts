@@ -129,6 +129,18 @@ export class GameLibrary {
     }
   }
 
+  /** Removes every game installed, and every file they kept. */
+  async removeAll() {
+    for (const value of await this.storage.listManifests()) {
+      try {
+        await this.storage.removeGame(checkGameManifest(value).project.id)
+      } catch {
+        // A manifest that cannot be read names no game to remove.
+      }
+    }
+    await this.storage.removeAssetsExcept([])
+  }
+
   async remove(gameId: string) {
     await this.storage.removeGame(gameId)
     const kept = (await this.storage.listManifests()).flatMap(value => {

@@ -253,6 +253,8 @@ Unlike decisions, what a player **remembers** stays across every new playthrough
 A counter or a decision can last too: `[counter lasting: Coins = 0]`, or `[decision multi
 lasting: Bag = Key | Lamp]`. In a playthrough it behaves as any other, going back included, and the next playthrough starts with what the last one left. Use `[remember]` for what the game knows, whatever the player takes back; a lasting value for what the player carries.
 
+Previews remember too, as players do. To try the story again from a clean start, the projects page has **Erase what Cyberdeck keeps…**: erasing the saves and progress of the previews leaves your projects alone.
+
 Players can see some of this in their **Journal**, but only what you choose:
 
 ```text

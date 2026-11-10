@@ -130,9 +130,13 @@ on another computer, and bring the game archive along to install it there.
 
 #### Erasing what the web builds store
 
-The applications have no button for it yet. Erasing deletes every project, profile, installed game
-and save of the copies concerned: back up the projects to keep first (*Back up* in Cyberdeck), and
-save to a file the games worth keeping.
+Each application erases what it keeps, from its first page: in Cyberdeck, *Erase what Cyberdeck
+keeps…*, below the projects (the saves and progress of the previews, and every project if wished);
+in Datajack, *Erase what Datajack keeps…*, below the games (every game, and the profile's saves and
+progress if wished). That reaches only the copy opened. For copies no longer at hand, or to erase
+everything at once, the browser's own ways follow. They delete every project, profile, installed
+game and save of the copies concerned: back up the projects to keep first (*Back up* in Cyberdeck),
+and save to a file the games worth keeping.
 
 **Put on a web host** (GitHub Pages, for instance), the applications are a site like any other: the
 browser's own "clear site data" for that address erases them.
@@ -816,25 +820,19 @@ the SHA-256 in their name; and only save folders the player picked in the system
 - **Web data cannot be cleared from Firefox.** The web builds keep projects, profiles, games and
   saves in the browser's storage. Opened from a file, each copy is a site of its own, named by its
   path, so every version unzipped keeps its own data; Firefox's "Clear site data" lists only sites
-  with a web address, and leaves them all (see [Erasing what the web builds
-  store](#erasing-what-the-web-builds-store)). Each application should offer to erase everything it
-  stores.
+  with a web address, and leaves them all. Each application now erases its own, but a copy deleted
+  can only be erased the browser's way (see [Erasing what the web builds
+  store](#erasing-what-the-web-builds-store)).
 - **A game's own settings.** Settings open from the library, for every game; a game's own, from
   its card, could set some apart for that game (a slower text for one, a louder music for another).
 - **The name plate's place, for authors.** Players choose in Settings whether the name slides to the
   character speaking, jumps there or stays put. Authors cannot choose it for their game yet: a game
   could say the name stays at the left, players' own choice still winning; and for a game that says
   nothing, staying at the left may be the better default than sliding.
-- **Erasing from the applications.** Each application should have a button to erase what it
-  stores, so that no one needs the steps of [Erasing what the web builds
-  store](#erasing-what-the-web-builds-store). In Datajack, a choice: the games alone, or the games
-  with their saves and progress. Removing a game today keeps its saves and progress, which weigh
-  almost nothing, so that installing it again finds them.
 - **A preview closer to playing.** Cyberdeck's preview plays a game as Datajack does, but without
-  what Datajack offers around the game itself, such as the map. And its saves stay (in the
-  browser's storage, under `cyberdeck:preview:`) with no way to erase them, which gets in the way of
-  testing a story from a clean start. The preview should offer what a player has, and a way to
-  start over: erasing its saves and progress, for the project or for all.
+  what Datajack offers around the game itself, such as the map. The preview should offer what a
+  player has. (Its saves and progress can now be erased, from the projects page, to test a story
+  from a clean start; for one project at a time, they cannot yet.)
 - **Previewing a late page reaches it one way only.** Previewing from a page plays the shortest way
   a player could get there, and starts with the values of that way. A late chapter thus starts with
   the values of a few early choices, and an ending that needs others may be out of reach; the State

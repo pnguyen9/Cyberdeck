@@ -135,6 +135,21 @@ describe('saves', () => {
     expect(await readdir(join(profile.saveFolder, 'game-1'))).toEqual(['1.json'])
   })
 
+  it('erases every save and progress of the profile, leaving what else is in its folder', async () => {
+    const profileFiles = createProfileFiles()
+    const profile = await profileFiles.create('Pascal', null)
+    await profileFiles.writeSave(profile.id, 'game-1', '1', SAVE_TEXT)
+    await profileFiles.writeSave(profile.id, 'game-1', 'progress', SAVE_TEXT)
+    await profileFiles.writeSave(profile.id, 'game-2', 'autosave', SAVE_TEXT)
+    await writeFile(join(profile.saveFolder, 'game-2', 'notes.txt'), 'mine')
+    await writeFile(join(profile.saveFolder, 'readme.txt'), 'mine')
+
+    await profileFiles.eraseSaves(profile.id)
+
+    expect((await readdir(profile.saveFolder)).sort()).toEqual(['game-2', 'readme.txt'])
+    expect(await readdir(join(profile.saveFolder, 'game-2'))).toEqual(['notes.txt'])
+  })
+
   it('keeps the last of many writes made in a burst', async () => {
     const profileFiles = createProfileFiles()
     const profile = await profileFiles.create('Pascal', null)

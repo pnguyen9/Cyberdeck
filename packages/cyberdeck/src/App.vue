@@ -62,6 +62,6 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       @leave="previewing = null"
     />
   </template>
-  <ProjectsView v-else :store="store" @open="projectId => openProjectId = projectId" />
+  <ProjectsView v-else :store="store" :preview-saves="previewSaves" @open="projectId => openProjectId = projectId" />
   <ShortcutsPanel v-if="isPanelOpen" />
 </template>
