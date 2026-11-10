@@ -1,4 +1,4 @@
-import { flattenStoredNodes, defaultEnvironment, innerListsOf, type ChapterDocument, type Environment, type ProjectDocument, type StoredNode } from '../format/storyFormat'
+import { flattenStoredNodes, defaultEnvironment, innerListsOf, mapInnerLists, type ChapterDocument, type Environment, type ProjectDocument, type StoredNode } from '../format/storyFormat'
 import { storeImport } from '../format/storeImport'
 import type { ImportProblem } from '../importer/importTypes'
 import type { PageLayout } from '../pagination/paginate'
@@ -12,7 +12,8 @@ import { knownNamesFor, previewImport, type ImportPreview } from './projectEdits
  * new pages are written the same way. The text may become several nodes: a page grown too long is
  * cut as an import would, a new name creates a character.
  */
-export type NodeEditTarget = { type: 'replace'; nodeId: string } | { type: 'insert'; slot: DropSlot }
+/** A page or block replaced, pages inserted at a slot, or the whole chapter written anew, its Text view. */
+export type NodeEditTarget = { type: 'replace'; nodeId: string } | { type: 'insert'; slot: DropSlot } | { type: 'whole' }
 
 /** Whether the place edited lies inside a loop, where `[break]` belongs. */
 function editsInsideLoop(chapter: ChapterDocument, target: NodeEditTarget): boolean {
@@ -71,7 +72,7 @@ export function previewNodeEdit(
 
 /** The project's names as an edit at this place may use them: worked out once for an edit, not on every key typed. */
 export function knownNamesForEdit(project: ProjectDocument, chapters: readonly ChapterDocument[], chapterId: string, target: NodeEditTarget, words?: StoryWords): KnownNames {
-  return knownNamesFor(project, chapters, target.type === 'replace' ? { documentId: chapterId, nodeId: target.nodeId } : undefined, words)
+  return knownNamesFor(project, chapters, target.type === 'replace' ? { documentId: chapterId, nodeId: target.nodeId } : target.type === 'whole' ? { documentId: chapterId } : undefined, words)
 }
 
 /**
@@ -108,6 +109,9 @@ export function applyNodeEdit(
       nodes = [{ ...first, id: replaced.id }, ...others]
     }
     edited = replaceNode(chapter, target.nodeId, nodes, now)
+  } else if (target.type === 'whole') {
+    nodes = withIdentifiersKept(chapter.nodes, nodes)
+    edited = { ...chapter, nodes, updatedAt: now }
   } else {
     edited = insertNodes(chapter, target.slot, nodes, now)
   }
@@ -118,3 +122,25 @@ export function applyNodeEdit(
   }
 }
 
+/**
+ * The chapter written anew keeps the identifiers of its pages and choices left as they were, matched
+ * by their text, so that saves made on them still resume there.
+ */
+function withIdentifiersKept(before: readonly StoredNode[], after: StoredNode[]): StoredNode[] {
+  const keyOf = (node: StoredNode) => node.type === 'page' ? `page ${node.speakerId ?? ''} ${node.text}`
+    : node.type === 'choice' ? `choice ${node.decisionId} ${node.options.map(option => option.text).join(' / ')}` : null
+  const idsByKey = new Map<string, string[]>()
+  for (const node of flattenStoredNodes(before)) {
+    const key = keyOf(node)
+    if (key !== null) {
+      idsByKey.set(key, [...idsByKey.get(key) ?? [], node.id])
+    }
+  }
+  const keep = (nodes: readonly StoredNode[]): StoredNode[] => nodes.map(node => {
+    const key = keyOf(node)
+    const id = key === null ? undefined : idsByKey.get(key)?.shift()
+    const kept = id === undefined ? node : { ...node, id }
+    return mapInnerLists(kept, list => keep(list.nodes))
+  })
+  return keep(after)
+}

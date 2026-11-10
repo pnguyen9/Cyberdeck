@@ -37,6 +37,9 @@
 - All three need Datajack 2.1 (format 2.1).
 
 ### Cyberdeck, the editor
+- A **Text** view in the storyboard, beside Grid, Tree and Graph: the chapter, or the block opened,
+  as the text it imports from, edited like a document and saved in place; pages and choices left as
+  they were keep their identifiers, so that saves on them still resume there.
 - *Restore a backup or a game…* makes a project again from a game exported, for an author who lost
   it: under the same identifier, players' saves still knowing the game, with the chapters and files
   the game carried; the chapters it left out are said.

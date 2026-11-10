@@ -85,3 +85,23 @@ describe('editing a page as text', () => {
     expect(edit(state, { type: 'replace', nodeId: page.id }, '# Another chapter\nHm.').preview.problems.map(problem => problem.code)).toEqual(['chapterHeadingInEdit'])
   })
 })
+
+describe('editing a whole chapter as text', () => {
+  it('writes the chapter anew from its text, keeping the identifiers of what stayed as it was', () => {
+    const state = projectFrom(['[decision: Way = Left | Right]', 'Morning.', '[choice: Way]', '> Go left = Left', '> Go right = Right', '[if: Way is Left]', 'Left.', '[end]', 'Evening.'])
+    const chapter = state.chapters[0]!
+    const text = nodesText(state.project, chapter.nodes, [], 'en')
+    const { preview, applied } = edit(state, { type: 'whole' }, text.replace('Evening.', 'Night.').replace('Left.', 'Left, then home.'))
+    expect(preview.problems).toEqual([])
+    expect(pageTexts(applied!.chapter)).toEqual(['Morning.', 'Left, then home.', 'Night.'])
+    // The page left as it was, and the choice, keep their identifiers: saves on them still resume there.
+    expect(pageOf(applied!.chapter, 'Morning.').id).toBe(pageOf(chapter, 'Morning.').id)
+    const choiceId = (nodes: ChapterDocument['nodes']) => flattenStoredNodes(nodes).find(node => node.type === 'choice')?.id
+    expect(choiceId(applied!.chapter.nodes)).toBe(choiceId(chapter.nodes))
+  })
+
+  it('refuses a heading, the chapter being the one shown', () => {
+    const state = projectFrom(['Morning.'])
+    expect(edit(state, { type: 'whole' }, '# Another\nNoon.').preview.hasErrors).toBe(true)
+  })
+})

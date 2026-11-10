@@ -453,6 +453,8 @@ The grid keeps each block folded, to see the whole chapter at a glance and move 
 
 *The tree: the loop, its choice and its three branches, all at once. Cards are edited here, not moved.*
 
+The **Text** view shows the chapter, or the block you opened in the grid, as the text it imports from. Edit it like a Word document, then **Save**: no need to export and import again for a few lines.
+
 The **Graph** view draws the whole story as a map: chapters one under the other, blocks forking into their branches and joining again, endings where routes stop, and scenes on the side, linked to each `[play]` that calls them. Drag it to move around, use the wheel to zoom, and click a box: its panel opens it in the grid, adds a branch to a block or an option to a choice, or moves a branch.
 
 From the keyboard, <kbd>Tab</kbd> goes from box to box, bringing each into view, and <kbd>Enter</kbd> selects the one reached and moves to its panel, where <kbd>Tab</kbd> goes through its buttons; <kbd>Esc</kbd> comes back to the box. On the map itself, the arrows move it around, and <kbd>+</kbd> and <kbd>−</kbd> zoom in and out.

@@ -497,6 +497,11 @@ A **project** holds the whole game. Its screens:
   the arrows move it, the wheel or + and − zoom, Tab goes from box to box and Enter selects one and moves to
   its panel (Esc comes back); a box selected opens its
   card in the grid, adds a branch to its block or an option to its choice, or moves its branch.
+  The **Text** view shows the level being worked on as the text it imports from, the whole chapter
+  or the block opened in the grid, edited like a document with the tag editor's chips and
+  suggestions; saving writes that part anew in place (pages and choices left as they were keep their
+  identifiers, so saves made on them still resume there), its problems listed as in Import, and
+  Ctrl+Z on the board puts the old text back. Leaving it with changes asks first.
   **B** adds a block after the focused card, written as text (`[if: ]`, `[else]`, `[end]`, ready for
   its condition); **E** edits a block's own text, its conditions and branches, as a page is edited,
   while Enter keeps opening it. A block's panel says how to do each.
@@ -828,13 +833,6 @@ the SHA-256 in their name; and only save folders the player picked in the system
   character speaking, jumps there or stays put. Authors cannot choose it for their game yet: a game
   could say the name stays at the left, players' own choice still winning; and for a game that says
   nothing, staying at the left may be the better default than sliding.
-- **A Text view, beside Grid, Tree and Graph.** The level of the storyboard being worked on, as the
-  text it imports from, edited like a document: the chapter, or the block opened, its pages, tags
-  and branches written out, with the tag editor's chips and suggestions. Applying it re-imports only
-  that part, in place, as a page or a block edited with Enter already does; the problems are listed
-  as in Import, and nothing changes until they are fixed. It spares exporting a chapter, editing it
-  in Word and importing it back for a few lines, and keeps to where the author is rather than the
-  whole story.
 - **A preview closer to playing.** Cyberdeck's preview plays a game as Datajack does, but without
   what Datajack offers around the game itself, such as the map. The preview should offer what a
   player has. (Its saves and progress can now be erased, from the projects page, to test a story

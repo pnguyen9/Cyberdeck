@@ -74,7 +74,7 @@ const chapter = computed(() => documents.value.find(candidate => candidate.id ==
 const isScene = computed(() => chapter.value !== null && project.value.sceneOrder.includes(chapter.value.id))
 const sceneNames = computed(() => new Map(scenes.value.map(scene => [scene.id, scene.title ?? ''])))
 /** The grid sorts cards like slides; the tree shows each condition's branches side by side, for reading, not moving. */
-const view = ref<'grid' | 'tree' | 'graph'>('grid')
+const view = ref<'grid' | 'tree' | 'graph' | 'text'>('grid')
 
 /** The block whose branches the grid shows; null for the chapter's own level. */
 const blockId = ref<string | null>(null)
@@ -208,7 +208,7 @@ function startEditing(entry: EditableEntry) {
     void nextTick(() => editor.value?.focus())
     return
   }
-  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'replace', nodeId: entry.node.id }, nodesText(project.value, [entry.node], scenes.value, language.value)))
+  settleEdit(unsavedQuestion(), () => openEdit({ type: 'replace', nodeId: entry.node.id }, nodesText(project.value, [entry.node], scenes.value, language.value)))
 }
 
 /** Right after the focused element; in an empty branch, its start; with no focus, at the end of the level's first list. */
@@ -222,14 +222,14 @@ function slotAfterFocus(): DropSlot {
 }
 
 function startAdding() {
-  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'insert', slot: slotAfterFocus() }, ''))
+  settleEdit(unsavedQuestion(), () => openEdit({ type: 'insert', slot: slotAfterFocus() }, ''))
 }
 
 /** A new block after the focus, as text to complete: an `[if]` and its `[else]`, ready for the condition. */
 const NEW_BLOCK = '[if: ]\n\n[else]\n\n[end]'
 
 function startAddingBlock() {
-  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'insert', slot: slotAfterFocus() }, NEW_BLOCK))
+  settleEdit(unsavedQuestion(), () => openEdit({ type: 'insert', slot: slotAfterFocus() }, NEW_BLOCK))
 }
 
 /** A block's own text, its conditions and branches with the pages in them, edited as a page is. */
@@ -238,7 +238,7 @@ function startEditingBlock(block: BlockElement) {
     void nextTick(() => editor.value?.focus())
     return
   }
-  settleEdit(text.value.unsavedPage, () => openEdit({ type: 'replace', nodeId: block.node.id }, nodesText(project.value, [block.node], scenes.value, language.value)))
+  settleEdit(unsavedQuestion(), () => openEdit({ type: 'replace', nodeId: block.node.id }, nodesText(project.value, [block.node], scenes.value, language.value)))
 }
 
 async function saveEdit(): Promise<boolean> {
@@ -398,13 +398,61 @@ function onChapterPicked(event: Event) {
   const chosenId = select.value
   // The picker shows the chapter of the board until the author has answered.
   select.value = chapter.value?.id ?? ''
-  settleEdit(text.value.unsavedPage, () => {
+  settleEdit(unsavedQuestion(), () => {
     editing.value = null
     storyboardChapterId.value = chosenId
   })
 }
 
-useUnsavedChanges(() => isEditChanged.value, proceed => settleEdit(text.value.unsavedPage, proceed))
+/**
+ * The Text view: the level being worked on as the text it imports from, written like a document. The
+ * block opened in the grid, or the whole chapter; saving writes that part anew, as editing a page does.
+ */
+function openTextEdit() {
+  const current = chapter.value
+  if (current === null) {
+    return
+  }
+  const block = blockId.value === null ? undefined : flattenStoredNodes(current.nodes).find(node => node.id === blockId.value)
+  if (block !== undefined) {
+    openEdit({ type: 'replace', nodeId: block.id }, nodesText(project.value, [block], scenes.value, language.value))
+  } else {
+    openEdit({ type: 'whole' }, nodesText(project.value, current.nodes, scenes.value, language.value))
+  }
+}
+
+/** The question asked before leaving changes: of the page open, or of the Text view's text. */
+function unsavedQuestion(): string {
+  return editing.value?.target.type === 'whole' || view.value === 'text' ? text.value.unsavedText : text.value.unsavedPage
+}
+
+/** Switches views; leaving the Text view with changes asks first, as closing a page edited does. */
+function showView(next: 'grid' | 'tree' | 'graph' | 'text') {
+  if (next === view.value) {
+    return
+  }
+  settleEdit(unsavedQuestion(), () => {
+    editing.value = null
+    pending.value = null
+    view.value = next
+  })
+}
+
+// In the Text view, the text is always open: after saving, after another chapter is picked.
+watch([view, () => chapter.value?.id, () => editing.value === null, blockId], ([shown, , isClosed]) => {
+  if (shown === 'text' && isClosed) {
+    openTextEdit()
+  }
+})
+
+/** In the Text view, undoes the changes not saved yet; the text stays open. */
+function revertText() {
+  if (editing.value !== null) {
+    editing.value = { ...editing.value, text: editing.value.original }
+  }
+}
+
+useUnsavedChanges(() => isEditChanged.value, proceed => settleEdit(unsavedQuestion(), proceed))
 onMounted(() => board.value?.focus())
 
 /** Pages and choices can be played from; the preview finds a way there. */
@@ -636,7 +684,7 @@ watch(storyboardRequest, request => {
 })
 
 function goUpToStory() {
-  settleEdit(text.value.unsavedPage, () => {
+  settleEdit(unsavedQuestion(), () => {
     editing.value = null
     isStoryLevel.value = true
   })
@@ -644,7 +692,7 @@ function goUpToStory() {
 
 /** From the graph to the card in the grid, the chapter or scene it is in opened. */
 function openFromGraph(documentId: string, nodeId: string | null) {
-  settleEdit(text.value.unsavedPage, () => {
+  settleEdit(unsavedQuestion(), () => {
     editing.value = null
     storyboardChapterId.value = documentId
     view.value = 'grid'
@@ -664,7 +712,7 @@ function editFromGraph(documentId: string, nodeId: string, withAddition: (text: 
   if (node === undefined) {
     return
   }
-  settleEdit(text.value.unsavedPage, () => {
+  settleEdit(unsavedQuestion(), () => {
     storyboardChapterId.value = documentId
     view.value = 'grid'
     void nextTick(() => {
@@ -959,15 +1007,17 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
           </select>
         </label>
         <div class="view-switch" role="group" :aria-label="text.view">
-          <button class="button small" :class="{ primary: view === 'grid' }" :aria-pressed="view === 'grid'" @click="view = 'grid'">{{ text.grid }}</button>
-          <button class="button small" :class="{ primary: view === 'tree' }" :aria-pressed="view === 'tree'" @click="view = 'tree'">{{ text.tree }}</button>
-          <button class="button small" :class="{ primary: view === 'graph' }" :aria-pressed="view === 'graph'" @click="view = 'graph'">{{ text.graph }}</button>
+          <button class="button small" :class="{ primary: view === 'grid' }" :aria-pressed="view === 'grid'" @click="showView('grid')">{{ text.grid }}</button>
+          <button class="button small" :class="{ primary: view === 'tree' }" :aria-pressed="view === 'tree'" @click="showView('tree')">{{ text.tree }}</button>
+          <button class="button small" :class="{ primary: view === 'graph' }" :aria-pressed="view === 'graph'" @click="showView('graph')">{{ text.graph }}</button>
+          <button class="button small" :class="{ primary: view === 'text' }" :aria-pressed="view === 'text'" @click="showView('text')">{{ text.textView }}</button>
         </div>
         <label class="field block-limit" :class="{ unused: view !== 'grid' }" :inert="view !== 'grid'" :title="text.blockLimitTitle">
           <span>{{ text.blockLimit }}</span>
           <input v-model.number="settings.blockPageLimit" class="text-input" type="number" min="1" max="99" step="1" :aria-label="text.blockLimitLabel">
         </label>
         <p v-if="view === 'graph'" class="muted keys">{{ text.graphKeys }}</p>
+        <p v-else-if="view === 'text'" class="muted keys">{{ blockId === null ? text.textViewChapter : text.textViewBlock }}</p>
         <p v-else class="muted keys">
           <template v-if="view === 'grid'">
             {{ text.gridKeys({
@@ -991,8 +1041,40 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
       <p v-if="chapterUnreachableCount > 0" class="warning" role="note">
         {{ text.chapterUnreached(chapterUnreachableCount) }}
       </p>
+      <section v-if="view === 'text'" class="text-view">
+        <UnsavedQuestion
+          v-if="pending !== null"
+          :question="pending.question"
+          :can-save="canSaveEdit"
+          :cannot-save-reason="text.cannotSaveEdit"
+          @save="answerSave"
+          @discard="answerDiscard"
+          @keep="answerKeepEditing"
+        />
+        <template v-if="editing !== null">
+          <TagTextEditor
+            ref="editor"
+            v-model="editing.text"
+            class="text-view-editor"
+            :vocabulary="vocabulary"
+            :layout="layout"
+            :label="text.textViewLabel"
+            :placeholder="text.pagePlaceholder"
+            @submit="saveEdit"
+            @cancel="revertText"
+          />
+          <ul v-if="editPreview !== null && editPreview.problems.length > 0" class="problems">
+            <li v-for="(problem, index) in editPreview.problems" :key="index" :class="problem.severity">{{ problemMessage(problem, locale) }}</li>
+          </ul>
+          <div class="edit-actions">
+            <button class="button primary small" :disabled="!canSaveEdit || !isEditChanged" @click="saveEdit">{{ common.save }} <kbd>{{ keysOf('save') }}</kbd></button>
+            <button class="button small" :disabled="!isEditChanged" @click="revertText">{{ text.revertText }} <kbd>{{ keysOf('cancel') }}</kbd></button>
+            <span v-if="isEditChanged" class="changed muted">● {{ text.notSavedYet }}</span>
+          </div>
+        </template>
+      </section>
       <StoryGraphView
-        v-if="view === 'graph'"
+        v-else-if="view === 'graph'"
         @open="openFromGraph"
         @add-branch="addBranchFromGraph"
         @add-option="addOptionFromGraph"
@@ -1165,6 +1247,17 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
 </template>
 
 <style scoped>
+.text-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 900px;
+}
+
+.text-view-editor {
+  min-height: 60vh;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
