@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   emptyProgress,
   layOutProgressMap,
+  mergeProgress,
   parseProgress,
   recordChoiceReached,
   recordEndReached,
@@ -148,5 +149,34 @@ describe('the map', () => {
     ])
     expect(map.edges).toHaveLength(6)
     expect([map.endingsReached, map.endingsTotal]).toEqual([1, 2])
+  })
+})
+
+describe('progress brought from elsewhere', () => {
+  it('joins what either reached, each point with the options taken in both, the lasting values brought', () => {
+    const story = storyFromText(['Hello.'])
+    const base = emptyProgress(story)
+    const save = { saveFormat: 1 } as unknown as ProgressData['points'][number]['save']
+    const own: ProgressData = {
+      ...base,
+      points: [{ key: 'door', chapterId: 'c', choiceId: 'door', reachedAt: NOW, save, taken: [{ optionId: 'open', next: { type: 'end', endingId: 'out' } }, { optionId: 'knock', next: null }] }],
+      endingIds: ['out'],
+      readPageIds: ['p1'],
+      lasting: { decisions: {}, counters: { Coins: 1 } },
+    }
+    const brought: ProgressData = {
+      ...base,
+      points: [
+        { key: 'door', chapterId: 'c', choiceId: 'door', reachedAt: NOW, save, taken: [{ optionId: 'knock', next: { type: 'point', key: 'hall' } }, { optionId: 'open', next: null }] },
+        { key: 'hall', chapterId: 'c', choiceId: 'hall', reachedAt: NOW, save, taken: [] },
+      ],
+      endingIds: ['in'],
+      readPageIds: ['p1', 'p2'],
+      lasting: { decisions: {}, counters: { Coins: 7 } },
+    }
+    const merged = mergeProgress(own, brought)
+    expect(merged.points.map(point => point.key)).toEqual(['door', 'hall'])
+    expect(merged.points[0]!.taken).toEqual([{ optionId: 'open', next: { type: 'end', endingId: 'out' } }, { optionId: 'knock', next: { type: 'point', key: 'hall' } }])
+    expect([merged.endingIds, merged.readPageIds, merged.lasting]).toEqual([['out', 'in'], ['p1', 'p2'], { decisions: {}, counters: { Coins: 7 } }])
   })
 })

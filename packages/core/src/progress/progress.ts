@@ -170,6 +170,41 @@ export function choicesOf(story: PlayableStory): Map<string, StoredChoice> {
     .flatMap(node => node.type === 'choice' ? [[node.id, node] as const] : []))
 }
 
+/**
+ * Progress brought from elsewhere (another computer, another build) joined to the profile's: what
+ * either reached is reached, each point's options taken together. The values that last and the
+ * language are the brought ones', the player carrying on from where they played last.
+ */
+export function mergeProgress(own: ProgressData, brought: ProgressData): ProgressData {
+  const union = (first: readonly string[], second: readonly string[]) => [...new Set([...first, ...second])]
+  const points = new Map(own.points.map(point => [point.key, point]))
+  for (const point of brought.points) {
+    const known = points.get(point.key)
+    if (known === undefined) {
+      points.set(point.key, point)
+      continue
+    }
+    const taken = new Map(known.taken.map(option => [option.optionId, option]))
+    for (const option of point.taken) {
+      // An option whose outcome one of them learned keeps it.
+      if (taken.get(option.optionId)?.next == null) {
+        taken.set(option.optionId, option)
+      }
+    }
+    points.set(point.key, { ...known, taken: [...taken.values()] })
+  }
+  return {
+    ...own,
+    points: [...points.values()],
+    endingIds: union(own.endingIds, brought.endingIds),
+    memoryIds: union(own.memoryIds, brought.memoryIds),
+    readPageIds: union(own.readPageIds, brought.readPageIds),
+    illustrationIds: union(own.illustrationIds, brought.illustrationIds),
+    ...(brought.lasting === undefined ? {} : { lasting: brought.lasting }),
+    ...(brought.language === undefined ? {} : { language: brought.language }),
+  }
+}
+
 /** Checks progress read back from a file; unreadable parts are dropped rather than failing the game. */
 export function parseProgress(value: unknown): ProgressData | null {
   if (typeof value !== 'object' || value === null) {

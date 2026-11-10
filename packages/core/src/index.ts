@@ -131,6 +131,7 @@ export {
   decisionsTestedFrom,
   emptyProgress,
   emptyProgressOf,
+  mergeProgress,
   parseProgress,
   pointKeyOf,
   recordChoiceReached,

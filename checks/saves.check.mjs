@@ -89,5 +89,5 @@ export default async function check(page, { url, serve, output }) {
   writeFileSync(`${output}/not-a-save.json`, '{"game": 3}')
   await page.setFiles('.load-button .file-input', [`${output}/not-a-save.json`])
   await pause(400)
-  page.check('anything else is refused', await page.evaluate(`document.querySelector('.error')?.textContent`), 'not-a-save.json is not a save.')
+  page.check('anything else is refused', await page.evaluate(`document.querySelector('.error')?.textContent`), 'not-a-save.json is neither a save nor a game\'s progress.')
 }

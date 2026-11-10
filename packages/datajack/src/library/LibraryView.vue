@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { emptyProgressOf, languageName, parseSave, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
+import { emptyProgressOf, languageName, mergeProgress, parseProgress, parseSave, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
 import { AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { describeError } from '../i18n/errorMessages'
@@ -166,11 +166,16 @@ async function loadSave(file: File | undefined) {
   }
   message.value = null
   errorMessage.value = null
-  const save = await readSave(file)
-  if (save === null) {
+  const read = await readSaveOrProgress(file)
+  if (read === null) {
     errorMessage.value = text.value.notASave(file.name)
     return
   }
+  if ('progress' in read) {
+    await loadProgress(file.name, read.progress)
+    return
+  }
+  const save = read.save
   const entry = entries.value.find(candidate => candidate.id === save.game.id)
   if (entry === undefined) {
     errorMessage.value = text.value.gameNotInstalled(file.name, save.game.name)
@@ -179,12 +184,54 @@ async function loadSave(file: File | undefined) {
   await play(entry, save)
 }
 
-async function readSave(file: File): Promise<SaveData | null> {
+/** A save, or a game's progress, read from a file; null for anything else. */
+async function readSaveOrProgress(file: File): Promise<{ save: SaveData } | { progress: ProgressData } | null> {
   try {
-    return parseSave(JSON.parse(await file.text()))
+    const value: unknown = JSON.parse(await file.text())
+    const save = parseSave(value)
+    if (save !== null) {
+      return { save }
+    }
+    const progress = isRecord(value) && value.progressFormat !== undefined ? parseProgress(value) : null
+    return progress === null ? null : { progress }
   } catch {
     return null
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+/** A game's progress joined to the profile's: carried from another computer or another build. */
+async function loadProgress(fileName: string, progress: ProgressData) {
+  const entry = entries.value.find(candidate => candidate.id === progress.game.id)
+  if (entry === undefined) {
+    errorMessage.value = text.value.progressOfGameNotInstalled(fileName, progress.game.name)
+    return
+  }
+  const own = await props.saveStore.readProgress(entry.id) ?? emptyProgressOf({ id: entry.id, name: entry.name })
+  if (!await props.saveStore.writeProgress(entry.id, mergeProgress(own, progress))) {
+    errorMessage.value = text.value.progressNotWritten(entry.name)
+    return
+  }
+  message.value = text.value.progressLoaded(entry.name)
+  await refresh()
+}
+
+const PROGRESS_FILE_KEPT_MILLISECONDS = 60_000
+
+/** The progress of a game as a file, made as the link is followed: the link then downloads it. */
+function prepareProgressFile(event: MouseEvent, entry: LibraryEntry) {
+  const progress = progressByGame.value.get(entry.id)
+  const link = event.currentTarget as HTMLAnchorElement
+  if (progress === undefined) {
+    event.preventDefault()
+    return
+  }
+  const url = URL.createObjectURL(new Blob([JSON.stringify(progress, null, 2)], { type: 'application/json' }))
+  link.href = url
+  setTimeout(() => URL.revokeObjectURL(url), PROGRESS_FILE_KEPT_MILLISECONDS)
 }
 
 function onSaveChosen(input: HTMLInputElement) {
@@ -290,6 +337,7 @@ function onDrop(event: DragEvent) {
             <button v-if="card.hasMap" class="button" @click="openMap(card.entry)">{{ text.map }}</button>
             <button v-if="card.entry.illustrationCount > 0" class="button" @click="openMap(card.entry, 'gallery')">{{ text.gallery }}</button>
             <button v-if="card.entry.credits !== ''" class="link-button" @click="shownCredits = shownCredits === card.entry.id ? null : card.entry.id">{{ text.credits }}</button>
+            <a v-if="progressByGame.has(card.entry.id)" class="link-button" href="#" :download="text.progressFileName(card.entry.name)" @click="prepareProgressFile($event, card.entry)">{{ text.progressToFile }}</a>
             <button class="link-button" @click="confirming = { gameId: card.entry.id, action: 'remove' }">{{ text.remove }}</button>
           </div>
           <p v-if="shownCredits === card.entry.id" class="credits">{{ card.entry.credits }}</p>

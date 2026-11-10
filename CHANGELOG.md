@@ -7,6 +7,9 @@
   General settings, was out of reach.
 - *Erase what Datajack keeps…*, below the games, removes every game, and if wished the profile's
   saves and progress (removing games alone keeps them, for when the games come back).
+- *Progress to a file*, on a game's card, writes its progress (endings, map, gallery, read pages,
+  lasting values) to carry to another computer or build; *Load a save or progress…* joins it to what
+  the profile had reached.
 - **Settings** in the library opens the profile's settings without starting a game: players find the
   accessibility settings before they need them.
 - Settings, Accessibility: the name over the text box slides to the character speaking, as before,

@@ -766,9 +766,12 @@ application's data folder.
 
 The game autosaves at every page and choice; Save and Load offer six slots more, each with a small
 picture of the stage as it was saved. The Save panel also
-offers the playthrough as a file (`<game> <date> <time>.json`), and the library's **Load a save…**
-(or dropping the `.json` on it) opens such a file in the current profile, on the web as on the
-desktop, provided its game is installed. Saves are plain
+offers the playthrough as a file (`<game> <date> <time>.json`), and the library's **Load a save or
+progress…** (or dropping the `.json` on it) opens such a file in the current profile, on the web as
+on the desktop, provided its game is installed. A game's card offers its **progress as a file**
+(endings, map, gallery, read pages, lasting values), to carry to another computer or another build,
+nothing being online: loaded the same way, it joins what the profile had reached, its lasting values
+and language taken over. Saves are plain
 JSON with decisions, background, music, characters (with their depth), the cover of a fade, the
 tint, the text mode (and in full-screen text, the pages already on the screen) and the illustration
 shown, by name, plus the list of options picked.
@@ -869,10 +872,6 @@ the SHA-256 in their name; and only save folders the player picked in the system
   decimal sign may not be what an English player meant (`1,000`), so the field shows, as it is
   typed, the number it understood, written as the game writes it (`13.37`), and refuses one with
   more decimals than the counter keeps, saying why.
-- **Progress as a file.** Saves can be written to a file, but not a game's progress (endings, map,
-  gallery, lasting values). Players should be able to export it, and load it back: to carry a game
-  over to another computer or another build (web to desktop, for instance) and play on where they
-  were, nothing of it being online.
 - **Opening a game in Cyberdeck.** An exported game holds what its project needs; Cyberdeck could
   open one as a project, for an author who lost theirs.
 

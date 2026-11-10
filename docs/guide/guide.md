@@ -469,7 +469,7 @@ The **Log** shows what they read and picked. Clicking a line goes back to it. Th
 
 ![The log: past lines with who said them, and the option picked, “Tell her the truth.”, in gold.](images/log.png)
 
-The game saves at every page. Save and Load add six slots, and **Save to a file** keeps a save as a file, to put aside or to carry to another computer. There, **Load a save…** in the library opens it, if the game is installed. Each save shows a small picture of the stage as it was. The **Map** shows each choice they have reached and where each option led, so that they can try another from there.
+The game saves at every page. Save and Load add six slots, and **Save to a file** keeps a save as a file, to put aside or to carry to another computer. There, **Load a save or progress…** in the library opens it, if the game is installed. Their progress (endings, map, gallery) goes with them the same way: **Progress to a file**, on the game's card. Each save shows a small picture of the stage as it was. The **Map** shows each choice they have reached and where each option led, so that they can try another from there.
 
 **Auto ▶** moves on by itself: a page with a voice waits for its line, another for the time it takes to read it. Any key or click takes over again.
 
