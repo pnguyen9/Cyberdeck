@@ -5,6 +5,8 @@
 ### Datajack, the player
 - Settings scroll when a category is taller than the screen: in Datajack, the language, last of the
   General settings, was out of reach.
+- **Settings** in the library opens the profile's settings without starting a game: players find the
+  accessibility settings before they need them.
 - Settings, Accessibility: the name over the text box slides to the character speaking, as before,
   jumps there, or stays put at the left, middle or right, for players whom the moving name
   distracts. It no longer slides for players whose system asks for less motion.

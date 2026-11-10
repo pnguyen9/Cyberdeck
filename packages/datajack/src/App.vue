@@ -8,6 +8,7 @@ import {
   MapView,
   PlayerView,
   provideLocale,
+  SettingsScreen,
   type PlayerSettings,
 } from '@cyberdeck/stage'
 import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
@@ -65,6 +66,9 @@ async function closeMap() {
   }
 }
 
+/** The player's settings, opened from the library, outside any game. */
+const settingsShown = ref(false)
+
 /** A game's gallery, with what this profile has seen of it. */
 const galleryShown = shallowRef<{ story: PlayableStory; progress: ProgressData } | null>(null)
 
@@ -103,6 +107,7 @@ onMounted(async () => {
       @play="playFrom"
       @close="closeMap"
     />
+    <SettingsScreen v-else-if="settingsShown" v-model="settings" v-model:language-choice="languageChoice" @close="settingsShown = false" />
     <GalleryView v-else-if="galleryShown !== null" :story="galleryShown.story" :progress="galleryShown.progress" @close="galleryShown = null" />
     <PlayerView
       v-else-if="playing !== null"
@@ -125,6 +130,7 @@ onMounted(async () => {
       @play="(story, resumeFrom) => playing = { story, resumeFrom }"
       @map="story => showMap(story, 'library')"
       @gallery="showGallery"
+      @settings="settingsShown = true"
       @switch-profile="profile = null"
     />
   </template>

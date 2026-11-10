@@ -8,7 +8,7 @@ import type { GameLibrary, LibraryEntry } from './gameLibrary'
 
 const props = defineProps<{ library: GameLibrary; saveStore: SaveStore; profileName: string }>()
 const languageChoice = defineModel<LanguageChoice>('languageChoice', { required: true })
-const emit = defineEmits<{ play: [story: PlayableStory, resumeFrom: SaveData | null]; map: [story: PlayableStory]; gallery: [story: PlayableStory]; switchProfile: [] }>()
+const emit = defineEmits<{ play: [story: PlayableStory, resumeFrom: SaveData | null]; map: [story: PlayableStory]; gallery: [story: PlayableStory]; settings: []; switchProfile: [] }>()
 
 const entries = shallowRef<LibraryEntry[]>([])
 const autosaves = shallowRef<ReadonlyMap<string, SaveData>>(new Map())
@@ -203,6 +203,7 @@ function onDrop(event: DragEvent) {
           <span>{{ text.language }}</span>
           <LanguageSelect v-model="languageChoice" />
         </label>
+        <button class="button" @click="emit('settings')">{{ text.settings }}</button>
         <button class="profile-button" @click="emit('switchProfile')">{{ profileName }} <span class="switch">· {{ text.switchProfile }}</span></button>
       </div>
     </header>

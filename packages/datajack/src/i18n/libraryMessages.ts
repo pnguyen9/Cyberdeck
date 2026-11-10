@@ -3,6 +3,7 @@ import type { InstallOutcome } from '../library/gameLibrary'
 /** The library of installed games. */
 const en = {
   switchProfile: 'Switch profile',
+  settings: 'Settings',
   language: 'Language',
   installing: 'Installing…',
   addGame: 'Add a game…',
@@ -46,6 +47,7 @@ type LibraryMessages = typeof en
 
 const fr: LibraryMessages = {
   switchProfile: 'Changer de profil',
+  settings: 'Paramètres',
   language: 'Langue',
   installing: 'Installation…',
   addGame: 'Ajouter un jeu…',

@@ -672,9 +672,10 @@ and selected chapters; the last two are this archive, made from a project's *Exp
 ### Library
 
 After the profile, Datajack opens the library: the installed games with their cover, description,
-release and chapters (those not installed counted, named, or not mentioned, as the author chose), *Continue* from the profile's autosave, *New
-game*, credits, the *Map* and the *Gallery* of illustrations seen, and removal (saves are kept).
-*Add a game…* or dropping an archive installs it. A game in several languages has **Play in** on
+release and chapters (those not installed counted, named, or not mentioned, as the author chose),
+*Continue* from the profile's autosave, *New game*, credits, the *Map* and the *Gallery* of
+illustrations seen, and removal (saves are kept). *Add a game…* or dropping an archive installs it.
+**Settings** opens the profile's settings without starting a game, the same as in a game. A game in several languages has **Play in** on
 its card: the language picked is kept for that game, by each profile; Datajack's own is taken first when
 the game has it. A save resumes in the language it was played in; one loaded in another language from
 the game's own Load panel resumes at the start of its chapter, with its decisions. On
@@ -818,10 +819,8 @@ the SHA-256 in their name; and only save folders the player picked in the system
   with a web address, and leaves them all (see [Erasing what the web builds
   store](#erasing-what-the-web-builds-store)). Each application should offer to erase everything it
   stores.
-- **Settings from the library.** Datajack's Settings should open from the library, without starting a
-  game: settings for every game, and for those who want, a game's own, from its card. Players would
-  then find the accessibility settings by themselves, such as untimed choices for those who cannot
-  answer in time, rather than being told about them.
+- **A game's own settings.** Settings open from the library, for every game; a game's own, from
+  its card, could set some apart for that game (a slower text for one, a louder music for another).
 - **The name plate's place, for authors.** Players choose in Settings whether the name slides to the
   character speaking, jumps there or stays put. Authors cannot choose it for their game yet: a game
   could say the name stays at the left, players' own choice still winning; and for a game that says
