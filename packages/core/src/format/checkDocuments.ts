@@ -201,7 +201,8 @@ function condition(value: unknown, path: string, depth: number): StoredCondition
     return object({ type: oneOf('endingSeen'), endingId: string, negated: boolean })(value, path)
   }
   if (fields.type === 'counter') {
-    return object({ type: oneOf('counter'), counterId: string, operator: oneOf('=', '!=', '<', '<=', '>', '>='), amount: integer })(value, path)
+    const compared = object({ type: oneOf('counter'), counterId: string, operator: oneOf('=', '!=', '<', '<=', '>', '>='), amount: integer })(value, path)
+    return fields.otherCounterId === undefined ? compared : { ...compared, otherCounterId: string(fields.otherCounterId, `${path}.otherCounterId`) }
   }
   if (fields.type === 'and' || fields.type === 'or') {
     const conditions = Array.isArray(fields.conditions) ? fields.conditions : fail(`${path}.conditions`, 'a list')
@@ -263,6 +264,10 @@ function node(value: unknown, path: string, depth: number): StoredNode {
       return object({ type: oneOf('unset'), id: string, decisionId: string, valueId: nullable(string) })(value, path)
     case 'count': {
       const count: StoredCount = object({ type: oneOf('count'), id: string, counterId: string, operation: oneOf('add', 'set', 'random'), amount: integer })(value, path)
+      if (fields.from !== undefined) {
+        const from = record(fields.from, `${path}.from`)
+        count.from = { counterId: string(from.counterId, `${path}.from.counterId`), factor: finiteNumber(from.factor, `${path}.from.factor`) }
+      }
       if (count.operation === 'random') {
         const maximum = integer(fields.maximum, `${path}.maximum`)
         count.maximum = maximum >= count.amount ? maximum : fail(`${path}.maximum`, 'a number at least the lowest one')

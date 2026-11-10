@@ -113,7 +113,7 @@ export type Condition =
    * `Trust >= 3`: a counter compared with a number. `Trust is 3` reads as `is`, a decision's test,
    * until the name is known to be a counter's.
    */
-  | { type: 'compare'; counter: string; operator: '<' | '<=' | '>' | '>='; amount: number }
+  | { type: 'compare'; counter: string; operator: '<' | '<=' | '>' | '>='; amount: number; other?: string }
   | { type: 'and' | 'or'; conditions: Condition[] }
   /** Kept so that the branch still appears in the preview; the import reports it as an error. */
   | { type: 'invalid'; text: string }
@@ -146,6 +146,14 @@ export interface AddNode {
   sourceLine: number
   counter: string
   amount: number
+  /** `[add: Money -{Bet}]`, `[add: Money {Bet} * 2.5]`: what another counter holds, times a factor, instead of `amount`. */
+  from?: CounterValue
+}
+
+/** Another counter's value, times a factor: `{Bet}`, `-{Bet}`, `{Bet} * 1.5`. */
+export interface CounterValue {
+  counter: string
+  factor: number
 }
 
 /**

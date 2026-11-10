@@ -188,6 +188,9 @@ function valueReads(story: PlayableStory): readonly ValueRead[] {
       for (const node of nodes) {
         switch (node.type) {
           case 'count':
+            if (node.from !== undefined) {
+              read([node.from.counterId], node, given)
+            }
             if (node.operation === 'add') {
               read([node.counterId], node, given)
             } else {

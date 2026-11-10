@@ -626,7 +626,9 @@ export class StoryRuntime {
           this.undecide(node.decisionId, node.valueId)
           break
         case 'count': {
-          let count = node.operation === 'add' ? this.countOf(node.counterId) + node.amount : node.amount
+          // Another counter's value, `{Bet} * 2.5`, in this counter's units, rounded to what it keeps.
+          const amount = node.from === undefined ? node.amount : Math.round(this.inUnitsOf(this.countOf(node.from.counterId), node.from.counterId, node.counterId) * node.from.factor)
+          let count = node.operation === 'add' ? this.countOf(node.counterId) + amount : amount
           let seed = this.currentSnapshot.seed
           if (node.operation === 'random') {
             const draw = drawFrom(seed)
@@ -747,6 +749,11 @@ export class StoryRuntime {
     this.currentSnapshot = { ...this.currentSnapshot, counters }
   }
 
+  /** A number in one counter's units, in another's: hundredths of a dollar as whole dollars, or back. */
+  private inUnitsOf(units: number, fromCounterId: string, toCounterId: string): number {
+    return units * 10 ** ((this.counterDecimals.get(toCounterId) ?? 0) - (this.counterDecimals.get(fromCounterId) ?? 0))
+  }
+
   private countOf(counterId: string): number {
     return Object.hasOwn(this.currentSnapshot.counters, counterId) ? this.currentSnapshot.counters[counterId] ?? 0 : this.initialCounts.get(counterId) ?? 0
   }
@@ -754,6 +761,11 @@ export class StoryRuntime {
   private holds(condition: StoredCondition): boolean {
     switch (condition.type) {
       case 'counter':
+        if (condition.otherCounterId !== undefined) {
+          // Two counters compared as numbers, whatever decimals each keeps.
+          const scale = (counterId: string) => 10 ** (this.counterDecimals.get(counterId) ?? 0)
+          return compare(this.countOf(condition.counterId) / scale(condition.counterId), condition.operator, this.countOf(condition.otherCounterId) / scale(condition.otherCounterId))
+        }
         return compare(this.countOf(condition.counterId), condition.operator, condition.amount)
       case 'is': {
         const isHeld = this.heldValues(condition.decisionId).includes(condition.valueId)

@@ -1,6 +1,6 @@
 import { firstLanguageOf } from './languages'
 import type { AskBound, Condition, Directive, ImportResult, ShownDeclaration, StoryNode, StyleDeclaration } from '../importer/importTypes'
-import { readAmount, readDraw, readRandom } from '../importer/readControl'
+import { readAmount, readCounterValue, readDraw, readRandom } from '../importer/readControl'
 import { flattenNodes, normalizeName } from '../importer/storyNodes'
 import { interpretStageDirective } from '../stage/stageDirectives'
 import { checkAuthorCss, styleClassName } from './authorCss'
@@ -189,6 +189,10 @@ export function storeImport(
       case 'set': {
         const counter = counters.get(node.decision)
         if (counter !== undefined) {
+          const copied = readCounterValue(node.value)
+          if (copied !== null) {
+            return { type: 'count', id, counterId: counter.id, operation: 'set', amount: 0, from: { counterId: counters.find(copied.counter).id, factor: copied.factor } }
+          }
           const random = readRandom(node.value)
           return random === null
             ? { type: 'count', id, counterId: counter.id, operation: 'set', amount: unitsOf(amountOf(node.value), counter) }
@@ -215,6 +219,9 @@ export function storeImport(
       }
       case 'add': {
         const counter = counters.find(node.counter)
+        if (node.from !== undefined) {
+          return { type: 'count', id, counterId: counter.id, operation: 'add', amount: 0, from: { counterId: counters.find(node.from.counter).id, factor: node.from.factor } }
+        }
         return { type: 'count', id, counterId: counter.id, operation: 'add', amount: unitsOf(node.amount, counter) }
       }
       case 'unset': {
@@ -551,6 +558,10 @@ function storeCondition(condition: Condition, decisions: DecisionRegistry, count
     case 'is': {
       const counter = counters.get(condition.decision)
       if (counter !== undefined) {
+        const other = valueNamedIn(condition.value)
+        if (other !== null) {
+          return { type: 'counter', counterId: counter.id, operator: condition.negated ? '!=' : '=', amount: 0, otherCounterId: counters.find(other).id }
+        }
         return { type: 'counter', counterId: counter.id, operator: condition.negated ? '!=' : '=', amount: unitsOf(amountOf(condition.value), counter) }
       }
       const decision = decisions.find(condition.decision)
@@ -558,6 +569,9 @@ function storeCondition(condition: Condition, decisions: DecisionRegistry, count
     }
     case 'compare': {
       const counter = counters.find(condition.counter)
+      if (condition.other !== undefined) {
+        return { type: 'counter', counterId: counter.id, operator: condition.operator, amount: 0, otherCounterId: counters.find(condition.other).id }
+      }
       return { type: 'counter', counterId: counter.id, operator: condition.operator, amount: unitsOf(condition.amount, counter) }
     }
     case 'remembered':

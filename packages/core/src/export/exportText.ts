@@ -1,6 +1,6 @@
 import { writtenAmount } from '../format/counterNumbers'
 import { valueWritten } from '../format/valueTags'
-import { describeAskNumber, describeCopy, describeDraw } from '../storyboard/describeNodes'
+import { counterValueText, describeAskNumber, describeCopy, describeDraw } from '../storyboard/describeNodes'
 import { firstLanguageOf } from '../format/languages'
 import { effectText } from '../storyboard/describeNodes'
 import { ENDINGS_REACHED, flattenStoredNodes } from '../format/storyFormat'
@@ -311,9 +311,10 @@ class TextWriter {
         case 'count': {
           const name = this.counterName(node.counterId)
           const amount = (units: number) => this.amount(units, node.counterId)
-          this.line(node.operation === 'add' ? `[add: ${name} ${amount(node.amount)}]`
+          const from = node.from === undefined ? null : counterValueText(node.from, this.project)
+          this.line(node.operation === 'add' ? `[add: ${name} ${from ?? amount(node.amount)}]`
             : node.operation === 'random' ? `[set: ${name} = random ${amount(node.amount)} ${amount(node.maximum ?? node.amount)}]`
-              : `[set: ${name} = ${amount(node.amount)}]`)
+              : `[set: ${name} = ${from ?? amount(node.amount)}]`)
           break
         }
         case 'unset': {
@@ -430,7 +431,7 @@ class TextWriter {
   private requirement(requirement: Exclude<StoredCondition, { type: 'and' | 'or' }>): string {
     if (requirement.type === 'counter') {
       const name = this.counterName(requirement.counterId)
-      const amount = this.amount(requirement.amount, requirement.counterId)
+      const amount = requirement.otherCounterId === undefined ? this.amount(requirement.amount, requirement.counterId) : `{${this.counterName(requirement.otherCounterId)}}`
       return requirement.operator === '=' ? `${name} is ${amount}`
         : requirement.operator === '!=' ? `${name} is not ${amount}`
           : `${name} ${requirement.operator} ${amount}`

@@ -8,7 +8,7 @@ import { styleClassName } from '../format/authorCss'
 import { placeholdersIn } from '../format/textValues'
 import { readStyleProperty } from '../format/textStyles'
 import type { Condition, ImportedChapter, ImportProblem, ImportResult, StoryNode } from './importTypes'
-import { decimalsOf, decimalsWritten, readAmount, readDraw, readRandom } from './readControl'
+import { decimalsOf, decimalsWritten, readAmount, readCounterValue, readDraw, readRandom } from './readControl'
 import { flattenNodes, normalizeName } from './storyNodes'
 
 /**
@@ -198,6 +198,14 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
   }
   /** A counter takes a number where a decision takes one of its values. */
   const checkCounterValue = (name: string, value: string, line: number, mayDraw = false) => {
+    // Another counter's value, `{Points}`: it must be a counter.
+    const other = readCounterValue(value)
+    if (other !== null) {
+      if (!isCounter(other.counter)) {
+        problems.push({ severity: 'error', code: 'unknownCounter', line, subject: other.counter })
+      }
+      return
+    }
     const draw = mayDraw ? readRandom(value) : null
     if (readAmount(value) === null && draw === null) {
       problems.push({ severity: 'error', code: 'counterNeedsNumber', line, subject: `${name}: ${value}` })
@@ -215,7 +223,9 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
         checkValue(part.decision, part.value, line)
       } else if (part.type === 'compare' && !isCounter(part.counter)) {
         problems.push({ severity: 'error', code: 'unknownCounter', line, subject: part.counter })
-      } else if (part.type === 'compare') {
+      } else if (part.type === 'compare' && part.other !== undefined && !isCounter(part.other)) {
+        problems.push({ severity: 'error', code: 'unknownCounter', line, subject: part.other })
+      } else if (part.type === 'compare' && part.other === undefined) {
         checkPrecision(part.counter, decimalsOf(part.amount), String(part.amount), line)
       } else if (part.type === 'remembered' && !memories.has(normalizeName(part.memory))) {
         problems.push({ severity: 'error', code: 'unknownMemory', line, subject: part.memory })
@@ -258,7 +268,11 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
         checkValue(node.decision, node.value, node.sourceLine)
       }
     }
-    if (node.type === 'add') {
+    if (node.type === 'add' && node.from !== undefined) {
+      if (!isCounter(node.from.counter)) {
+        problems.push({ severity: 'error', code: 'unknownCounter', line: node.sourceLine, subject: node.from.counter })
+      }
+    } else if (node.type === 'add') {
       checkPrecision(node.counter, decimalsOf(node.amount), String(node.amount), node.sourceLine)
     }
     if (node.type === 'askNumber') {

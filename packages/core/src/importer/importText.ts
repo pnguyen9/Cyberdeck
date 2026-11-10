@@ -455,7 +455,7 @@ class TextImporter {
           return
         }
         this.flushPendingDirectives()
-        this.addNode({ type: 'add', sourceLine: lineNumber, counter: addition.name, amount: addition.amount })
+        this.addNode({ type: 'add', sourceLine: lineNumber, counter: addition.name, amount: addition.amount, ...(addition.from === undefined ? {} : { from: addition.from }) })
         return
       }
       case 'choice': {

@@ -107,6 +107,9 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
         break
       case 'counter':
         use('counter', condition.counterId, { role: 'tested', documentId, nodeId })
+        if (condition.otherCounterId !== undefined) {
+          use('counter', condition.otherCounterId, { role: 'tested', documentId, nodeId })
+        }
         break
       case 'remembered':
         use('memory', condition.memoryId, { role: 'tested', documentId, nodeId })
@@ -156,6 +159,9 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
           break
         case 'count':
           use('counter', node.counterId, { role: 'changed', documentId, nodeId })
+          if (node.from !== undefined) {
+            use('counter', node.from.counterId, { role: 'tested', documentId, nodeId })
+          }
           break
         case 'copy':
           use('decision', node.decisionId, { role: 'set', documentId, nodeId })

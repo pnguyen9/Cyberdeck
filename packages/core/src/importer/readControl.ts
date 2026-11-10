@@ -1,4 +1,4 @@
-import type { AskBound, Condition, Directive } from './importTypes'
+import type { AskBound, Condition, CounterValue, Directive } from './importTypes'
 
 /** Directives that shape the story rather than the stage. They must be alone on their line. */
 export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
@@ -116,8 +116,23 @@ export function readCounterDeclaration(text: string): { name: string; initial: n
   return assignment === null || initial === null ? null : { name: assignment.name, initial, decimals: decimalsWritten(assignment.value) }
 }
 
-/** `Trust 2`, `Trust -1` → name and amount; `Trust` alone adds 1. Null without a name. */
-export function readAddition(text: string): { name: string; amount: number } | null {
+/** `{Bet}`, `-{Bet}`, `{Bet} * 1.5` → another counter's value times a factor; null for anything else. */
+export function readCounterValue(text: string): CounterValue | null {
+  const value = /^([+-])?\s*\{([^{}]+)\}\s*(?:\*\s*([+-]?\d+(?:\.\d+)?))?$/.exec(text.trim())
+  if (value === null) {
+    return null
+  }
+  const factor = (value[1] === '-' ? -1 : 1) * (value[3] === undefined ? 1 : Number(value[3]))
+  return Number.isFinite(factor) ? { counter: value[2]!.trim(), factor } : null
+}
+
+/** `Trust 2`, `Trust -1` → name and amount; `Trust` alone adds 1; `Money -{Bet}` another counter's value. Null without a name. */
+export function readAddition(text: string): { name: string; amount: number; from?: CounterValue } | null {
+  const withValue = /^(.*\S)\s+([+-]?\s*\{[^{}]+\}(?:\s*\*\s*[+-]?\d+(?:\.\d+)?)?)$/.exec(text.trim())
+  const from = withValue === null ? null : readCounterValue(withValue[2]!)
+  if (withValue !== null && from !== null) {
+    return { name: withValue[1]!.trim(), amount: 0, from }
+  }
   const withAmount = /^(.*\S)\s+([+-]?\d+(?:\.\d+)?)$/.exec(text.trim())
   const amount = withAmount === null ? 1 : readAmount(withAmount[2]!)
   const name = withAmount === null ? text.trim() : withAmount[1]!
@@ -198,6 +213,10 @@ function readComparison(text: string): Condition | null {
     const name = (flag[3] ?? '').trim()
     const negated = flag[1] !== undefined
     return /^remembered$/i.test(flag[2] ?? '') ? { type: 'remembered', memory: name, negated } : { type: 'endingSeen', ending: name, negated }
+  }
+  const versus = /^(.+?)\s*(<=|>=|<|>)\s*\{([^{}]+)\}$/.exec(text.trim())
+  if (versus !== null) {
+    return { type: 'compare', counter: versus[1]!.trim(), operator: versus[2] as '<' | '<=' | '>' | '>=', amount: 0, other: versus[3]!.trim() }
   }
   const counter = /^(.+?)\s*(<=|>=|<|>)\s*([+-]?\d+(?:\.\d+)?)$/.exec(text.trim())
   if (counter !== null) {

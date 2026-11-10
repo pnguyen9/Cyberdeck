@@ -474,7 +474,8 @@ export type CounterOperator = '=' | '!=' | '<' | '<=' | '>' | '>='
 export type StoredCondition =
   | { type: 'is'; decisionId: string; valueId: string; negated: boolean }
   /** The counter compared with `amount`: `Trust >= 3`. Since 1.3. */
-  | { type: 'counter'; counterId: string; operator: CounterOperator; amount: number }
+  /** `otherCounterId`: compared with what another counter holds, `Money >= {Bet}`, in place of `amount`. Since 2.1. */
+  | { type: 'counter'; counterId: string; operator: CounterOperator; amount: number; otherCounterId?: string }
   | { type: 'remembered'; memoryId: string; negated: boolean }
   | { type: 'endingSeen'; endingId: string; negated: boolean }
   | { type: 'and' | 'or'; conditions: StoredCondition[] }
@@ -510,6 +511,8 @@ export interface StoredCount {
   counterId: string
   operation: 'add' | 'set' | 'random'
   amount: number
+  /** `[add: Money -{Bet}]`, `[set: Score = {Points}]`: another counter's value times `factor`, in place of `amount`. Since 2.1. */
+  from?: { counterId: string; factor: number }
   /** For `random`: the highest number drawn, `amount` the lowest. */
   maximum?: number
 }
@@ -650,7 +653,7 @@ export function testedIdsIn(condition: StoredCondition): string[] {
     case 'is':
       return [condition.decisionId]
     case 'counter':
-      return [condition.counterId]
+      return condition.otherCounterId === undefined ? [condition.counterId] : [condition.counterId, condition.otherCounterId]
     case 'remembered':
     case 'endingSeen':
       return []

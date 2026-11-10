@@ -1,7 +1,7 @@
 import { entriesNamedByValue } from '../format/valueTags'
 import { checkChapterDocument, checkProjectDocument, DocumentError, isPlainIdentifier } from '../format/checkDocuments'
 import { chapterIn, languagesOf } from '../format/languages'
-import { commandsOf, expressionAssetId, flattenStoredNodes, mapInnerLists, type Asset, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredNode } from '../format/storyFormat'
+import { commandsOf, expressionAssetId, flattenStoredNodes, mapInnerLists, type Asset, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredCondition, type StoredNode } from '../format/storyFormat'
 import { STYLE_PROPERTIES_OF_1_1 } from '../format/textStyles'
 import { isAskableName, placeholdersAsWritten } from '../format/textValues'
 import { drawsNumbers } from '../runtime/chance'
@@ -263,6 +263,18 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
   ], source.exportedAt)
 }
 
+/** The conditions a node tests: its branches', or its options'. */
+function conditionsOf(node: StoredNode): StoredCondition[] {
+  return node.type === 'condition' ? node.branches.flatMap(branch => branch.condition === null ? [] : [branch.condition])
+    : node.type === 'choice' ? node.options.flatMap(option => option.condition === null ? [] : [option.condition]) : []
+}
+
+/** Whether a condition compares two counters, `Money >= {Bet}`, which Datajack 2.0 does not read. */
+function comparesCounters(condition: StoredCondition): boolean {
+  return condition.type === 'counter' ? condition.otherCounterId !== undefined
+    : condition.type === 'and' || condition.type === 'or' ? condition.conditions.some(comparesCounters) : false
+}
+
 /**
  * The oldest format that holds the game, so that players who have not updated Datajack can still
  * play what it draws. 1.1, which Datajack 1.0 reads, unless the game uses what 1.0 would refuse
@@ -284,7 +296,7 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   const needsDatajack20 = languagesOf(project).length > 1 || project.decisions.some(decision => decision.lasting === true) || project.counters.some(counter => counter.lasting === true)
     || documents.some(document => flattenStoredNodes(document.nodes).some(node => (node.type === 'remember' && node.forget === true) || (node.type === 'choice' && node.timeLimitMs !== undefined)))
   // An older Datajack refuses a command it does not know, and would count a counter's hundredths as whole numbers.
-  if (project.counters.some(counter => (counter.decimals ?? 0) > 0 || counter.clock !== undefined) || project.characters.some(character => character.picturesFrom !== undefined) || documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'askNumber' || node.type === 'draw' || node.type === 'copy'
+  if (project.counters.some(counter => (counter.decimals ?? 0) > 0 || counter.clock !== undefined) || project.characters.some(character => character.picturesFrom !== undefined) || documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'askNumber' || node.type === 'draw' || node.type === 'copy' || (node.type === 'count' && node.from !== undefined) || conditionsOf(node).some(comparesCounters)
     || commandsOf(node).some(command => command.type === 'continued' || ('from' in command && command.from !== undefined))))) {
     return '2.1'
   }

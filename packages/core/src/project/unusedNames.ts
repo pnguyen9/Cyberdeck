@@ -70,6 +70,9 @@ export function unusedNames(project: ProjectDocument, documents: readonly Chapte
         break
       case 'counter':
         used.add(condition.counterId)
+        if (condition.otherCounterId !== undefined) {
+          used.add(condition.otherCounterId)
+        }
         break
       case 'and':
       case 'or':
@@ -111,6 +114,9 @@ export function unusedNames(project: ProjectDocument, documents: readonly Chapte
         break
       case 'count':
         used.add(node.counterId)
+        if (node.from !== undefined) {
+          used.add(node.from.counterId)
+        }
         break
       case 'copy':
         used.add(node.decisionId)

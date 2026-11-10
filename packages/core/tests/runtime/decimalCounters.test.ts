@@ -121,3 +121,39 @@ describe('a number asked for', () => {
     expect(checkReferences(imported).map(problem => `${problem.code} ${problem.subject}`)).toEqual(['unknownCounter Mony'])
   })
 })
+
+describe('a counter counting with another', () => {
+  const BET = [
+    '[counter: Money = 100.00]',
+    '[counter: Bet = 10]',
+    '[counter: Hand = 0]',
+    '[add: Money -{Bet}]',
+    'Bet placed: {Money} left.',
+    '[if: Money >= {Bet}]',
+    'You could bet again.',
+    '[end]',
+    '[add: Money {Bet} * 2.5]',
+    '[set: Hand = {Bet}]',
+    'Paid 3 to 2: {Money}, hand {Hand}.',
+  ]
+
+  it('adds, takes and sets what another holds, times a factor, whatever decimals each keeps, and compares with it', () => {
+    const story = storyFromText(BET)
+    const runtime = new StoryRuntime(story)
+    runtime.start()
+    expect(shownText(runtime)).toBe('Bet placed: 90.00 left.')
+    runtime.next()
+    expect(shownText(runtime)).toBe('You could bet again.')
+    runtime.next()
+    expect(shownText(runtime)).toBe('Paid 3 to 2: 115.00, hand 10.')
+  })
+
+  it('writes back as written, reports a value naming no counter, and needs Datajack 2.1', () => {
+    const story = storyFromText(BET)
+    const written = exportText(story.project, story.chapters, { declareDecisions: true })
+    expect(['[add: Money -{Bet}]', '[if: Money >= {Bet}]', '[add: Money {Bet} * 2.5]', '[set: Hand = {Bet}]'].map(line => written.includes(line))).toEqual([true, true, true, true])
+    expect(playerFormatVersion(story.project, story.chapters)).toBe('2.1')
+    const imported = importText(['[counter: Money = 0]', '[add: Money {Bt}]', '[if: Money > {Bt}]', 'Hi.', '[end]'].join('\n'), { layout: monospaceLayout, locale: 'en' })
+    expect(checkReferences(imported).map(problem => `${problem.code} ${problem.subject}`)).toEqual(['unknownCounter Bt', 'unknownCounter Bt'])
+  })
+})

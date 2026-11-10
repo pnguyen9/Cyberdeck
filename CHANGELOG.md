@@ -39,6 +39,8 @@
 - `[set: Drawn = random not in Dealt]` draws a value of a decision, leaving out those another holds;
   `[set: Dealt = {Drawn}]` gives a decision the value named like another's.
 - `[character: card1 = card]`: a character showing another's pictures.
+- A counter counting with another: `[add: Money -{Bet}]`, `[add: Money {Bet} * 2.5]`,
+  `[set: Score = {Points}]`, `[if: Money >= {Bet}]`.
 - All of these need Datajack 2.1 (format 2.1).
 
 ### Cyberdeck, the editor

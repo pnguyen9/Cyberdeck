@@ -73,7 +73,8 @@ export function describeCondition(condition: StoredCondition, project: ProjectDo
     case 'counter': {
       const counter = project.counters.find(candidate => candidate.id === condition.counterId)
       const operator = condition.operator === '=' ? 'is' : condition.operator === '!=' ? 'is not' : condition.operator
-      return `${counter?.name ?? '?'} ${operator} ${writtenAmount(condition.amount, counter ?? {})}`
+      const other = condition.otherCounterId === undefined ? null : project.counters.find(candidate => candidate.id === condition.otherCounterId)
+      return `${counter?.name ?? '?'} ${operator} ${condition.otherCounterId === undefined ? writtenAmount(condition.amount, counter ?? {}) : `{${other?.name ?? '?'}}`}`
     }
     case 'is': {
       const decision = project.decisions.find(candidate => candidate.id === condition.decisionId)
@@ -102,9 +103,20 @@ export function describeCount(node: StoredCount, project: ProjectDocument): stri
   const counter = project.counters.find(candidate => candidate.id === node.counterId)
   const name = counter?.name ?? '?'
   const amount = (units: number) => writtenAmount(units, counter ?? {})
+  if (node.from !== undefined) {
+    const value = counterValueText(node.from, project)
+    return node.operation === 'set' ? `${name} = ${value}` : `${name} + ${value}`
+  }
   return node.operation === 'set' ? `${name} = ${amount(node.amount)}`
     : node.operation === 'random' ? `${name} = random ${amount(node.amount)}–${amount(node.maximum ?? node.amount)}`
       : `${name} ${node.amount < 0 ? '−' : '+'} ${amount(Math.abs(node.amount))}`
+}
+
+/** Another counter's value as a tag writes it: `{Bet}`, `-{Bet}`, `{Bet} * 2.5`. */
+export function counterValueText(from: { counterId: string; factor: number }, project: ProjectDocument): string {
+  const name = project.counters.find(counter => counter.id === from.counterId)?.name ?? '?'
+  const size = Math.abs(from.factor)
+  return `${from.factor < 0 ? '-' : ''}{${name}}${size === 1 ? '' : ` * ${size}`}`
 }
 
 /** `Dealt = {Drawn}`, as the tag is written. */

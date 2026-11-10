@@ -303,7 +303,7 @@ Players can give a number too: `[ask number: Bet = 10, from 1 to {Money}]` asks 
 
 Three counters come from the player's clock, with nothing to declare: `hour` (0 to 23), `weekday` (1 for Monday to 7 for Sunday) and `time away`, the minutes since they last played. `[if: hour >= 22 or hour < 6]` can put a character to sleep at night, and `[if: time away > 1440]` greet players back after a day.
 
-A decision's value can choose a picture: with `[decision: Mood = calm | angry]`, `[marie: {Mood}]` shows Marie's *calm* or *angry* picture, whichever Mood holds, with no `[if]`. `[set: Mood = random]` draws one of its values, and `[character: twin = marie]` lets a second character show Marie's pictures, without giving it files of its own.
+A decision's value can choose a picture: with `[decision: Mood = calm | angry]`, `[marie: {Mood}]` shows Marie's *calm* or *angry* picture, whichever Mood holds, with no `[if]`. Counters can count with each other too: `[add: Money -{Bet}]`, `[if: Money >= {Bet}]`. `[set: Mood = random]` draws one of its values, and `[character: twin = marie]` lets a second character show Marie's pictures, without giving it files of its own.
 
 ## 12. Keeping track of decisions
 

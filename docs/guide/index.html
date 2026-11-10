@@ -505,7 +505,8 @@ the field tells them what it understood, and what it cannot take.</p>
 <code>[if: time away > 1440]</code> greet players back after a day.</p>
 <p>A decision's value can choose a picture: with <code>[decision: Mood = calm | angry]</code>,
 <code>[marie: {Mood}]</code> shows Marie's <em>calm</em> or <em>angry</em> picture, whichever Mood holds, with no
-<code>[if]</code>. <code>[set: Mood = random]</code> draws one of its values, and <code>[character: twin = marie]</code>
+<code>[if]</code>. Counters can count with each other too: <code>[add: Money -{Bet}]</code>,
+<code>[if: Money >= {Bet}]</code>. <code>[set: Mood = random]</code> draws one of its values, and <code>[character: twin = marie]</code>
 lets a second character show Marie's pictures, without giving it files of its own.</p>
 
 <h2 id="tracking">12. Keeping track of decisions</h2>
