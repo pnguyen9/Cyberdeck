@@ -14,13 +14,15 @@
 ### Cyberdeck, the editor
 - Exporting only some chapters, the author chooses what players see of those left out: their
   titles, only how many there are (the default, the titles giving nothing away), or nothing, the
-  game seeming whole, for a story still being written or kept a mystery.
+  game seeming whole, for a story still being written or kept a mystery; the endings only those
+  chapters lead to then go uncounted too, until they are installed.
 - In the tree view, a long condition wraps inside its box, rather than running out of a pill's round
   ends.
 
 ### Samples
 - A mini game, rock, paper, scissors, in `docs/sample/minigames/`, its sounds made by code.
 - Sakura Week plays each extra scene of a character once before any comes back.
+- Sakura Week names the coming day at the end of each chapter, for a game exported a day at a time.
 
 ## 2.0.3 — 2026-11-06
 

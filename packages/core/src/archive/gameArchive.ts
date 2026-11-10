@@ -34,6 +34,18 @@ export interface ArchivedChapter {
   included: boolean
   /** False for a chapter left out that players are not told of: neither named nor counted. */
   listed?: false
+  /** For such a chapter, the endings it alone leads to among those shipped: not counted either until it is installed. */
+  endingIds?: string[]
+}
+
+/** The endings players are not told of: those only chapters kept quiet about, and not installed, lead to. */
+export function uncountedEndingIds(chapters: readonly ArchivedChapter[]): Set<string> {
+  return new Set(chapters.filter(chapter => !chapter.included && chapter.listed === false).flatMap(chapter => chapter.endingIds ?? []))
+}
+
+/** The endings a document leads to. */
+function endingIdsIn(document: ChapterDocument): string[] {
+  return flattenStoredNodes(document.nodes).flatMap(node => node.type === 'ending' ? [node.endingId] : [])
 }
 
 /** What players learn of the chapters an archive leaves out: their titles, how many there are, or nothing. */
@@ -220,6 +232,8 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
     }),
   }
   const formatVersion = playerFormatVersion(shipped, everyText)
+  // Endings the shipped chapters and scenes lead to: players may reach those, so they are always counted.
+  const shippedEndingIds = new Set([...included, ...scenes].flatMap(endingIdsIn))
   const manifest: GameManifest = {
     archiveFormat: ARCHIVE_FORMAT,
     release,
@@ -228,11 +242,14 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
     chapters: project.chapterOrder.map(chapterId => {
       const isIncluded = includedChapterIds.includes(chapterId)
       const shown = isIncluded ? 'named' : source.leftOutChapters ?? 'named'
+      const document = chaptersById.get(chapterId)
+      const ownEndingIds = shown === 'hidden' && document !== undefined ? [...new Set(endingIdsIn(document))].filter(endingId => !shippedEndingIds.has(endingId)) : []
       return {
         id: chapterId,
-        title: shown === 'named' ? chaptersById.get(chapterId)?.title ?? null : null,
+        title: shown === 'named' ? document?.title ?? null : null,
         included: isIncluded,
         ...(shown === 'hidden' ? { listed: false as const } : {}),
+        ...(ownEndingIds.length === 0 ? {} : { endingIds: ownEndingIds }),
       }
     }),
     assetFiles,
@@ -531,7 +548,17 @@ export function checkGameManifest(value: unknown): GameManifest {
       if (chapterFields.listed !== undefined && chapterFields.listed !== false) {
         throw new DocumentError(`${path}.listed`, 'false, or nothing')
       }
-      return { id: chapterFields.id, title: chapterFields.title, included: chapterFields.included, ...(chapterFields.listed === false ? { listed: false as const } : {}) }
+      const endingIds = chapterFields.endingIds
+      if (endingIds !== undefined && !(Array.isArray(endingIds) && endingIds.every(endingId => typeof endingId === 'string'))) {
+        throw new DocumentError(`${path}.endingIds`, 'a list of identifiers')
+      }
+      return {
+        id: chapterFields.id,
+        title: chapterFields.title,
+        included: chapterFields.included,
+        ...(chapterFields.listed === false ? { listed: false as const } : {}),
+        ...(endingIds === undefined ? {} : { endingIds: endingIds as string[] }),
+      }
     })
     if (chapters.map(chapter => chapter.id).join('/') !== project.chapterOrder.join('/')) {
       throw new DocumentError('game.chapters', 'the chapters of game.project.chapterOrder')

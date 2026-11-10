@@ -286,6 +286,8 @@ function dismissTitleCard() {
 }
 
 const endingsReached = computed(() => props.story.project.endings.filter(ending => progress.value.endingIds.includes(ending.id)).length)
+/** The endings players are told of: those of chapters the game keeps quiet about only once reached. */
+const endingsCounted = computed(() => props.story.project.endings.filter(ending => !(props.story.uncountedEndingIds?.has(ending.id) ?? false) || progress.value.endingIds.includes(ending.id)).length)
 
 /**
  * Runs a runtime action and shows its new state; a story that loops becomes an error message,
@@ -1205,7 +1207,7 @@ onUnmounted(() => {
       <div v-if="snapshot.step.type === 'end' || errorMessage !== null" class="end-screen" @click.stop>
         <p :class="errorMessage === null ? ['ending-name', ...reservedStyleClasses(RESERVED_STYLE_NAMES.ending)] : []">{{ errorMessage ?? endingName ?? endWords }}</p>
         <p v-if="errorMessage === null && story.project.endings.length > 0" class="endings-count">
-          {{ storyText.endingsReached(endingsReached, story.project.endings.length) }}
+          {{ storyText.endingsReached(endingsReached, endingsCounted) }}
         </p>
         <div class="end-actions">
           <button v-if="canGoBack" class="end-button" @click="goBack">{{ text.back }}</button>

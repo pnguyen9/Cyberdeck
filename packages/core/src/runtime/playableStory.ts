@@ -7,6 +7,8 @@ export interface PlayableStory {
   chapters: ChapterDocument[]
   /** Where to load each asset from, by asset identifier: object URLs of the chip's files. */
   assetUrls: ReadonlyMap<string, string>
+  /** Endings only chapters not installed lead to, which the game keeps quiet about: not counted for players. */
+  uncountedEndingIds?: ReadonlySet<string>
 }
 
 /** The chapters in the order the project lists them; chapters it does not list are not played. */

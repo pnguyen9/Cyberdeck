@@ -17,6 +17,7 @@ import {
   type ProjectDocument,
   type StoredNode,
   type LeftOutChapters,
+  uncountedEndingIds,
 } from '../src/index'
 import { monospaceLayout } from './monospaceLayout'
 
@@ -168,6 +169,22 @@ describe('game archives', () => {
       { id: game.one.id, title: null, included: false, listed: false },
       { id: game.two.id, title: 'Two', included: true },
     ])
+  })
+
+  it('keeps quiet about the endings only the chapters it keeps quiet about lead to, until those are installed', async () => {
+    let nextId = 1
+    const environment = { createId: () => `id-${nextId++}`, now: () => '2026-10-26T09:00:00.000Z' }
+    const text = ['# One', '[choice: Way]', '> Stay = Stay', '> Go = Go', '[if: Way is Stay]', '[ending: Home]', '[end]', 'On.', '# Two', '[if: Way is Go]', '[ending: Home]', '[end]', '[ending: Far]'].join('\n')
+    const stored = storeImport(importText(text, { layout: monospaceLayout, locale: 'en' }), createProject({ name: 'Ways', locale: 'en' }, environment), { fileName: null }, environment)
+    const [one, two] = stored.chapters
+    const archive = await readGameArchive(await createGameArchive({
+      project: stored.project, chapters: stored.chapters, includedChapterIds: [one!.id], leftOutChapters: 'hidden', readAsset: async () => new Uint8Array(), release: '1.0', exportedAt: EXPORTED_AT,
+    }))
+    const far = stored.project.endings.find(ending => ending.name === 'Far')!
+    // Home is reached in the chapter shipped: only Far is kept quiet about.
+    expect(archive.manifest.chapters.find(chapter => chapter.id === two!.id)).toEqual({ id: two!.id, title: null, included: false, listed: false, endingIds: [far.id] })
+    expect([...uncountedEndingIds(archive.manifest.chapters)]).toEqual([far.id])
+    expect(uncountedEndingIds(archive.manifest.chapters.map(chapter => ({ ...chapter, included: true }))).size).toBe(0)
   })
 
   it('carries every scene with the assets it uses, even in an archive of a chapter that does not play it', async () => {

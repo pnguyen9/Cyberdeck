@@ -29,6 +29,7 @@ export {
   MEDIA_TYPES_BY_EXTENSION,
   mediaTypeOfFile,
   readGameArchive,
+  uncountedEndingIds,
   safeFileName,
   type ArchivedAssetFile,
   type ArchivedChapter,

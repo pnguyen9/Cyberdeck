@@ -784,9 +784,6 @@ the SHA-256 in their name; and only save folders the player picked in the system
 
 ### Problems
 
-- **Endings counted in chapters kept quiet about.** A game exported saying nothing of the chapters
-  it leaves out still counts every ending of the story, on its library card and its end screens
-  ("endings reached: 0 of 6"): the endings of those chapters should go uncounted too.
 - **The map loses its links.** After playing a game with only its first chapter, then installing the
   whole game, the map started rows over at its left edge: Chapter 2 began a row of its own, and the
   last scene of Chapter 6 sat alone in the first column instead of at the far right of its route.

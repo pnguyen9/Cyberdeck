@@ -9,6 +9,7 @@ import {
   languagesOf,
   projectIn,
   type PlayableStory,
+  uncountedEndingIds,
 } from '@cyberdeck/core'
 
 /**
@@ -80,7 +81,7 @@ export class GameLibrary {
         description: project.details.description,
         credits: project.details.credits,
         coverUrl: coverFile === undefined ? null : await this.storage.assetUrl(storedAssetFileName(coverFile)),
-        endingCount: project.endings.length,
+        endingCount: project.endings.filter(ending => !uncountedEndingIds(chapters).has(ending.id)).length,
         languages: languagesOf(project),
         illustrationCount: project.illustrations.length,
         chapters,
@@ -157,7 +158,12 @@ export class GameLibrary {
     }
     const languages = languagesOf(manifest.project)
     const played = language !== null && languages.includes(language) ? language : languages[0]!
-    return { project: projectIn(manifest.project, played), chapters: chapters.map(chapter => chapterIn(chapter, played, manifest.project)), assetUrls }
+    return {
+      project: projectIn(manifest.project, played),
+      chapters: chapters.map(chapter => chapterIn(chapter, played, manifest.project)),
+      assetUrls,
+      uncountedEndingIds: uncountedEndingIds(manifest.chapters),
+    }
   }
 }
 

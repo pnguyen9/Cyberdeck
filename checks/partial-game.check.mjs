@@ -1,6 +1,7 @@
 // A game exported with only its first chapter, the second kept quiet about, played in Datajack: the
-// library counts one chapter; running out of chapters is no ending; the end screen says the story goes on, in the words the route taken gave, and the map shows
-// no end where the next chapter is.
+// library counts one chapter, and not the ending only that chapter leads to; running out of chapters
+// is no ending; the end screen says the story goes on, in the words the route taken gave, and the map
+// shows no end where the next chapter is.
 import { createProfile, createProjectWithStory, exportGame, installGame, pause, shownStep } from './harness.mjs'
 
 const STORY = `# Monday
@@ -28,7 +29,7 @@ export default async function check(page, { url, serve }) {
 
   await createProfile(page, await serve('datajack'), 'Pascal')
   await installGame(page, archive)
-  page.check('the library says nothing of the chapter left out', (await page.evaluate(`document.querySelector('.chapters')?.textContent.trim()`))?.startsWith('1 chapter ·'), true)
+  page.check('the library says nothing of the chapter left out, nor of the ending only it leads to', await page.evaluate(`document.querySelector('.chapters')?.textContent.trim()`), '1 chapter')
   await page.clickButton('Play', '.button')
   await page.waitFor('.viewport')
   await pause(500)
