@@ -1,3 +1,4 @@
+import { entriesNamedByValue } from '../format/valueTags'
 import { placeholdersIn } from '../format/textValues'
 import { normalizeName } from '../importer/storyNodes'
 import { flattenStoredNodes, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredCondition, type StoredNode } from '../format/storyFormat'
@@ -21,6 +22,11 @@ export type UnusedName =
 export function unusedNames(project: ProjectDocument, documents: readonly ChapterDocument[]): UnusedName[] {
   const used = new Set<string>()
   const useCommand = (command: StageCommand) => {
+    // A picture chosen by a decision's value uses the pictures of all its values.
+    entriesNamedByValue(command, project).forEach(id => used.add(id))
+    if ((command.type === 'enter' || command.type === 'expression' || command.type === 'background' || command.type === 'illustration') && command.from !== undefined) {
+      used.add(command.from)
+    }
     switch (command.type) {
       case 'background':
         used.add(command.backgroundId)
@@ -106,6 +112,16 @@ export function unusedNames(project: ProjectDocument, documents: readonly Chapte
       case 'count':
         used.add(node.counterId)
         break
+      case 'copy':
+        used.add(node.decisionId)
+        used.add(node.fromDecisionId)
+        break
+      case 'draw':
+        used.add(node.decisionId)
+        if (node.notInDecisionId !== null) {
+          used.add(node.notInDecisionId)
+        }
+        break
       case 'askNumber':
         used.add(node.counterId)
         for (const bound of [node.minimum, node.maximum]) {
@@ -135,6 +151,11 @@ export function unusedNames(project: ProjectDocument, documents: readonly Chapte
   entries('sound', project.sounds)
   entries('illustration', project.illustrations)
   entries('video', project.videos)
+  // A character whose pictures another shows is used, with all its pictures.
+  for (const borrower of project.characters.filter(character => used.has(character.id) && character.picturesFrom !== undefined)) {
+    used.add(borrower.picturesFrom!)
+    project.characters.find(character => character.id === borrower.picturesFrom)?.expressions.forEach(expression => used.add(expression.id))
+  }
   for (const character of project.characters) {
     const hasFile = character.expressions.some(expression => expression.assetId !== null)
     if (!used.has(character.id)) {

@@ -1,6 +1,7 @@
+import { entriesNamedByValue } from '../format/valueTags'
 import { checkChapterDocument, checkProjectDocument, DocumentError, isPlainIdentifier } from '../format/checkDocuments'
 import { chapterIn, languagesOf } from '../format/languages'
-import { flattenStoredNodes, mapInnerLists, type Asset, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredNode } from '../format/storyFormat'
+import { commandsOf, expressionAssetId, flattenStoredNodes, mapInnerLists, type Asset, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredNode } from '../format/storyFormat'
 import { STYLE_PROPERTIES_OF_1_1 } from '../format/textStyles'
 import { isAskableName, placeholdersAsWritten } from '../format/textValues'
 import { drawsNumbers } from '../runtime/chance'
@@ -283,7 +284,8 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   const needsDatajack20 = languagesOf(project).length > 1 || project.decisions.some(decision => decision.lasting === true) || project.counters.some(counter => counter.lasting === true)
     || documents.some(document => flattenStoredNodes(document.nodes).some(node => (node.type === 'remember' && node.forget === true) || (node.type === 'choice' && node.timeLimitMs !== undefined)))
   // An older Datajack refuses a command it does not know, and would count a counter's hundredths as whole numbers.
-  if (project.counters.some(counter => (counter.decimals ?? 0) > 0 || counter.clock !== undefined) || documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'askNumber' || commandsOf(node).some(command => command.type === 'continued')))) {
+  if (project.counters.some(counter => (counter.decimals ?? 0) > 0 || counter.clock !== undefined) || project.characters.some(character => character.picturesFrom !== undefined) || documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'askNumber' || node.type === 'draw' || node.type === 'copy'
+    || commandsOf(node).some(command => command.type === 'continued' || ('from' in command && command.from !== undefined))))) {
     return '2.1'
   }
   if (needsDatajack20) {
@@ -317,10 +319,6 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
 /** The texts a node shows players, where `{…}` may stand. */
 function textsShownBy(node: StoredNode): string[] {
   return node.type === 'page' ? [node.text] : node.type === 'choice' ? node.options.map(option => option.text) : []
-}
-
-function commandsOf(node: StoredNode): readonly StageCommand[] {
-  return node.type === 'page' ? [...node.commandsBefore, ...node.inlineCommands] : node.type === 'stage' ? node.commands : []
 }
 
 /**
@@ -406,12 +404,22 @@ export function assetsUsedBy(project: ProjectDocument, chapters: readonly Chapte
     }
   }
   const visit = (command: StageCommand) => {
+    // A picture chosen by a decision's value may be any of its values': the game carries them all.
+    const named = new Set(entriesNamedByValue(command, project))
+    if (named.size > 0) {
+      project.backgrounds.filter(background => named.has(background.id)).forEach(background => add(background.assetId))
+      project.illustrations.filter(illustration => named.has(illustration.id)).forEach(illustration => add(illustration.assetId))
+      for (const character of project.characters) {
+        character.expressions.filter(expression => named.has(expression.id)).forEach(expression => add(expressionAssetId(project.characters, character, expression)))
+      }
+    }
     switch (command.type) {
       case 'enter':
-      case 'expression':
-        add(project.characters.find(character => character.id === command.characterId)
-          ?.expressions.find(expression => expression.id === command.expressionId)?.assetId)
+      case 'expression': {
+        const character = project.characters.find(candidate => candidate.id === command.characterId)
+        add(expressionAssetId(project.characters, character, character?.expressions.find(expression => expression.id === command.expressionId)))
         break
+      }
       case 'background':
         add(project.backgrounds.find(background => background.id === command.backgroundId)?.assetId)
         break

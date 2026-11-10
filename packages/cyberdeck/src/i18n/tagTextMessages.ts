@@ -48,6 +48,7 @@ const en = {
     'decision lasting': 'a decision the profile keeps from one playthrough to the next',
     ask: 'asks the player for a name, which {Name} then shows',
     'ask number': 'asks the player for a number, kept by a counter: Bet = 10, from 1 to {Money}',
+    character: 'a character showing another’s pictures: card1 = card',
     timeout: 'on an option: taken when the time of the choice runs out',
   },
   /** What a word suggested is. */
@@ -185,6 +186,7 @@ const fr: TagTextMessages = {
     'decision lasting': 'une décision que le profil garde d’une partie à l’autre',
     ask: 'demande un nom au joueur, que {Nom} affiche ensuite',
     'ask number': 'demande un nombre au joueur, gardé par un compteur\u00a0: Mise = 10, from 1 to {Argent}',
+    character: 'un personnage qui montre les images d’un autre\u00a0: carte1 = carte',
     timeout: 'sur une option\u00a0: prise quand le temps du choix est écoulé',
   },
   details: {

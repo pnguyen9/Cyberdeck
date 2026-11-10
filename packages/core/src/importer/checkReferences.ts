@@ -1,9 +1,14 @@
 import { CLOCK_COUNTERS, ENDINGS_REACHED } from '../format/storyFormat'
+import { STAGE_KEYWORDS } from '../stage/stageDirectives'
+import { valueNamedIn } from '../format/valueTags'
+
+/** Tags showing a picture, which a decision's value may name: besides a character's own, `[marie: {Mood}]`. */
+const PICTURE_TAGS: ReadonlySet<string> = new Set(['enter', 'bg', 'background', 'illustration', 'cg'])
 import { styleClassName } from '../format/authorCss'
 import { placeholdersIn } from '../format/textValues'
 import { readStyleProperty } from '../format/textStyles'
 import type { Condition, ImportedChapter, ImportProblem, ImportResult, StoryNode } from './importTypes'
-import { decimalsOf, decimalsWritten, readAmount, readRandom } from './readControl'
+import { decimalsOf, decimalsWritten, readAmount, readDraw, readRandom } from './readControl'
 import { flattenNodes, normalizeName } from './storyNodes'
 
 /**
@@ -121,6 +126,23 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
       }
     }
   }
+  // A tag showing a picture may name it by a decision's value, `[card1: {Drawn}]`; no other tag can.
+  for (const node of allNodes) {
+    const directives = node.type === 'page' ? [...node.directivesBefore, ...node.inlineDirectives] : node.type === 'stage' ? node.directives : []
+    for (const directive of directives) {
+      for (const [, braced] of directive.arguments.join(' ').matchAll(/\{([^{}]+)\}/g)) {
+        const name = braced!.trim()
+        const showsPicture = PICTURE_TAGS.has(directive.name) || !STAGE_KEYWORDS.includes(directive.name)
+        if (!showsPicture) {
+          problems.push({ severity: 'error', code: 'tagValueNotHere', line: node.sourceLine, subject: `${directive.name}: {${name}}` })
+        } else if (counters.has(normalizeName(name))) {
+          problems.push({ severity: 'error', code: 'tagValueNeedsDecision', line: node.sourceLine, subject: name })
+        } else if (!decisionValues.has(normalizeName(name))) {
+          problems.push({ severity: 'error', code: 'unknownDecision', line: node.sourceLine, subject: name })
+        }
+      }
+    }
+  }
   problems.push(...checkScenes(result, knownNames.scenes ?? []))
   problems.push(...checkStyles(result, allNodes, knownNames.styles ?? [], knownNames.styleClasses ?? []))
 
@@ -214,8 +236,24 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
       node.options.forEach(option => checkCondition(option.condition, option.sourceLine))
     }
     if (node.type === 'set') {
-      if (isCounter(node.decision)) {
+      const draw = isCounter(node.decision) ? null : readDraw(node.value)
+      const copied = isCounter(node.decision) ? null : valueNamedIn(node.value)
+      if (copied !== null) {
+        // A value named like another decision's: both must be decisions.
+        for (const named of [node.decision, copied]) {
+          if (!decisionValues.has(normalizeName(named))) {
+            problems.push({ severity: 'error', code: isCounter(named) ? 'tagValueNeedsDecision' : 'unknownDecision', line: node.sourceLine, subject: named })
+          }
+        }
+      } else if (isCounter(node.decision)) {
         checkCounterValue(node.decision, node.value, node.sourceLine, true)
+      } else if (draw !== null) {
+        // A value drawn at random: the decision, and the one whose values are left out, must be known.
+        for (const named of [node.decision, ...(draw.notIn === null ? [] : [draw.notIn])]) {
+          if (!decisionValues.has(normalizeName(named))) {
+            problems.push({ severity: 'error', code: 'unknownDecision', line: node.sourceLine, subject: named })
+          }
+        }
       } else {
         checkValue(node.decision, node.value, node.sourceLine)
       }

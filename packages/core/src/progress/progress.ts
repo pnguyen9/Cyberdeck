@@ -197,6 +197,20 @@ function valueReads(story: PlayableStory): readonly ValueRead[] {
           case 'askNumber':
             give(node.counterId, node)
             break
+          case 'copy':
+            read([node.fromDecisionId], node, given)
+            if (singleDecisionIds.has(node.decisionId)) {
+              give(node.decisionId, node)
+            }
+            break
+          case 'draw':
+            if (node.notInDecisionId !== null) {
+              read([node.notInDecisionId], node, given)
+            }
+            if (singleDecisionIds.has(node.decisionId)) {
+              give(node.decisionId, node)
+            }
+            break
           case 'set':
             if (singleDecisionIds.has(node.decisionId)) {
               give(node.decisionId, node)

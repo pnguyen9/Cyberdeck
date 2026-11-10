@@ -1,5 +1,5 @@
 import { alwaysStops, readingFlow } from '../format/readingFlow'
-import { flattenStoredNodes, type ChapterDocument, type ProjectDocument, type StoredCondition, type StoredNode } from '../format/storyFormat'
+import { commandsOf, flattenStoredNodes, type ChapterDocument, type ProjectDocument, type StoredCondition, type StoredNode } from '../format/storyFormat'
 import { normalizeName } from '../importer/storyNodes'
 import { placeholdersIn } from '../format/textValues'
 import { isPropertyAlone, RESERVED_STYLE_NAMES } from '../format/textStyles'
@@ -127,6 +127,12 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
     }
     for (const node of flattenStoredNodes(document.nodes)) {
       const nodeId = node.id
+      // A picture chosen by a decision's value shows that value.
+      for (const command of commandsOf(node)) {
+        if ((command.type === 'enter' || command.type === 'expression' || command.type === 'background' || command.type === 'illustration') && command.from !== undefined) {
+          use('decision', command.from, { role: 'shown', documentId, nodeId })
+        }
+      }
       switch (node.type) {
         case 'definition':
           use(node.kind, node.definedId, { role: 'declared', documentId, nodeId })
@@ -150,6 +156,16 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
           break
         case 'count':
           use('counter', node.counterId, { role: 'changed', documentId, nodeId })
+          break
+        case 'copy':
+          use('decision', node.decisionId, { role: 'set', documentId, nodeId })
+          use('decision', node.fromDecisionId, { role: 'tested', documentId, nodeId })
+          break
+        case 'draw':
+          use('decision', node.decisionId, { role: 'set', documentId, nodeId })
+          if (node.notInDecisionId !== null) {
+            use('decision', node.notInDecisionId, { role: 'tested', documentId, nodeId })
+          }
           break
         case 'askNumber':
           use('counter', node.counterId, { role: 'changed', documentId, nodeId })

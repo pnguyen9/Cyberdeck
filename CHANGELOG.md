@@ -34,7 +34,12 @@
   many decimals.
 - The player's clock, with nothing to declare: `hour` (0 to 23), `weekday` (1 for Monday to 7 for
   Sunday) and `time away` (minutes since the profile last played), tested and shown as counters.
-- All three need Datajack 2.1 (format 2.1).
+- A picture named by a decision's value, `[enter: card1 {Card}]`, `[bg: {Place}]`: the one named like
+  the value it holds as the tag plays, with no branch.
+- `[set: Drawn = random not in Dealt]` draws a value of a decision, leaving out those another holds;
+  `[set: Dealt = {Drawn}]` gives a decision the value named like another's.
+- `[character: card1 = card]`: a character showing another's pictures.
+- All of these need Datajack 2.1 (format 2.1).
 
 ### Cyberdeck, the editor
 - The preview's **State** panel changes values by hand: decisions, counters, names, and memories and

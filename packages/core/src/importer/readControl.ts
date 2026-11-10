@@ -11,6 +11,7 @@ export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
   'add',
   'ask',
   'ask number',
+  'character',
   'timeout',
   'choice',
   'if',
@@ -82,6 +83,15 @@ export function decimalsWritten(text: string): number {
 /** How many decimals a number read from a tag holds, as the shortest writing of it shows them. */
 export function decimalsOf(amount: number): number {
   return decimalsWritten(String(amount))
+}
+
+/**
+ * `random`, `random not in Dealt` → a value of a decision drawn at random, leaving out those another
+ * decision holds; null for anything else.
+ */
+export function readDraw(text: string): { notIn: string | null } | null {
+  const draw = /^random(?:\s+not\s+in\s+(.+))?$/i.exec(text.trim())
+  return draw === null ? null : { notIn: draw[1]?.trim() ?? null }
 }
 
 /** `random 1 6` → the lowest and highest numbers to draw from; null for anything else, or the highest below the lowest. */

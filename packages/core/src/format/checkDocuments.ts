@@ -84,6 +84,14 @@ function withFlag<Shape extends object, Field extends string>(field: Field, chec
   return (value, path) => (record(value, path)[field] === true ? { ...check(value, path), [field]: true } : check(value, path)) as Shape & { [Key in Field]?: true }
 }
 
+/** A picture a decision's value names, `[card1: {Drawn}]`: the decision, kept only when there is one. */
+function withValueFrom<Shape extends object>(check: Check<Shape>): Check<Shape & { from?: string }> {
+  return (value, path) => {
+    const from = record(value, path).from
+    return from === undefined ? check(value, path) : { ...check(value, path), from: string(from, `${path}.from`) }
+  }
+}
+
 /** A counter the clock gives, kept only when it is one. */
 function withClock<Shape extends object>(check: Check<Shape>): Check<Shape & { clock?: ClockValue }> {
   return (value, path) => {
@@ -148,7 +156,7 @@ const placement: Check<Placement> = (value, path) => {
 }
 
 const STAGE_COMMANDS: { [Type in StageCommand['type']]: Check<Extract<StageCommand, { type: Type }>> } = {
-  background: object({ type: oneOf('background'), backgroundId: string }),
+  background: withValueFrom(object({ type: oneOf('background'), backgroundId: string })),
   transition: object({ type: oneOf('transition'), name: string, durationMs: nullable(duration) }),
   shake: object({ type: oneOf('shake'), strength: oneOf('light', 'strong'), durationMs: nullable(duration) }),
   flash: object({ type: oneOf('flash'), color: oneOf('white', 'red', 'black'), durationMs: nullable(duration) }),
@@ -157,15 +165,15 @@ const STAGE_COMMANDS: { [Type in StageCommand['type']]: Check<Extract<StageComma
   continued: object({ type: oneOf('continued'), text: nullable(string) }),
   textMode: object({ type: oneOf('textMode'), mode: oneOf('box', 'full') }),
   clear: object({ type: oneOf('clear') }),
-  illustration: object({ type: oneOf('illustration'), illustrationId: nullable(string) }),
+  illustration: withValueFrom(object({ type: oneOf('illustration'), illustrationId: nullable(string) })),
   music: object({ type: oneOf('music'), musicId: nullable(string) }),
   sound: object({ type: oneOf('sound'), soundId: string }),
   voice: object({ type: oneOf('voice'), soundId: string }),
   video: object({ type: oneOf('video'), videoId: string }),
-  enter: object({ type: oneOf('enter'), characterId: string, expressionId: string, placement, facing: nullable(facing), depth: nullable(depth), animation }),
+  enter: withValueFrom(object({ type: oneOf('enter'), characterId: string, expressionId: string, placement, facing: nullable(facing), depth: nullable(depth), animation })),
   exit: object({ type: oneOf('exit'), characterId: string, animation }),
   move: object({ type: oneOf('move'), characterId: string, placement: nullable(placement), depth: nullable(depth), animation }),
-  expression: object({ type: oneOf('expression'), characterId: string, expressionId: string }),
+  expression: withValueFrom(object({ type: oneOf('expression'), characterId: string, expressionId: string })),
   wait: object({ type: oneOf('wait'), seconds: (value, path) => finiteNumber(value, path) >= 0 && (value as number) <= 600 ? value as number : fail(path, 'at most ten minutes, in seconds') }),
 }
 
@@ -243,6 +251,10 @@ function node(value: unknown, path: string, depth: number): StoredNode {
     }
     case 'ask':
       return object({ type: oneOf('ask'), id: string, askedNameId: string })(value, path)
+    case 'copy':
+      return object({ type: oneOf('copy'), id: string, decisionId: string, fromDecisionId: string })(value, path)
+    case 'draw':
+      return object({ type: oneOf('draw'), id: string, decisionId: string, notInDecisionId: nullable(string) })(value, path)
     case 'askNumber':
       return object({ type: oneOf('askNumber'), id: string, counterId: string, defaultAmount: integer, minimum: nullable(askBound), maximum: nullable(askBound) })(value, path)
     case 'set':
@@ -349,8 +361,9 @@ const checkProjectFields: Check<ProjectDocument> = object({
   styles: array(withFlag('implicit', object({ id: string, name: string, properties: styleProperties }))),
   characters: array((value, path) => {
     const character: Character = object({ id: string, name: string, expressions: array(withAssetId), drawnFacing: nullable(facing) })(value, path)
-    const color = record(value, path).nameColor
-    return color === undefined ? character : { ...character, nameColor: /^#[0-9a-f]{6}$/i.test(String(color)) ? String(color) : fail(`${path}.nameColor`, 'a colour, #rrggbb') }
+    const { nameColor: color, picturesFrom } = record(value, path)
+    const colored = color === undefined ? character : { ...character, nameColor: /^#[0-9a-f]{6}$/i.test(String(color)) ? String(color) : fail(`${path}.nameColor`, 'a colour, #rrggbb') }
+    return picturesFrom === undefined ? colored : { ...colored, picturesFrom: string(picturesFrom, `${path}.picturesFrom`) }
   }),
   backgrounds: array(withAssetId),
   music: array(withAssetId),

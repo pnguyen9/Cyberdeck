@@ -137,6 +137,8 @@ function layoutNodes(nodes: readonly StoredNode[], documentId: string, layout: L
       case 'count':
       case 'ask':
       case 'askNumber':
+      case 'draw':
+      case 'copy':
       case 'remember':
       case 'definition':
         run.push(node)

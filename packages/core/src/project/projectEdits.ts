@@ -106,6 +106,10 @@ export function refersOnlyToKnownDefinitions(chapter: ChapterDocument, project: 
         return valueIds.has(node.decisionId) && (node.valueId === null || knowsValue(node.decisionId, node.valueId))
       case 'count':
         return counterIds.has(node.counterId)
+      case 'copy':
+        return valueIds.has(node.decisionId) && valueIds.has(node.fromDecisionId)
+      case 'draw':
+        return valueIds.has(node.decisionId) && (node.notInDecisionId === null || valueIds.has(node.notInDecisionId))
       case 'askNumber':
         return counterIds.has(node.counterId) && [node.minimum, node.maximum].every(bound => bound?.type !== 'counter' || counterIds.has(bound.counterId))
       case 'condition':

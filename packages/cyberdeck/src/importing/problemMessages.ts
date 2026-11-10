@@ -92,6 +92,9 @@ const en: ProblemMessages = {
   },
   invalidAskNumber: subject => `${subject === '' ? '[ask number: …]' : `"${subject}"`} should look like: Bet = 10, from 1 to {Money}: a counter, the number proposed, and if wished the lowest and highest numbers allowed, each a number or a counter in braces.`,
   clockReadOnly: subject => `${subject} is read from the player's clock: the story may test it and show it, not change it. To count something of your own, declare a counter of another name.`,
+  tagValueNotHere: subject => `A value in braces names a picture only in [enter], [bg], [illustration] and a character's own tag: "${subject}" cannot take one.`,
+  tagValueNeedsDecision: subject => `${subject} is a counter: a picture is named by a decision's value, whose values are the pictures' names, [decision: ${subject} = …].`,
+  invalidSharedPictures: subject => `${subject === '' ? '[character: …]' : `"${subject}"`} should look like: card1 = card, a character, then the one whose pictures it shows.`,
   duplicateCounter: (subject, suggestion) => suggestion === ''
     ? `The counter "${subject}" is declared twice.`
     : `The counter "${subject}" is already declared in ${suggestion}: change it there, or move it to Definitions first.`,
@@ -210,6 +213,9 @@ const fr: ProblemMessages = {
   },
   invalidAskNumber: subject => `${subject === '' ? '[ask number: …]' : quoted(subject)} devrait avoir cette forme\u00a0: Mise = 10, from 1 to {Argent}\u00a0: un compteur, le nombre proposé, et si besoin le plus petit et le plus grand nombres permis, chacun un nombre ou un compteur entre accolades.`,
   clockReadOnly: subject => `${subject} vient de l’horloge du joueur\u00a0: l’histoire peut la tester et l’afficher, pas la changer. Pour compter quelque chose vous-même, déclarez un compteur d’un autre nom.`,
+  tagValueNotHere: subject => `Une valeur entre accolades ne nomme une image que dans [enter], [bg], [illustration] et la balise d’un personnage\u00a0: ${quoted(subject)} ne peut pas en prendre.`,
+  tagValueNeedsDecision: subject => `${subject} est un compteur\u00a0: une image se nomme par la valeur d’une décision, dont les valeurs sont les noms des images, [decision: ${subject} = …].`,
+  invalidSharedPictures: subject => `${subject === '' ? '[character: …]' : quoted(subject)} devrait avoir cette forme\u00a0: carte1 = carte, un personnage, puis celui dont il montre les images.`,
   duplicateCounter: (subject, suggestion) => suggestion === ''
     ? `Le compteur ${quoted(subject)} est déclaré deux fois.`
     : `Le compteur ${quoted(subject)} est déjà déclaré dans ${suggestion}\u00a0: modifiez-le là-bas, ou déplacez-le d’abord dans Définitions.`,

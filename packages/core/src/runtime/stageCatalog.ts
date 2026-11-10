@@ -1,4 +1,4 @@
-import type { Facing, Frames } from '../format/storyFormat'
+import { expressionAssetId, type Facing, type Frames } from '../format/storyFormat'
 import type { PlayableStory } from './playableStory'
 
 /** Names and file addresses of what the stage shows, looked up by identifier. */
@@ -43,7 +43,7 @@ export function createStageCatalog(story: PlayableStory): StageCatalog {
     characterName: characterId => characters.get(characterId)?.name ?? '',
     drawnFacing: characterId => characters.get(characterId)?.drawnFacing ?? null,
     expressionName: (characterId, expressionId) => expressionOf(characterId, expressionId)?.name ?? '',
-    expressionUrl: (characterId, expressionId) => urlOf(expressionOf(characterId, expressionId)?.assetId),
+    expressionUrl: (characterId, expressionId) => urlOf(expressionAssetId(project.characters, characters.get(characterId), expressionOf(characterId, expressionId))),
     musicName: musicId => music.get(musicId)?.name ?? '',
     musicUrl: musicId => urlOf(music.get(musicId)?.assetId),
     soundUrl: soundId => urlOf(sounds.get(soundId)?.assetId),

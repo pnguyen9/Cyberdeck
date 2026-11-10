@@ -9,10 +9,11 @@ import type {
   StoredNode,
   StoredPage,
 } from '../format/storyFormat'
-import { flattenStoredNodes, innerListsOf, type AskedName, type ClockValue, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
+import { flattenStoredNodes, innerListsOf, type AskedName, type ProjectDocument, type ClockValue, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
 import { givenName, pageWithValues, withValues, type ValueOf } from '../format/textValues'
 import { normalizeName } from '../importer/storyNodes'
 import { drawFrom, newSeed } from './chance'
+import { withValueChosen } from '../format/valueTags'
 import { valuesReader, type HeldValues } from './storyValues'
 import { chaptersInOrder, scenesOf, type PlayableStory } from './playableStory'
 import { applyStageCommand, createStageContext, EMPTY_STAGE, showPage, type StageContext, type StageState } from './stageState'
@@ -165,9 +166,11 @@ export class StoryRuntime {
   private readonly counterDecimals: ReadonlyMap<string, number>
   /** Counters the clock gives, and the clock, once the player's is given. */
   private readonly clockCounters: readonly { id: string; clock: ClockValue }[]
+  private readonly project: ProjectDocument
   private clock: { now: () => Date; minutesAway: number } | null = null
 
   constructor(story: PlayableStory) {
+    this.project = story.project
     this.clockCounters = story.project.counters.flatMap(counter => counter.clock === undefined ? [] : [{ id: counter.id, clock: counter.clock }])
     this.counterDecimals = new Map(story.project.counters.flatMap(counter => counter.decimals === undefined ? [] : [[counter.id, counter.decimals] as const]))
     this.chapters = chaptersInOrder(story)
@@ -598,6 +601,27 @@ export class StoryRuntime {
         case 'set':
           this.decide(node.decisionId, node.valueId)
           break
+        case 'copy': {
+          const from = this.decisionsById.get(node.fromDecisionId)
+          const name = from?.values.find(value => value.id === this.heldValues(node.fromDecisionId)[0])?.name
+          const value = name === undefined ? undefined : this.decisionsById.get(node.decisionId)?.values.find(candidate => normalizeName(candidate.name) === normalizeName(name))
+          if (value !== undefined) {
+            this.decide(node.decisionId, value.id)
+          }
+          break
+        }
+        case 'draw': {
+          const decision = this.decisionsById.get(node.decisionId)
+          const leftOut = node.notInDecisionId === null ? new Set<string>()
+            : new Set(this.heldValues(node.notInDecisionId).map(valueId => normalizeName(this.decisionsById.get(node.notInDecisionId!)?.values.find(value => value.id === valueId)?.name ?? '')))
+          const candidates = (decision?.values ?? []).filter(value => !leftOut.has(normalizeName(value.name)))
+          if (candidates.length > 0) {
+            const draw = drawFrom(this.currentSnapshot.seed)
+            this.currentSnapshot = { ...this.currentSnapshot, seed: draw.seed }
+            this.decide(node.decisionId, candidates[Math.floor(draw.fraction * candidates.length)]!.id)
+          }
+          break
+        }
         case 'unset':
           this.undecide(node.decisionId, node.valueId)
           break
@@ -759,7 +783,9 @@ export class StoryRuntime {
     this.currentSnapshot = { ...this.currentSnapshot, decisions: { ...this.currentSnapshot.decisions, [decisionId]: values } }
   }
 
-  private applyToStage(command: StageCommand) {
+  private applyToStage(written: StageCommand) {
+    // A picture a decision's value names is the one it names now.
+    const command = withValueChosen(written, this.project, this.currentSnapshot.decisions)
     if (CUE_TYPES.has(command.type) && !this.isReplaying) {
       this.queuedCues.push(command as Cue)
     }

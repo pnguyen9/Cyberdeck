@@ -1,6 +1,6 @@
 import { firstLanguageOf } from './languages'
 import type { AskBound, Condition, Directive, ImportResult, ShownDeclaration, StoryNode, StyleDeclaration } from '../importer/importTypes'
-import { readAmount, readRandom } from '../importer/readControl'
+import { readAmount, readDraw, readRandom } from '../importer/readControl'
 import { flattenNodes, normalizeName } from '../importer/storyNodes'
 import { interpretStageDirective } from '../stage/stageDirectives'
 import { checkAuthorCss, styleClassName } from './authorCss'
@@ -28,6 +28,7 @@ import {
 } from './storyFormat'
 import { readStyleProperty, type StyleProperty } from './textStyles'
 import { placeholdersIn } from './textValues'
+import { valueNamedIn } from './valueTags'
 
 export interface StoredImport {
   /** A new project document; the one given is left untouched. */
@@ -94,7 +95,11 @@ export function storeImport(
     }
   }
 
-  const registry = new StageRegistry(project, environment)
+  // A tag may name a picture by a decision's value, `[card1: {Drawn}]`: its decision is looked up among those of the import.
+  const registry = new StageRegistry(project, environment, name => decisions.has(name) ? decisions.find(name) : undefined)
+  for (const shared of result.sharedPictures ?? []) {
+    registry.sharePictures(shared.name, shared.from)
+  }
   const toCommand = (directive: Directive) => {
     const instruction = interpretStageDirective(directive, registry.vocabulary())
     if (instruction === null) {
@@ -190,6 +195,14 @@ export function storeImport(
             : { type: 'count', id, counterId: counter.id, operation: 'random', amount: unitsOf(random.minimum, counter), maximum: unitsOf(random.maximum, counter) }
         }
         const decision = decisions.find(node.decision)
+        const copied = valueNamedIn(node.value)
+        if (copied !== null) {
+          return { type: 'copy', id, decisionId: decision.id, fromDecisionId: decisions.find(copied).id }
+        }
+        const draw = readDraw(node.value)
+        if (draw !== null) {
+          return { type: 'draw', id, decisionId: decision.id, notInDecisionId: draw.notIn === null ? null : decisions.find(draw.notIn).id }
+        }
         return { type: 'set', id, decisionId: decision.id, valueId: decisions.findValue(decision, node.value).id }
       }
       case 'ask':

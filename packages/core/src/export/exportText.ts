@@ -1,5 +1,6 @@
 import { writtenAmount } from '../format/counterNumbers'
-import { describeAskNumber } from '../storyboard/describeNodes'
+import { valueWritten } from '../format/valueTags'
+import { describeAskNumber, describeCopy, describeDraw } from '../storyboard/describeNodes'
 import { firstLanguageOf } from '../format/languages'
 import { effectText } from '../storyboard/describeNodes'
 import { ENDINGS_REACHED, flattenStoredNodes } from '../format/storyFormat'
@@ -104,6 +105,10 @@ export function globalDefinitionLines(project: ProjectDocument, documents: reado
     // The clock's counters are every story's: never declared.
     ...project.counters.filter(counter => counter.clock === undefined && !homed.has(counter.id) && !(counter.implicit === true && added.has(counter.id))).map(counter => definitionLine(project, 'counter', counter.id)!),
     ...project.styles.filter(style => style.implicit !== true && !homed.has(style.id) && !isPropertyAlone(style)).map(style => definitionLine(project, 'style', style.id)!),
+    ...project.characters.flatMap(character => {
+      const lender = project.characters.find(candidate => candidate.id === character.picturesFrom)
+      return lender === undefined ? [] : [`[character: ${character.name} = ${lender.name}]`]
+    }),
     ...shownLines(project),
   ]
 }
@@ -262,6 +267,12 @@ class TextWriter {
         case 'askNumber':
           this.line(`[${describeAskNumber(node, this.project)}]`)
           break
+        case 'draw':
+          this.line(`[set: ${describeDraw(node, this.project)}]`)
+          break
+        case 'copy':
+          this.line(`[set: ${describeCopy(node, this.project)}]`)
+          break
         case 'ask': {
           const asked = this.project.askedNames.find(candidate => candidate.id === node.askedNameId)
           this.line(`[ask: ${asked?.name ?? '?'}${asked === undefined || asked.defaultName === '' ? '' : ` = ${asked.defaultName}`}]`)
@@ -365,7 +376,7 @@ class TextWriter {
   private directive(command: StageCommand | InlineStageCommand): string {
     switch (command.type) {
       case 'background':
-        return `[bg: ${this.project.backgrounds.find(background => background.id === command.backgroundId)?.name ?? '?'}]`
+        return `[bg: ${valueWritten(command, this.project) ?? this.project.backgrounds.find(background => background.id === command.backgroundId)?.name ?? '?'}]`
       case 'transition':
       case 'shake':
       case 'flash':
@@ -379,7 +390,7 @@ class TextWriter {
       case 'clear':
         return '[clear]'
       case 'illustration':
-        return `[illustration: ${command.illustrationId === null ? 'none' : this.project.illustrations.find(illustration => illustration.id === command.illustrationId)?.name ?? '?'}]`
+        return `[illustration: ${valueWritten(command, this.project) ?? (command.illustrationId === null ? 'none' : this.project.illustrations.find(illustration => illustration.id === command.illustrationId)?.name ?? '?')}]`
       case 'music':
         return `[music: ${command.musicId === null ? 'stop' : this.project.music.find(track => track.id === command.musicId)?.name ?? '?'}]`
       case 'sound':
@@ -388,7 +399,7 @@ class TextWriter {
       case 'video':
         return `[video: ${this.project.videos.find(video => video.id === command.videoId)?.name ?? '?'}]`
       case 'enter': {
-        const expression = this.expressionName(command.characterId, command.expressionId)
+        const expression = valueWritten(command, this.project) ?? this.expressionName(command.characterId, command.expressionId)
         return `[enter: ${words(
           this.characterName(command.characterId),
           this.placement(command.placement),
@@ -403,7 +414,7 @@ class TextWriter {
       case 'move':
         return `[move: ${words(this.characterName(command.characterId), command.placement === null ? '' : this.placement(command.placement), command.depth ?? '', animationWords(command.animation))}]`
       case 'expression':
-        return `[${this.characterName(command.characterId)}: ${this.expressionName(command.characterId, command.expressionId)}]`
+        return `[${this.characterName(command.characterId)}: ${valueWritten(command, this.project) ?? this.expressionName(command.characterId, command.expressionId)}]`
       case 'wait':
         return `[wait: ${command.seconds}]`
     }

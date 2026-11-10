@@ -125,6 +125,24 @@ export interface Character {
   drawnFacing: Facing | null
   /** The colour of the name on their plate, `#rrggbb`; absent for the plate's own. Since 1.5. */
   nameColor?: string
+  /**
+   * The character whose pictures it shows, `[character: card1 = card]`: an expression with no file
+   * of its own shows that character's of the same name. Look-alikes, cards on a table. Since 2.1.
+   */
+  picturesFrom?: string
+}
+
+/** The file an expression shows: its own, or that of the expression of the same name of the character it takes its pictures from. */
+export function expressionAssetId(characters: readonly Character[], character: Character | undefined, expression: Expression | undefined): string | null {
+  if (expression === undefined) {
+    return null
+  }
+  if (expression.assetId !== null || character?.picturesFrom === undefined) {
+    return expression.assetId
+  }
+  const lender = characters.find(candidate => candidate.id === character.picturesFrom)
+  const name = expression.name.trim().toLowerCase()
+  return lender?.expressions.find(candidate => candidate.name.trim().toLowerCase() === name)?.assetId ?? null
 }
 
 /** Picture frames of the text box and the name plate: images of the project, stretched by their edges. Since 1.5. */
@@ -345,7 +363,8 @@ export type TintName = 'sepia' | 'night' | 'grey'
 
 /** What a page or a stage node does to the stage, by identifier. Null durations take the player's defaults. */
 export type StageCommand =
-  | { type: 'background'; backgroundId: string }
+  /** `from`: the decision whose value names the background, `[bg: {Place}]`; `backgroundId` its first value's. Since 2.1. */
+  | { type: 'background'; backgroundId: string; from?: string }
   /**
    * Announces how the next background appears: `fade`, through `black` or `white`; players treat
    * names they do not know as a cut.
@@ -373,13 +392,13 @@ export type StageCommand =
   /** Starts a new screen of full-screen text. Since 1.1. */
   | { type: 'clear' }
   /** Shown over the whole stage until another one, or null to take it away. Since 1.1. */
-  | { type: 'illustration'; illustrationId: string | null }
+  | { type: 'illustration'; illustrationId: string | null; from?: string }
   /** `facing` null: the player turns the character towards the middle of the stage; `depth` null stands in the middle. */
-  | { type: 'enter'; characterId: string; expressionId: string; placement: Placement; facing: Facing | null; depth: Depth | null; animation: AnimationSpec }
+  | { type: 'enter'; characterId: string; expressionId: string; placement: Placement; facing: Facing | null; depth: Depth | null; animation: AnimationSpec; from?: string }
   | { type: 'exit'; characterId: string; animation: AnimationSpec }
   /** A null placement or depth keeps the current one; at least one of them is given. */
   | { type: 'move'; characterId: string; placement: Placement | null; depth: Depth | null; animation: AnimationSpec }
-  | { type: 'expression'; characterId: string; expressionId: string }
+  | { type: 'expression'; characterId: string; expressionId: string; from?: string }
   /** Pauses the typewriter; meaningful inline only. */
   | { type: 'wait'; seconds: number }
 
@@ -524,6 +543,29 @@ export interface StoredAsk {
   askedNameId: string
 }
 
+/**
+ * `[set: Drawn = random]`: one of the decision's values drawn at random, as `[set]` would give it;
+ * `[set: Drawn = random not in Dealt]` leaves out the values another decision holds, by their names:
+ * a card dealt is not dealt twice. Nothing left to draw, nothing changes. Since 2.1.
+ */
+export interface StoredDraw {
+  type: 'draw'
+  id: string
+  decisionId: string
+  notInDecisionId: string | null
+}
+
+/**
+ * `[set: Dealt = {Drawn}]`: the decision is given its value named like the one another decision
+ * holds, as `[set]` would give it: the card drawn joins those dealt. Since 2.1.
+ */
+export interface StoredCopy {
+  type: 'copy'
+  id: string
+  decisionId: string
+  fromDecisionId: string
+}
+
 /** A bound of a number asked for: a number, in the units of the counter asked for, or what another counter holds. */
 export type StoredAskBound = { type: 'amount'; amount: number } | { type: 'counter'; counterId: string }
 
@@ -568,12 +610,17 @@ export interface StoredBreak {
   id: string
 }
 
-export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredCount | StoredAsk | StoredAskNumber | StoredDefinition | StoredEnding | StoredRemember
+export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredCount | StoredDraw | StoredCopy | StoredAsk | StoredAskNumber | StoredDefinition | StoredEnding | StoredRemember
 
 /** A list of nodes inside a block: a branch of a condition, or the body of a loop, which bears the loop's identifier. */
 export interface InnerList {
   id: string
   nodes: StoredNode[]
+}
+
+/** The stage commands a node gives: a page's, before its text and inside it, or a stage node's. */
+export function commandsOf(node: StoredNode): readonly StageCommand[] {
+  return node.type === 'page' ? [...node.commandsBefore, ...node.inlineCommands] : node.type === 'stage' ? node.commands : []
 }
 
 /** The lists a block holds: a condition's branches, a loop's body; none for other nodes. */

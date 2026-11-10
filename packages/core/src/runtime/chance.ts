@@ -2,7 +2,7 @@ import { flattenStoredNodes, type ChapterDocument } from '../format/storyFormat'
 
 /** Whether the story draws numbers, `[set: X = random 1 6]`: only then do its saves keep the seed. */
 export function drawsNumbers(documents: readonly ChapterDocument[]): boolean {
-  return documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'count' && node.operation === 'random'))
+  return documents.some(document => flattenStoredNodes(document.nodes).some(node => (node.type === 'count' && node.operation === 'random') || node.type === 'draw'))
 }
 
 /** A seed for the draws of a new game. */

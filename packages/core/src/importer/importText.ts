@@ -418,6 +418,16 @@ class TextImporter {
         }
         return
       }
+      case 'character': {
+        // A character showing another's pictures: `[character: card1 = card]`.
+        const assignment = readAssignment(text)
+        if (assignment === null || normalizeName(assignment.name) === normalizeName(assignment.value)) {
+          this.addProblem('error', 'invalidSharedPictures', lineNumber, text === '' ? undefined : text)
+          return
+        }
+        this.result.sharedPictures = [...this.result.sharedPictures ?? [], { sourceLine: lineNumber, name: assignment.name, from: assignment.value }]
+        return
+      }
       case 'shown':
       case 'shown after an ending': {
         // Names are listed with commas, `[shown: Bag, Trust]`, which no name in a tag holds.

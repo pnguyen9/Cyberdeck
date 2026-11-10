@@ -17,11 +17,13 @@ import {
   type StoredCount,
   type StoredAsk,
   type StoredAskNumber,
+  type StoredDraw,
+  type StoredCopy,
   type StoredUnset,
   type StoredDefinition,
   type StoredStage,
 } from '../format/storyFormat'
-import { describeAskNumber, describeAssignment, describeCondition, describeCount, describeDefinition, describeStageCommand, describeUnset } from './describeNodes'
+import { describeAskNumber, describeAssignment, describeCopy, describeDraw, describeCondition, describeCount, describeDefinition, describeStageCommand, describeUnset } from './describeNodes'
 import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
 
 /**
@@ -35,7 +37,7 @@ import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
  */
 export type StoryboardEntry =
   | { type: 'card'; id: string; node: StoredPage | StoredChoice; number: string; branch: string; slot: DropSlot }
-  | { type: 'marker'; id: string; node: StoredStage | StoredSet | StoredCount | StoredAsk | StoredAskNumber | StoredUnset | StoredDefinition | StoredEnding | StoredRemember | StoredBreak | StoredPlay; text: string; branch: string; slot: DropSlot }
+  | { type: 'marker'; id: string; node: StoredStage | StoredSet | StoredCount | StoredDraw | StoredCopy | StoredAsk | StoredAskNumber | StoredUnset | StoredDefinition | StoredEnding | StoredRemember | StoredBreak | StoredPlay; text: string; branch: string; slot: DropSlot }
   | { type: 'conditionStart'; id: string; node: StoredConditionNode; text: string; branch: string; slot: DropSlot }
   | { type: 'branchStart'; id: string; node: StoredConditionNode; branchIndex: number; text: string; branch: string; slot: DropSlot }
   | { type: 'conditionEnd'; id: string; node: StoredConditionNode; branch: string; slot: DropSlot }
@@ -88,6 +90,12 @@ export function storyboardEntries(chapter: ChapterDocument, project: ProjectDocu
           break
         case 'askNumber':
           entries.push({ type: 'marker', id: node.id, node, text: describeAskNumber(node, project), branch, slot })
+          break
+        case 'draw':
+          entries.push({ type: 'marker', id: node.id, node, text: describeDraw(node, project), branch, slot })
+          break
+        case 'copy':
+          entries.push({ type: 'marker', id: node.id, node, text: describeCopy(node, project), branch, slot })
           break
         case 'unset':
           entries.push({ type: 'marker', id: node.id, node, text: describeUnset(node.decisionId, node.valueId, project, words), branch, slot })

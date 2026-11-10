@@ -35,7 +35,9 @@ const characters = computed(() => project.value.characters.map(character => ({
   name: character.name,
   drawnFacing: character.drawnFacing ?? 'viewer',
   nameColor: character.nameColor ?? null,
-  expressions: character.expressions.map(expression => entry(expression.id, expression.name, expression.assetId)),
+  /** The character whose pictures it shows, `[character: card1 = card]`: its own wait for no file. */
+  lenderName: project.value.characters.find(candidate => candidate.id === character.picturesFrom)?.name ?? null,
+  expressions: character.picturesFrom === undefined ? character.expressions.map(expression => entry(expression.id, expression.name, expression.assetId)) : [],
 })))
 const backgrounds = computed(() => project.value.backgrounds.map(background => entry(background.id, background.name, background.assetId)))
 const music = computed(() => project.value.music.map(track => entry(track.id, track.name, track.assetId)))
@@ -158,7 +160,8 @@ function setDrawnFacing(characterId: string, value: string) {
             </select>
           </label>
         </div>
-        <p v-if="character.expressions.length === 0" class="muted entry">{{ text.speaksOnly }}</p>
+        <p v-if="character.lenderName !== null" class="muted entry">{{ text.showsPicturesOf(character.lenderName) }}</p>
+        <p v-else-if="character.expressions.length === 0" class="muted entry">{{ text.speaksOnly }}</p>
         <div v-for="expression in character.expressions" :key="expression.id" class="entry">
           <img v-if="expression.imageUrl !== null" class="thumbnail" :src="expression.imageUrl" alt="">
           <span v-else class="thumbnail empty" />

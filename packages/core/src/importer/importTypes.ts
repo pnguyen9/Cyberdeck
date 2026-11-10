@@ -288,6 +288,9 @@ export type ImportProblemCode =
   | 'counterTooPrecise'
   | 'invalidAskNumber'
   | 'clockReadOnly'
+  | 'tagValueNotHere'
+  | 'invalidSharedPictures'
+  | 'tagValueNeedsDecision'
   | 'duplicateCounter'
   | 'counterNamedLikeDecision'
   | 'unsetCounter'
@@ -334,6 +337,8 @@ export interface ImportResult {
   scenes: ImportedChapter[]
   /** `[shown: Bag, Trust]`, `[shown after an ending: …]`: what players may see, `endings reached` among the names for the endings. */
   shown: ShownDeclaration[]
+  /** `[character: card1 = card]`: a character showing another's pictures. */
+  sharedPictures?: { sourceLine: number; name: string; from: string }[]
   problems: ImportProblem[]
 }
 

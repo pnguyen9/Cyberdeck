@@ -1,5 +1,6 @@
 import { writtenAmount } from '../format/counterNumbers'
-import type { AnimationSpec, DefinitionKind, Placement, ProjectDocument, StageCommand, StoredAskBound, StoredAskNumber, StoredCondition, StoredCount } from '../format/storyFormat'
+import { valueWritten } from '../format/valueTags'
+import type { AnimationSpec, DefinitionKind, Placement, ProjectDocument, StageCommand, StoredAskBound, StoredAskNumber, StoredCondition, StoredCopy, StoredCount, StoredDraw } from '../format/storyFormat'
 import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
 
 /** Short descriptions of what nodes do, in the words of the writing syntax, for the storyboard. */
@@ -31,7 +32,7 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
     project.characters.find(character => character.id === characterId)?.expressions.find(expression => expression.id === expressionId)?.name ?? '?'
   switch (command.type) {
     case 'background':
-      return `bg: ${project.backgrounds.find(background => background.id === command.backgroundId)?.name ?? '?'}`
+      return `bg: ${valueWritten(command, project) ?? project.backgrounds.find(background => background.id === command.backgroundId)?.name ?? '?'}`
     case 'transition':
     case 'shake':
     case 'flash':
@@ -45,7 +46,7 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
     case 'clear':
       return 'clear'
     case 'illustration':
-      return `illustration: ${command.illustrationId === null ? 'none' : project.illustrations.find(illustration => illustration.id === command.illustrationId)?.name ?? '?'}`
+      return `illustration: ${valueWritten(command, project) ?? (command.illustrationId === null ? 'none' : project.illustrations.find(illustration => illustration.id === command.illustrationId)?.name ?? '?')}`
     case 'music':
       return command.musicId === null ? 'music: stop' : `music: ${project.music.find(track => track.id === command.musicId)?.name ?? '?'}`
     case 'sound':
@@ -55,13 +56,13 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
       return `video: ${project.videos.find(video => video.id === command.videoId)?.name ?? '?'}`
     case 'enter':
       return `enter: ${[characterName(command.characterId), placementWords(command.placement, project), command.facing === null ? '' : `facing-${command.facing}`,
-        command.depth ?? '', expressionName(command.characterId, command.expressionId), animationWords(command.animation)].filter(word => word !== '' && word !== 'normal').join(' ')}`
+        command.depth ?? '', valueWritten(command, project) ?? expressionName(command.characterId, command.expressionId), animationWords(command.animation)].filter(word => word !== '' && word !== 'normal').join(' ')}`
     case 'exit':
       return `exit: ${[characterName(command.characterId), animationWords(command.animation)].filter(word => word !== '').join(' ')}`
     case 'move':
       return `move: ${[characterName(command.characterId), command.placement === null ? '' : placementWords(command.placement, project), command.depth ?? '', animationWords(command.animation)].filter(word => word !== '').join(' ')}`
     case 'expression':
-      return `${characterName(command.characterId)}: ${expressionName(command.characterId, command.expressionId)}`
+      return `${characterName(command.characterId)}: ${valueWritten(command, project) ?? expressionName(command.characterId, command.expressionId)}`
     case 'wait':
       return `wait: ${command.seconds}`
   }
@@ -104,6 +105,18 @@ export function describeCount(node: StoredCount, project: ProjectDocument): stri
   return node.operation === 'set' ? `${name} = ${amount(node.amount)}`
     : node.operation === 'random' ? `${name} = random ${amount(node.amount)}–${amount(node.maximum ?? node.amount)}`
       : `${name} ${node.amount < 0 ? '−' : '+'} ${amount(Math.abs(node.amount))}`
+}
+
+/** `Dealt = {Drawn}`, as the tag is written. */
+export function describeCopy(node: StoredCopy, project: ProjectDocument): string {
+  const name = (decisionId: string) => project.decisions.find(decision => decision.id === decisionId)?.name ?? '?'
+  return `${name(node.decisionId)} = {${name(node.fromDecisionId)}}`
+}
+
+/** `Drawn = random`, `Drawn = random not in Dealt`, as the tag is written. */
+export function describeDraw(node: StoredDraw, project: ProjectDocument): string {
+  const name = (decisionId: string | null) => project.decisions.find(decision => decision.id === decisionId)?.name ?? '?'
+  return `${name(node.decisionId)} = random${node.notInDecisionId === null ? '' : ` not in ${name(node.notInDecisionId)}`}`
 }
 
 /** `ask number: Bet = 10, from 1 to {Money}`, as the tag is written. */
