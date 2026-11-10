@@ -21,6 +21,14 @@
 - `[to be continued: …]` gives the words of that moment, for the whole story or for a route: the last
   one passed counts. Stories that use it need Datajack 2.1 (format 2.1).
 
+### Stories
+- Counters with decimals: `[counter: Money = 1000.00]` counts in hundredths, exactly, and shows its
+  number as the game's language writes numbers (`1,000.50`, `1 000,50`).
+- `[ask number: Bet = 10, from 1 to {Money}]` asks the player for a number: the field takes a comma
+  or a point, says what it understood, and refuses, saying why, a number out of bounds or with too
+  many decimals.
+- Both need Datajack 2.1 (format 2.1).
+
 ### Cyberdeck, the editor
 - *Erase what Cyberdeck keeps…*, below the projects, erases the saves and progress of the previews,
   for a story played from a clean start, its lasting values back to what it declares; and if wished,

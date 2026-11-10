@@ -151,6 +151,14 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
         case 'count':
           use('counter', node.counterId, { role: 'changed', documentId, nodeId })
           break
+        case 'askNumber':
+          use('counter', node.counterId, { role: 'changed', documentId, nodeId })
+          for (const bound of [node.minimum, node.maximum]) {
+            if (bound?.type === 'counter') {
+              use('counter', bound.counterId, { role: 'shown', documentId, nodeId })
+            }
+          }
+          break
         case 'unset':
           use('decision', node.decisionId, { role: 'unset', documentId, nodeId, ...(node.valueId === null ? {} : { valueId: node.valueId }) })
           break

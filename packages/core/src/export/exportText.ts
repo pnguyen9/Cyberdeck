@@ -1,3 +1,5 @@
+import { writtenAmount } from '../format/counterNumbers'
+import { describeAskNumber } from '../storyboard/describeNodes'
 import { firstLanguageOf } from '../format/languages'
 import { effectText } from '../storyboard/describeNodes'
 import { ENDINGS_REACHED, flattenStoredNodes } from '../format/storyFormat'
@@ -81,7 +83,7 @@ export function definitionLine(project: ProjectDocument, kind: DefinitionKind, d
   }
   if (kind === 'counter') {
     const counter = project.counters.find(candidate => candidate.id === definedId)
-    return counter === undefined ? null : `[counter${counter.lasting === true ? ' lasting' : ''}: ${counter.name} = ${counter.initial}]`
+    return counter === undefined ? null : `[counter${counter.lasting === true ? ' lasting' : ''}: ${counter.name} = ${writtenAmount(counter.initial, counter)}]`
   }
   const style = project.styles.find(candidate => candidate.id === definedId)
   return style === undefined ? null : `[style: ${style.name} = ${style.properties.length === 0 ? 'plain' : style.properties.join(', ')}]`
@@ -95,7 +97,8 @@ export function globalDefinitionLines(project: ProjectDocument, documents: reado
   const nodes = documents.flatMap(document => flattenStoredNodes(document.nodes))
   const homed = new Set(nodes.flatMap(node => node.type === 'definition' ? [node.definedId] : []))
   const chosen = new Set(nodes.flatMap(node => node.type === 'choice' ? [node.decisionId] : []))
-  const added = new Set(nodes.flatMap(node => node.type === 'count' && node.operation === 'add' ? [node.counterId] : []))
+  // Counters an `[add]` or an `[ask number]` makes come back with it, needing no declaration.
+  const added = new Set(nodes.flatMap(node => (node.type === 'count' && node.operation === 'add') || node.type === 'askNumber' ? [node.counterId] : []))
   return [
     ...project.decisions.filter(decision => !homed.has(decision.id) && !(decision.implicit === true && chosen.has(decision.id))).map(decision => definitionLine(project, 'decision', decision.id)!),
     ...project.counters.filter(counter => !homed.has(counter.id) && !(counter.implicit === true && added.has(counter.id))).map(counter => definitionLine(project, 'counter', counter.id)!),
@@ -255,6 +258,9 @@ class TextWriter {
           }
           break
         }
+        case 'askNumber':
+          this.line(`[${describeAskNumber(node, this.project)}]`)
+          break
         case 'ask': {
           const asked = this.project.askedNames.find(candidate => candidate.id === node.askedNameId)
           this.line(`[ask: ${asked?.name ?? '?'}${asked === undefined || asked.defaultName === '' ? '' : ` = ${asked.defaultName}`}]`)
@@ -292,9 +298,10 @@ class TextWriter {
         }
         case 'count': {
           const name = this.counterName(node.counterId)
-          this.line(node.operation === 'add' ? `[add: ${name} ${node.amount}]`
-            : node.operation === 'random' ? `[set: ${name} = random ${node.amount} ${node.maximum ?? node.amount}]`
-              : `[set: ${name} = ${node.amount}]`)
+          const amount = (units: number) => this.amount(units, node.counterId)
+          this.line(node.operation === 'add' ? `[add: ${name} ${amount(node.amount)}]`
+            : node.operation === 'random' ? `[set: ${name} = random ${amount(node.amount)} ${amount(node.maximum ?? node.amount)}]`
+              : `[set: ${name} = ${amount(node.amount)}]`)
           break
         }
         case 'unset': {
@@ -411,9 +418,10 @@ class TextWriter {
   private requirement(requirement: Exclude<StoredCondition, { type: 'and' | 'or' }>): string {
     if (requirement.type === 'counter') {
       const name = this.counterName(requirement.counterId)
-      return requirement.operator === '=' ? `${name} is ${requirement.amount}`
-        : requirement.operator === '!=' ? `${name} is not ${requirement.amount}`
-          : `${name} ${requirement.operator} ${requirement.amount}`
+      const amount = this.amount(requirement.amount, requirement.counterId)
+      return requirement.operator === '=' ? `${name} is ${amount}`
+        : requirement.operator === '!=' ? `${name} is not ${amount}`
+          : `${name} ${requirement.operator} ${amount}`
     }
     const not = requirement.negated ? 'not ' : ''
     switch (requirement.type) {
@@ -441,6 +449,11 @@ class TextWriter {
 
   private decision(decisionId: string) {
     return this.project.decisions.find(decision => decision.id === decisionId)
+  }
+
+  /** A number in a counter's units, as a tag writes it: with the decimals the counter keeps. */
+  private amount(units: number, counterId: string): string {
+    return writtenAmount(units, this.project.counters.find(counter => counter.id === counterId) ?? {})
   }
 
   private counterName(counterId: string): string {

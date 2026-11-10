@@ -491,6 +491,11 @@ was lost), and <code>[unset: Clues]</code> takes them all away.</p>
 <code>[set: Affection = 0]</code> starts it over. Conditions can use <code>&gt;</code>, <code>&gt;=</code>,
 <code>&lt;</code>, <code>&lt;=</code>, <code>is</code> and <code>is not</code>. Like decisions, counters are
 saved with the game and undone by going back.</p>
+<p>A counter can count with decimals: write its first number with them, <code>[counter: Money = 1000.00]</code>,
+for hundredths. <code>{Money}</code> shows it as your players' language writes numbers.</p>
+<p>Players can give a number too: <code>[ask number: Bet = 10, from 1 to {Money}]</code> asks them for the bet,
+10 if they type nothing, at least 1 and at most the money they have. They may type a comma or a point;
+the field tells them what it understood, and what it cannot take.</p>
 
 <h2 id="tracking">12. Keeping track of decisions</h2>
 <p>A decision or a style can be declared anywhere, and used everywhere. Two tabs keep them from getting

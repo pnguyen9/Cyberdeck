@@ -1,3 +1,4 @@
+import { writtenAmount } from './counterNumbers'
 import type { MeasureText } from '../pagination/wrapLines'
 import { normalizeName } from '../importer/storyNodes'
 import type { ProjectDocument, StoredPage } from './storyFormat'
@@ -41,7 +42,7 @@ export type PossibleValues = ReadonlyMap<string, readonly string[]>
 export function possibleValues(project: ProjectDocument): Map<string, string[]> {
   const possible = new Map<string, string[]>()
   for (const counter of project.counters) {
-    possible.set(normalizeName(counter.name), counterTexts(counter.initial))
+    possible.set(normalizeName(counter.name), counterTexts(writtenAmount(counter.initial, counter), counter.decimals ?? 0))
   }
   for (const decision of project.decisions) {
     const names = decision.values.map(value => value.name)
@@ -53,9 +54,12 @@ export function possibleValues(project: ProjectDocument): Map<string, string[]> 
   return possible
 }
 
-/** What a counter may show: its first number, or one far beyond what stories count, a sign included. */
-export function counterTexts(initial: number): string[] {
-  return [COUNTER_WIDTH, String(initial)]
+/**
+ * What a counter may show: its first number, or one far beyond what stories count, a sign included;
+ * with decimals, written as languages write them, a thousands separator in.
+ */
+export function counterTexts(initial: string, decimals = 0): string[] {
+  return [decimals === 0 ? COUNTER_WIDTH : `-0,000,000.${'0'.repeat(decimals)}`, initial]
 }
 
 /** Adds what a value may also show to `possible`, keeping what it had. */

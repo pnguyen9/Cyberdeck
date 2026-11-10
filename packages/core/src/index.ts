@@ -123,7 +123,7 @@ export { RESERVED_STYLE_NAMES } from './format/textStyles'
 export { givenName, MAXIMUM_ASKED_NAME_LENGTH, possibleValues, type PossibleValues } from './format/textValues'
 export { playerFormatVersion } from './archive/gameArchive'
 export { createProjectBackup, readProjectBackup, type ProjectBackup } from './project/projectBackup'
-export { describeAssignment, describeCondition, describeCount, describeDefinition, describeStageCommand, describeUnset } from './storyboard/describeNodes'
+export { describeAskNumber, describeAssignment, describeCondition, describeCount, describeDefinition, describeStageCommand, describeUnset } from './storyboard/describeNodes'
 export { ENGLISH_STORY_WORDS, type StoryWords } from './storyboard/storyWords'
 export { CHAPTER_START, insertNodes, moveBranch, moveNodes, removeNodes, replaceNode, storyboardEntries, type DropSlot, type StoryboardEntry, type StoryboardOptions } from './storyboard/storyboard'
 export {
@@ -151,3 +151,4 @@ export { applyNodeEdit, previewNodeEdit, type NodeEditTarget } from './project/n
 export { findPathTo, type FoundPath } from './runtime/findPath'
 export { docxToText } from './importer/readDocx'
 export { blockOfContainer, locateNode, stepNodes, storyboardLevel, type LevelElement, type LevelLane, type LevelOptions, type StoryboardLevel } from './storyboard/storyboardLevel'
+export { readTypedNumber, savedAmount, shownAmount, unitsFromSaved, writtenAmount, type TypedNumberProblem } from './format/counterNumbers'

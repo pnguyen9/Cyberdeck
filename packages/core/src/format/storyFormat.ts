@@ -53,7 +53,14 @@ export interface Decision {
 export interface Counter {
   id: string
   name: string
+  /**
+   * In the counter's units: a counter with decimals counts in hundredths (`decimals` 2) or the like,
+   * so that every number it holds, adds or is compared with is a whole number of them. Amounts of
+   * `count` nodes and `counter` conditions are in the same units.
+   */
   initial: number
+  /** The decimals it counts with, `[counter: Money = 1000.00]` two; none when absent. Since 2.1. */
+  decimals?: number
   /** Declared nowhere: an `[add]` made it, starting at 0. */
   implicit?: true
   /** Its number is kept by the profile from one playthrough to the next. Since 2.0. */
@@ -500,6 +507,22 @@ export interface StoredAsk {
   askedNameId: string
 }
 
+/** A bound of a number asked for: a number, in the units of the counter asked for, or what another counter holds. */
+export type StoredAskBound = { type: 'amount'; amount: number } | { type: 'counter'; counterId: string }
+
+/**
+ * `[ask number: Bet = 10, from 1 to {Money}]`: the player types a number for a counter, which the
+ * field keeps within its bounds. Amounts in the counter's units. Since 2.1.
+ */
+export interface StoredAskNumber {
+  type: 'askNumber'
+  id: string
+  counterId: string
+  defaultAmount: number
+  minimum: StoredAskBound | null
+  maximum: StoredAskBound | null
+}
+
 /** The profile remembers this from now on, in every playthrough; or, `forget`, no longer does. Forgetting since 2.0. */
 export interface StoredRemember {
   type: 'remember'
@@ -528,7 +551,7 @@ export interface StoredBreak {
   id: string
 }
 
-export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredCount | StoredAsk | StoredDefinition | StoredEnding | StoredRemember
+export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredCount | StoredAsk | StoredAskNumber | StoredDefinition | StoredEnding | StoredRemember
 
 /** A list of nodes inside a block: a branch of a condition, or the body of a loop, which bears the loop's identifier. */
 export interface InnerList {

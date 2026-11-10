@@ -112,7 +112,7 @@ function tokenize(line: string, problems: LineProblem[]): Token[] {
 }
 
 /** Directives whose argument is read as written: a list of names separated by commas, or words players read. */
-const AS_WRITTEN_DIRECTIVES: ReadonlySet<string> = new Set(['shown', 'shown after an ending', 'to be continued'])
+const AS_WRITTEN_DIRECTIVES: ReadonlySet<string> = new Set(['shown', 'shown after an ending', 'to be continued', 'ask number'])
 
 /** `enter: marie left smile` → name `enter`, arguments `marie`, `left`, `smile`. Null when the name is missing. */
 function readDirective(content: string): Directive | null {

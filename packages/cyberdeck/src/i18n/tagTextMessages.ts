@@ -47,6 +47,7 @@ const en = {
     'counter lasting': 'a counter the profile keeps from one playthrough to the next',
     'decision lasting': 'a decision the profile keeps from one playthrough to the next',
     ask: 'asks the player for a name, which {Name} then shows',
+    'ask number': 'asks the player for a number, kept by a counter: Bet = 10, from 1 to {Money}',
     timeout: 'on an option: taken when the time of the choice runs out',
   },
   /** What a word suggested is. */
@@ -122,6 +123,7 @@ const en = {
     counter: 'Counter',
     add: 'Add to a counter',
     ask: 'Ask for a name',
+    askNumber: 'Ask for a number',
     timedChoice: 'Timed choice',
     loopEnd: 'Loop … end',
     break: 'Leave the loop',
@@ -182,6 +184,7 @@ const fr: TagTextMessages = {
     'counter lasting': 'un compteur que le profil garde d’une partie à l’autre',
     'decision lasting': 'une décision que le profil garde d’une partie à l’autre',
     ask: 'demande un nom au joueur, que {Nom} affiche ensuite',
+    'ask number': 'demande un nombre au joueur, gardé par un compteur\u00a0: Mise = 10, from 1 to {Argent}',
     timeout: 'sur une option\u00a0: prise quand le temps du choix est écoulé',
   },
   details: {
@@ -256,6 +259,7 @@ const fr: TagTextMessages = {
     counter: 'Compteur',
     add: 'Ajouter à un compteur',
     ask: 'Demander un nom',
+    askNumber: 'Demander un nombre',
     timedChoice: 'Choix minuté',
     loopEnd: 'Boucle … fin',
     break: 'Sortir de la boucle',

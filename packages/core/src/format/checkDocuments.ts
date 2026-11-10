@@ -1,3 +1,4 @@
+import { MAXIMUM_COUNTER_DECIMALS } from '../importer/readControl'
 import {
   isSupportedFormatVersion,
   type AnimationSpec,
@@ -7,6 +8,7 @@ import {
   type ProjectDocument,
   type StageCommand,
   type Character,
+  type StoredAskBound,
   type StoredChoice,
   type StoredCount,
   type VideoClip,
@@ -81,6 +83,19 @@ function withFlag<Shape extends object, Field extends string>(field: Field, chec
   return (value, path) => (record(value, path)[field] === true ? { ...check(value, path), [field]: true } : check(value, path)) as Shape & { [Key in Field]?: true }
 }
 
+/** A counter's decimals, kept only when it has some: 1 to the most a counter may count with. */
+function withDecimals<Shape extends object>(check: Check<Shape>): Check<Shape & { decimals?: number }> {
+  return (value, path) => {
+    const decimals = record(value, path).decimals
+    if (decimals === undefined || decimals === 0) {
+      return check(value, path)
+    }
+    return Number.isInteger(decimals) && (decimals as number) > 0 && (decimals as number) <= MAXIMUM_COUNTER_DECIMALS
+      ? { ...check(value, path), decimals: decimals as number }
+      : fail(`${path}.decimals`, `a number of decimals, 1 to ${MAXIMUM_COUNTER_DECIMALS}`)
+  }
+}
+
 /** A language code, as a key or a value: letters, then subtags, nothing that could leave a folder. */
 const languageCode: Check<string> = (value, path) => typeof value === 'string' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8}){0,3}$/.test(value) ? value : fail(path, 'a language code')
 
@@ -94,6 +109,14 @@ const styleProperties: Check<(typeof STYLE_PROPERTIES)[number][]> = (value, path
   array(string)(value, path).filter((property): property is (typeof STYLE_PROPERTIES)[number] => (STYLE_PROPERTIES as readonly string[]).includes(property))
 
 const formatVersion: Check<string> = (value, path) => isSupportedFormatVersion(string(value, path)) ? value as string : fail(path, 'a format version this player reads')
+
+/** A bound of a number asked for: a number, or a counter. */
+const askBound: Check<StoredAskBound> = (value, path) => {
+  const fields = record(value, path)
+  return fields.type === 'amount' ? { type: 'amount', amount: integer(fields.amount, `${path}.amount`) }
+    : fields.type === 'counter' ? { type: 'counter', counterId: string(fields.counterId, `${path}.counterId`) }
+      : fail(`${path}.type`, 'amount or counter')
+}
 
 const animationKind = oneOf('instant', 'fade', 'slide-from-left', 'slide-from-right', 'slide-to-left', 'slide-to-right')
 const facing = oneOf('left', 'right')
@@ -211,6 +234,8 @@ function node(value: unknown, path: string, depth: number): StoredNode {
     }
     case 'ask':
       return object({ type: oneOf('ask'), id: string, askedNameId: string })(value, path)
+    case 'askNumber':
+      return object({ type: oneOf('askNumber'), id: string, counterId: string, defaultAmount: integer, minimum: nullable(askBound), maximum: nullable(askBound) })(value, path)
     case 'set':
       return object({ type: oneOf('set'), id: string, decisionId: string, valueId: string })(value, path)
     case 'unset':
@@ -304,7 +329,7 @@ const checkProjectFields: Check<ProjectDocument> = object({
   chapterOrder: array(string),
   sceneOrder: array(string),
   decisions: array(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, multiple: boolean, values: array(object({ id: string, name: string })) })))),
-  counters: array(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, initial: integer })))),
+  counters: array(withDecimals(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, initial: integer }))))),
   askedNames: array(object({ id: string, name: string, defaultName: string })),
   endings: array((ending, endingPath) => {
     const checked = object({ id: string, name: string })(ending, endingPath)

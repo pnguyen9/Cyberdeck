@@ -104,6 +104,14 @@ export function unusedNames(project: ProjectDocument, documents: readonly Chapte
       case 'count':
         used.add(node.counterId)
         break
+      case 'askNumber':
+        used.add(node.counterId)
+        for (const bound of [node.minimum, node.maximum]) {
+          if (bound?.type === 'counter') {
+            used.add(bound.counterId)
+          }
+        }
+        break
       case 'definition':
         used.add(node.definedId)
         break

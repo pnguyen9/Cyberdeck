@@ -32,6 +32,8 @@ import {
   readCondition,
   readCounterDeclaration,
   readDecisionDeclaration,
+  decimalsWritten,
+  readAskNumber,
   readRandom,
   declarationKind,
 } from './readControl'
@@ -123,7 +125,7 @@ function valuesDeclaredIn(input: string, known: PossibleValues = new Map()): Map
       } else if (declared?.kind === 'counter') {
         const declaration = readCounterDeclaration(text)
         if (declaration !== null) {
-          for (const shown of counterTexts(declaration.initial)) {
+          for (const shown of counterTexts(String(declaration.initial), declaration.decimals)) {
             addPossibleValue(possible, declaration.name, shown)
           }
         }
@@ -464,6 +466,16 @@ class TextImporter {
         }
         this.flushPendingDirectives()
         this.addNode({ type: 'ask', sourceLine: lineNumber, name: assignment.name, defaultName: assignment.value === '' ? null : assignment.value })
+        return
+      }
+      case 'ask number': {
+        const asked = readAskNumber(directive.written ?? text)
+        if (asked === null) {
+          this.addProblem('error', 'invalidAskNumber', lineNumber, text === '' ? undefined : text)
+          return
+        }
+        this.flushPendingDirectives()
+        this.addNode({ type: 'askNumber', sourceLine: lineNumber, counter: asked.counter, defaultAmount: asked.defaultAmount, decimals: decimalsWritten(asked.defaultWritten), minimum: asked.minimum, maximum: asked.maximum })
         return
       }
       case 'timeout':

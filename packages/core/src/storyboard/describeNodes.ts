@@ -1,4 +1,5 @@
-import type { AnimationSpec, DefinitionKind, Placement, ProjectDocument, StageCommand, StoredCondition, StoredCount } from '../format/storyFormat'
+import { writtenAmount } from '../format/counterNumbers'
+import type { AnimationSpec, DefinitionKind, Placement, ProjectDocument, StageCommand, StoredAskBound, StoredAskNumber, StoredCondition, StoredCount } from '../format/storyFormat'
 import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
 
 /** Short descriptions of what nodes do, in the words of the writing syntax, for the storyboard. */
@@ -69,9 +70,9 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
 export function describeCondition(condition: StoredCondition, project: ProjectDocument): string {
   switch (condition.type) {
     case 'counter': {
-      const name = project.counters.find(candidate => candidate.id === condition.counterId)?.name ?? '?'
+      const counter = project.counters.find(candidate => candidate.id === condition.counterId)
       const operator = condition.operator === '=' ? 'is' : condition.operator === '!=' ? 'is not' : condition.operator
-      return `${name} ${operator} ${condition.amount}`
+      return `${counter?.name ?? '?'} ${operator} ${writtenAmount(condition.amount, counter ?? {})}`
     }
     case 'is': {
       const decision = project.decisions.find(candidate => candidate.id === condition.decisionId)
@@ -97,10 +98,24 @@ export function describeAssignment(decisionId: string, valueId: string, project:
 
 /** `Trust + 2`, `Trust − 1`, `Trust = 3`, `Weather = random 1–6`. */
 export function describeCount(node: StoredCount, project: ProjectDocument): string {
-  const name = project.counters.find(candidate => candidate.id === node.counterId)?.name ?? '?'
-  return node.operation === 'set' ? `${name} = ${node.amount}`
-    : node.operation === 'random' ? `${name} = random ${node.amount}–${node.maximum ?? node.amount}`
-      : `${name} ${node.amount < 0 ? '−' : '+'} ${Math.abs(node.amount)}`
+  const counter = project.counters.find(candidate => candidate.id === node.counterId)
+  const name = counter?.name ?? '?'
+  const amount = (units: number) => writtenAmount(units, counter ?? {})
+  return node.operation === 'set' ? `${name} = ${amount(node.amount)}`
+    : node.operation === 'random' ? `${name} = random ${amount(node.amount)}–${amount(node.maximum ?? node.amount)}`
+      : `${name} ${node.amount < 0 ? '−' : '+'} ${amount(Math.abs(node.amount))}`
+}
+
+/** `ask number: Bet = 10, from 1 to {Money}`, as the tag is written. */
+export function describeAskNumber(node: StoredAskNumber, project: ProjectDocument): string {
+  const counter = project.counters.find(candidate => candidate.id === node.counterId)
+  const bound = (written: StoredAskBound | null) => written === null ? null
+    : written.type === 'amount' ? writtenAmount(written.amount, counter ?? {})
+      : `{${project.counters.find(candidate => candidate.id === written.counterId)?.name ?? '?'}}`
+  const minimum = bound(node.minimum)
+  const maximum = bound(node.maximum)
+  const bounds = [...(minimum === null ? [] : [`from ${minimum}`]), ...(maximum === null ? [] : [`to ${maximum}`])].join(' ')
+  return `ask number: ${counter?.name ?? '?'} = ${writtenAmount(node.defaultAmount, counter ?? {})}${bounds === '' ? '' : `, ${bounds}`}`
 }
 
 /** `Confession: Accept | Refuse`, `Clues (several): Letter | Key`, `Trust: starts at 2`, `Whisper: italic, small`. */
@@ -111,7 +126,7 @@ export function describeDefinition(kind: DefinitionKind, definedId: string, proj
   }
   if (kind === 'counter') {
     const counter = project.counters.find(candidate => candidate.id === definedId)
-    return counter === undefined ? '?' : `${counter.name}${words.colon}${words.startsAt(counter.initial)}`
+    return counter === undefined ? '?' : `${counter.name}${words.colon}${words.startsAt(writtenAmount(counter.initial, counter))}`
   }
   const style = project.styles.find(candidate => candidate.id === definedId)
   return style === undefined ? '?' : `${style.name}${words.colon}${style.properties.join(', ') || words.fromTheCss}`

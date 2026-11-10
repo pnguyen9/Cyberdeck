@@ -17,7 +17,7 @@ export interface StoryWords {
   /** A name asked for, and what stands in until the player gives one. */
   askedName: (name: string, defaultName: string) => string
   /** What a counter holds before anything changes it. */
-  startsAt: (amount: number) => string
+  startsAt: (amount: string) => string
   /** In place of the properties of a style drawn by the CSS alone. */
   fromTheCss: string
   /** A decision with every value taken away. */

@@ -53,6 +53,7 @@ const TAG_TEMPLATES: { id: keyof TagTextMessages['templates']; text: string; gro
   { id: 'counter', text: '[counter: | = 0]', group: 'story' },
   { id: 'add', text: '[add: ', group: 'story' },
   { id: 'ask', text: '[ask: | = ]', group: 'story' },
+  { id: 'askNumber', text: '[ask number: | = 0, from 0 to 100]', group: 'story' },
   { id: 'timedChoice', text: '[choice: | 10s]\n> \n> \n> … = Silent [timeout]', group: 'story' },
   { id: 'loopEnd', text: '[loop]\n|\n[end]', group: 'story' },
   { id: 'break', text: '[break]', group: 'story' },

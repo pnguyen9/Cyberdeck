@@ -295,6 +295,10 @@ What the story counts, such as affection, money or the rounds of a fight, is a *
 
 A counter starts at 0. To start it elsewhere, declare it: `[counter: Affection = 2]`. `[set: Affection = 0]` starts it over. Conditions can use `>`, `>=`, `<`, `<=`, `is` and `is not`. Like decisions, counters are saved with the game and undone by going back.
 
+A counter can count with decimals: write its first number with them, `[counter: Money = 1000.00]`, for hundredths. `{Money}` shows it as your players' language writes numbers.
+
+Players can give a number too: `[ask number: Bet = 10, from 1 to {Money}]` asks them for the bet, 10 if they type nothing, at least 1 and at most the money they have. They may type a comma or a point; the field tells them what it understood, and what it cannot take.
+
 ## 12. Keeping track of decisions
 
 A decision or a style can be declared anywhere, and used everywhere. Two tabs keep them from getting lost.

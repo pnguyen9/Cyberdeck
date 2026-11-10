@@ -1,3 +1,4 @@
+import { shownAmount } from '../format/counterNumbers'
 import type { ProjectDocument } from '../format/storyFormat'
 import type { ValueOf } from '../format/textValues'
 import { normalizeName } from '../importer/storyNodes'
@@ -27,7 +28,7 @@ export function valuesReader(project: ProjectDocument): (held: HeldValues) => Va
     }
     const counter = countersByName.get(key)
     if (counter !== undefined) {
-      return String(Object.hasOwn(held.counters, counter.id) ? held.counters[counter.id] ?? 0 : counter.initial)
+      return shownAmount(Object.hasOwn(held.counters, counter.id) ? held.counters[counter.id] ?? 0 : counter.initial, counter, project.locale)
     }
     const decision = decisionsByName.get(key)
     if (decision === undefined) {

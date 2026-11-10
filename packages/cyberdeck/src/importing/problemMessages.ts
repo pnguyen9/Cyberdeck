@@ -77,13 +77,20 @@ const en: ProblemMessages = {
   duplicateDecision: (subject, suggestion) => suggestion === ''
     ? `The decision "${subject}" is declared twice.`
     : `The decision "${subject}" is already declared in ${suggestion}: change it there, or move it to Definitions first.`,
-  invalidCounter: subject => `"${subject}" should look like: Name = 0, a whole number, or the name alone to start at 0.`,
+  invalidCounter: subject => `"${subject}" should look like: Name = 0, a number (0.00 for one counting in hundredths), or the name alone to start at 0.`,
   invalidAdd: subject => subject === '' ? '[add: …] needs the name of a counter, and an amount if not 1: [add: Trust 2], [add: Trust -1].' : `"${subject}" should look like: Counter 2, Counter -1, or the counter alone to add 1.`,
   unknownCounter: subject => `No counter is called "${subject}": declare it with [counter: ${subject}], or count with [add: ${subject}].`,
   counterNeedsNumber: subject => {
     const [counter, value] = subject.split(': ')
-    return `${counter} is a counter: it holds whole numbers, not "${value}". [set] may also draw one, random 1 6.`
+    return `${counter} is a counter: it holds numbers, not "${value}". [set] may also draw one, random 1 6.`
   },
+  counterTooPrecise: (subject, kept) => {
+    const [counter, value] = subject.split(': ')
+    return kept === '0'
+      ? `${counter} counts in whole numbers: ${value} has decimals. Declare it with the decimals it should keep, [counter: ${counter} = 0.00] for hundredths.`
+      : `${counter} keeps ${kept} ${kept === '1' ? 'decimal' : 'decimals'}, as it is declared: ${value} has more.`
+  },
+  invalidAskNumber: subject => `${subject === '' ? '[ask number: …]' : `"${subject}"`} should look like: Bet = 10, from 1 to {Money}: a counter, the number proposed, and if wished the lowest and highest numbers allowed, each a number or a counter in braces.`,
   duplicateCounter: (subject, suggestion) => suggestion === ''
     ? `The counter "${subject}" is declared twice.`
     : `The counter "${subject}" is already declared in ${suggestion}: change it there, or move it to Definitions first.`,
@@ -187,13 +194,20 @@ const fr: ProblemMessages = {
   duplicateDecision: (subject, suggestion) => suggestion === ''
     ? `La décision ${quoted(subject)} est déclarée deux fois.`
     : `La décision ${quoted(subject)} est déjà déclarée dans ${suggestion}\u00a0: modifiez-la là-bas, ou déplacez-la d’abord dans Définitions.`,
-  invalidCounter: subject => `${quoted(subject)} devrait avoir cette forme\u00a0: Nom = 0, un nombre entier, ou le nom seul pour commencer à 0.`,
+  invalidCounter: subject => `${quoted(subject)} devrait avoir cette forme\u00a0: Nom = 0, un nombre (0.00 pour compter en centièmes), ou le nom seul pour commencer à 0.`,
   invalidAdd: subject => subject === '' ? '[add: …] attend le nom d’un compteur, et le nombre à ajouter, si ce n’est pas 1\u00a0: [add: Confiance 2], [add: Confiance -1].' : `${quoted(subject)} devrait avoir cette forme\u00a0: Compteur 2, Compteur -1, ou le compteur seul pour ajouter 1.`,
   unknownCounter: subject => `Aucun compteur ne s’appelle ${quoted(subject)}\u00a0: déclarez-le avec [counter: ${subject}], ou comptez avec [add: ${subject}].`,
   counterNeedsNumber: subject => {
     const [counter, value] = subject.split(': ')
-    return `${counter} est un compteur\u00a0: il contient des nombres entiers, pas ${quoted(value ?? '')}. [set] peut aussi en tirer un au hasard, random 1 6.`
+    return `${counter} est un compteur\u00a0: il contient des nombres, pas ${quoted(value ?? '')}. [set] peut aussi en tirer un au hasard, random 1 6.`
   },
+  counterTooPrecise: (subject, kept) => {
+    const [counter, value] = subject.split(': ')
+    return kept === '0'
+      ? `${counter} compte en nombres entiers\u00a0: ${value} a des décimales. Déclarez-le avec les décimales à garder, [counter: ${counter} = 0.00] pour des centièmes.`
+      : `${counter} garde ${kept} ${kept === '1' ? 'décimale' : 'décimales'}, comme il est déclaré\u00a0: ${value} en a davantage.`
+  },
+  invalidAskNumber: subject => `${subject === '' ? '[ask number: …]' : quoted(subject)} devrait avoir cette forme\u00a0: Mise = 10, from 1 to {Argent}\u00a0: un compteur, le nombre proposé, et si besoin le plus petit et le plus grand nombres permis, chacun un nombre ou un compteur entre accolades.`,
   duplicateCounter: (subject, suggestion) => suggestion === ''
     ? `Le compteur ${quoted(subject)} est déclaré deux fois.`
     : `Le compteur ${quoted(subject)} est déjà déclaré dans ${suggestion}\u00a0: modifiez-le là-bas, ou déplacez-le d’abord dans Définitions.`,

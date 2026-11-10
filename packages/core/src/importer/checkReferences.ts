@@ -3,7 +3,7 @@ import { styleClassName } from '../format/authorCss'
 import { placeholdersIn } from '../format/textValues'
 import { readStyleProperty } from '../format/textStyles'
 import type { Condition, ImportedChapter, ImportProblem, ImportResult, StoryNode } from './importTypes'
-import { readAmount, readRandom } from './readControl'
+import { decimalsOf, decimalsWritten, readAmount, readRandom } from './readControl'
 import { flattenNodes, normalizeName } from './storyNodes'
 
 /**
@@ -16,6 +16,8 @@ export interface KnownDefinition {
   name: string
   declaredIn?: string | null
   implicit?: boolean
+  /** A counter's decimals, when it counts with some. */
+  decimals?: number
 }
 
 export interface KnownDecision extends KnownDefinition {
@@ -135,10 +137,31 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     }
   }
 
+  /** The decimals each counter keeps, by name normalised: as declared here, or as the project has it. */
+  const decimalsByCounter = new Map([
+    ...(knownNames.counters ?? []).map(counter => [normalizeName(counter.name), counter.decimals ?? 0] as const),
+    ...result.counters.map(declaration => [normalizeName(declaration.name), declaration.decimals] as const),
+  ])
+  // A counter an `[ask number]` makes keeps the decimals of the number it proposes.
+  for (const node of allNodes) {
+    if (node.type === 'askNumber' && !decimalsByCounter.has(normalizeName(node.counter))) {
+      decimalsByCounter.set(normalizeName(node.counter), node.decimals)
+    }
+  }
+  /** A number with more decimals than its counter keeps: `0.5` for a counter of whole numbers. */
+  const checkPrecision = (name: string, decimals: number, written: string, line: number) => {
+    const kept = decimalsByCounter.get(normalizeName(name)) ?? 0
+    if (decimals > kept) {
+      problems.push({ severity: 'error', code: 'counterTooPrecise', line, subject: `${name}: ${written}`, suggestion: String(kept) })
+    }
+  }
   /** A counter takes a number where a decision takes one of its values. */
   const checkCounterValue = (name: string, value: string, line: number, mayDraw = false) => {
-    if (readAmount(value) === null && !(mayDraw && readRandom(value) !== null)) {
+    const draw = mayDraw ? readRandom(value) : null
+    if (readAmount(value) === null && draw === null) {
       problems.push({ severity: 'error', code: 'counterNeedsNumber', line, subject: `${name}: ${value}` })
+    } else {
+      checkPrecision(name, draw === null ? decimalsWritten(value) : Math.max(decimalsOf(draw.minimum), decimalsOf(draw.maximum)), value, line)
     }
   }
   const isCounter = (name: string) => counters.has(normalizeName(name))
@@ -151,6 +174,8 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
         checkValue(part.decision, part.value, line)
       } else if (part.type === 'compare' && !isCounter(part.counter)) {
         problems.push({ severity: 'error', code: 'unknownCounter', line, subject: part.counter })
+      } else if (part.type === 'compare') {
+        checkPrecision(part.counter, decimalsOf(part.amount), String(part.amount), line)
       } else if (part.type === 'remembered' && !memories.has(normalizeName(part.memory))) {
         problems.push({ severity: 'error', code: 'unknownMemory', line, subject: part.memory })
       } else if (part.type === 'endingSeen' && !endings.has(normalizeName(part.ending))) {
@@ -174,6 +199,19 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
         checkCounterValue(node.decision, node.value, node.sourceLine, true)
       } else {
         checkValue(node.decision, node.value, node.sourceLine)
+      }
+    }
+    if (node.type === 'add') {
+      checkPrecision(node.counter, decimalsOf(node.amount), String(node.amount), node.sourceLine)
+    }
+    if (node.type === 'askNumber') {
+      checkPrecision(node.counter, decimalsOf(node.defaultAmount), String(node.defaultAmount), node.sourceLine)
+      for (const bound of [node.minimum, node.maximum]) {
+        if (bound?.type === 'amount') {
+          checkPrecision(node.counter, decimalsOf(bound.amount), String(bound.amount), node.sourceLine)
+        } else if (bound?.type === 'counter' && !isCounter(bound.counter)) {
+          problems.push({ severity: 'error', code: 'unknownCounter', line: node.sourceLine, subject: bound.counter })
+        }
       }
     }
     if (node.type === 'unset') {
@@ -254,7 +292,7 @@ function checkCounters(result: ImportResult, allNodes: readonly StoryNode[], kno
     names.add(name)
   }
   for (const node of allNodes) {
-    if (node.type === 'add') {
+    if (node.type === 'add' || node.type === 'askNumber') {
       names.add(normalizeName(node.counter))
     }
   }

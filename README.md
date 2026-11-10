@@ -269,6 +269,8 @@ one per language, of the same shape: another language is one more table each.
 | `[loop]` … `[break]` … `[end]` | Plays what is inside again and again; `[break]`, usually in a branch, leaves the innermost loop and goes on after its `[end]`. A loop with nothing inside to leave it (no `[break]` or `[ending]`) is reported. |
 | `[set: Clues = Letter]` | Sets a decision without a choice. |
 | `[counter: Trust = 2]`, `[counter: Trust]` | Declares a counter, a whole number the story counts with, and what it starts at (0 when not given). Optional: an `[add]` makes the counter it names. |
+| `[counter: Money = 1000.00]` | A counter with decimals: as many as its first number is written with, here hundredths (at most 4). It counts exactly, `0.1 + 0.2` being `0.30`; `{Money}` shows it as the game's language writes numbers, `1,000.50` or `1 000,50`; a number with more decimals than it keeps is reported. Saves keep it as it reads, `1000.5`. Needs Datajack 2.1. |
+| `[ask number: Bet = 10, from 1 to {Money}]` | Asks the player for a number, for a counter (made by it when not declared, with the decimals of the number proposed). The bounds are numbers or counters in braces, read when the number is asked; either may go. The field takes digits with one comma or point for decimals, whatever the language, spaces ignored, a minus only when the lowest bound is below zero; it says what it understood, and refuses what lies out of bounds or has too many decimals, saying why. Nothing typed takes the number proposed. Needs Datajack 2.1. |
 | `[counter lasting: Coins = 0]`, `[decision multi lasting: Bag = Key \| Lamp]` | A counter or a decision the profile keeps from one playthrough to the next: within one it behaves as any other, going back undoing what was added or taken, and a new playthrough starts with what the last one left. What the player carries, apart from what the game knows (`[remember]`). Needs Datajack 2.0. |
 | `[shown: Bag, Coins]`, `[shown after an ending: Trust, endings reached]` | What players see in their **Journal**: decisions while they hold something (a bag its items, until taken away), counters their number, and with `endings reached` the endings reached; always, or once the profile has reached any ending. Nothing unless the author says so. Lines among the definitions, names separated by commas; the Index writes them too. |
 | `[add: Trust]`, `[add: Trust 2]`, `[add: Trust -1]` | Adds to a counter: 1, or the amount after its name. `[set: Trust = 0]` gives it a value. |
@@ -851,27 +853,6 @@ the SHA-256 in their name; and only save folders the player picked in the system
     allowed, and previewing from a point starts with its values, so the author chooses the way to a
     late page rather than taking the shortest. The map can also hide the paths not played, keeping
     only the one played (or the one leading to where the preview started).
-- **Numbers typed by players.** `[ask]` takes a name, text the story shows but cannot count with.
-  A number asked for would go into a counter, to add, compare and show like any other:
-  `[ask number: Bet = 10, from 1 to {Money}]`, the bounds plain numbers or counters. The field
-  takes whole numbers only, a minus sign included when the lower bound is below zero (a temperature
-  from -30 to 50), a decimal point too for a counter with decimals (below), and refuses what lies outside the bounds, saying which they are, so that a
-  player can bet neither a negative amount nor more money than they have. Blackjack would use it for
-  a bet of any amount.
-- **Counters with decimals.** Counters hold whole numbers; money in cents, or a temperature of
-  21.5, would need decimals. A counter would take the decimals it is declared with:
-  `[counter: Money = 1000.00]` counts in hundredths, adds, compares and asks for numbers to that
-  precision, and shows them with it (`{Money}` → `1000.50`). Kept inside as a whole number of
-  hundredths, it never shows the rounding errors of computer arithmetic (`0.1 + 0.2` giving
-  `0.30000000000000004`). Numbers are written as the language the game is played in writes
-  them, by the browser's own rules (`Intl.NumberFormat`): `1,000.50` in English, `1 000,50` in
-  French. The browser does not read numbers back, so the field reads them itself, as a browser's
-  number field does: plain digits with one decimal sign, a comma or a point whatever the language,
-  since players type as they are used to (`13,37` is 13.37 in a game played in English too);
-  thousands separators are never needed (`1000000.05`), and spaces are ignored. A comma read as a
-  decimal sign may not be what an English player meant (`1,000`), so the field shows, as it is
-  typed, the number it understood, written as the game writes it (`13.37`), and refuses one with
-  more decimals than the counter keeps, saying why.
 - **Opening a game in Cyberdeck.** An exported game holds what its project needs; Cyberdeck could
   open one as a project, for an author who lost theirs.
 
@@ -893,7 +874,7 @@ downloaded and all of it is as free as the rest of the repository.
 - **Blackjack**, with all its rules. It first offers to read the rules or skip them, then asks
   how many decks the shoe holds (1, 2, 4, 6 or 8, as casinos deal). Players start with $1,000, bet,
   play or leave; the bet is
-  picked among choices ($10, $50, $100, everything, or another amount, typed); the journal shows their money, and having none left is game over. Drawn cards, table and
+  picked among choices ($10, $50, $100, everything, or another amount, typed with `[ask number]`); the journal shows their money, and having none left is game over. Drawn cards, table and
   chips, and styles or CSS to make it move: cards flying into place as they are dealt, the dealer's
   hidden card turned over. Turning a card could be its back shrinking, then its front growing, with a
   few frames between for a smoother look; or animated GIFs made to play once (back, then front, then

@@ -1,5 +1,5 @@
 import { firstLanguageOf } from './languages'
-import type { Condition, Directive, ImportResult, ShownDeclaration, StoryNode, StyleDeclaration } from '../importer/importTypes'
+import type { AskBound, Condition, Directive, ImportResult, ShownDeclaration, StoryNode, StyleDeclaration } from '../importer/importTypes'
 import { readAmount, readRandom } from '../importer/readControl'
 import { flattenNodes, normalizeName } from '../importer/storyNodes'
 import { interpretStageDirective } from '../stage/stageDirectives'
@@ -20,6 +20,7 @@ import {
   withShown,
   type ShownToPlayers,
   type ShownWhen,
+  type StoredAskBound,
   type StoredCondition,
   type StoredNode,
   type TextStyle,
@@ -70,11 +71,13 @@ export function storeImport(
   }
   const counters = new CounterRegistry(project.counters, environment)
   for (const declaration of result.counters) {
-    counters.declare(declaration.name, declaration.initial, declaration.lasting)
+    counters.declare(declaration.name, declaration.initial, declaration.lasting, declaration.decimals)
   }
   for (const node of importedNodes) {
     if (node.type === 'add') {
       counters.use(node.counter)
+    } else if (node.type === 'askNumber') {
+      counters.use(node.counter, node.decimals)
     }
   }
   const askedNames = new AskedNameRegistry(project.askedNames, environment)
@@ -176,16 +179,24 @@ export function storeImport(
         if (counter !== undefined) {
           const random = readRandom(node.value)
           return random === null
-            ? { type: 'count', id, counterId: counter.id, operation: 'set', amount: amountOf(node.value) }
-            : { type: 'count', id, counterId: counter.id, operation: 'random', amount: random.minimum, maximum: random.maximum }
+            ? { type: 'count', id, counterId: counter.id, operation: 'set', amount: unitsOf(amountOf(node.value), counter) }
+            : { type: 'count', id, counterId: counter.id, operation: 'random', amount: unitsOf(random.minimum, counter), maximum: unitsOf(random.maximum, counter) }
         }
         const decision = decisions.find(node.decision)
         return { type: 'set', id, decisionId: decision.id, valueId: decisions.findValue(decision, node.value).id }
       }
       case 'ask':
         return { type: 'ask', id, askedNameId: askedNames.find(node.name).id }
-      case 'add':
-        return { type: 'count', id, counterId: counters.find(node.counter).id, operation: 'add', amount: node.amount }
+      case 'askNumber': {
+        const counter = counters.find(node.counter)
+        const bound = (written: AskBound | null): StoredAskBound | null => written === null ? null
+          : written.type === 'amount' ? { type: 'amount', amount: unitsOf(written.amount, counter) } : { type: 'counter', counterId: counters.find(written.counter).id }
+        return { type: 'askNumber', id, counterId: counter.id, defaultAmount: unitsOf(node.defaultAmount, counter), minimum: bound(node.minimum), maximum: bound(node.maximum) }
+      }
+      case 'add': {
+        const counter = counters.find(node.counter)
+        return { type: 'count', id, counterId: counter.id, operation: 'add', amount: unitsOf(node.amount, counter) }
+      }
       case 'unset': {
         const decision = decisions.find(node.decision)
         return { type: 'unset', id, decisionId: decision.id, valueId: node.value === null ? null : decisions.findValue(decision, node.value).id }
@@ -397,9 +408,15 @@ class CounterRegistry {
   }
 
   /** A declaration: creates the counter, or gives one declared again its initial value, keeping its identifier. */
-  declare(name: string, initial: number, lasting: boolean) {
+  declare(name: string, initial: number, lasting: boolean, decimals = 0) {
     const existing = this.get(name)
-    const counter: Counter = { id: existing?.id ?? this.environment.createId(), name, initial, ...(lasting ? { lasting: true as const } : {}) }
+    const counter: Counter = {
+      id: existing?.id ?? this.environment.createId(),
+      name,
+      initial: Math.round(initial * 10 ** decimals),
+      ...(decimals === 0 ? {} : { decimals }),
+      ...(lasting ? { lasting: true as const } : {}),
+    }
     if (existing === undefined) {
       this.counters.push(counter)
     } else {
@@ -407,10 +424,10 @@ class CounterRegistry {
     }
   }
 
-  /** An `[add]`: makes the counter it names when nobody declared it, starting at 0. */
-  use(name: string) {
+  /** An `[add]` or an `[ask number]`: makes the counter it names when nobody declared it, starting at 0. */
+  use(name: string, decimals = 0) {
     if (this.get(name) === undefined) {
-      this.counters.push({ id: this.environment.createId(), name, initial: 0, implicit: true })
+      this.counters.push({ id: this.environment.createId(), name, initial: 0, implicit: true, ...(decimals === 0 ? {} : { decimals }) })
     }
   }
 
@@ -464,9 +481,14 @@ class AskedNameRegistry {
 function amountOf(value: string): number {
   const amount = readAmount(value)
   if (amount === null) {
-    throw new Error(`"${value}" is no whole number: check the import with checkReferences before storing it`)
+    throw new Error(`"${value}" is no number: check the import with checkReferences before storing it`)
   }
   return amount
+}
+
+/** A number as written, in the counter's units: `0.5` is 50 hundredths of a counter of two decimals. */
+function unitsOf(amount: number, counter: Counter): number {
+  return Math.round(amount * 10 ** (counter.decimals ?? 0))
 }
 
 /** Endings and memories: created by being named, found again by name ignoring case. */
@@ -497,13 +519,15 @@ function storeCondition(condition: Condition, decisions: DecisionRegistry, count
     case 'is': {
       const counter = counters.get(condition.decision)
       if (counter !== undefined) {
-        return { type: 'counter', counterId: counter.id, operator: condition.negated ? '!=' : '=', amount: amountOf(condition.value) }
+        return { type: 'counter', counterId: counter.id, operator: condition.negated ? '!=' : '=', amount: unitsOf(amountOf(condition.value), counter) }
       }
       const decision = decisions.find(condition.decision)
       return { type: 'is', decisionId: decision.id, valueId: decisions.findValue(decision, condition.value).id, negated: condition.negated }
     }
-    case 'compare':
-      return { type: 'counter', counterId: counters.find(condition.counter).id, operator: condition.operator, amount: condition.amount }
+    case 'compare': {
+      const counter = counters.find(condition.counter)
+      return { type: 'counter', counterId: counter.id, operator: condition.operator, amount: unitsOf(condition.amount, counter) }
+    }
     case 'remembered':
       return { type: 'remembered', memoryId: memories.idOf(condition.memory), negated: condition.negated }
     case 'endingSeen':

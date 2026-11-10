@@ -64,7 +64,7 @@ const en = {
   declaredInDefinitions: (_kind: NameKind) => 'declared in Definitions',
   madeByChoices: 'made by its choices',
   madeByAdd: 'made by its [add]',
-  startsAt: (amount: number) => `starts at ${amount}`,
+  startsAt: (amount: string) => `starts at ${amount}`,
   shownToPlayers: 'In the players’ journal',
   shownNever: 'never',
   shownAlways: 'always',

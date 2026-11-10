@@ -1,3 +1,4 @@
+import { shownAmount } from '../format/counterNumbers'
 import type { ProjectDocument } from '../format/storyFormat'
 import type { HeldValues } from './storyValues'
 
@@ -36,7 +37,7 @@ export function journalOf(project: ProjectDocument, held: HeldValues, endingIds:
     const counter = counters.get(id)
     if (counter !== undefined) {
       const count = Object.hasOwn(held.counters, id) ? held.counters[id] ?? 0 : counter.initial
-      return [{ id, name: counter.name, kind: 'counter', items: [String(count)] }]
+      return [{ id, name: counter.name, kind: 'counter', items: [shownAmount(count, counter, project.locale)] }]
     }
     return []
   })

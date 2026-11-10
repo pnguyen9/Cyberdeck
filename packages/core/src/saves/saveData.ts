@@ -1,3 +1,4 @@
+import { savedAmount, unitsFromSaved } from '../format/counterNumbers'
 import { normalizeName } from '../importer/storyNodes'
 import { givenName, withValues } from '../format/textValues'
 import { valuesReader } from '../runtime/storyValues'
@@ -62,7 +63,7 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
   const countersById = new Map(project.counters.map(counter => [counter.id, counter]))
   const counters = Object.entries(state.counters).flatMap(([counterId, count]) => {
     const counter = countersById.get(counterId)
-    return counter === undefined ? [] : [[counter.name, count] as const]
+    return counter === undefined ? [] : [[counter.name, savedAmount(count, counter)] as const]
   })
   const names = Object.entries(state.names).flatMap(([askedNameId, given]) => {
     const asked = project.askedNames.find(candidate => candidate.id === askedNameId)
@@ -139,7 +140,7 @@ export function stateFromSave(story: PlayableStory, save: SaveData): RuntimeStat
   for (const [counterName, count] of Object.entries(save.counters ?? {})) {
     const counter = findNamed(project.counters, counterName)
     if (counter !== undefined) {
-      counters[counter.id] = count
+      counters[counter.id] = unitsFromSaved(count, counter)
     }
   }
 
@@ -205,7 +206,7 @@ export function parseSave(value: unknown): SaveData | null {
     && (page === null || (isRecord(page) && isString(page.chapterId) && isString(page.nodeId)
       && (page.playedFrom === undefined || (Array.isArray(page.playedFrom) && page.playedFrom.every(isString)))))
     && isRecord(decisions) && Object.values(decisions).every(values => Array.isArray(values) && values.every(isString))
-    && (value.counters === undefined || (isRecord(value.counters) && Object.values(value.counters).every(count => Number.isSafeInteger(count))))
+    && (value.counters === undefined || (isRecord(value.counters) && Object.values(value.counters).every(count => typeof count === 'number' && Number.isFinite(count) && Math.abs(count) < 1e15)))
     && (value.names === undefined || (isRecord(value.names) && Object.values(value.names).every(isString)))
     && (value.seed === undefined || (Number.isSafeInteger(value.seed) && (value.seed as number) >= 0))
     && (value.language === undefined || (typeof value.language === 'string' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8}){0,3}$/.test(value.language)))

@@ -34,6 +34,8 @@ import {
   waitMillisecondsOf,
   EFFECT_DEFAULTS,
   MAXIMUM_ASKED_NAME_LENGTH,
+  readTypedNumber,
+  shownAmount,
   type Cue,
   type PendingOption,
   type PlayableStory,
@@ -133,6 +135,56 @@ const asked = computed(() => {
 const typedName = ref('')
 const askInput = useTemplateRef<HTMLInputElement>('askInput')
 watch(askInput, input => input?.focus())
+
+/** The number the player is asked for: its counter, its bounds and the number proposed, as players read them. */
+const askedNumber = computed(() => {
+  const step = snapshot.value.step
+  if (step.type !== 'askNumber') {
+    return null
+  }
+  const counter: { name: string; decimals?: number } = props.story.project.counters.find(candidate => candidate.id === step.ask.counterId) ?? { name: '?' }
+  const shown = (units: number) => shownAmount(units, counter, props.story.project.locale)
+  return {
+    step,
+    counter,
+    minimum: step.minimum === null ? null : shown(step.minimum),
+    maximum: step.maximum === null ? null : shown(step.maximum),
+    proposed: shown(step.proposed),
+    shown,
+  }
+})
+const typedNumber = ref('')
+const numberInput = useTemplateRef<HTMLInputElement>('numberInput')
+watch(numberInput, input => input?.focus())
+/** What the field makes of what is typed, as it is typed: nothing yet takes the number proposed. */
+const typedNumberReading = computed(() => {
+  const asked = askedNumber.value
+  return asked === null ? null : readTypedNumber(typedNumber.value, asked.counter, asked.step.minimum, asked.step.maximum)
+})
+/** Under the field: the number understood, written as the game writes it, or why it cannot be taken. */
+const typedNumberNote = computed(() => {
+  const asked = askedNumber.value
+  const reading = typedNumberReading.value
+  if (asked === null || reading === null) {
+    return ''
+  }
+  if ('units' in reading) {
+    return text.value.numberUnderstood(asked.shown(reading.units))
+  }
+  switch (reading.problem) {
+    case 'empty':
+      return text.value.numberProposed(asked.proposed)
+    case 'notANumber':
+      return text.value.numberDigitsOnly
+    case 'tooPrecise':
+      return text.value.numberDecimals(asked.counter.decimals ?? 0)
+    case 'belowMinimum':
+      return text.value.numberAtLeast(asked.minimum ?? '')
+    case 'aboveMaximum':
+      return text.value.numberAtMost(asked.maximum ?? '')
+  }
+})
+const isTypedNumberTaken = computed(() => typedNumberReading.value !== null && ('units' in typedNumberReading.value || typedNumberReading.value.problem === 'empty'))
 /** A character's name, which may be one the player gave: `{Hero}`. */
 const characterName = (characterId: string) => runtime.withValues(catalog.characterName(characterId))
 /** The styled parts of a page, with the properties of their styles. */
@@ -213,6 +265,8 @@ const announcement = computed(() => {
       return step.choice.options.map(option => option.text).join(' / ')
     case 'ask':
       return asked.value?.name ?? ''
+    case 'askNumber':
+      return askedNumber.value?.counter.name ?? ''
     case 'end':
       return errorMessage.value ?? endingName.value ?? endWords.value
   }
@@ -442,7 +496,8 @@ function readAloud() {
   const step = runtime.snapshot.step
   const parts = step.type === 'page' ? [speakerName.value ?? '', step.page.text]
     : step.type === 'choice' ? step.choice.options.map(option => option.text)
-      : step.type === 'ask' ? [asked.value?.name ?? ''] : []
+      : step.type === 'ask' ? [asked.value?.name ?? '']
+        : step.type === 'askNumber' ? [askedNumber.value?.counter.name ?? ''] : []
   const spoken = parts.filter(part => part !== '').join('. ')
   if (spoken !== '') {
     const utterance = new SpeechSynthesisUtterance(spoken)
@@ -811,6 +866,16 @@ function goBack() {
   replayVoice()
 }
 
+/** Gives the number typed, once the field takes it; nothing typed takes the number proposed. */
+function answerNumber() {
+  const reading = typedNumberReading.value
+  if (reading === null || !isTypedNumberTaken.value) {
+    return
+  }
+  typedNumber.value = ''
+  playForward(() => runtime.answerNumber('units' in reading ? reading.units : null))
+}
+
 /** Gives the name typed; nothing typed keeps the default. */
 function answer() {
   const typed = typedName.value
@@ -1160,6 +1225,28 @@ onUnmounted(() => {
         >
         <button class="ask-button" type="submit">{{ text.confirmName }}</button>
       </form>
+      <form v-if="askedNumber !== null && isHudShown" class="ask" @click.stop @submit.prevent="answerNumber">
+        <label class="ask-label" for="asked-number">{{ askedNumber.counter.name }}</label>
+        <span v-if="askedNumber.minimum !== null || askedNumber.maximum !== null" class="ask-bounds">
+          {{ askedNumber.minimum !== null && askedNumber.maximum !== null ? text.numberBetween(askedNumber.minimum, askedNumber.maximum)
+            : askedNumber.minimum !== null ? text.numberAtLeast(askedNumber.minimum) : text.numberAtMost(askedNumber.maximum ?? '') }}
+        </span>
+        <input
+          id="asked-number"
+          ref="numberInput"
+          v-model="typedNumber"
+          class="ask-input"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          maxlength="24"
+          :placeholder="askedNumber.proposed"
+          aria-describedby="asked-number-note"
+          @keydown.enter.prevent="answerNumber"
+        >
+        <span id="asked-number-note" class="ask-note" :class="{ refused: !isTypedNumberTaken }" aria-live="polite">{{ typedNumberNote }}</span>
+        <button class="ask-button" type="submit" :disabled="!isTypedNumberTaken">{{ text.confirmName }}</button>
+      </form>
       <div v-if="isHudShown" class="quick-menu" :class="{ low: fullScreenPages !== null }" :style="fullScreenPages === null ? { bottom: `${quickMenuBottom}px` } : undefined">
         <button class="quick-button" :disabled="!canGoBack" @click.stop="fromMenu(goBack)">{{ text.back }}</button>
         <button class="quick-button" @click.stop="fromMenu(openLog)">{{ text.log }}</button>
@@ -1392,6 +1479,21 @@ onUnmounted(() => {
 .ask-label {
   font: 600 1em/1.2 system-ui, sans-serif;
   color: #9eeaff;
+}
+
+.ask-bounds,
+.ask-note {
+  font: 0.6em/1.3 system-ui, sans-serif;
+  color: #a3acbb;
+}
+
+.ask-note.refused {
+  color: #ffb4a8;
+}
+
+.ask-button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .ask-input {

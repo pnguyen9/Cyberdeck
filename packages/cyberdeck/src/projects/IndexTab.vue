@@ -9,6 +9,7 @@ import {
   storyFlow,
   type IndexedName,
   type NameKind,
+  writtenAmount,
 } from '@cyberdeck/core'
 import { useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, nextTick, onMounted, ref } from 'vue'
@@ -94,7 +95,7 @@ function homeText(name: IndexedName): string {
 function valuesOf(name: IndexedName): string[] {
   if (name.kind === 'counter') {
     const counter = project.value.counters.find(candidate => candidate.id === name.id)
-    return counter === undefined ? [] : [text.value.startsAt(counter.initial)]
+    return counter === undefined ? [] : [text.value.startsAt(writtenAmount(counter.initial, counter))]
   }
   return name.kind === 'decision' ? project.value.decisions.find(decision => decision.id === name.id)?.values.map(value => value.name) ?? [] : []
 }

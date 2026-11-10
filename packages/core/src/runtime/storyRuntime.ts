@@ -9,7 +9,7 @@ import type {
   StoredNode,
   StoredPage,
 } from '../format/storyFormat'
-import { flattenStoredNodes, innerListsOf, type AskedName, type StoredAsk } from '../format/storyFormat'
+import { flattenStoredNodes, innerListsOf, type AskedName, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
 import { givenName, pageWithValues, withValues, type ValueOf } from '../format/textValues'
 import { normalizeName } from '../importer/storyNodes'
 import { drawFrom, newSeed } from './chance'
@@ -23,6 +23,12 @@ export type PlayerStep =
   | { type: 'choice'; choice: StoredChoice }
   /** The player is asked for a name. */
   | { type: 'ask'; ask: StoredAsk }
+  /**
+   * The player is asked for a number, for a counter, within bounds worked out as it is asked (a
+   * bound naming a counter is what it holds then), in the units of the counter asked for; null for
+   * no bound. The number proposed is kept within them too.
+   */
+  | { type: 'askNumber'; ask: StoredAskNumber; minimum: number | null; maximum: number | null; proposed: number }
   /** The end of the story, or of this path when an `[ending: …]` was reached. */
   | { type: 'end'; endingId: string | null }
 
@@ -147,8 +153,11 @@ export class StoryRuntime {
   private readonly lastingDecisionIds: ReadonlySet<string>
   private readonly lastingCounterIds: ReadonlySet<string>
   private lastingStart: LastingValues = { decisions: {}, counters: {} }
+  /** The decimals of each counter that keeps some, by identifier: for bounds read from another counter. */
+  private readonly counterDecimals: ReadonlyMap<string, number>
 
   constructor(story: PlayableStory) {
+    this.counterDecimals = new Map(story.project.counters.flatMap(counter => counter.decimals === undefined ? [] : [[counter.id, counter.decimals] as const]))
     this.chapters = chaptersInOrder(story)
     this.scenes = scenesOf(story)
     this.decisionsById = new Map(story.project.decisions.map(decision => [decision.id, decision]))
@@ -229,7 +238,7 @@ export class StoryRuntime {
   exportState(): RuntimeState {
     const step = this.currentSnapshot.step
     const chapter = this.chapters[this.chapterIndex]
-    const nodeId = step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : step.type === 'ask' ? step.ask.id : null
+    const nodeId = step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : step.type === 'ask' || step.type === 'askNumber' ? step.ask.id : null
     const playedFrom = this.frames.flatMap(frame => frame.playId === undefined ? [] : [frame.playId])
     return {
       page: chapter === undefined || nodeId === null ? null : { chapterId: chapter.id, nodeId, ...(playedFrom.length === 0 ? {} : { playedFrom }) },
@@ -411,6 +420,21 @@ export class StoryRuntime {
     this.playUntilStop()
   }
 
+  /**
+   * Gives the number asked for, in the counter's units, kept within the bounds; null takes the
+   * number proposed.
+   */
+  answerNumber(units: number | null) {
+    const step = this.currentSnapshot.step
+    if (step.type !== 'askNumber') {
+      return
+    }
+    this.isReplaying = false
+    const given = within(units ?? step.proposed, step.minimum, step.maximum)
+    this.currentSnapshot = { ...this.currentSnapshot, counters: { ...this.currentSnapshot.counters, [step.ask.counterId]: given } }
+    this.playUntilStop()
+  }
+
   /** Leaves the current page; inline commands not reached yet still apply. */
   next() {
     if (this.currentSnapshot.step.type !== 'page') {
@@ -490,6 +514,12 @@ export class StoryRuntime {
         case 'ask':
           this.setStep({ type: 'ask', ask: node })
           return
+        case 'askNumber': {
+          const minimum = this.boundOf(node.minimum, node.counterId, 'up')
+          const maximum = this.boundOf(node.maximum, node.counterId, 'down')
+          this.setStep({ type: 'askNumber', ask: node, minimum, maximum, proposed: within(node.defaultAmount, minimum, maximum) })
+          return
+        }
         case 'stage':
           node.commands.forEach(command => this.applyToStage(command))
           break
@@ -586,6 +616,22 @@ export class StoryRuntime {
   }
 
   /** Own entries only, as for decisions. */
+  /**
+   * A bound in the units of the counter asked for: a number as stored, or what a counter holds now,
+   * rounded towards the inside when it keeps more decimals.
+   */
+  private boundOf(bound: StoredAskBound | null, askedCounterId: string, rounding: 'up' | 'down'): number | null {
+    if (bound === null) {
+      return null
+    }
+    if (bound.type === 'amount') {
+      return bound.amount
+    }
+    const decimalsOf = (counterId: string) => this.counterDecimals.get(counterId) ?? 0
+    const scaled = this.countOf(bound.counterId) * 10 ** (decimalsOf(askedCounterId) - decimalsOf(bound.counterId))
+    return rounding === 'up' ? Math.ceil(scaled) : Math.floor(scaled)
+  }
+
   private countOf(counterId: string): number {
     return Object.hasOwn(this.currentSnapshot.counters, counterId) ? this.currentSnapshot.counters[counterId] ?? 0 : this.initialCounts.get(counterId) ?? 0
   }
@@ -679,4 +725,10 @@ function framesLeadingTo(nodes: StoredNode[], nodeId: string): Frame[] | null {
     }
   }
   return null
+}
+
+/** A number kept within bounds; a highest bound below the lowest gives the lowest. */
+function within(units: number, minimum: number | null, maximum: number | null): number {
+  const capped = maximum === null ? units : Math.min(units, maximum)
+  return minimum === null ? capped : Math.max(capped, minimum)
 }

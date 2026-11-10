@@ -88,6 +88,21 @@ export interface AskNode {
   defaultName: string | null
 }
 
+/** A bound of a number asked for: a number written, or what a counter holds when it is asked. */
+export type AskBound = { type: 'amount'; amount: number } | { type: 'counter'; counter: string }
+
+/** `[ask number: Bet = 10, from 1 to {Money}]`: the player types a number, kept by a counter. */
+export interface AskNumberNode {
+  type: 'askNumber'
+  sourceLine: number
+  counter: string
+  defaultAmount: number
+  /** The decimals the number proposed is written with: those of a counter it makes. */
+  decimals: number
+  minimum: AskBound | null
+  maximum: AskBound | null
+}
+
 export type Condition =
   | { type: 'is'; decision: string; value: string; negated: boolean }
   /** `remembered X`: the profile remembers it, from this playthrough or an earlier one. */
@@ -189,7 +204,7 @@ export interface PlayNode {
   scene: string
 }
 
-export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | AddNode | AskNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
+export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | AddNode | AskNode | AskNumberNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
 
 /**
  * `[decision: Confession = Accept | Refuse]`, or `[decision multi: …]` when several values can hold at
@@ -208,6 +223,8 @@ export interface CounterDeclaration {
   sourceLine: number
   name: string
   initial: number
+  /** The decimals it counts with, as its first number is written: `1000.00` two. */
+  decimals: number
   lasting: boolean
 }
 
@@ -268,6 +285,8 @@ export type ImportProblemCode =
   | 'invalidAdd'
   | 'unknownCounter'
   | 'counterNeedsNumber'
+  | 'counterTooPrecise'
+  | 'invalidAskNumber'
   | 'duplicateCounter'
   | 'counterNamedLikeDecision'
   | 'unsetCounter'

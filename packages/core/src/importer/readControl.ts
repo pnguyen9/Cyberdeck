@@ -1,4 +1,4 @@
-import type { Condition, Directive } from './importTypes'
+import type { AskBound, Condition, Directive } from './importTypes'
 
 /** Directives that shape the story rather than the stage. They must be alone on their line. */
 export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
@@ -10,6 +10,7 @@ export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
   'counter lasting',
   'add',
   'ask',
+  'ask number',
   'timeout',
   'choice',
   'if',
@@ -64,10 +65,23 @@ export function readDecisionDeclaration(text: string): { name: string; values: s
   return values.length === 0 ? null : { name: assignment.name, values }
 }
 
-/** A whole number as written in a tag: `3`, `-1`, `+2`. */
+/** The most decimals a counter may count with: hundredths of a cent would already be past what stories need. */
+export const MAXIMUM_COUNTER_DECIMALS = 4
+
+/** A number as written in a tag: `3`, `-1`, `+2`, and with a point for decimals, `0.50`. */
 export function readAmount(text: string): number | null {
-  const amount = /^[+-]?\d{1,15}$/.test(text.trim()) ? Number(text.trim()) : Number.NaN
-  return Number.isSafeInteger(amount) ? amount : null
+  const amount = new RegExp(`^[+-]?\\d{1,12}(?:\\.\\d{1,${MAXIMUM_COUNTER_DECIMALS}})?$`).test(text.trim()) ? Number(text.trim()) : Number.NaN
+  return Number.isFinite(amount) ? amount : null
+}
+
+/** How many decimals a number is written with: `0.50` two, `3` none. */
+export function decimalsWritten(text: string): number {
+  return /\.(\d+)$/.exec(text.trim())?.[1]?.length ?? 0
+}
+
+/** How many decimals a number read from a tag holds, as the shortest writing of it shows them. */
+export function decimalsOf(amount: number): number {
+  return decimalsWritten(String(amount))
 }
 
 /** `random 1 6` → the lowest and highest numbers to draw from; null for anything else, or the highest below the lowest. */
@@ -78,22 +92,55 @@ export function readRandom(text: string): { minimum: number; maximum: number } |
   return minimum === null || maximum === null || maximum < minimum ? null : { minimum, maximum }
 }
 
-/** `Trust = 2` → name and initial value; `Trust` alone starts at 0. Null without a name, or with a value that is no whole number. */
-export function readCounterDeclaration(text: string): { name: string; initial: number } | null {
+/**
+ * `Trust = 2` → name and initial value; `Trust` alone starts at 0. `Money = 1000.00` counts in
+ * hundredths: the decimals written with the first number are those the counter keeps. Null without
+ * a name, or with a value that is no number.
+ */
+export function readCounterDeclaration(text: string): { name: string; initial: number; decimals: number } | null {
   if (!text.includes('=')) {
-    return text.trim() === '' ? null : { name: text.trim(), initial: 0 }
+    return text.trim() === '' ? null : { name: text.trim(), initial: 0, decimals: 0 }
   }
   const assignment = readAssignment(text)
   const initial = assignment === null ? null : readAmount(assignment.value)
-  return assignment === null || initial === null ? null : { name: assignment.name, initial }
+  return assignment === null || initial === null ? null : { name: assignment.name, initial, decimals: decimalsWritten(assignment.value) }
 }
 
 /** `Trust 2`, `Trust -1` → name and amount; `Trust` alone adds 1. Null without a name. */
 export function readAddition(text: string): { name: string; amount: number } | null {
-  const withAmount = /^(.*\S)\s+([+-]?\d+)$/.exec(text.trim())
+  const withAmount = /^(.*\S)\s+([+-]?\d+(?:\.\d+)?)$/.exec(text.trim())
   const amount = withAmount === null ? 1 : readAmount(withAmount[2]!)
   const name = withAmount === null ? text.trim() : withAmount[1]!
   return name === '' || amount === null ? null : { name, amount }
+}
+
+/**
+ * `Bet = 10, from 1 to {Money}` → the counter, the number proposed, and the bounds, each a number or
+ * `{Counter}`; either bound may go, or both. Null for anything else.
+ */
+export function readAskNumber(text: string): { counter: string; defaultAmount: number; defaultWritten: string; minimum: AskBound | null; maximum: AskBound | null } | null {
+  const bound = String.raw`([+-]?\d+(?:\.\d+)?|\{[^{}]+\})`
+  const parts = new RegExp(String.raw`^(.+?)\s*=\s*([+-]?\d+(?:\.\d+)?)\s*(?:,\s*(?:from\s+${bound})?\s*(?:to\s+${bound})?)?$`, 'i').exec(text.trim())
+  if (parts === null || parts[1]!.trim() === '' || (text.includes(',') && parts[3] === undefined && parts[4] === undefined)) {
+    return null
+  }
+  const readBound = (written: string | undefined): AskBound | null | undefined => {
+    if (written === undefined) {
+      return null
+    }
+    if (written.startsWith('{')) {
+      return { type: 'counter', counter: written.slice(1, -1).trim() }
+    }
+    const amount = readAmount(written)
+    return amount === null ? undefined : { type: 'amount', amount }
+  }
+  const defaultAmount = readAmount(parts[2]!)
+  const minimum = readBound(parts[3])
+  const maximum = readBound(parts[4])
+  if (defaultAmount === null || minimum === undefined || maximum === undefined) {
+    return null
+  }
+  return { counter: parts[1]!.trim(), defaultAmount, defaultWritten: parts[2]!, minimum, maximum }
 }
 
 /** `Answer 10s` → the decision and the time to pick, in milliseconds; the decision alone when no time ends the text. */
@@ -142,7 +189,7 @@ function readComparison(text: string): Condition | null {
     const negated = flag[1] !== undefined
     return /^remembered$/i.test(flag[2] ?? '') ? { type: 'remembered', memory: name, negated } : { type: 'endingSeen', ending: name, negated }
   }
-  const counter = /^(.+?)\s*(<=|>=|<|>)\s*([+-]?\d+)$/.exec(text.trim())
+  const counter = /^(.+?)\s*(<=|>=|<|>)\s*([+-]?\d+(?:\.\d+)?)$/.exec(text.trim())
   if (counter !== null) {
     const amount = readAmount(counter[3]!)
     return amount === null ? null : { type: 'compare', counter: counter[1]!.trim(), operator: counter[2] as '<' | '<=' | '>' | '>=', amount }
