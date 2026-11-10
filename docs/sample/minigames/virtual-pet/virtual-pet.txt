@@ -1,0 +1,153 @@
+[import: story en]
+
+[style: Ending = gold, large, fade-in]
+
+[counter lasting: Hunger = 2]
+[counter lasting: Mood = 7]
+[counter lasting: Energy = 7]
+[counter lasting: Visits = 0]
+[counter: Pick = 0]
+[decision: Care = Feed | Play | Pet | Nap | Watch | Bye]
+
+[shown: Hunger, Mood, Energy, Visits]
+
+# Pip
+[bg: room]
+[music: stop]
+[add: Visits]
+[if: hour >= 21 or hour < 7]
+[tint: night]
+[end]
+[enter: pip center]
+[if: Visits is 1]
+A small round chick blinks at you from a basket by the window. This is Pip, and Pip is yours now.
+Feed Pip, play with Pip, or just watch: if you choose nothing, Pip lives its own little life. Press A to let the days go by on their own, and J to see how Pip is doing.
+[else if: time away > 1440]
+[pip: happy]
+[sound: chirp]
+Pip spots you and bounces in circles, cheeping at the top of its voice. You were away for more than a day!
+[add: Hunger 3]
+[add: Mood 2]
+[play: Bounds]
+[else if: time away > 120]
+[pip: happy]
+[sound: chirp]
+Pip hops to the edge of the basket to greet you.
+[add: Hunger 2]
+[add: Mood 1]
+[play: Bounds]
+[else]
+Pip tilts its head, as if you had never left.
+[end]
+[play: Bounds]
+[loop]
+[if: Energy <= 2]
+[pip: asleep]
+Pip is fast asleep, a tiny puff rising and falling.
+[else if: Hunger >= 7]
+[pip: hungry]
+Pip pecks at the empty bowl, then looks at you. Pointedly.
+[else if: Mood <= 3]
+[pip: sad]
+Pip sits with its back to you, feathers ruffled. It will forgive you soon, with a little care.
+[else if: Energy <= 4]
+[pip: sleepy]
+Pip's eyes keep closing on their own.
+[else if: Mood >= 8]
+[pip: happy]
+Pip hums a tiny tune to itself.
+[else]
+[pip: normal]
+Pip looks around the room, curious about everything.
+[end]
+[choice: Care 8s]
+> Feed Pip = Feed
+> Play together = Play
+> Pet Pip = Pet
+> Let Pip nap = Nap
+> Just watch = Watch [timeout]
+> Say goodbye for now = Bye
+[if: Care is Bye]
+[break]
+[else if: Care is Feed]
+[pip: eating]
+[sound: munch]
+[add: Hunger -4]
+[add: Mood 1]
+[play: Bounds]
+Pip gobbles the seeds, crumbs everywhere.
+[else if: Care is Play and Energy <= 2]
+[sound: yawn]
+Pip is too sleepy to play. It yawns at the ball.
+[else if: Care is Play]
+[pip: playing]
+[sound: giggle]
+[add: Mood 3]
+[add: Energy -2]
+[add: Hunger 1]
+[play: Bounds]
+You roll a little ball. Pip chases it, trips over it, and rolls after it.
+[else if: Care is Pet]
+[pip: happy]
+[sound: chirp]
+[add: Mood 2]
+[play: Bounds]
+Pip leans into your finger and closes its eyes.
+[else if: Care is Nap]
+[pip: asleep]
+[sound: yawn]
+[add: Energy 4]
+[add: Hunger 1]
+[play: Bounds]
+Pip tucks its head under a wing. A short nap later, it is wide awake again.
+[else]
+[set: Pick = random 1 4]
+[if: Pick is 1]
+[add: Energy -1]
+[play: Bounds]
+Pip chases a speck of dust across the floor, very seriously.
+[else if: Pick is 2]
+[add: Mood 1]
+[play: Bounds]
+Pip pecks at its reflection in the window, and startles itself.
+[else if: Pick is 3]
+[add: Energy 1]
+[play: Bounds]
+Pip falls asleep mid-step, and wakes up confused.
+[else]
+[add: Mood 1]
+[play: Bounds]
+Pip sings a little song nobody taught it.
+[end]
+[add: Hunger 1]
+[play: Bounds]
+[if: Hunger >= 7]
+[add: Mood -1]
+[play: Bounds]
+[end]
+[end]
+[end]
+[pip: happy]
+[sound: chirp]
+Pip cheeps goodbye. It will be right here when you come back.
+[ending: See you soon]
+
+# Scene: Bounds
+[if: Hunger < 0]
+[set: Hunger = 0]
+[end]
+[if: Hunger > 10]
+[set: Hunger = 10]
+[end]
+[if: Mood < 0]
+[set: Mood = 0]
+[end]
+[if: Mood > 10]
+[set: Mood = 10]
+[end]
+[if: Energy < 0]
+[set: Energy = 0]
+[end]
+[if: Energy > 10]
+[set: Energy = 10]
+[end]

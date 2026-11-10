@@ -56,6 +56,8 @@
 ### Samples
 - A mini game, rock, paper, scissors, in `docs/sample/minigames/`, its sounds made by code.
 - Sakura Week plays each extra scene of a character once before any comes back.
+- A second mini game, a virtual pet: Pip, cared for or left to live its own life, gladder to see
+  players the longer they were away, its pictures and sounds made by code.
 - Sakura Week names the coming day at the end of each chapter, for a game exported a day at a time.
 
 ## 2.0.3 — 2026-11-06
