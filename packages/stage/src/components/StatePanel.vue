@@ -16,24 +16,21 @@ const text = useMessages(playerMessages)
 /** Decisions and counters as `{…}` shows them in the text; names only once the player gave them. */
 const readValues = computed(() => valuesReader(props.story.project))
 const valueOf = computed(() => readValues.value(props.snapshot))
-const decisions = computed(() => props.story.project.decisions.map(decision => ({ name: decision.name, value: valueOf.value(decision.name) ?? '' })))
-const counters = computed(() => props.story.project.counters.map(counter => ({ name: counter.name, value: valueOf.value(counter.name) ?? '' })))
-const names = computed(() => props.story.project.askedNames.map(asked => ({
-  name: asked.name,
-  value: Object.hasOwn(props.snapshot.names, asked.id) ? props.snapshot.names[asked.id] ?? '' : '',
-  defaultName: asked.defaultName,
-})))
-const memories = computed(() => props.story.project.memories.filter(memory => props.memoryIds.includes(memory.id)).map(memory => memory.name))
-const endings = computed(() => props.story.project.endings.filter(ending => props.endingIds.includes(ending.id)).map(ending => ending.name))
-
-/** What changing a value by hand needs: the decisions, counters and names by identifier, and every memory and ending. */
+/** Each value as shown, with what changing it by hand needs: the identifiers, the values held. */
 const decisionRows = computed(() => props.story.project.decisions.map(decision => ({
   decision,
+  shown: valueOf.value(decision.name) ?? '',
   valueIds: Object.hasOwn(props.snapshot.decisions, decision.id) ? props.snapshot.decisions[decision.id] ?? [] : [],
 })))
 const counterRows = computed(() => props.story.project.counters.map(counter => ({ counter, shown: valueOf.value(counter.name) ?? '' })))
+const nameRows = computed(() => props.story.project.askedNames.map(asked => ({
+  asked,
+  given: Object.hasOwn(props.snapshot.names, asked.id) ? props.snapshot.names[asked.id] ?? '' : '',
+})))
 const allMemories = computed(() => props.story.project.memories.map(memory => ({ memory, isHeld: props.memoryIds.includes(memory.id) })))
 const allEndings = computed(() => props.story.project.endings.map(ending => ({ ending, isHeld: props.endingIds.includes(ending.id) })))
+const memories = computed(() => allMemories.value.filter(entry => entry.isHeld).map(entry => entry.memory.name))
+const endings = computed(() => allEndings.value.filter(entry => entry.isHeld).map(entry => entry.ending.name))
 /** Counters whose number typed could not be read, until it can. */
 const refusedCounters = ref<ReadonlySet<string>>(new Set())
 
@@ -61,34 +58,34 @@ function toggleValue(decision: Decision, valueIds: readonly string[], valueId: s
       <button class="close" :aria-label="text.close" @click="emit('close')">×</button>
     </header>
     <p v-if="editable" class="hint">{{ text.stateEditable }}</p>
-    <section v-if="decisions.length > 0">
+    <section v-if="decisionRows.length > 0">
       <h3>{{ text.stateDecisions }}</h3>
       <dl>
-        <template v-for="(entry, index) in decisions" :key="entry.name">
-          <dt>{{ entry.name }}</dt>
-          <dd v-if="editable && decisionRows[index] !== undefined">
-            <span v-if="decisionRows[index].decision.multiple" class="choices">
-              <label v-for="value in decisionRows[index].decision.values" :key="value.id">
-                <input type="checkbox" :checked="decisionRows[index].valueIds.includes(value.id)" @change="toggleValue(decisionRows[index].decision, decisionRows[index].valueIds, value.id, ($event.target as HTMLInputElement).checked)">
+        <template v-for="row in decisionRows" :key="row.decision.id">
+          <dt>{{ row.decision.name }}</dt>
+          <dd v-if="editable">
+            <span v-if="row.decision.multiple" class="choices">
+              <label v-for="value in row.decision.values" :key="value.id">
+                <input type="checkbox" :checked="row.valueIds.includes(value.id)" @change="toggleValue(row.decision, row.valueIds, value.id, ($event.target as HTMLInputElement).checked)">
                 {{ value.name }}
               </label>
             </span>
             <select
               v-else
               class="field"
-              :aria-label="entry.name"
-              :value="decisionRows[index].valueIds[0] ?? ''"
-              @change="emit('change', { type: 'decision', decisionId: decisionRows[index].decision.id, valueIds: ($event.target as HTMLSelectElement).value === '' ? [] : [($event.target as HTMLSelectElement).value] })"
+              :aria-label="row.decision.name"
+              :value="row.valueIds[0] ?? ''"
+              @change="emit('change', { type: 'decision', decisionId: row.decision.id, valueIds: ($event.target as HTMLSelectElement).value === '' ? [] : [($event.target as HTMLSelectElement).value] })"
             >
               <option value="">{{ text.stateNone }}</option>
-              <option v-for="value in decisionRows[index].decision.values" :key="value.id" :value="value.id">{{ value.name }}</option>
+              <option v-for="value in row.decision.values" :key="value.id" :value="value.id">{{ value.name }}</option>
             </select>
           </dd>
-          <dd v-else :class="{ none: entry.value === '' }">{{ entry.value === '' ? text.stateNone : entry.value }}</dd>
+          <dd v-else :class="{ none: row.shown === '' }">{{ row.shown === '' ? text.stateNone : row.shown }}</dd>
         </template>
       </dl>
     </section>
-    <section v-if="counters.length > 0">
+    <section v-if="counterRows.length > 0">
       <h3>{{ text.stateCounters }}</h3>
       <dl>
         <template v-for="row in counterRows" :key="row.counter.id">
@@ -107,21 +104,21 @@ function toggleValue(decision: Decision, valueIds: readonly string[], valueId: s
         </template>
       </dl>
     </section>
-    <section v-if="names.length > 0">
+    <section v-if="nameRows.length > 0">
       <h3>{{ text.stateNames }}</h3>
       <dl>
-        <template v-for="(entry, index) in names" :key="entry.name">
-          <dt>{{ entry.name }}</dt>
+        <template v-for="row in nameRows" :key="row.asked.id">
+          <dt>{{ row.asked.name }}</dt>
           <dd v-if="editable">
             <input
               class="field"
-              :value="entry.value"
-              :placeholder="entry.defaultName"
-              :aria-label="entry.name"
-              @change="emit('change', { type: 'name', askedNameId: story.project.askedNames[index]!.id, name: ($event.target as HTMLInputElement).value })"
+              :value="row.given"
+              :placeholder="row.asked.defaultName"
+              :aria-label="row.asked.name"
+              @change="emit('change', { type: 'name', askedNameId: row.asked.id, name: ($event.target as HTMLInputElement).value })"
             >
           </dd>
-          <dd v-else :class="{ none: entry.value === '' }">{{ entry.value === '' ? text.stateNotGiven(entry.defaultName) : entry.value }}</dd>
+          <dd v-else :class="{ none: row.given === '' }">{{ row.given === '' ? text.stateNotGiven(row.asked.defaultName) : row.given }}</dd>
         </template>
       </dl>
     </section>

@@ -9,13 +9,13 @@ import type {
   StoredNode,
   StoredPage,
 } from '../format/storyFormat'
-import { flattenStoredNodes, innerListsOf, MAXIMUM_GRID, type AskedName, type ProjectDocument, type ClockValue, type ListPlace, type ListValue, type StoredGrid, type StoredListChange, type StoredTake, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
+import { flattenStoredNodes, innerListsOf, MAXIMUM_GRID, type Counter, type ProjectDocument, type ClockValue, type ListPlace, type ListValue, type StoredGrid, type StoredListChange, type StoredTake, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
 import { givenName, pageWithValues, withValues, type ValueOf } from '../format/textValues'
 import { normalizeName } from '../importer/storyNodes'
 import { drawFrom, newSeed } from './chance'
 import { withValueChosen } from '../format/valueTags'
 import { listsOf } from '../format/lists'
-import { writtenAmount } from '../format/counterNumbers'
+import { savedAmount, scaleOf, unitsFromText, wholeAmount, writtenAmount } from '../format/counterNumbers'
 import { valuesReader, type HeldValues } from './storyValues'
 import { chaptersInOrder, scenesOf, type PlayableStory } from './playableStory'
 import { applyStageCommand, createStageContext, EMPTY_STAGE, showPage, type StageContext, type StageState } from './stageState'
@@ -278,7 +278,10 @@ export class StoryRuntime {
         break
       }
       case 'counter':
-        this.currentSnapshot = { ...snapshot, counters: { ...snapshot.counters, [change.counterId]: change.units } }
+        // The clock's counters follow the clock: a value given by hand would not last past the next step.
+        if (!this.clockCounters.some(counter => counter.id === change.counterId)) {
+          this.currentSnapshot = { ...snapshot, counters: { ...snapshot.counters, [change.counterId]: change.units } }
+        }
         break
       case 'name': {
         const names = { ...snapshot.names }
@@ -329,7 +332,7 @@ export class StoryRuntime {
   exportState(): RuntimeState {
     const step = this.currentSnapshot.step
     const chapter = this.chapters[this.chapterIndex]
-    const nodeId = step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : step.type === 'ask' || step.type === 'askNumber' ? step.ask.id : step.type === 'grid' ? step.grid.id : null
+    const nodeId = nodeIdOf(step)
     const playedFrom = this.frames.flatMap(frame => frame.playId === undefined ? [] : [frame.playId])
     return {
       page: chapter === undefined || nodeId === null ? null : { chapterId: chapter.id, nodeId, ...(playedFrom.length === 0 ? {} : { playedFrom }) },
@@ -535,8 +538,7 @@ export class StoryRuntime {
       return
     }
     this.isReplaying = false
-    const scale = 10 ** (this.counterDecimals.get(step.grid.counterId) ?? 0)
-    this.currentSnapshot = { ...this.currentSnapshot, counters: { ...this.currentSnapshot.counters, [step.grid.counterId]: number * scale } }
+    this.currentSnapshot = { ...this.currentSnapshot, counters: { ...this.currentSnapshot.counters, [step.grid.counterId]: number * scaleOf(this.counterOf(step.grid.counterId)) } }
     this.playUntilStop()
   }
 
@@ -623,7 +625,7 @@ export class StoryRuntime {
         case 'grid': {
           // A size given by counters, `grid {Columns} × {Rows}`, is read now, within what a grid may be.
           const sized = (counterId: string | undefined, written: number, largest: number) => counterId === undefined ? written
-            : Math.min(Math.max(Math.trunc(this.countOf(counterId) / 10 ** (this.counterDecimals.get(counterId) ?? 0)), 1), largest)
+            : within(this.wholeCountOf(counterId), 1, largest)
           const grid = { ...node, columns: sized(node.columnsFrom, node.columns, MAXIMUM_GRID.columns), rows: sized(node.rowsFrom, node.rows, MAXIMUM_GRID.rows) }
           const items = this.listOf(node.listId)
           this.setStep({ type: 'grid', grid, items: Array.from({ length: grid.columns * grid.rows }, (_, index) => items[index] ?? '') })
@@ -654,9 +656,8 @@ export class StoryRuntime {
           break
         }
         case 'copy': {
-          const from = this.decisionsById.get(node.fromDecisionId)
-          const name = from?.values.find(value => value.id === this.heldValues(node.fromDecisionId)[0])?.name
-          const value = name === undefined ? undefined : this.decisionsById.get(node.decisionId)?.values.find(candidate => normalizeName(candidate.name) === normalizeName(name))
+          const name = this.heldValueName(node.fromDecisionId)
+          const value = name === undefined ? undefined : this.valueNamed(node.decisionId, name)
           if (value !== undefined) {
             this.decide(node.decisionId, value.id)
           }
@@ -679,8 +680,7 @@ export class StoryRuntime {
           break
         case 'count': {
           // Another counter's value, `{Bet} * 2.5`, in this counter's units, rounded to what it keeps.
-          const fromItem = node.fromItem === undefined ? null : Number(this.itemAt(node.fromItem.listId, node.fromItem.place).replace(',', '.'))
-          const amount = fromItem !== null ? (Number.isFinite(fromItem) ? Math.round(fromItem * 10 ** (this.counterDecimals.get(node.counterId) ?? 0)) : 0)
+          const amount = node.fromItem !== undefined ? unitsFromText(this.itemAt(node.fromItem.listId, node.fromItem.place), this.counterOf(node.counterId)) ?? 0
             : node.from === undefined ? node.amount : Math.round(this.inUnitsOf(this.countOf(node.from.counterId), node.from.counterId, node.counterId) * node.from.factor)
           let count = node.operation === 'add' ? this.countOf(node.counterId) + amount : amount
           let seed = this.currentSnapshot.seed
@@ -767,7 +767,6 @@ export class StoryRuntime {
     return this.readValues(this.currentSnapshot)
   }
 
-  /** Own entries only, as for decisions. */
   /**
    * A bound in the units of the counter asked for: a number as stored, or what a counter holds now,
    * rounded towards the inside when it keeps more decimals.
@@ -779,8 +778,7 @@ export class StoryRuntime {
     if (bound.type === 'amount') {
       return bound.amount
     }
-    const decimalsOf = (counterId: string) => this.counterDecimals.get(counterId) ?? 0
-    const scaled = this.countOf(bound.counterId) * 10 ** (decimalsOf(askedCounterId) - decimalsOf(bound.counterId))
+    const scaled = this.inUnitsOf(this.countOf(bound.counterId), bound.counterId, askedCounterId)
     return rounding === 'up' ? Math.ceil(scaled) : Math.floor(scaled)
   }
 
@@ -805,7 +803,17 @@ export class StoryRuntime {
 
   /** A number in one counter's units, in another's: hundredths of a dollar as whole dollars, or back. */
   private inUnitsOf(units: number, fromCounterId: string, toCounterId: string): number {
-    return units * 10 ** ((this.counterDecimals.get(toCounterId) ?? 0) - (this.counterDecimals.get(fromCounterId) ?? 0))
+    return units * 10 ** ((this.counterOf(toCounterId).decimals ?? 0) - (this.counterOf(fromCounterId).decimals ?? 0))
+  }
+
+  /** How a counter keeps its numbers: its decimals, none when it keeps whole numbers. */
+  private counterOf(counterId: string): Pick<Counter, 'decimals'> {
+    return { decimals: this.counterDecimals.get(counterId) ?? 0 }
+  }
+
+  /** What a counter holds now, as a whole number. */
+  private wholeCountOf(counterId: string): number {
+    return wholeAmount(this.countOf(counterId), this.counterOf(counterId))
   }
 
   /** What a list holds now. */
@@ -814,13 +822,14 @@ export class StoryRuntime {
     return Object.hasOwn(lists, listId) ? lists[listId] ?? [] : this.initialLists.get(listId) ?? []
   }
 
+  /** Gives a list its new values: an array of its own, which nothing else changes afterwards. */
   private setList(listId: string, items: readonly string[]) {
-    this.currentSnapshot = { ...this.currentSnapshot, lists: { ...this.currentSnapshot.lists, [listId]: [...items] } }
+    this.currentSnapshot = { ...this.currentSnapshot, lists: { ...this.currentSnapshot.lists, [listId]: items } }
   }
 
   /** The number of a place: written, or what a counter holds, whole. */
   private placeNumber(place: ListPlace): number {
-    return place.type === 'number' ? place.number : Math.trunc(this.countOf(place.counterId) / 10 ** (this.counterDecimals.get(place.counterId) ?? 0))
+    return place.type === 'number' ? place.number : this.wholeCountOf(place.counterId)
   }
 
   /** What a place of a list holds; nothing outside the list. */
@@ -834,9 +843,9 @@ export class StoryRuntime {
       case 'text':
         return value.text
       case 'decision':
-        return this.decisionsById.get(value.decisionId)?.values.find(candidate => candidate.id === this.heldValues(value.decisionId)[0])?.name ?? ''
+        return this.heldValueName(value.decisionId) ?? ''
       case 'counter':
-        return writtenAmount(this.countOf(value.counterId), { decimals: this.counterDecimals.get(value.counterId) ?? 0 })
+        return writtenAmount(this.countOf(value.counterId), this.counterOf(value.counterId))
       case 'item':
         return this.itemAt(value.listId, value.place)
     }
@@ -860,15 +869,18 @@ export class StoryRuntime {
       case 'add':
         items.push(this.textOf(node.change.value))
         break
-      case 'shuffle':
+      case 'shuffle': {
         // Fisher–Yates, from the seed: a save resumed shuffles as the game would have.
+        let seed = this.currentSnapshot.seed
         for (let index = items.length - 1; index > 0; index--) {
-          const draw = drawFrom(this.currentSnapshot.seed)
-          this.currentSnapshot = { ...this.currentSnapshot, seed: draw.seed }
+          const draw = drawFrom(seed)
+          seed = draw.seed
           const other = Math.floor(draw.fraction * (index + 1))
           ;[items[index], items[other]] = [items[other]!, items[index]!]
         }
+        this.currentSnapshot = { ...this.currentSnapshot, seed }
         break
+      }
       case 'clear':
         items.length = 0
         break
@@ -879,17 +891,28 @@ export class StoryRuntime {
   /** A value taken out of a list, into a counter (as a number) or a decision (as the value of that name). */
   private giveTaken(into: StoredTake['into'], taken: string) {
     if (into.type === 'counter') {
-      const amount = Number(taken.replace(',', '.'))
-      if (Number.isFinite(amount)) {
-        const units = Math.round(amount * 10 ** (this.counterDecimals.get(into.counterId) ?? 0))
+      const units = unitsFromText(taken, this.counterOf(into.counterId))
+      if (units !== null) {
         this.currentSnapshot = { ...this.currentSnapshot, counters: { ...this.currentSnapshot.counters, [into.counterId]: units } }
       }
       return
     }
-    const value = this.decisionsById.get(into.decisionId)?.values.find(candidate => normalizeName(candidate.name) === normalizeName(taken))
+    const value = this.valueNamed(into.decisionId, taken)
     if (value !== undefined) {
       this.decide(into.decisionId, value.id)
     }
+  }
+
+  /** The name of the value a decision holds, its first for a decision holding several. */
+  private heldValueName(decisionId: string): string | undefined {
+    const heldId = this.heldValues(decisionId)[0]
+    return this.decisionsById.get(decisionId)?.values.find(value => value.id === heldId)?.name
+  }
+
+  /** A decision's value named as given, whatever the case or spacing. */
+  private valueNamed(decisionId: string, name: string) {
+    const wanted = normalizeName(name)
+    return this.decisionsById.get(decisionId)?.values.find(value => normalizeName(value.name) === wanted)
   }
 
   private countOf(counterId: string): number {
@@ -901,8 +924,7 @@ export class StoryRuntime {
       case 'counter':
         if (condition.otherCounterId !== undefined) {
           // Two counters compared as numbers, whatever decimals each keeps.
-          const scale = (counterId: string) => 10 ** (this.counterDecimals.get(counterId) ?? 0)
-          return compare(this.countOf(condition.counterId) / scale(condition.counterId), condition.operator, this.countOf(condition.otherCounterId) / scale(condition.otherCounterId))
+          return compare(savedAmount(this.countOf(condition.counterId), this.counterOf(condition.counterId)), condition.operator, savedAmount(this.countOf(condition.otherCounterId), this.counterOf(condition.otherCounterId)))
         }
         return compare(this.countOf(condition.counterId), condition.operator, condition.amount)
       case 'is': {
@@ -996,6 +1018,11 @@ function framesLeadingTo(nodes: StoredNode[], nodeId: string): Frame[] | null {
     }
   }
   return null
+}
+
+/** The node a player stops at: a page, a choice, a question; null at the end or before the start. */
+export function nodeIdOf(step: PlayerStep): string | null {
+  return step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : step.type === 'ask' || step.type === 'askNumber' ? step.ask.id : step.type === 'grid' ? step.grid.id : null
 }
 
 /** A number kept within bounds; a highest bound below the lowest gives the lowest. */

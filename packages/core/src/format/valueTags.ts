@@ -21,22 +21,31 @@ function isValueCommand(command: StageCommand): command is ValueCommand & { from
     && command.from !== undefined
 }
 
+/** The decision whose value names the picture a command shows; null for a picture named as such. */
+export function decisionChoosingPicture(command: StageCommand): string | null {
+  return isValueCommand(command) ? command.from : null
+}
+
+/** The pictures a command may show: the backgrounds, the illustrations, or its character's expressions. */
+function picturesFor(command: ValueCommand, project: ProjectDocument): readonly { id: string; name: string }[] {
+  switch (command.type) {
+    case 'background':
+      return project.backgrounds
+    case 'illustration':
+      return project.illustrations
+    case 'enter':
+    case 'expression':
+      return project.characters.find(character => character.id === command.characterId)?.expressions ?? []
+  }
+}
+
 /** The entries such a tag may show, one per value of its decision: what it uses, and what a game must carry. */
 export function entriesNamedByValue(command: StageCommand, project: ProjectDocument): string[] {
   if (!isValueCommand(command)) {
     return []
   }
   const names = new Set(project.decisions.find(decision => decision.id === command.from)?.values.map(value => normalizeName(value.name)) ?? [])
-  const named = (entries: readonly { id: string; name: string }[]) => entries.filter(entry => names.has(normalizeName(entry.name))).map(entry => entry.id)
-  switch (command.type) {
-    case 'background':
-      return named(project.backgrounds)
-    case 'illustration':
-      return named(project.illustrations)
-    case 'enter':
-    case 'expression':
-      return named(project.characters.find(character => character.id === command.characterId)?.expressions ?? [])
-  }
+  return picturesFor(command, project).filter(entry => names.has(normalizeName(entry.name))).map(entry => entry.id)
 }
 
 /**
@@ -53,21 +62,19 @@ export function withValueChosen(command: StageCommand, project: ProjectDocument,
   if (valueName === undefined) {
     return command
   }
-  const find = (entries: readonly { id: string; name: string }[]) => entries.find(entry => normalizeName(entry.name) === normalizeName(valueName))?.id
+  const wanted = normalizeName(valueName)
+  const pictureId = picturesFor(command, project).find(entry => normalizeName(entry.name) === wanted)?.id
+  if (pictureId === undefined) {
+    return command
+  }
   switch (command.type) {
-    case 'background': {
-      const backgroundId = find(project.backgrounds)
-      return backgroundId === undefined ? command : { ...command, backgroundId }
-    }
-    case 'illustration': {
-      const illustrationId = find(project.illustrations)
-      return illustrationId === undefined ? command : { ...command, illustrationId }
-    }
+    case 'background':
+      return { ...command, backgroundId: pictureId }
+    case 'illustration':
+      return { ...command, illustrationId: pictureId }
     case 'enter':
-    case 'expression': {
-      const expressionId = find(project.characters.find(character => character.id === command.characterId)?.expressions ?? [])
-      return expressionId === undefined ? command : { ...command, expressionId }
-    }
+    case 'expression':
+      return { ...command, expressionId: pictureId }
   }
 }
 

@@ -1,7 +1,7 @@
 import { CLOCK_COUNTERS, ENDINGS_REACHED } from '../format/storyFormat'
 import { STAGE_KEYWORDS } from '../stage/stageDirectives'
 import { valueNamedIn } from '../format/valueTags'
-import { splitListPlace } from '../format/lists'
+import { listPlaceSplitter } from '../format/lists'
 
 /** Tags showing a picture, which a decision's value may name: besides a character's own, `[marie: {Mood}]`. */
 const PICTURE_TAGS: ReadonlySet<string> = new Set(['enter', 'bg', 'background', 'illustration', 'cg'])
@@ -106,7 +106,7 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
   // Lists: the project's and those declared here; a place is written after a list's name, `Board Cell`.
   const listNames = [...knownNames.lists ?? [], ...(result.lists ?? []).map(declaration => declaration.name)]
   const isList = (name: string) => listNames.some(list => normalizeName(list) === normalizeName(name))
-  const placeOf = (written: string) => splitListPlace(written, listNames)
+  const placeOf = listPlaceSplitter(listNames)
   for (const name of counters) {
     // A choice on a counter's name, or a declaration, would make it a decision as well.
     const clash = result.decisions.find(declaration => normalizeName(declaration.name) === name)
@@ -185,7 +185,6 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     }
   }
 
-  /** The decimals each counter keeps, by name normalised: as declared here, or as the project has it. */
   /** A place must be a number from 1, or a counter; `size` only where a number is read. */
   const checkPlace = (place: string, line: number, sizeAllowed = false) => {
     if (/^\d+$/.test(place.trim()) ? Number(place) < 1 : !(counters.has(normalizeName(place)) || (sizeAllowed && normalizeName(place) === 'size'))) {
@@ -210,6 +209,7 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
       problems.push({ severity: 'error', code: 'unknownList', line, subject: name })
     }
   }
+  /** The decimals each counter keeps, by name normalised: as declared here, or as the project has it. */
   const decimalsByCounter = new Map([
     ...(knownNames.counters ?? []).map(counter => [normalizeName(counter.name), counter.decimals ?? 0] as const),
     ...result.counters.map(declaration => [normalizeName(declaration.name), declaration.decimals] as const),
@@ -231,8 +231,9 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
   const checkCounterValue = (name: string, value: string, line: number, mayDraw = false) => {
     // Another counter's value, `{Points}`: it must be a counter.
     const other = readCounterValue(value)
-    if (other !== null && placeOf(other.counter) !== null) {
-      checkPlace(placeOf(other.counter)!.place, line)
+    const otherPlace = other === null ? null : placeOf(other.counter)
+    if (otherPlace !== null) {
+      checkPlace(otherPlace.place, line)
       return
     }
     if (other !== null) {
@@ -288,9 +289,10 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     if (node.type === 'choice') {
       node.options.forEach(option => checkCondition(option.condition, option.sourceLine))
     }
-    if (node.type === 'set' && placeOf(node.decision) !== null) {
+    const setPlace = node.type === 'set' ? placeOf(node.decision) : null
+    if (node.type === 'set' && setPlace !== null) {
       // A place of a list given a value: `[set: Board Cell = {Animal}]`.
-      checkPlace(placeOf(node.decision)!.place, node.sourceLine)
+      checkPlace(setPlace.place, node.sourceLine)
       checkListValue(node.value, node.sourceLine)
       continue
     }

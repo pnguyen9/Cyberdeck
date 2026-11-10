@@ -69,17 +69,21 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
   }
 }
 
+/** A comparison as a condition reads: `is`, `is not`, or the sign itself. */
+function operatorWords(operator: string): string {
+  return operator === '=' ? 'is' : operator === '!=' ? 'is not' : operator
+}
+
 export function describeCondition(condition: StoredCondition, project: ProjectDocument): string {
   switch (condition.type) {
     case 'listItem':
       return `${listName(condition.listId, project)} ${listPlaceText(condition.place, project)} ${condition.negated ? 'is not' : 'is'} ${listValueText(condition.value, project)}`
     case 'listSize': {
-      const operator = condition.operator === '=' ? 'is' : condition.operator === '!=' ? 'is not' : condition.operator
-      return `${listName(condition.listId, project)} size ${operator} ${condition.amount}`
+      return `${listName(condition.listId, project)} size ${operatorWords(condition.operator)} ${condition.amount}`
     }
     case 'counter': {
       const counter = project.counters.find(candidate => candidate.id === condition.counterId)
-      const operator = condition.operator === '=' ? 'is' : condition.operator === '!=' ? 'is not' : condition.operator
+      const operator = operatorWords(condition.operator)
       const other = condition.otherCounterId === undefined ? null : project.counters.find(candidate => candidate.id === condition.otherCounterId)
       return `${counter?.name ?? '?'} ${operator} ${condition.otherCounterId === undefined ? writtenAmount(condition.amount, counter ?? {}) : `{${other?.name ?? '?'}}`}`
     }
@@ -111,7 +115,7 @@ export function describeCount(node: StoredCount, project: ProjectDocument): stri
   const name = counter?.name ?? '?'
   const amount = (units: number) => writtenAmount(units, counter ?? {})
   if (node.fromItem !== undefined) {
-    return `${name} = {${listName(node.fromItem.listId, project)} ${listPlaceText(node.fromItem.place, project)}}`
+    return `${name} = ${listValueText({ type: 'item', ...node.fromItem }, project)}`
   }
   if (node.from !== undefined) {
     const value = counterValueText(node.from, project)

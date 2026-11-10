@@ -1,7 +1,7 @@
 import { writtenAmount } from '../format/counterNumbers'
 import { valueWritten } from '../format/valueTags'
 import { counterValueText, describeAskNumber, describeCondition, describeCopy, describeDraw, describeGrid, describeListNode } from '../storyboard/describeNodes'
-import { listName, listPlaceText, listsOf } from '../format/lists'
+import { listsOf, listValueText } from '../format/lists'
 import { firstLanguageOf } from '../format/languages'
 import { effectText } from '../storyboard/describeNodes'
 import { ENDINGS_REACHED, flattenStoredNodes } from '../format/storyFormat'
@@ -321,7 +321,7 @@ class TextWriter {
         case 'count': {
           const name = this.counterName(node.counterId)
           const amount = (units: number) => this.amount(units, node.counterId)
-          const from = node.fromItem !== undefined ? `{${listName(node.fromItem.listId, this.project)} ${listPlaceText(node.fromItem.place, this.project)}}`
+          const from = node.fromItem !== undefined ? listValueText({ type: 'item', ...node.fromItem }, this.project)
             : node.from === undefined ? null : counterValueText(node.from, this.project)
           this.line(node.operation === 'add' ? `[add: ${name} ${from ?? amount(node.amount)}]`
             : node.operation === 'random' ? `[set: ${name} = random ${amount(node.amount)} ${amount(node.maximum ?? node.amount)}]`
@@ -440,27 +440,7 @@ class TextWriter {
   }
 
   private requirement(requirement: Exclude<StoredCondition, { type: 'and' | 'or' }>): string {
-    if (requirement.type === 'counter') {
-      const name = this.counterName(requirement.counterId)
-      const amount = requirement.otherCounterId === undefined ? this.amount(requirement.amount, requirement.counterId) : `{${this.counterName(requirement.otherCounterId)}}`
-      return requirement.operator === '=' ? `${name} is ${amount}`
-        : requirement.operator === '!=' ? `${name} is not ${amount}`
-          : `${name} ${requirement.operator} ${amount}`
-    }
-    if (requirement.type === 'listItem' || requirement.type === 'listSize') {
-      return describeCondition(requirement, this.project)
-    }
-    const not = requirement.negated ? 'not ' : ''
-    switch (requirement.type) {
-      case 'is': {
-        const decision = this.decision(requirement.decisionId)
-        return `${decision?.name ?? '?'} is ${not}${decision?.values.find(value => value.id === requirement.valueId)?.name ?? '?'}`
-      }
-      case 'remembered':
-        return `${not}remembered ${this.project.memories.find(memory => memory.id === requirement.memoryId)?.name ?? '?'}`
-      case 'endingSeen':
-        return `${not}seen ending ${this.project.endings.find(ending => ending.id === requirement.endingId)?.name ?? '?'}`
-    }
+    return describeCondition(requirement, this.project)
   }
 
   private placement(placement: Placement): string {

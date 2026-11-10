@@ -820,7 +820,7 @@ the SHA-256 in their name; and only save folders the player picked in the system
 
 `docs/sample/` holds stories to import, each a text and a zip of its files, dropped together in Cast &
 files: **Sakura Week**, a week of school before a festival, in `sakura-week/` (its pictures and
-sounds were made outside this repository: the zip is their only source), and three mini games in
+sounds were made outside this repository: the zip is their only source), and five mini games in
 `minigames/`, showing what conditions, loops, scenes, counters and decisions can do beyond a story.
 Their pictures and sounds are made by code, `scripts/samples/`, so that nothing is downloaded and all
 of it is as free as the rest of the repository.
@@ -859,13 +859,11 @@ Lists, the grid of picture buttons (sized by numbers or counters), and the Pairs
 samples. Left for later: Blackjack's shoe of 2, 4, 6 or 8 real decks as a list of the cards left;
 Minesweeper's flags, which need a second way to pick a tile (a right click, a key).
 
-### 2. Release 3.0.0 (built, waiting for the author)
+### 2. Release 3.0.0 (done)
 
-Everything since 2.0.3 ships with it. A story is still marked with the oldest format that plays it:
+Everything since 2.0.3 shipped with it. A story is still marked with the oldest format that plays it:
 2.1 for what came before lists, 3.0 with lists, so that an older Datajack refuses only what it
-cannot play. Versions are at 3.0.0, the guide's images taken again, and `npm run release` has made
-the files in `release/v3.0.0` (the mini games packed with their asset scripts). Left: the tag, the
-push and the GitHub release, once the author says so; the files uploaded by the author.
+cannot play.
 
 ### 3. Then, in no particular order
 

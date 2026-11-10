@@ -143,10 +143,10 @@ export function readAddition(text: string): { name: string; amount: number; from
 }
 
 /**
- * `Bet = 10, from 1 to {Money}` → the counter, the number proposed, and the bounds, each a number or
+ * `Bet = 10, from 1 to {Money}` → the counter, the number proposed with the decimals it is written with, and the bounds, each a number or
  * `{Counter}`; either bound may go, or both. Null for anything else.
  */
-export function readAskNumber(text: string): { counter: string; defaultAmount: number; defaultWritten: string; minimum: AskBound | null; maximum: AskBound | null } | null {
+export function readAskNumber(text: string): { counter: string; defaultAmount: number; decimals: number; minimum: AskBound | null; maximum: AskBound | null } | null {
   const bound = String.raw`([+-]?\d+(?:\.\d+)?|\{[^{}]+\})`
   const parts = new RegExp(String.raw`^(.+?)\s*=\s*([+-]?\d+(?:\.\d+)?)\s*(?:,\s*(?:from\s+${bound})?\s*(?:to\s+${bound})?)?$`, 'i').exec(text.trim())
   if (parts === null || parts[1]!.trim() === '' || (text.includes(',') && parts[3] === undefined && parts[4] === undefined)) {
@@ -168,7 +168,7 @@ export function readAskNumber(text: string): { counter: string; defaultAmount: n
   if (defaultAmount === null || minimum === undefined || maximum === undefined) {
     return null
   }
-  return { counter: parts[1]!.trim(), defaultAmount, defaultWritten: parts[2]!, minimum, maximum }
+  return { counter: parts[1]!.trim(), defaultAmount, decimals: decimalsWritten(parts[2]!), minimum, maximum }
 }
 
 /** `Answer 10s` → the decision and the time to pick, in milliseconds; the decision alone when no time ends the text. */

@@ -10,6 +10,7 @@ import {
   projectIn,
   type PlayableStory,
   uncountedEndingIds,
+  countedEndingCount,
 } from '@cyberdeck/core'
 
 /**
@@ -81,7 +82,7 @@ export class GameLibrary {
         description: project.details.description,
         credits: project.details.credits,
         coverUrl: coverFile === undefined ? null : await this.storage.assetUrl(storedAssetFileName(coverFile)),
-        endingCount: project.endings.filter(ending => !uncountedEndingIds(chapters).has(ending.id)).length,
+        endingCount: countedEndingCount(project.endings, uncountedEndingIds(chapters)),
         languages: languagesOf(project),
         illustrationCount: project.illustrations.length,
         chapters,

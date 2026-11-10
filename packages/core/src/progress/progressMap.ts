@@ -151,7 +151,23 @@ export function layOutProgressMap(progress: ProgressData, story: PlayableStory):
 function untangle(forward: readonly MapEdge[], columns: ReadonlyMap<string, number>, rows: Map<string, number>, points: readonly ProgressPoint[], choices: ReadonlyMap<string, StoredChoice>) {
   const optionRank = new Map(points.flatMap(point => (choices.get(point.choiceId)?.options ?? []).map((option, rank) => [`${point.key} ${option.id}`, rank] as const)))
   const columnCount = Math.max(0, ...columns.values()) + 1
-  const keysIn = (column: number) => [...columns].filter(([, at]) => at === column).map(([key]) => key)
+  // Each column's points, and each point's lines in and out, gathered once for every sweep.
+  const grouped = <Key, Item>(items: Iterable<Item>, keyOf: (item: Item) => Key) => {
+    const groups = new Map<Key, Item[]>()
+    for (const item of items) {
+      const group = groups.get(keyOf(item))
+      if (group === undefined) {
+        groups.set(keyOf(item), [item])
+      } else {
+        group.push(item)
+      }
+    }
+    return groups
+  }
+  const keysByColumn = grouped(columns, ([, column]) => column)
+  const keysIn = (column: number) => (keysByColumn.get(column) ?? []).map(([key]) => key)
+  const linesInto = grouped(forward, edge => edge.to)
+  const linesFrom = grouped(forward, edge => edge.from)
   const level = (keys: readonly string[], barycentre: (key: string) => number | null) => {
     const sorted = keys
       .map(key => ({ key, at: barycentre(key) ?? rows.get(key) ?? 0 }))
@@ -164,9 +180,9 @@ function untangle(forward: readonly MapEdge[], columns: ReadonlyMap<string, numb
     }
   }
   const mean = (values: readonly number[]) => values.length === 0 ? null : values.reduce((sum, value) => sum + value, 0) / values.length
-  const fromParents = (key: string) => mean(forward.filter(edge => edge.to === key)
+  const fromParents = (key: string) => mean((linesInto.get(key) ?? [])
     .map(edge => (rows.get(edge.from) ?? 0) + (optionRank.get(`${edge.from} ${edge.optionId}`) ?? 0) / 100))
-  const fromChildren = (key: string) => mean(forward.filter(edge => edge.from === key).map(edge => rows.get(edge.to) ?? 0))
+  const fromChildren = (key: string) => mean((linesFrom.get(key) ?? []).map(edge => rows.get(edge.to) ?? 0))
   for (let sweep = 0; sweep < 4; sweep++) {
     for (let column = 1; column < columnCount; column++) {
       level(keysIn(column), fromParents)

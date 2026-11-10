@@ -1,6 +1,6 @@
 import { testedIdsOf } from '../format/storyFormat'
 import type { PlayableStory } from './playableStory'
-import { StoryRuntime, type PlayerStep, type RuntimeState } from './storyRuntime'
+import { nodeIdOf, StoryRuntime, type RuntimeState } from './storyRuntime'
 
 /** Stops visited in all before the search gives up: deep enough for any story, quick enough for a click. */
 const MAXIMUM_STOPS = 50_000
@@ -10,10 +10,6 @@ export interface FoundPath {
   state: RuntimeState
   /** The options picked on the way. */
   optionIds: string[]
-}
-
-function nodeIdOf(step: PlayerStep): string | null {
-  return step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : step.type === 'ask' || step.type === 'askNumber' ? step.ask.id : step.type === 'grid' ? step.grid.id : null
 }
 
 /**

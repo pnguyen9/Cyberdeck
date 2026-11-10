@@ -34,7 +34,6 @@ import {
   readCondition,
   readCounterDeclaration,
   readDecisionDeclaration,
-  decimalsWritten,
   readAskNumber,
   readRandom,
   declarationKind,
@@ -539,7 +538,7 @@ class TextImporter {
           return
         }
         this.flushPendingDirectives()
-        this.addNode({ type: 'askNumber', sourceLine: lineNumber, counter: asked.counter, defaultAmount: asked.defaultAmount, decimals: decimalsWritten(asked.defaultWritten), minimum: asked.minimum, maximum: asked.maximum })
+        this.addNode({ type: 'askNumber', sourceLine: lineNumber, counter: asked.counter, defaultAmount: asked.defaultAmount, decimals: asked.decimals, minimum: asked.minimum, maximum: asked.maximum })
         return
       }
       case 'timeout':

@@ -31,8 +31,9 @@ import {
 } from './storyFormat'
 import { readStyleProperty, type StyleProperty } from './textStyles'
 import { placeholdersIn } from './textValues'
-import { splitListPlace } from './lists'
+import { listPlaceSplitter } from './lists'
 import { valueNamedIn } from './valueTags'
+import { unitsFromSaved as unitsOf } from './counterNumbers'
 
 export interface StoredImport {
   /** A new project document; the one given is left untouched. */
@@ -81,23 +82,23 @@ export function storeImport(
     counters.declare(declaration.name, declaration.initial, declaration.lasting, declaration.decimals)
   }
   for (const node of importedNodes) {
-    if (node.type === 'add') {
+    if (node.type === 'add' || node.type === 'grid') {
       counters.use(node.counter)
     } else if (node.type === 'askNumber') {
       counters.use(node.counter, node.decimals)
-    } else if (node.type === 'grid') {
-      counters.use(node.counter)
     }
   }
   // A clock's counter shown in the text, `{hour}`, is made as one tested would be.
+  const clockNames = new Set(CLOCK_COUNTERS.map(clock => normalizeName(clock.name)))
   for (const node of importedNodes) {
     const texts = node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : []
-    texts.flatMap(placeholdersIn).forEach(name => counters.get(name))
+    texts.flatMap(placeholdersIn).filter(name => clockNames.has(normalizeName(name))).forEach(name => counters.get(name))
   }
   const lists = new ListRegistry(project.lists ?? [], environment)
   for (const declaration of result.lists ?? []) {
     lists.declare(declaration.name, declaration.items)
   }
+  const splitPlace = listPlaceSplitter(lists.names())
   /** A place of a list as written: a number, or a counter's name. */
   const listPlace = (written: string): ListPlace => /^\d+$/.test(written.trim()) ? { type: 'number', number: Number(written.trim()) } : { type: 'counter', counterId: counters.find(written).id }
   /** A value as written: itself, or in braces what a place, a decision or a counter holds. */
@@ -106,11 +107,12 @@ export function storeImport(
     if (braced === null) {
       return { type: 'text', text: written.trim() }
     }
-    const placed = splitListPlace(braced, lists.names())
+    const placed = splitPlace(braced)
     if (placed !== null) {
       return { type: 'item', listId: lists.find(placed.list).id, place: listPlace(placed.place) }
     }
-    return decisions.has(braced) ? { type: 'decision', decisionId: decisions.find(braced).id } : { type: 'counter', counterId: counters.find(braced).id }
+    const decision = decisions.get(braced)
+    return decision !== undefined ? { type: 'decision', decisionId: decision.id } : { type: 'counter', counterId: counters.find(braced).id }
   }
   const askedNames = new AskedNameRegistry(project.askedNames, environment)
   for (const node of importedNodes) {
@@ -120,7 +122,7 @@ export function storeImport(
   }
 
   // A tag may name a picture by a decision's value, `[card1: {Drawn}]`: its decision is looked up among those of the import.
-  const registry = new StageRegistry(project, environment, name => decisions.has(name) ? decisions.find(name) : undefined)
+  const registry = new StageRegistry(project, environment, name => decisions.get(name))
   for (const shared of result.sharedPictures ?? []) {
     registry.sharePictures(shared.name, shared.from)
   }
@@ -128,13 +130,13 @@ export function storeImport(
   // lists hold at first, what the story writes in them, and every value of a decision it copies there.
   const gridCharacters = importedNodes.flatMap(node => node.type === 'grid' && node.character !== null ? [node.character] : [])
   if (gridCharacters.length > 0) {
-    const written = importedNodes.flatMap(node => node.type === 'listAdd' ? [node.value] : node.type === 'set' && splitListPlace(node.decision, lists.names()) !== null ? [node.value] : [])
+    const written = importedNodes.flatMap(node => node.type === 'listAdd' ? [node.value] : node.type === 'set' && splitPlace(node.decision) !== null ? [node.value] : [])
     const tileNames = new Set([
       ...lists.all().flatMap(list => list.initial),
       ...written.filter(value => valueNamedIn(value) === null).map(value => value.trim()),
       ...written.flatMap(value => {
         const braced = valueNamedIn(value)
-        return braced !== null && decisions.has(braced) ? decisions.find(braced).values.map(decisionValue => decisionValue.name) : []
+        return braced === null ? [] : decisions.get(braced)?.values.map(decisionValue => decisionValue.name) ?? []
       }),
     ].filter(name => name !== ''))
     for (const characterName of gridCharacters) {
@@ -164,7 +166,7 @@ export function storeImport(
 
   const endings = new NameRegistry(project.endings, environment)
   const memories = new NameRegistry(project.memories, environment)
-  const toCondition = (condition: Condition) => storeCondition(condition, decisions, counters, endings, memories, { lists, listPlace, listValue })
+  const toCondition = (condition: Condition) => storeCondition(condition, decisions, counters, endings, memories, { lists, splitPlace, listPlace, listValue })
   const styles = new StyleRegistry(project.styles, result.styles, environment, new Set(checkAuthorCss(project.css).classes))
   // Plays may name scenes written further down: every scene has its identifier before any node is stored.
   const sceneIds = new Map(knownScenes.map(scene => [normalizeName(scene.name), scene.id]))
@@ -230,14 +232,14 @@ export function storeImport(
       }
       case 'set': {
         // `[set: Board 3 = cat]`: a place of a list.
-        const placed = splitListPlace(node.decision, lists.names())
+        const placed = splitPlace(node.decision)
         if (placed !== null) {
           return { type: 'list', id, listId: lists.find(placed.list).id, change: { type: 'set', place: listPlace(placed.place), value: listValue(node.value) } }
         }
         const counter = counters.get(node.decision)
         if (counter !== undefined) {
           const copied = readCounterValue(node.value)
-          const fromPlace = copied === null ? null : splitListPlace(copied.counter, lists.names())
+          const fromPlace = copied === null ? null : splitPlace(copied.counter)
           if (fromPlace !== null) {
             return { type: 'count', id, counterId: counter.id, operation: 'set', amount: 0, fromItem: { listId: lists.find(fromPlace.list).id, place: listPlace(fromPlace.place) } }
           }
@@ -484,12 +486,17 @@ class DecisionRegistry {
     }
   }
 
+  get(name: string): Decision | undefined {
+    const wanted = normalizeName(name)
+    return this.decisions.find(candidate => normalizeName(candidate.name) === wanted)
+  }
+
   has(name: string): boolean {
-    return this.decisions.some(candidate => normalizeName(candidate.name) === normalizeName(name))
+    return this.get(name) !== undefined
   }
 
   find(name: string): Decision {
-    const decision = this.decisions.find(candidate => normalizeName(candidate.name) === normalizeName(name))
+    const decision = this.get(name)
     if (decision === undefined) {
       throw new Error(`Unknown decision "${name}": check the import with checkReferences before storing it`)
     }
@@ -523,7 +530,7 @@ class CounterRegistry {
     const counter: Counter = {
       id: existing?.id ?? this.environment.createId(),
       name,
-      initial: Math.round(initial * 10 ** decimals),
+      initial: unitsOf(initial, { decimals }),
       ...(decimals === 0 ? {} : { decimals }),
       ...(lasting ? { lasting: true as const } : {}),
     }
@@ -604,11 +611,6 @@ function amountOf(value: string): number {
   return amount
 }
 
-/** A number as written, in the counter's units: `0.5` is 50 hundredths of a counter of two decimals. */
-function unitsOf(amount: number, counter: Counter): number {
-  return Math.round(amount * 10 ** (counter.decimals ?? 0))
-}
-
 /** Endings and memories: created by being named, found again by name ignoring case. */
 class NameRegistry {
   private readonly entries: { id: string; name: string }[]
@@ -635,6 +637,7 @@ class NameRegistry {
 /** How a condition reads lists: their registry, and places and values as written. */
 interface ListReading {
   lists: ListRegistry
+  splitPlace: (written: string) => { list: string; place: string } | null
   listPlace: (written: string) => ListPlace
   listValue: (written: string) => ListValue
 }
@@ -642,7 +645,7 @@ interface ListReading {
 function storeCondition(condition: Condition, decisions: DecisionRegistry, counters: CounterRegistry, endings: NameRegistry, memories: NameRegistry, reading: ListReading): StoredCondition {
   switch (condition.type) {
     case 'is': {
-      const placed = splitListPlace(condition.decision, reading.lists.names())
+      const placed = reading.splitPlace(condition.decision)
       if (placed !== null && normalizeName(placed.place) === 'size') {
         const amount = readAmount(condition.value) ?? 0
         return { type: 'listSize', listId: reading.lists.find(placed.list).id, operator: condition.negated ? '!=' : '=', amount }
@@ -662,7 +665,7 @@ function storeCondition(condition: Condition, decisions: DecisionRegistry, count
       return { type: 'is', decisionId: decision.id, valueId: decisions.findValue(decision, condition.value).id, negated: condition.negated }
     }
     case 'compare': {
-      const sized = splitListPlace(condition.counter, reading.lists.names())
+      const sized = reading.splitPlace(condition.counter)
       if (sized !== null && normalizeName(sized.place) === 'size') {
         return { type: 'listSize', listId: reading.lists.find(sized.list).id, operator: condition.operator, amount: condition.amount }
       }

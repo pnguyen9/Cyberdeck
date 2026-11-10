@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
 import type { LanguageChoice } from '../i18n/locale'
 import type { PlayerSettings } from '../settings/playerSettings'
 import { STAGE_HEIGHT, STAGE_WIDTH } from '../textboxLayout'
 import SettingsPanel from './SettingsPanel.vue'
+import { useFullscreen, useStageScale } from './stageWindow'
 
 /** The player's settings on a screen of their own, outside any game: drawn on a stage the size of a game's, scaled to the window. */
 const settings = defineModel<PlayerSettings>({ required: true })
@@ -11,20 +12,8 @@ const languageChoice = defineModel<LanguageChoice | undefined>('languageChoice')
 const emit = defineEmits<{ close: [] }>()
 
 const viewport = useTemplateRef<HTMLElement>('viewport')
-const scale = ref(1)
-const resizeObserver = new ResizeObserver(([entry]) => {
-  if (entry !== undefined) {
-    scale.value = Math.min(entry.contentRect.width / STAGE_WIDTH, entry.contentRect.height / STAGE_HEIGHT)
-  }
-})
-
-const isFullscreen = ref(document.fullscreenElement !== null)
-function onFullscreenChange() {
-  isFullscreen.value = document.fullscreenElement !== null
-}
-function toggleFullscreen() {
-  void (document.fullscreenElement === null ? document.documentElement.requestFullscreen() : document.exitFullscreen()).catch(() => undefined)
-}
+const scale = useStageScale(viewport)
+const { isFullscreen, toggleFullscreen } = useFullscreen()
 
 /** Escape closes, as in a game; while the panel waits for a key to give, it takes Escape first. */
 function onKeyDown(event: KeyboardEvent) {
@@ -33,18 +22,8 @@ function onKeyDown(event: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
-  if (viewport.value !== null) {
-    resizeObserver.observe(viewport.value)
-  }
-  document.addEventListener('fullscreenchange', onFullscreenChange)
-  window.addEventListener('keydown', onKeyDown)
-})
-onBeforeUnmount(() => {
-  resizeObserver.disconnect()
-  document.removeEventListener('fullscreenchange', onFullscreenChange)
-  window.removeEventListener('keydown', onKeyDown)
-})
+onMounted(() => window.addEventListener('keydown', onKeyDown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
 </script>
 
 <template>

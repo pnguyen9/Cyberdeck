@@ -215,7 +215,7 @@ const fr: ProblemMessages = {
       ? `${counter} compte en nombres entiers\u00a0: ${value} a des décimales. Déclarez-le avec les décimales à garder, [counter: ${counter} = 0.00] pour des centièmes.`
       : `${counter} garde ${kept} ${kept === '1' ? 'décimale' : 'décimales'}, comme il est déclaré\u00a0: ${value} en a davantage.`
   },
-  invalidAskNumber: subject => `${subject === '' ? '[ask number: …]' : quoted(subject)} devrait avoir cette forme\u00a0: Mise = 10, from 1 to {Argent}\u00a0: un compteur, le nombre proposé, et si besoin le plus petit et le plus grand nombres permis, chacun un nombre ou un compteur entre accolades.`,
+  invalidAskNumber: subject => `${subject === '' ? '[ask number: …]' : quoted(subject)} devrait avoir cette forme\u00a0: Mise = 10, from 1 to {Argent}\u00a0: un compteur, le nombre proposé, et si besoin le plus petit et le plus grand nombre permis, chacun un nombre ou un compteur entre accolades.`,
   clockReadOnly: subject => `${subject} vient de l’horloge du joueur\u00a0: l’histoire peut la tester et l’afficher, pas la changer. Pour compter quelque chose vous-même, déclarez un compteur d’un autre nom.`,
   tagValueNotHere: subject => `Une valeur entre accolades ne nomme une image que dans [enter], [bg], [illustration] et la balise d’un personnage\u00a0: ${quoted(subject)} ne peut pas en prendre.`,
   tagValueNeedsDecision: subject => `${subject} est un compteur\u00a0: une image se nomme par la valeur d’une décision, dont les valeurs sont les noms des images, [decision: ${subject} = …].`,

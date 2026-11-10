@@ -73,10 +73,9 @@ cpSync(join(root, 'docs', 'sample', 'sakura-week', 'sakura-week.txt'), join(work
 cpSync(join(root, 'docs', 'sample', 'sakura-week', 'sakura-week-assets.zip'), join(workFolder, sampleName, 'sakura-week-assets.zip'))
 zipFolder(workFolder, sampleName, `${sampleName}.zip`)
 
-// The mini games, each a text and the zip of its files, and the scripts that made those files.
+// The mini games, each a text and the zip of its files.
 const miniGamesName = `Cyberdeck-${version}-sample-mini-games`
 cpSync(join(root, 'docs', 'sample', 'minigames'), join(workFolder, miniGamesName), { recursive: true })
-cpSync(join(root, 'scripts', 'samples'), join(workFolder, miniGamesName, 'scripts'), { recursive: true })
 zipFolder(workFolder, miniGamesName, `${miniGamesName}.zip`)
 rmSync(workFolder, { recursive: true, force: true })
 

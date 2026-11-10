@@ -192,15 +192,11 @@ async function readSaveOrProgress(file: File): Promise<{ save: SaveData } | { pr
     if (save !== null) {
       return { save }
     }
-    const progress = isRecord(value) && value.progressFormat !== undefined ? parseProgress(value) : null
+    const progress = parseProgress(value)
     return progress === null ? null : { progress }
   } catch {
     return null
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
 }
 
 /** A game's progress joined to the profile's: carried from another computer or another build. */

@@ -1,4 +1,4 @@
-import { entriesNamedByValue } from '../format/valueTags'
+import { decisionChoosingPicture, entriesNamedByValue } from '../format/valueTags'
 import { listsOf } from '../format/lists'
 import { checkChapterDocument, checkProjectDocument, DocumentError, isPlainIdentifier } from '../format/checkDocuments'
 import { chapterIn, languagesOf } from '../format/languages'
@@ -43,6 +43,11 @@ export interface ArchivedChapter {
 /** The endings players are not told of: those only chapters kept quiet about, and not installed, lead to. */
 export function uncountedEndingIds(chapters: readonly ArchivedChapter[]): Set<string> {
   return new Set(chapters.filter(chapter => !chapter.included && chapter.listed === false).flatMap(chapter => chapter.endingIds ?? []))
+}
+
+/** How many endings players are told of: all but those kept quiet about, unless already reached. */
+export function countedEndingCount(endings: readonly { id: string }[], uncountedIds: ReadonlySet<string> | undefined, reachedIds: readonly string[] = []): number {
+  return endings.filter(ending => !(uncountedIds?.has(ending.id) ?? false) || reachedIds.includes(ending.id)).length
 }
 
 /** The endings a document leads to. */
@@ -300,9 +305,16 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   if (listsOf(project).length > 0) {
     return '3.0'
   }
-  // An older Datajack refuses a command it does not know, and would count a counter's hundredths as whole numbers.
-  if (project.counters.some(counter => (counter.decimals ?? 0) > 0 || counter.clock !== undefined) || project.characters.some(character => character.picturesFrom !== undefined) || documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'askNumber' || node.type === 'draw' || node.type === 'copy' || (node.type === 'count' && node.from !== undefined) || conditionsOf(node).some(comparesCounters)
-    || commandsOf(node).some(command => command.type === 'continued' || ('from' in command && command.from !== undefined))))) {
+  // An older Datajack refuses a node or command it does not know, and would count a counter's
+  // hundredths as whole numbers.
+  const needsDatajack21Node = (node: StoredNode) => node.type === 'askNumber' || node.type === 'draw' || node.type === 'copy'
+    || (node.type === 'count' && node.from !== undefined)
+    || conditionsOf(node).some(comparesCounters)
+    || commandsOf(node).some(command => command.type === 'continued' || decisionChoosingPicture(command) !== null)
+  const needsDatajack21 = project.counters.some(counter => (counter.decimals ?? 0) > 0 || counter.clock !== undefined)
+    || project.characters.some(character => character.picturesFrom !== undefined)
+    || documents.some(document => flattenStoredNodes(document.nodes).some(needsDatajack21Node))
+  if (needsDatajack21) {
     return '2.1'
   }
   if (needsDatajack20) {

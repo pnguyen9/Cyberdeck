@@ -2,7 +2,6 @@ import { MAXIMUM_COUNTER_DECIMALS } from '../importer/readControl'
 import {
   isSupportedFormatVersion,
   type AnimationSpec,
-  type ClockValue,
   type ChapterDocument,
   type InlineStageCommand,
   type ListPlace,
@@ -87,20 +86,17 @@ function withFlag<Shape extends object, Field extends string>(field: Field, chec
   return (value, path) => (record(value, path)[field] === true ? { ...check(value, path), [field]: true } : check(value, path)) as Shape & { [Key in Field]?: true }
 }
 
-/** A picture a decision's value names, `[card1: {Drawn}]`: the decision, kept only when there is one. */
-function withValueFrom<Shape extends object>(check: Check<Shape>): Check<Shape & { from?: string }> {
+/** A field kept only when there is one: a later version's, which earlier documents do not have. */
+function withOptional<Shape extends object, Field extends string, Value>(field: Field, fieldCheck: Check<Value>, check: Check<Shape>): Check<Shape & { [Key in Field]?: Value }> {
   return (value, path) => {
-    const from = record(value, path).from
-    return from === undefined ? check(value, path) : { ...check(value, path), from: string(from, `${path}.from`) }
+    const written = record(value, path)[field]
+    return (written === undefined ? check(value, path) : { ...check(value, path), [field]: fieldCheck(written, `${path}.${field}`) }) as Shape & { [Key in Field]?: Value }
   }
 }
 
-/** A counter the clock gives, kept only when it is one. */
-function withClock<Shape extends object>(check: Check<Shape>): Check<Shape & { clock?: ClockValue }> {
-  return (value, path) => {
-    const clock = record(value, path).clock
-    return clock === undefined ? check(value, path) : { ...check(value, path), clock: oneOf('hour', 'weekday', 'timeAway')(clock, `${path}.clock`) }
-  }
+/** A picture a decision's value names, `[card1: {Drawn}]`: the decision, kept only when there is one. */
+function withValueFrom<Shape extends object>(check: Check<Shape>): Check<Shape & { from?: string }> {
+  return withOptional('from', string, check)
 }
 
 /** A counter's decimals, kept only when it has some: 1 to the most a counter may count with. */
@@ -204,8 +200,7 @@ function condition(value: unknown, path: string, depth: number): StoredCondition
     return object({ type: oneOf('endingSeen'), endingId: string, negated: boolean })(value, path)
   }
   if (fields.type === 'counter') {
-    const compared = object({ type: oneOf('counter'), counterId: string, operator: oneOf('=', '!=', '<', '<=', '>', '>='), amount: integer })(value, path)
-    return fields.otherCounterId === undefined ? compared : { ...compared, otherCounterId: string(fields.otherCounterId, `${path}.otherCounterId`) }
+    return withOptional('otherCounterId', string, object({ type: oneOf('counter'), counterId: string, operator: oneOf('=', '!=', '<', '<=', '>', '>='), amount: integer }))(value, path)
   }
   if (fields.type === 'listItem') {
     return { type: 'listItem', listId: string(fields.listId, `${path}.listId`), place: listPlace(fields.place, `${path}.place`), value: listValue(fields.value, `${path}.value`), negated: boolean(fields.negated, `${path}.negated`) }
@@ -278,12 +273,8 @@ function node(value: unknown, path: string, depth: number): StoredNode {
       }
     }
     case 'grid': {
-      const grid: StoredGrid = object({ type: oneOf('grid'), id: string, counterId: string, columns: integer, rows: integer, listId: string, characterId: nullable(string) })(value, path)
-      return {
-        ...grid,
-        ...(fields.columnsFrom === undefined ? {} : { columnsFrom: string(fields.columnsFrom, `${path}.columnsFrom`) }),
-        ...(fields.rowsFrom === undefined ? {} : { rowsFrom: string(fields.rowsFrom, `${path}.rowsFrom`) }),
-      }
+      const grid: Check<StoredGrid> = object({ type: oneOf('grid'), id: string, counterId: string, columns: integer, rows: integer, listId: string, characterId: nullable(string) })
+      return withOptional('rowsFrom', string, withOptional('columnsFrom', string, grid))(value, path)
     }
     case 'take': {
       const into = record(fields.into, `${path}.into`)
@@ -393,8 +384,7 @@ const css: Check<string> = (value, path) => string(value, path).length <= MAXIMU
 export const checkProjectDocument: Check<ProjectDocument> = (value, path) => {
   const project = checkProjectFields(typeof value === 'object' && value !== null && !Array.isArray(value) ? { ...LATER_PROJECT_FIELDS, ...value } : value, path)
   // Lists, since 3.0: kept only by projects that have some.
-  const lists = record(value, path).lists
-  return lists === undefined ? project : { ...project, lists: array(object({ id: string, name: string, initial: array(string) }))(lists, `${path}.lists`) }
+  return withOptional('lists', array(object({ id: string, name: string, initial: array(string) })), () => project)(value, path)
 }
 
 /** A place in a list: a number from 1, or a counter. */
@@ -431,7 +421,7 @@ const checkProjectFields: Check<ProjectDocument> = object({
   chapterOrder: array(string),
   sceneOrder: array(string),
   decisions: array(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, multiple: boolean, values: array(object({ id: string, name: string })) })))),
-  counters: array(withClock(withDecimals(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, initial: integer })))))),
+  counters: array(withOptional('clock', oneOf('hour', 'weekday', 'timeAway'), withDecimals(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, initial: integer })))))),
   askedNames: array(object({ id: string, name: string, defaultName: string })),
   endings: array((ending, endingPath) => {
     const checked = object({ id: string, name: string })(ending, endingPath)

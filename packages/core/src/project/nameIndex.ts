@@ -1,5 +1,7 @@
 import { alwaysStops, readingFlow } from '../format/readingFlow'
-import { commandsOf, flattenStoredNodes, type ChapterDocument, type ProjectDocument, type StoredCondition, type StoredNode } from '../format/storyFormat'
+import { commandsOf, flattenStoredNodes, type ChapterDocument, type ListPlace, type ListValue, type ProjectDocument, type StoredCondition, type StoredNode } from '../format/storyFormat'
+import { decisionChoosingPicture } from '../format/valueTags'
+import { idsReadBy, listPlaceSplitter, listsOf } from '../format/lists'
 import { normalizeName } from '../importer/storyNodes'
 import { placeholdersIn } from '../format/textValues'
 import { isPropertyAlone, RESERVED_STYLE_NAMES } from '../format/textStyles'
@@ -92,16 +94,38 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
     ...project.decisions.map(decision => [normalizeName(decision.name), { kind: 'decision' as const, id: decision.id }] as const),
     ...project.counters.map(counter => [normalizeName(counter.name), { kind: 'counter' as const, id: counter.id }] as const),
   ])
+  const splitPlace = listPlaceSplitter(listsOf(project).map(list => list.name))
   const shown = (texts: readonly string[], documentId: string, nodeId: string) => {
-    for (const name of new Set(texts.flatMap(placeholdersIn).map(normalizeName))) {
+    // `{Board Cell}` shows a place of a list: the counter naming the place is read.
+    const written = texts.flatMap(placeholdersIn).map(name => splitPlace(name)?.place ?? name)
+    for (const name of new Set(written.map(normalizeName))) {
       const target = shownNames.get(name)
       if (target !== undefined) {
         use(target.kind, target.id, { role: 'shown', documentId, nodeId })
       }
     }
   }
+  /** What a place or a value of a list reads: counters as tested, decisions as shown, being read whole. */
+  const listRead = (place: ListPlace | null, value: ListValue | null, documentId: string, nodeId: string | null) => {
+    for (const id of idsReadBy(place, value)) {
+      if (names.has(`counter:${id}`)) {
+        use('counter', id, { role: 'tested', documentId, nodeId })
+      } else {
+        use('decision', id, { role: 'shown', documentId, nodeId })
+      }
+    }
+  }
+  /** A decision that may be given any of its values: a random draw, a value taken from a list. */
+  const givenAnyValue = (decisionId: string, documentId: string, nodeId: string) => {
+    for (const value of project.decisions.find(decision => decision.id === decisionId)?.values ?? []) {
+      use('decision', decisionId, { role: 'set', documentId, nodeId, valueId: value.id })
+    }
+  }
   const tested = (condition: StoredCondition, documentId: string, nodeId: string | null, withElse = false): void => {
     switch (condition.type) {
+      case 'listItem':
+        listRead(condition.place, condition.value, documentId, nodeId)
+        break
       case 'is':
         use('decision', condition.decisionId, { role: 'tested', documentId, nodeId, valueId: condition.valueId, ...(withElse ? { withElse: true as const } : {}) })
         break
@@ -132,8 +156,9 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
       const nodeId = node.id
       // A picture chosen by a decision's value shows that value.
       for (const command of commandsOf(node)) {
-        if ((command.type === 'enter' || command.type === 'expression' || command.type === 'background' || command.type === 'illustration') && command.from !== undefined) {
-          use('decision', command.from, { role: 'shown', documentId, nodeId })
+        const decisionId = decisionChoosingPicture(command)
+        if (decisionId !== null) {
+          use('decision', decisionId, { role: 'shown', documentId, nodeId })
         }
       }
       switch (node.type) {
@@ -162,13 +187,36 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
           if (node.from !== undefined) {
             use('counter', node.from.counterId, { role: 'tested', documentId, nodeId })
           }
+          if (node.fromItem !== undefined) {
+            listRead(node.fromItem.place, null, documentId, nodeId)
+          }
+          break
+        case 'list':
+          if (node.change.type === 'set' || node.change.type === 'add') {
+            listRead(node.change.type === 'set' ? node.change.place : null, node.change.value, documentId, nodeId)
+          }
+          break
+        case 'take':
+          if (node.into.type === 'counter') {
+            use('counter', node.into.counterId, { role: 'changed', documentId, nodeId })
+          } else {
+            givenAnyValue(node.into.decisionId, documentId, nodeId)
+          }
+          break
+        case 'grid':
+          use('counter', node.counterId, { role: 'changed', documentId, nodeId })
+          for (const counterId of [node.columnsFrom, node.rowsFrom]) {
+            if (counterId !== undefined) {
+              use('counter', counterId, { role: 'tested', documentId, nodeId })
+            }
+          }
           break
         case 'copy':
           use('decision', node.decisionId, { role: 'set', documentId, nodeId })
           use('decision', node.fromDecisionId, { role: 'tested', documentId, nodeId })
           break
         case 'draw':
-          use('decision', node.decisionId, { role: 'set', documentId, nodeId })
+          givenAnyValue(node.decisionId, documentId, nodeId)
           if (node.notInDecisionId !== null) {
             use('decision', node.notInDecisionId, { role: 'tested', documentId, nodeId })
           }

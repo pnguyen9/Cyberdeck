@@ -5,8 +5,33 @@ import type { Counter } from './storyFormat'
  * every sum and comparison is exact. These turn its units into what people read and write, and back.
  */
 
-function scaleOf(counter: Pick<Counter, 'decimals'>): number {
+/** How many units make one: 100 for a counter that keeps hundredths, 1 for whole numbers. */
+export function scaleOf(counter: Pick<Counter, 'decimals'>): number {
   return 10 ** (counter.decimals ?? 0)
+}
+
+/** The whole number a counter holds, decimals dropped: a place in a list, a size of a grid. */
+export function wholeAmount(units: number, counter: Pick<Counter, 'decimals'>): number {
+  return Math.trunc(units / scaleOf(counter))
+}
+
+/** A number written as text, with a point or a comma, in the counter's units; null for no number. */
+export function unitsFromText(text: string, counter: Pick<Counter, 'decimals'>): number | null {
+  const amount = Number(text.replace(',', '.'))
+  return Number.isFinite(amount) ? unitsFromSaved(amount, counter) : null
+}
+
+const numberFormats = new Map<string, Intl.NumberFormat>()
+
+function numberFormat(locale: string, decimals: number): Intl.NumberFormat {
+  const key = `${locale}|${decimals}`
+  const known = numberFormats.get(key)
+  if (known !== undefined) {
+    return known
+  }
+  const format = new Intl.NumberFormat(locale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+  numberFormats.set(key, format)
+  return format
 }
 
 /** As a tag writes it, with as many decimals as the counter keeps and a point: `1000.50`, `-0.25`, `3`. */
@@ -30,7 +55,7 @@ export function shownAmount(units: number, counter: Pick<Counter, 'decimals'>, l
     return String(units)
   }
   try {
-    return new Intl.NumberFormat(locale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(units / scaleOf(counter))
+    return numberFormat(locale, decimals).format(units / scaleOf(counter))
   } catch {
     return writtenAmount(units, counter)
   }
@@ -41,7 +66,7 @@ export function savedAmount(units: number, counter: Pick<Counter, 'decimals'>): 
   return units / scaleOf(counter)
 }
 
-/** A number from a save, in the counter's units, rounded to what it keeps. */
+/** A plain number, from a save or a declaration, in the counter's units, rounded to what it keeps. */
 export function unitsFromSaved(amount: number, counter: Pick<Counter, 'decimals'>): number {
   return Math.round(amount * scaleOf(counter))
 }

@@ -27,7 +27,7 @@ export default async function check(page, { url }) {
 
   await page.setFiles('.file-button input[type=file]', [game])
   await pause(1500)
-  page.check('the game restores as its project, saying what it left out', await page.statusText(), 'Week was made again from the game. The game left out a chapter: import it to have the whole story. Files the game did not use wait for theirs in Cast & files.')
+  page.check('the game restores as its project, saying what it left out', await page.statusText(), 'Week was made again from the game. The game left out a chapter: import it to have the whole story. Pictures and sounds whose file the game did not carry wait for one in Cast & files.')
   await page.evaluate(`document.querySelector('.open-project').click()`)
   await pause(1000)
   page.check('its chapter is back', await page.evaluate(`[...document.querySelectorAll('.story-level .card.chapter .title')].map(title => title.textContent)`), ['Monday'])

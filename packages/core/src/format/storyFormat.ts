@@ -1,4 +1,5 @@
 import type { StyleProperty } from './textStyles'
+import { idsReadBy } from './lists'
 /**
  * Version of the stored documents, shared by Cyberdeck projects and Datajack chips.
  *
@@ -726,13 +727,8 @@ export function testedIdsIn(condition: StoredCondition): string[] {
       return [condition.decisionId]
     case 'counter':
       return condition.otherCounterId === undefined ? [condition.counterId] : [condition.counterId, condition.otherCounterId]
-    case 'listItem': {
-      const fromPlace = condition.place.type === 'counter' ? [condition.place.counterId] : []
-      const value = condition.value
-      const fromValue = value.type === 'decision' ? [value.decisionId] : value.type === 'counter' ? [value.counterId]
-        : value.type === 'item' ? [value.listId, ...(value.place.type === 'counter' ? [value.place.counterId] : [])] : []
-      return [condition.listId, ...fromPlace, ...fromValue]
-    }
+    case 'listItem':
+      return [condition.listId, ...idsReadBy(condition.place, condition.value)]
     case 'listSize':
       return [condition.listId]
     case 'remembered':

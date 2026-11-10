@@ -19,6 +19,7 @@ import {
   recordEndReached,
   minutesAway,
   recordPlaying,
+  countedEndingCount,
   isMissingChapters,
   recordIllustrationSeen,
   hasJournal,
@@ -61,6 +62,7 @@ import SettingsPanel from './SettingsPanel.vue'
 import StatePanel from './StatePanel.vue'
 import MusicPlayer from './MusicPlayer.vue'
 import StageView from './StageView.vue'
+import { useFullscreen, useStageScale } from './stageWindow'
 import TextBox from './TextBox.vue'
 import FullScreenText from './FullScreenText.vue'
 import type { StyledPart } from '../textRuns'
@@ -111,7 +113,6 @@ const playingVideo = ref<{ url: string; captionsUrl: string | null } | null>(nul
 const videoElement = useTemplateRef<HTMLVideoElement>('video')
 /** The text, choices and menu: hidden by the player, and under a panel or the end screen, which have their own buttons. */
 const isHudShown = computed(() => !isTextHidden.value && openPanel.value === 'none' && snapshot.value.step.type !== 'end' && errorMessage.value === null && titleCard.value === null && playingVideo.value === null)
-const isFullscreen = ref(document.fullscreenElement !== null)
 const notice = ref<string | null>(null)
 let noticeTimer: ReturnType<typeof setTimeout> | undefined
 const NOTICE_MILLISECONDS = 3500
@@ -277,11 +278,12 @@ const announcement = computed(() => {
       return errorMessage.value ?? endingName.value ?? endWords.value
   }
 })
+const missingChapters = computed(() => isMissingChapters(props.story))
 /**
  * What an end without an ending says: the end, or, in a game missing chapters, that the story goes
  * on, in the words the story last gave with `[to be continued: …]`, or by default.
  */
-const endWords = computed(() => isMissingChapters(props.story)
+const endWords = computed(() => missingChapters.value
   ? snapshot.value.stage.continuedText ?? storyText.value.toBeContinued
   : storyText.value.theEnd)
 const endingName = computed(() => {
@@ -347,7 +349,7 @@ function dismissTitleCard() {
 
 const endingsReached = computed(() => props.story.project.endings.filter(ending => progress.value.endingIds.includes(ending.id)).length)
 /** The endings players are told of: those of chapters the game keeps quiet about only once reached. */
-const endingsCounted = computed(() => props.story.project.endings.filter(ending => !(props.story.uncountedEndingIds?.has(ending.id) ?? false) || progress.value.endingIds.includes(ending.id)).length)
+const endingsCounted = computed(() => countedEndingCount(props.story.project.endings, props.story.uncountedEndingIds, progress.value.endingIds))
 
 /**
  * Runs a runtime action and shows its new state; a story that loops becomes an error message,
@@ -632,7 +634,7 @@ function recordProgress() {
     pendingOption = null
   } else if (step.type === 'end') {
     // Chapters not installed are where the story goes on: running out of them is no end to show on the map.
-    if (step.endingId !== null || !isMissingChapters(props.story)) {
+    if (step.endingId !== null || !missingChapters.value) {
       recorded = recordEndReached(recorded, step.endingId, pendingOption)
     }
     pendingOption = null
@@ -960,11 +962,6 @@ function choose(optionId: string) {
   playForward(() => runtime.choose(optionId))
 }
 
-function toggleFullscreen() {
-  const change = document.fullscreenElement === null ? document.documentElement.requestFullscreen() : document.exitFullscreen()
-  change.catch(() => showNotice(text.value.fullscreenUnavailable))
-}
-
 function perform(action: PlayerAction) {
   if (action === 'auto') {
     toggleAuto()
@@ -1104,10 +1101,6 @@ function onContextMenu(event: MouseEvent) {
   }
 }
 
-function onFullscreenChange() {
-  isFullscreen.value = document.fullscreenElement !== null
-}
-
 function onWheel(event: WheelEvent) {
   if (openPanel.value !== 'none') {
     return
@@ -1121,12 +1114,8 @@ function onWheel(event: WheelEvent) {
 }
 
 const viewport = useTemplateRef<HTMLElement>('viewport')
-const scale = ref(1)
-const resizeObserver = new ResizeObserver(([entry]) => {
-  if (entry !== undefined) {
-    scale.value = Math.min(entry.contentRect.width / STAGE_WIDTH, entry.contentRect.height / STAGE_HEIGHT)
-  }
-})
+const scale = useStageScale(viewport)
+const { isFullscreen, toggleFullscreen } = useFullscreen(() => showNotice(text.value.fullscreenUnavailable))
 
 /** The menu stays above the text box, which grows with text the player chose larger. */
 const QUICK_MENU_BOTTOM = 310
@@ -1147,12 +1136,8 @@ watch(textBox, (current, previous) => {
 
 onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
-  document.addEventListener('fullscreenchange', onFullscreenChange)
   window.addEventListener('mousedown', onMouseDown)
   window.addEventListener('mouseup', onMouseUp)
-  if (viewport.value !== null) {
-    resizeObserver.observe(viewport.value)
-  }
   progress.value = await props.saveStore.readProgress(props.story.project.id) ?? progress.value
   runtime.useClock({ now: () => new Date(), minutesAway: minutesAway(progress.value, new Date()) })
   runtime.useMemory(progress.value)
@@ -1170,10 +1155,8 @@ onUnmounted(() => {
   stopVoice()
   clearTimeout(choiceTimer)
   clearTimeout(autoTimer)
-  document.removeEventListener('fullscreenchange', onFullscreenChange)
   window.removeEventListener('mousedown', onMouseDown)
   window.removeEventListener('mouseup', onMouseUp)
-  resizeObserver.disconnect()
   textBoxObserver.disconnect()
   clearTimeout(typingTimer)
   clearTimeout(noticeTimer)

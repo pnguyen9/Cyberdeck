@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkReferences, exportText, importText, playerFormatVersion, stateFromSave, StoryRuntime, toSave } from '../../src/index'
+import { checkReferences, exportText, importText, indexNames, nameWarnings, playerFormatVersion, stateFromSave, StoryRuntime, storyFlow, toSave } from '../../src/index'
 import { monospaceLayout } from '../monospaceLayout'
 import { storyFromText } from './storyFromText'
 
@@ -105,5 +105,34 @@ describe('a grid of picture buttons', () => {
     runtime.next()
     expect(runtime.snapshot.step.type).toBe('end')
     expect(exportText(story.project, story.chapters, { declareDecisions: true })).toContain('[choice: Cell grid 2 × 2 from Shown with tile]')
+  })
+})
+
+describe('the index', () => {
+  it('knows what lists, grids and draws read and give: nothing there looks forgotten', () => {
+    const story = storyFromText([
+      '[decision: Card = ace | king]',
+      '[decision: Kept = ace | king]',
+      '[counter: Cell = 0]',
+      '[counter: Second = 0]',
+      '[counter: Count = 0]',
+      '[list: Shown = 4 × back]',
+      '[list: Hand]',
+      '[choice: Cell grid 2 × 2 from Shown with tile]',
+      '[set: Second = {Cell}]',
+      '[set: Shown Second = open]',
+      '[set: Card = random]',
+      '[add: Hand = {Card}]',
+      '[take: Kept = first of Hand]',
+      '[take: Count = first of Hand]',
+      '[if: Kept is ace or Kept is king]',
+      'Kept {Count}.',
+      '[end]',
+      '[if: Card is ace]',
+      'An ace.',
+      '[end]',
+    ])
+    const index = indexNames(story.project, story.chapters)
+    expect(nameWarnings(index, story.project, storyFlow(story.chapters, [])).map(warning => `${warning.name.name} ${warning.code}`)).toEqual(['Card valueGivenNeverTested'])
   })
 })

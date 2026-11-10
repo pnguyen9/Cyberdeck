@@ -185,6 +185,12 @@ function valueReads(story: PlayableStory): readonly ValueRead[] {
     const walk = (nodes: readonly StoredNode[], givenAtStart: ReadonlyMap<string, number>): Map<string, number> => {
       const given = new Map(givenAtStart)
       const give = (id: string, node: StoredNode) => given.set(id, positions.get(node.id) ?? 0)
+      // Setting a decision that holds several values adds one to them: only a single-value decision is given anew.
+      const giveDecision = (decisionId: string, node: StoredNode) => {
+        if (singleDecisionIds.has(decisionId)) {
+          give(decisionId, node)
+        }
+      }
       for (const node of nodes) {
         switch (node.type) {
           case 'count':
@@ -202,28 +208,20 @@ function valueReads(story: PlayableStory): readonly ValueRead[] {
             break
           case 'copy':
             read([node.fromDecisionId], node, given)
-            if (singleDecisionIds.has(node.decisionId)) {
-              give(node.decisionId, node)
-            }
+            giveDecision(node.decisionId, node)
             break
           case 'draw':
             if (node.notInDecisionId !== null) {
               read([node.notInDecisionId], node, given)
             }
-            if (singleDecisionIds.has(node.decisionId)) {
-              give(node.decisionId, node)
-            }
+            giveDecision(node.decisionId, node)
             break
           case 'set':
-            if (singleDecisionIds.has(node.decisionId)) {
-              give(node.decisionId, node)
-            }
+            giveDecision(node.decisionId, node)
             break
           case 'choice':
             node.options.forEach(option => option.condition !== null && read(testedIdsIn(option.condition), node, given))
-            if (singleDecisionIds.has(node.decisionId)) {
-              give(node.decisionId, node)
-            }
+            giveDecision(node.decisionId, node)
             break
           case 'condition':
             node.branches.forEach(branch => branch.condition !== null && read(testedIdsIn(branch.condition), node, given))

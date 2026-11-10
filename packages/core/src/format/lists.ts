@@ -28,15 +28,25 @@ export function readListItems(text: string): string[] | null {
 
 /** A name written with a place, `Board Cell`, `Board 3`, `Board size`, split by the lists known: the list, and what follows. */
 export function splitListPlace(written: string, listNames: readonly string[]): { list: string; place: string } | null {
-  const normalized = normalizeName(written)
+  return listPlaceSplitter(listNames)(written)
+}
+
+/** `splitListPlace` for the same lists again and again: the names are sorted and normalised once. */
+export function listPlaceSplitter(listNames: readonly string[]): (written: string) => { list: string; place: string } | null {
   // The longest list name first: `Board` must not take what `Board game` would.
-  for (const name of [...listNames].sort((first, second) => second.length - first.length)) {
-    const key = normalizeName(name)
-    if (normalized.startsWith(`${key} `) && normalized.length > key.length + 1) {
-      return { list: name, place: written.trim().slice(written.trim().length - (normalized.length - key.length - 1)).trim() }
+  const keys = [...listNames].sort((first, second) => second.length - first.length).map(name => ({ name, key: normalizeName(name) }))
+  return written => {
+    if (keys.length === 0) {
+      return null
     }
+    const normalized = normalizeName(written)
+    for (const { name, key } of keys) {
+      if (normalized.startsWith(`${key} `) && normalized.length > key.length + 1) {
+        return { list: name, place: written.trim().slice(written.trim().length - (normalized.length - key.length - 1)).trim() }
+      }
+    }
+    return null
   }
-  return null
 }
 
 /** A place as a tag writes it: `3`, or a counter's name. */
