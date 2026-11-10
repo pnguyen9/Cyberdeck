@@ -336,6 +336,11 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     }
     if (node.type === 'grid') {
       checkList(node.list, node.sourceLine)
+      for (const size of [node.columns, node.rows]) {
+        if (typeof size === 'string' && !isCounter(size)) {
+          problems.push({ severity: 'error', code: 'unknownCounter', line: node.sourceLine, subject: size })
+        }
+      }
     }
     if (node.type === 'listAdd' || node.type === 'shuffle') {
       checkList(node.list, node.sourceLine)

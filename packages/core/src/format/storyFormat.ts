@@ -107,6 +107,9 @@ export interface StoredGrid {
   counterId: string
   columns: number
   rows: number
+  /** A size read from counters as the grid is shown, `grid {Columns} × {Rows}`, in place of `columns`, `rows`. */
+  columnsFrom?: string
+  rowsFrom?: string
   listId: string
   characterId: string | null
 }

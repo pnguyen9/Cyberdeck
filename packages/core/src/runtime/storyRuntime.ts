@@ -9,7 +9,7 @@ import type {
   StoredNode,
   StoredPage,
 } from '../format/storyFormat'
-import { flattenStoredNodes, innerListsOf, type AskedName, type ProjectDocument, type ClockValue, type ListPlace, type ListValue, type StoredGrid, type StoredListChange, type StoredTake, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
+import { flattenStoredNodes, innerListsOf, MAXIMUM_GRID, type AskedName, type ProjectDocument, type ClockValue, type ListPlace, type ListValue, type StoredGrid, type StoredListChange, type StoredTake, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
 import { givenName, pageWithValues, withValues, type ValueOf } from '../format/textValues'
 import { normalizeName } from '../importer/storyNodes'
 import { drawFrom, newSeed } from './chance'
@@ -132,8 +132,12 @@ interface Stop {
   frames: Frame[]
 }
 
-/** Nodes played in a row without reaching a page or a choice before the story is declared looping. */
-const MAXIMUM_SILENT_NODES = 10_000
+/**
+ * Nodes played in a row without reaching a page or a choice before the story is declared looping:
+ * room for a game working through a whole board between two picks (an expert Minesweeper counting
+ * and opening 480 cells), still found out in a fraction of a second.
+ */
+const MAXIMUM_SILENT_NODES = 200_000
 
 /** Stops kept for going back; older ones are forgotten. */
 const MAXIMUM_HISTORY_LENGTH = 500
@@ -617,8 +621,12 @@ export class StoryRuntime {
           this.setStep({ type: 'ask', ask: node })
           return
         case 'grid': {
+          // A size given by counters, `grid {Columns} × {Rows}`, is read now, within what a grid may be.
+          const sized = (counterId: string | undefined, written: number, largest: number) => counterId === undefined ? written
+            : Math.min(Math.max(Math.trunc(this.countOf(counterId) / 10 ** (this.counterDecimals.get(counterId) ?? 0)), 1), largest)
+          const grid = { ...node, columns: sized(node.columnsFrom, node.columns, MAXIMUM_GRID.columns), rows: sized(node.rowsFrom, node.rows, MAXIMUM_GRID.rows) }
           const items = this.listOf(node.listId)
-          this.setStep({ type: 'grid', grid: node, items: Array.from({ length: node.columns * node.rows }, (_, index) => items[index] ?? '') })
+          this.setStep({ type: 'grid', grid, items: Array.from({ length: grid.columns * grid.rows }, (_, index) => items[index] ?? '') })
           return
         }
         case 'askNumber': {

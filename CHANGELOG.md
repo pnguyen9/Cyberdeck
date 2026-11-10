@@ -69,6 +69,8 @@
 ### Samples
 - A mini game, rock, paper, scissors, in `docs/sample/minigames/`, its sounds made by code.
 - Sakura Week plays each extra scene of a character once before any comes back.
+- A fifth mini game, Minesweeper: three levels or a board of one's own, the first cell never a
+  mine, empty areas opened in turn; the grid sized by counters, `grid {Columns} × {Rows}`.
 - A fourth mini game, Pairs: 16 tiles in a grid of picture buttons, the best number of turns kept.
 - A third mini game, blackjack: a single deck or a six-deck shoe, bets chosen or typed, hit, stand
   and double down, the dealer's card turned over, cards and music made by code.

@@ -1,0 +1,67 @@
+// The Minesweeper sample in docs/sample/minigames: its text imports without a problem and its files each
+// find their entry; a beginner board of 9 × 9 shown as a grid, the first cell opened never a mine and
+// opening an area around it when nothing is near; an expert board of 30 × 16 too, the whole board worked
+// through between two picks.
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { createProject, pause } from './harness.mjs'
+
+const sample = join(dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'sample', 'minigames', 'minesweeper')
+const options = page => page.evaluate(`[...document.querySelectorAll('.viewport .option')].map(option => option.textContent.trim())`)
+const tiles = page => page.evaluate(`[...document.querySelectorAll('.viewport .grid-menu .tile')].map(tile => tile.getAttribute('aria-label').split(': ')[1] ?? '')`)
+
+async function untilOptions(page) {
+  for (let press = 0; press < 6 && (await options(page)).length === 0; press++) {
+    await page.press(' ')
+    await pause(400)
+  }
+}
+
+async function playLevel(page, level) {
+  await untilOptions(page)
+  await page.evaluate(`[...document.querySelectorAll('.viewport .option')].find(option => option.textContent.trim().startsWith(${JSON.stringify(level)})).click()`)
+  await pause(1500)
+}
+
+export default async function check(page, { url }) {
+  await createProject(page, url, 'Minesweeper')
+  await page.setValue('.import .source', readFileSync(join(sample, 'minesweeper.txt'), 'utf8'))
+  await pause(1500)
+  page.check('the sample imports without problems', await page.evaluate(`[...document.querySelectorAll('.import .problems li')].map(item => item.textContent)`), [])
+  await page.clickButton('Import', '.import-actions .button')
+  await pause(1500)
+  await page.clickButton('Cast & files', '.tab')
+  await page.waitFor('.drop-zone .file-input')
+  await page.setFiles('.drop-zone .file-input', [join(sample, 'minesweeper-assets.zip')])
+  await page.waitFor('.message[role=status]', 30000)
+  await pause(600)
+  const report = await page.statusText()
+  page.check('every file finds its entry but the cover', report.slice(report.indexOf('Not used')), 'Not used, no entry of that name: cover.svg.')
+  page.check('and no entry is left without a file', await page.evaluate(`document.querySelectorAll('.cast .missing-count').length`), 0)
+
+  await page.clickButton('Preview ▶', '.button')
+  await page.waitFor('.viewport .text')
+  await pause(600)
+  await playLevel(page, 'Beginner')
+  page.check('a beginner board: 81 cells, all hidden', (await tiles(page)).filter(tile => tile === 'hidden').length, 81)
+  await page.evaluate(`document.querySelectorAll('.viewport .grid-menu .tile')[40].click()`)
+  await pause(1500)
+  const opened = await tiles(page)
+  page.check('the first cell opened is never a mine', ['mine', 'boom', 'hidden'].includes(opened[40]), false)
+  page.check('nothing near, the cells around open too', opened[40] !== '0' || opened.filter(tile => tile !== 'hidden').length > 1, true)
+  await page.screenshot('beginner')
+
+  // An expert board: the mines placed, counted and an area opened between two picks.
+  await page.evaluate(`document.querySelector('.leave-button').click()`)
+  await pause(800)
+  await page.clickButton('Preview ▶', '.button')
+  await page.waitFor('.viewport .text')
+  await pause(600)
+  await playLevel(page, 'Expert')
+  page.check('an expert board: 480 cells', (await tiles(page)).length, 480)
+  await page.evaluate(`document.querySelectorAll('.viewport .grid-menu .tile')[200].click()`)
+  await pause(3000)
+  page.check('worked through without being taken for a loop', [await page.evaluate(`!!document.querySelector('.viewport .grid-menu')`), ['mine', 'boom', 'hidden'].includes((await tiles(page))[200])], [true, false])
+  await page.screenshot('expert')
+}

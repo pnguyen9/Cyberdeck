@@ -64,7 +64,7 @@ for (const fileName of ['CHANGELOG.md', 'LICENSE']) {
   cpSync(join(root, fileName), join(documentationFolder, fileName))
 }
 const readme = readFileSync(join(root, 'README.md'), 'utf8')
-writeFileSync(join(documentationFolder, 'README.md'), readme.replace(/^## Planned for [^\n]*\n[\s\S]*?(?=^## )/m, ''))
+writeFileSync(join(documentationFolder, 'README.md'), readme.replace(/^## Plan\b[^\n]*\n[\s\S]*?(?=^## )/m, ''))
 zipFolder(workFolder, documentationName, `${documentationName}.zip`)
 
 // The sample story, to try the editor with: its text to import, and the zip of its files to drop in Cast & files.
@@ -72,6 +72,12 @@ const sampleName = `Cyberdeck-${version}-sample-sakura-week`
 cpSync(join(root, 'docs', 'sample', 'sakura-week', 'sakura-week.txt'), join(workFolder, sampleName, 'sakura-week.txt'))
 cpSync(join(root, 'docs', 'sample', 'sakura-week', 'sakura-week-assets.zip'), join(workFolder, sampleName, 'sakura-week-assets.zip'))
 zipFolder(workFolder, sampleName, `${sampleName}.zip`)
+
+// The mini games, each a text and the zip of its files, and the scripts that made those files.
+const miniGamesName = `Cyberdeck-${version}-sample-mini-games`
+cpSync(join(root, 'docs', 'sample', 'minigames'), join(workFolder, miniGamesName), { recursive: true })
+cpSync(join(root, 'scripts', 'samples'), join(workFolder, miniGamesName, 'scripts'), { recursive: true })
+zipFolder(workFolder, miniGamesName, `${miniGamesName}.zip`)
 rmSync(workFolder, { recursive: true, force: true })
 
 const sums = readdirSync(releaseFolder).filter(fileName => fileName.endsWith('.zip')).sort()

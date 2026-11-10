@@ -101,8 +101,9 @@ export interface GridNode {
   type: 'grid'
   sourceLine: number
   counter: string
-  columns: number
-  rows: number
+  /** A number, or a counter in braces read as the grid is shown. */
+  columns: number | string
+  rows: number | string
   list: string
   character: string | null
 }

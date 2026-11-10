@@ -267,8 +267,10 @@ export function storeImport(
           type: 'grid',
           id,
           counterId: counters.find(node.counter).id,
-          columns: node.columns,
-          rows: node.rows,
+          columns: typeof node.columns === 'number' ? node.columns : 1,
+          rows: typeof node.rows === 'number' ? node.rows : 1,
+          ...(typeof node.columns === 'string' ? { columnsFrom: counters.find(node.columns).id } : {}),
+          ...(typeof node.rows === 'string' ? { rowsFrom: counters.find(node.rows).id } : {}),
           listId: lists.find(node.list).id,
           characterId: node.character === null ? null : registry.character(node.character).id,
         }

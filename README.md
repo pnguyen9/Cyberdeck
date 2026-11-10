@@ -839,6 +839,12 @@ of it is as free as the rest of the repository.
 - **Pairs** (`pairs/`): 16 tiles, 8 animals drawn as shapes, shuffled; a grid of picture buttons
   (`[choice: Cell grid 4 × 4 from Shown with tile]`) over two lists, the deck and what is shown; a
   pair stays face up, two different animals turn back at the next pick; the best number of turns kept.
+- **Minesweeper** (`minesweeper/`): beginner 9 × 9 with 10 mines, intermediate 16 × 16 with 40, expert
+  30 × 16 with 99, or a board of one's own (9 to 30 columns, 9 to 24 rows, 10 mines to
+  (columns − 1) × (rows − 1), typed with `[ask number]`); the grid sized by counters
+  (`grid {Columns} × {Rows}`); the mines placed after the first pick, so that it is never one; each
+  cell's count kept in a list, and an empty area opened through a queue (`[add]`, `[take]`). No
+  flags yet: a grid picks, it does not mark.
 
 ## Plan
 
@@ -847,26 +853,11 @@ for what it adds, the whole suite run (`npm run typecheck`, `npm test`, `npm run
 `npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the CHANGELOG brought
 up to date, every French text read again.
 
-### 1. Version 3.0: lists and the grid
+### 1. Version 3.0: lists and the grid (done)
 
-A new major version of the format: stories using lists need Datajack 3.0.
-
-- **Lists**, a numbered row of values under one name, numbered from 1:
-  `[list: Board = 16 × none]`; `[set: Board 3 = cat]`, `[set: Board {Cell} = {Animal}]`;
-  `[shuffle: Board]`; `[add: Queue = {Cell}]` and `[take: Cell = first of Queue]` (a queue, for
-  opening the empty cells around an empty one without recursion); tests `[if: Board {Cell} is cat]`;
-  `{Board 3}` in text and in picture tags; a counter reading a place back, `[set: Near = {Board 3}]`.
-  Kept by saves, shown and changed in the State panel, listed in the Index, checked at import
-  (a place out of range, a list unknown), written back by the text export.
-- **The grid**: `[choice: Cell grid 4 × 4 from Shown]`, a choice shown as rows of picture buttons,
-  numbered from 1, each showing the picture named by its place in the list (`Shown 7` holding `cat`),
-  picking one giving the counter its number. Up to 30 × 16. Keyboard: the arrows move, Enter picks.
-- **Pairs**: done (see Samples).
-- **Minesweeper** (`minigames/minesweeper/`): beginner 9 × 9 with 10 mines, intermediate 16 × 16
-  with 40, expert 30 × 16 with 99, or a custom board, 9 to 30 columns, 9 to 24 rows, 10 mines to
-  (columns − 1) × (rows − 1); the first cell opened never a mine; empty areas opened in turn.
-- Blackjack's shoe could then hold 2, 4, 6 or 8 real decks (a list of the cards left), and a top 10
-  of scores becomes a list kept in order.
+Lists, the grid of picture buttons (sized by numbers or counters), and the Pairs and Minesweeper
+samples. Left for later: Blackjack's shoe of 2, 4, 6 or 8 real decks as a list of the cards left;
+Minesweeper's flags, which need a second way to pick a tile (a right click, a key).
 
 ### 2. Release 3.0.0
 

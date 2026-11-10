@@ -133,7 +133,8 @@ export function counterValueText(from: { counterId: string; factor: number }, pr
 export function describeGrid(node: StoredGrid, project: ProjectDocument): string {
   const counter = project.counters.find(candidate => candidate.id === node.counterId)?.name ?? '?'
   const character = node.characterId === null ? null : project.characters.find(candidate => candidate.id === node.characterId)?.name ?? '?'
-  return `choice: ${counter} grid ${node.columns} × ${node.rows} from ${listName(node.listId, project)}${character === null ? '' : ` with ${character}`}`
+  const size = (counterId: string | undefined, written: number) => counterId === undefined ? String(written) : `{${project.counters.find(candidate => candidate.id === counterId)?.name ?? '?'}}`
+  return `choice: ${counter} grid ${size(node.columnsFrom, node.columns)} × ${size(node.rowsFrom, node.rows)} from ${listName(node.listId, project)}${character === null ? '' : ` with ${character}`}`
 }
 
 /** A list's change or a value taken from it, as the tag is written: `set: Board 3 = cat`, `shuffle: Board`. */

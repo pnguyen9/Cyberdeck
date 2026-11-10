@@ -502,11 +502,14 @@ class TextImporter {
           return
         }
         // `[choice: Cell grid 4 × 4 from Shown with tile]`: a grid of picture buttons, no options written.
-        const grid = /^(.+?)\s+grid\s+(\d{1,2})\s*[×x*]\s*(\d{1,2})\s+from\s+(.+?)(?:\s+with\s+(.+))?$/i.exec(text.trim())
+        const grid = /^(.+?)\s+grid\s+(\d{1,2}|\{[^{}]+\})\s*[×x*]\s*(\d{1,2}|\{[^{}]+\})\s+from\s+(.+?)(?:\s+with\s+(.+))?$/i.exec(text.trim())
         if (grid !== null || /\sgrid\s/i.test(` ${text} `)) {
-          const columns = Number(grid?.[2])
-          const rows = Number(grid?.[3])
-          if (grid === null || columns < 1 || rows < 1 || columns > MAXIMUM_GRID.columns || rows > MAXIMUM_GRID.rows) {
+          const size = (written: string | undefined, largest: number): number | string | null => written === undefined ? null
+            : written.startsWith('{') ? written.slice(1, -1).trim()
+              : Number(written) >= 1 && Number(written) <= largest ? Number(written) : null
+          const columns = size(grid?.[2], MAXIMUM_GRID.columns)
+          const rows = size(grid?.[3], MAXIMUM_GRID.rows)
+          if (grid === null || columns === null || rows === null) {
             this.addProblem('error', 'invalidGrid', lineNumber, text)
             return
           }

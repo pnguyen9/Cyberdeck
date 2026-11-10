@@ -14,6 +14,7 @@ import {
   type StoredAskBound,
   type StoredChoice,
   type StoredCount,
+  type StoredGrid,
   type VideoClip,
   type StoredCondition,
   type StoredNode,
@@ -276,8 +277,14 @@ function node(value: unknown, path: string, depth: number): StoredNode {
           return fail(`${path}.change.type`, 'set, add, shuffle or clear')
       }
     }
-    case 'grid':
-      return object({ type: oneOf('grid'), id: string, counterId: string, columns: integer, rows: integer, listId: string, characterId: nullable(string) })(value, path)
+    case 'grid': {
+      const grid: StoredGrid = object({ type: oneOf('grid'), id: string, counterId: string, columns: integer, rows: integer, listId: string, characterId: nullable(string) })(value, path)
+      return {
+        ...grid,
+        ...(fields.columnsFrom === undefined ? {} : { columnsFrom: string(fields.columnsFrom, `${path}.columnsFrom`) }),
+        ...(fields.rowsFrom === undefined ? {} : { rowsFrom: string(fields.rowsFrom, `${path}.rowsFrom`) }),
+      }
+    }
     case 'take': {
       const into = record(fields.into, `${path}.into`)
       return {
