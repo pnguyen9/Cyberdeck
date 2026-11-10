@@ -838,10 +838,6 @@ the SHA-256 in their name; and only save folders the player picked in the system
   store](#erasing-what-the-web-builds-store)).
 - **A game's own settings.** Settings open from the library, for every game; a game's own, from
   its card, could set some apart for that game (a slower text for one, a louder music for another).
-- **The name plate's place, for authors.** Players choose in Settings whether the name slides to the
-  character speaking, jumps there or stays put. Authors cannot choose it for their game yet: a game
-  could say the name stays at the left, players' own choice still winning; and for a game that says
-  nothing, staying at the left may be the better default than sliding.
 - **A preview closer to playing.** Cyberdeck's preview plays a game as Datajack does, but without
   what Datajack offers around the game itself, such as the map. The preview should offer what a
   player has. (Its saves and progress can now be erased, from the projects page, to test a story
