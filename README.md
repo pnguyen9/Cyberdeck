@@ -872,6 +872,21 @@ cannot play.
 
 ### 3. Then, in no particular order
 
+- **Fix: animated pictures in Firefox** (found testing 3.1.0's falling example). The first fall plays;
+  later falls, and later previews, show Kai already on the ground until the page is reloaded.
+  Chromium plays every fall (the `animated-picture` check runs there only). Checked in Firefox 159,
+  headless, sampling the screen: Firefox plays an animated picture once per page, whatever its
+  address. Showing it again from the same address, on a new element, from a new object URL, a copy of
+  its bytes, an address with a `#suffix` or a `?query`: always the last frame at once. The file is
+  not to blame: `ImageDecoder` reads it as 9 frames, played once (a repetition count of 0). The fix:
+  the stage plays animated pictures itself, decoding their frames with `ImageDecoder` (in Firefox and
+  Chromium) and drawing each in turn on a canvas, from the start each time the picture is shown,
+  holding the last frame, and showing it at once for players who ask for less motion. The
+  `animated-picture` check should then compare two falls in a new preview, and run in Firefox too.
+  Not reproduced: Kai standing up for an instant before lying down, which was seen once. Sampled
+  every 20 to 50 ms, the first fall goes upright, falling, on the ground, then the lying picture,
+  nothing between; a flash of one screen frame would pass between samples. To look for again once
+  the frames are drawn by the stage.
 - **Upper-body characters**, as most Japanese visual novels draw them: a framing chosen per character
   or for the whole project in Cast & files, *full body* as today or *upper body*. Framed so, the
   picture is scaled to a set height whatever its file's size, may go past the bottom of the stage
