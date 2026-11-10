@@ -143,3 +143,50 @@ describe('chance', () => {
     expect(toSave(story, runtime.exportState(), '2026-11-04T10:00:00.000Z')).not.toHaveProperty('seed')
   })
 })
+
+describe('drawing among what was not drawn yet', () => {
+  it('plays each of three in turn before any again, drawing again in a loop until one is new', () => {
+    const story = storyFromText([
+      '[counter: Pick = 0]',
+      '[counter: Visit = 0]',
+      '[decision multi: Seen = One | Two | Three]',
+      '[loop]',
+      '[if: Visit is 6]',
+      '[break]',
+      '[end]',
+      '[add: Visit]',
+      '[if: Seen is One and Seen is Two and Seen is Three]',
+      '[unset: Seen]',
+      '[end]',
+      '[loop]',
+      '[set: Pick = random 1 3]',
+      '[if: Pick is 1 and Seen is not One or Pick is 2 and Seen is not Two or Pick is 3 and Seen is not Three]',
+      '[break]',
+      '[end]',
+      '[end]',
+      '[if: Pick is 1]',
+      '[set: Seen = One]',
+      'One.',
+      '[else if: Pick is 2]',
+      '[set: Seen = Two]',
+      'Two.',
+      '[else]',
+      '[set: Seen = Three]',
+      'Three.',
+      '[end]',
+      '[end]',
+      'The end.',
+    ])
+    for (let game = 0; game < 20; game++) {
+      const runtime = new StoryRuntime(story)
+      runtime.start()
+      const shown: string[] = []
+      while (shownText(runtime) !== 'The end.' && shown.length < 10) {
+        shown.push(shownText(runtime))
+        runtime.next()
+      }
+      expect(shown).toHaveLength(6)
+      expect([new Set(shown.slice(0, 3)).size, new Set(shown.slice(3)).size]).toEqual([3, 3])
+    }
+  })
+})

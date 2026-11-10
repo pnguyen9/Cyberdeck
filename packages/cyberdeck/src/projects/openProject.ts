@@ -61,6 +61,7 @@ import {
   type ShownWhen,
   type ChapterView,
   type SaveData,
+  type LeftOutChapters,
 } from '@cyberdeck/core'
 import type { Locale } from '@cyberdeck/stage'
 import { castMessages } from '../i18n/castMessages'
@@ -551,11 +552,12 @@ export class OpenProject {
   }
 
   /** The game players download: the chapters chosen and the files they use, in the languages chosen (every one by default), the story's first among them. */
-  exportGame(release: string, includedChapterIds: readonly string[], exportedAt: Date, languages: readonly string[] = languagesOf(this.currentProject)): Promise<Uint8Array<ArrayBuffer>> {
+  exportGame(release: string, includedChapterIds: readonly string[], exportedAt: Date, languages: readonly string[] = languagesOf(this.currentProject), leftOutChapters: LeftOutChapters = 'named'): Promise<Uint8Array<ArrayBuffer>> {
     return createGameArchive({
       project: this.currentProject,
       chapters: this.storedDocuments,
       includedChapterIds,
+      leftOutChapters,
       languages,
       readAsset: asset => this.store.readAsset(this.currentProject.id, asset.id),
       release,

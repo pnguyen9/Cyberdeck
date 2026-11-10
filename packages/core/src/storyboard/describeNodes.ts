@@ -37,6 +37,8 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
     case 'fade':
     case 'tint':
       return effectText(command)
+    case 'continued':
+      return `to be continued: ${command.text ?? 'none'}`
     case 'textMode':
       return `text: ${command.mode}`
     case 'clear':

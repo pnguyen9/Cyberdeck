@@ -23,6 +23,7 @@ export type StageInstruction =
   | { type: 'flash'; color: FlashColor; durationMs: number | null }
   | { type: 'fade'; direction: 'out' | 'in'; color: FadeColor; durationMs: number | null }
   | { type: 'tint'; tint: TintName | null }
+  | { type: 'continued'; text: string | null }
   | { type: 'textMode'; mode: 'box' | 'full' }
   | { type: 'illustration'; illustration: string | null }
   | { type: 'clear' }
@@ -45,7 +46,7 @@ export interface StageVocabulary {
   positionNames: readonly string[]
 }
 
-export const STAGE_KEYWORDS: readonly string[] = ['bg', 'background', 'transition', 'music', 'sound', 'voice', 'video', 'enter', 'exit', 'move', 'wait', 'shake', 'flash', 'fade out', 'fade in', 'tint', 'text', 'clear', 'illustration', 'cg', 'style']
+export const STAGE_KEYWORDS: readonly string[] = ['bg', 'background', 'transition', 'music', 'sound', 'voice', 'video', 'enter', 'exit', 'move', 'wait', 'shake', 'flash', 'fade out', 'fade in', 'tint', 'text', 'clear', 'illustration', 'cg', 'style', 'to be continued']
 
 const SHAKE_STRENGTHS: readonly ShakeStrength[] = ['light', 'strong']
 const FLASH_COLORS: readonly FlashColor[] = ['white', 'red', 'black']
@@ -224,6 +225,11 @@ export function interpretStageDirective(directive: Directive, vocabulary: StageV
     case 'illustration':
     case 'cg':
       return argumentText === '' ? null : { type: 'illustration', illustration: argumentText.toLowerCase() === 'none' ? null : argumentText }
+    case 'to be continued': {
+      // As written, commas included: the words players read when the game runs out of chapters.
+      const written = (directive.written ?? argumentText).trim()
+      return written === '' ? null : { type: 'continued', text: written.toLowerCase() === 'none' ? null : written }
+    }
     case 'tint': {
       const tint = argumentText.toLowerCase()
       return tint === 'none' ? { type: 'tint', tint: null } : (TINTS as readonly string[]).includes(tint) ? { type: 'tint', tint: tint as TintName } : null

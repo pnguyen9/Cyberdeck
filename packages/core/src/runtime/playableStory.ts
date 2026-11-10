@@ -16,6 +16,15 @@ export function chaptersInOrder(story: PlayableStory): ChapterDocument[] {
     .filter(chapter => chapter !== undefined)
 }
 
+/**
+ * Whether chapters of the story are not in the game, a game exported with only some of its chapters:
+ * reaching its end without an ending, a player has not finished the story, only what is installed.
+ */
+export function isMissingChapters(story: PlayableStory): boolean {
+  const chapterIds = new Set(story.chapters.map(chapter => chapter.id))
+  return story.project.chapterOrder.some(chapterId => !chapterIds.has(chapterId))
+}
+
 /** The scenes of the story by identifier, for `[play]` to find. */
 export function scenesOf(story: PlayableStory): Map<string, ChapterDocument> {
   return new Map(story.chapters.filter(chapter => story.project.sceneOrder.includes(chapter.id)).map(scene => [scene.id, scene]))

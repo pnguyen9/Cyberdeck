@@ -197,7 +197,8 @@ const stateClasses = (entryId: string) => ({
   align-self: flex-start;
   padding: 3px 10px;
   border: 1px solid var(--branch-color, #7b8597);
-  border-radius: 999px;
+  /* Half a line's height: round at the ends on one line, yet holding its text when it runs to several. */
+  border-radius: 12px;
   font-size: 13px;
   cursor: pointer;
 }
@@ -224,7 +225,8 @@ const stateClasses = (entryId: string) => ({
 
 .item.marker {
   padding: 2px 10px;
-  border-radius: 999px;
+  /* Half a line's height: round at the ends on one line, yet holding its text when it runs to several. */
+  border-radius: 12px;
   border-left-width: 1px;
   font-size: 13px;
   color: #a3acbb;

@@ -86,6 +86,7 @@ function createPage(outputDirectory, connection, stop) {
     },
     /** Sizes the page as a screen of this many CSS pixels, each drawn with `scale` device pixels. */
     setViewport: (width, height, scale = 1) => send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: scale, mobile: false }),
+    resetViewport: () => send('Emulation.clearDeviceMetricsOverride'),
     /** Clicks the middle of an element with the mouse, as a real click: pointer capture and all. */
     clickAt: async selector => {
       const point = await page.evaluate(`(() => { const rect = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 } })()`)

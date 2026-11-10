@@ -5,7 +5,7 @@ import type { StyleProperty } from './textStyles'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '2.0'
+export const FORMAT_VERSION = '2.1'
 
 /** True when this version of the code can read a document written in `version`: any version up to its own, every earlier major one included. */
 export function isSupportedFormatVersion(version: string): boolean {
@@ -342,6 +342,8 @@ export type StageCommand =
   | { type: 'fade'; direction: 'out' | 'in'; color: FadeColor; durationMs: number | null }
   /** Until changed; null removes it. Since 1.1. */
   | { type: 'tint'; tint: TintName | null }
+  /** What players read when the game runs out of the chapters installed, until another says otherwise; null for the default. */
+  | { type: 'continued'; text: string | null }
   /** Text in a box at the bottom, or over the whole screen, pages piling up until cleared. Since 1.1. */
   | { type: 'textMode'; mode: 'box' | 'full' }
   /** Starts a new screen of full-screen text. Since 1.1. */

@@ -308,9 +308,14 @@ kbd {
 
 .category {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 22px;
   min-height: 0;
+  /* A category taller than the screen scrolls; the space around keeps focus rings from being cut. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 16px 24px 4px;
 }
 
 .general {

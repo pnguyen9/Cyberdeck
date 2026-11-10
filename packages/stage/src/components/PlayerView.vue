@@ -17,6 +17,7 @@ import {
   emptyProgress,
   recordChoiceReached,
   recordEndReached,
+  isMissingChapters,
   recordIllustrationSeen,
   hasJournal,
   recordLasting,
@@ -213,9 +214,16 @@ const announcement = computed(() => {
     case 'ask':
       return asked.value?.name ?? ''
     case 'end':
-      return errorMessage.value ?? endingName.value ?? storyText.value.theEnd
+      return errorMessage.value ?? endingName.value ?? endWords.value
   }
 })
+/**
+ * What an end without an ending says: the end, or, in a game missing chapters, that the story goes
+ * on, in the words the story last gave with `[to be continued: …]`, or by default.
+ */
+const endWords = computed(() => isMissingChapters(props.story)
+  ? snapshot.value.stage.continuedText ?? storyText.value.toBeContinued
+  : storyText.value.theEnd)
 const endingName = computed(() => {
   const step = snapshot.value.step
   return step.type === 'end' && step.endingId !== null ? props.story.project.endings.find(ending => ending.id === step.endingId)?.name ?? null : null
@@ -560,7 +568,10 @@ function recordProgress() {
     currentPointKey = reached.pointKey
     pendingOption = null
   } else if (step.type === 'end') {
-    recorded = recordEndReached(recorded, step.endingId, pendingOption)
+    // Chapters not installed are where the story goes on: running out of them is no end to show on the map.
+    if (step.endingId !== null || !isMissingChapters(props.story)) {
+      recorded = recordEndReached(recorded, step.endingId, pendingOption)
+    }
     pendingOption = null
   }
   recorded = recordMemories(recorded, runtime.memoryIds, runtime.forgottenMemoryIds)
@@ -1192,7 +1203,7 @@ onUnmounted(() => {
         </div>
       </Transition>
       <div v-if="snapshot.step.type === 'end' || errorMessage !== null" class="end-screen" @click.stop>
-        <p :class="errorMessage === null ? ['ending-name', ...reservedStyleClasses(RESERVED_STYLE_NAMES.ending)] : []">{{ errorMessage ?? endingName ?? storyText.theEnd }}</p>
+        <p :class="errorMessage === null ? ['ending-name', ...reservedStyleClasses(RESERVED_STYLE_NAMES.ending)] : []">{{ errorMessage ?? endingName ?? endWords }}</p>
         <p v-if="errorMessage === null && story.project.endings.length > 0" class="endings-count">
           {{ storyText.endingsReached(endingsReached, story.project.endings.length) }}
         </p>

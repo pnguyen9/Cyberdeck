@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Datajack, the player
+- Settings scroll when a category is taller than the screen: in Datajack, the language, last of the
+  General settings, was out of reach.
+- A game exported with only some of its chapters, played to the last one installed, says *To be
+  continued…* rather than *The end.*, and the map no longer shows an end there: once the rest of the
+  game is installed, the choice before links to what follows.
+- `[to be continued: …]` gives the words of that moment, for the whole story or for a route: the last
+  one passed counts. Stories that use it need Datajack 2.1 (format 2.1).
+
+### Cyberdeck, the editor
+- Exporting only some chapters, the author chooses what players see of those left out: their
+  titles, only how many there are (the default, the titles giving nothing away), or nothing, the
+  game seeming whole, for a story still being written or kept a mystery.
+- In the tree view, a long condition wraps inside its box, rather than running out of a pill's round
+  ends.
+
+### Samples
+- A mini game, rock, paper, scissors, in `docs/sample/minigames/`, its sounds made by code.
+- Sakura Week plays each extra scene of a character once before any comes back.
+
 ## 2.0.3 — 2026-11-06
 
 ### Datajack, the player

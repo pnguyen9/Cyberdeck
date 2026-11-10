@@ -41,6 +41,8 @@ export interface SaveData {
     /** Only when the screen is faded out, tinted, or the text over the whole screen. */
     cover?: FadeColor
     tint?: TintName
+    /** What running out of chapters says, when the story wrote its own. */
+    continued?: string
     text?: 'full'
     /** In full-screen text, the pages already on the screen, the saved one last. */
     screen?: string[]
@@ -102,6 +104,7 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
       }),
       ...(state.stage.cover === null ? {} : { cover: state.stage.cover }),
       ...(state.stage.tint === null ? {} : { tint: state.stage.tint }),
+      ...(state.stage.continuedText === null ? {} : { continued: state.stage.continuedText }),
       ...(state.stage.textMode === 'full' ? { text: 'full' as const, screen: [...state.stage.screenfulPageIds] } : {}),
       ...(state.stage.illustrationId === null ? {} : { illustration: project.illustrations.find(illustration => illustration.id === state.stage.illustrationId)?.name ?? '' }),
     },
@@ -177,6 +180,7 @@ export function stateFromSave(story: PlayableStory, save: SaveData): RuntimeStat
       characters,
       cover: save.stage.cover ?? null,
       tint: save.stage.tint ?? null,
+      continuedText: save.stage.continued ?? null,
       textMode: save.stage.text ?? 'box',
       screenfulPageIds: save.stage.text === 'full' ? save.stage.screen ?? [] : [],
       illustrationId: save.stage.illustration === undefined ? null : findNamed(project.illustrations, save.stage.illustration)?.id ?? null,
@@ -211,6 +215,7 @@ export function parseSave(value: unknown): SaveData | null {
     && (stage.music === null || isString(stage.music))
     && (stage.cover === undefined || stage.cover === 'black' || stage.cover === 'white')
     && (stage.tint === undefined || stage.tint === 'sepia' || stage.tint === 'night' || stage.tint === 'grey')
+    && (stage.continued === undefined || isString(stage.continued))
     && (stage.text === undefined || stage.text === 'full')
     && (stage.screen === undefined || (Array.isArray(stage.screen) && stage.screen.length <= PAGES_PER_SCREENFUL && stage.screen.every(isString)))
     && (stage.illustration === undefined || isString(stage.illustration))

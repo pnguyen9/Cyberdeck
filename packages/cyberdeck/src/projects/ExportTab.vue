@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { languageName, languagesOf } from '@cyberdeck/core'
+import { languageName, languagesOf, type LeftOutChapters } from '@cyberdeck/core'
 import { createTextboxLayout, useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, ref } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
@@ -12,6 +12,9 @@ import { formatSize, safeFileName, usePreparedDownload } from './preparedDownloa
 const { open, project, chapters, scenes, everyText, language, act } = useEditor()
 const release = ref('1.0')
 const excludedChapterIds = ref<string[]>([])
+/** What players see of the chapters left out: their titles, how many there are, or nothing. */
+const leftOutChapters = ref<LeftOutChapters>('counted')
+const LEFT_OUT_CHOICES: readonly LeftOutChapters[] = ['named', 'counted', 'hidden']
 const download = usePreparedDownload()
 const textDownload = usePreparedDownload()
 const locale = useLocale()
@@ -61,7 +64,7 @@ function exportGame() {
   const wholeGame = included.value.length === chapters.value.length
   const suffix = wholeGame ? '' : ` - ${included.value.map(chapter => chapter.title ?? common.value.untitled).join(', ')}`
   return act(async () => {
-    const bytes = await open.exportGame(releaseLabel, included.value.map(chapter => chapter.id), new Date(), shippedLanguages.value)
+    const bytes = await open.exportGame(releaseLabel, included.value.map(chapter => chapter.id), new Date(), shippedLanguages.value, leftOutChapters.value)
     download.offer(`${safeFileName(`${project.value.name} ${releaseLabel}${suffix}`, locale.value)}.zip`, bytes)
   })
 }
@@ -83,6 +86,13 @@ function exportGame() {
         <input type="checkbox" :checked="!excludedChapterIds.includes(chapter.id)" @change="setIncluded(chapter.id, ($event.target as HTMLInputElement).checked)">
         {{ chapter.title ?? common.untitledChapter }}
       </label>
+      <div v-if="included.length < chapters.length" class="left-out" role="radiogroup" :aria-label="text.leftOutChapters">
+        <span>{{ text.leftOutChapters }}</span>
+        <label v-for="choice in LEFT_OUT_CHOICES" :key="choice" class="chapter">
+          <input v-model="leftOutChapters" type="radio" :value="choice" @change="download.forget()">
+          {{ text.leftOut[choice] }}
+        </label>
+      </div>
       <p v-if="scenes.length > 0" class="muted">
         {{ text.scenesToo(scenes.length, scenes.map(scene => scene.title).join(', ')) }}
       </p>
@@ -163,6 +173,12 @@ legend {
   gap: 8px;
   align-items: center;
   padding: 2px 0;
+}
+
+.left-out {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
 }
 
 .actions {

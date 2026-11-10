@@ -99,6 +99,11 @@ export default async function check(page, { url, assets, serve }) {
   await pause(300)
   await page.evaluate(`document.querySelector('.export .chapters input[type=checkbox]').click()`)
   await pause(200)
+  page.check('leaving a chapter out asks what players see of it, by default only how many', await page.evaluate(`[...document.querySelectorAll('.export .left-out label')].map(label => (label.querySelector('input').checked ? '● ' : '○ ') + label.textContent.trim())`), [
+    '○ Their titles, among the chapters they do not have',
+    '● Only how many there are, nothing of what they hold',
+    '○ Nothing: their game seems whole, for a story still being written or kept a mystery',
+  ])
   await page.clickButton('Export', '.export .button')
   await page.waitFor('.export .download')
   page.check('exporting some chapters names them', await page.evaluate(`document.querySelector('.export .download')?.getAttribute('download')`), 'The Letter 1.0 - Chapter 2 — The Rooftop.zip')
@@ -125,6 +130,6 @@ export default async function check(page, { url, assets, serve }) {
   await createProfile(page, await serve('datajack'), 'Pascal')
   await installGame(page, archive)
   page.check('Datajack installs the update', await page.statusText(), 'The Letter 1.0 installed.')
-  page.check('and names the chapter it lacks', await page.evaluate(`document.querySelector('.chapters')?.textContent.trim()`), '1 of 2 chapters · not installed: Chapter 1 — The Letter')
+  page.check('and counts the chapter it lacks, without naming it', await page.evaluate(`document.querySelector('.chapters')?.textContent.trim()`), '1 of 2 chapters')
   await page.screenshot('datajack-partial')
 }

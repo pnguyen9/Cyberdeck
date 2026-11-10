@@ -263,7 +263,8 @@ const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => elemen
   align-self: center;
   max-width: 220px;
   padding: 4px 10px;
-  border-radius: 999px;
+  /* Half a line's height: round at the ends on one line, yet holding its text when it runs to several. */
+  border-radius: 12px;
   font-size: 13px;
   color: #a3acbb;
   overflow-wrap: anywhere;

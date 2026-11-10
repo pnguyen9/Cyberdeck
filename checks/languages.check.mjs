@@ -79,6 +79,17 @@ export default async function check(page, { url, serve }) {
 
   await createProfile(page, await serve('datajack'), 'Pascal')
   await installGame(page, archive)
+  // A library longer than the window scrolls, its last game within reach: shown here by a window too short for one.
+  await page.setViewport(1000, 300)
+  await pause(300)
+  page.check('a library taller than the window scrolls to its last game', await page.evaluate(`(() => {
+    const scroller = document.scrollingElement
+    scroller.scrollTop = scroller.scrollHeight
+    const last = [...document.querySelectorAll('.game')].at(-1).getBoundingClientRect()
+    return [scroller.scrollHeight > scroller.clientHeight, last.bottom <= window.innerHeight + 1]
+  })()`), [true, true])
+  await page.resetViewport()
+  await pause(300)
   page.check('the library offers both languages', await page.evaluate(`[...document.querySelectorAll('.story-language option')].map(option => option.textContent)`), ['English', 'français'])
   await page.evaluate(`(() => { const select = document.querySelector('.story-language select'); select.value = 'fr'; select.dispatchEvent(new Event('change')) })()`)
   await pause(200)
@@ -86,6 +97,17 @@ export default async function check(page, { url, serve }) {
   await page.waitFor('.viewport .text')
   await pause(800)
   page.check('the game plays in French', await shownStep(page), 'La salle était vide.')
+  // Datajack's settings, the language included, are taller than the screen: they scroll to their end.
+  await page.press('o')
+  await pause(300)
+  page.check('the settings scroll to the language, their last setting', await page.evaluate(`(() => {
+    const category = document.querySelector('.overlay .category')
+    category.scrollTop = category.scrollHeight
+    const last = category.lastElementChild.getBoundingClientRect()
+    return [category.scrollHeight > category.clientHeight, last.bottom <= category.getBoundingClientRect().bottom + 1, category.lastElementChild.querySelector('select') !== null]
+  })()`), [true, true, true])
+  await page.press('Escape')
+  await pause(300)
   for (let press = 0; press < 3; press++) {
     await page.press(' ')
     await pause(500)

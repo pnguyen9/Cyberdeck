@@ -44,11 +44,15 @@ async function pickLanguage(entry: LibraryEntry, language: string) {
 
 const cards = computed(() => entries.value.map(entry => {
   const installed = entry.chapters.filter(chapter => chapter.included)
-  const missing = entry.chapters.filter(chapter => !chapter.included).map(chapter => chapter.title ?? text.value.untitledChapter)
+  // Chapters left out that their author keeps quiet about are not counted either.
+  const listedCount = entry.chapters.filter(chapter => chapter.included || chapter.listed !== false).length
+  // Chapters left out without their titles, as their author may choose, are only counted.
+  const missing = entry.chapters.flatMap(chapter => chapter.included || chapter.title === null ? [] : [chapter.title])
   const progress = progressByGame.value.get(entry.id) ?? null
   return {
     entry,
     installedCount: installed.length,
+    listedCount,
     missing,
     autosave: autosaves.value.get(entry.id) ?? null,
     hasMap: (progress?.points.length ?? 0) > 0,
@@ -237,8 +241,8 @@ function onDrop(event: DragEvent) {
             </select>
           </label>
           <p class="chapters">
-            <template v-if="card.missing.length === 0">{{ text.chapterCount(card.installedCount) }}</template>
-            <template v-else>{{ text.someChapters(card.installedCount, card.entry.chapters.length, card.missing) }}</template>
+            <template v-if="card.installedCount === card.listedCount">{{ text.chapterCount(card.installedCount) }}</template>
+            <template v-else>{{ text.someChapters(card.installedCount, card.listedCount, card.missing) }}</template>
             <template v-if="card.entry.endingCount > 0"> · {{ text.endingsReached(card.endingsReached, card.entry.endingCount) }}</template>
             <template v-if="card.entry.illustrationCount > 0"> · {{ text.illustrationsSeen(card.illustrationsSeen, card.entry.illustrationCount) }}</template>
           </p>

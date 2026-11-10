@@ -34,6 +34,6 @@ describe('forgetting', () => {
 describe('format 2.0', () => {
   it('reads every earlier version, and none newer', async () => {
     const { isSupportedFormatVersion } = await import('../../src/index')
-    expect(['1.0', '1.1', '1.5', '2.0', '2.1', '3.0', '0.9', 'two'].map(isSupportedFormatVersion)).toEqual([true, true, true, true, false, false, false, false])
+    expect(['1.0', '1.1', '1.5', '2.0', '2.1', '2.2', '3.0', '0.9', 'two'].map(isSupportedFormatVersion)).toEqual([true, true, true, true, true, false, false, false, false])
   })
 })

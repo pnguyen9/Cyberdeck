@@ -32,7 +32,12 @@ export interface ArchivedChapter {
   id: string
   title: string | null
   included: boolean
+  /** False for a chapter left out that players are not told of: neither named nor counted. */
+  listed?: false
 }
+
+/** What players learn of the chapters an archive leaves out: their titles, how many there are, or nothing. */
+export type LeftOutChapters = 'named' | 'counted' | 'hidden'
 
 export interface ArchivedAssetFile {
   path: string
@@ -66,6 +71,11 @@ export interface GameArchiveSource {
   /** Every chapter of the project, and its scenes: chapters left out are still listed by title. */
   chapters: readonly ChapterDocument[]
   includedChapterIds: readonly string[]
+  /**
+   * What players see of the chapters left out: their titles (by default); only how many there are,
+   * the titles giving nothing away; or nothing, for a story still being written or kept a mystery.
+   */
+  leftOutChapters?: LeftOutChapters
   /** The languages players get, the story's first always among them; every one of its languages by default. */
   languages?: readonly string[]
   readAsset: (asset: Asset) => Promise<Uint8Array<ArrayBuffer>>
@@ -215,11 +225,16 @@ export async function createGameArchive(source: GameArchiveSource): Promise<Uint
     release,
     exportedAt: source.exportedAt.toISOString(),
     project: { ...shipped, formatVersion },
-    chapters: project.chapterOrder.map(chapterId => ({
-      id: chapterId,
-      title: chaptersById.get(chapterId)?.title ?? null,
-      included: includedChapterIds.includes(chapterId),
-    })),
+    chapters: project.chapterOrder.map(chapterId => {
+      const isIncluded = includedChapterIds.includes(chapterId)
+      const shown = isIncluded ? 'named' : source.leftOutChapters ?? 'named'
+      return {
+        id: chapterId,
+        title: shown === 'named' ? chaptersById.get(chapterId)?.title ?? null : null,
+        included: isIncluded,
+        ...(shown === 'hidden' ? { listed: false as const } : {}),
+      }
+    }),
     assetFiles,
   }
   return writeZip([
@@ -250,6 +265,10 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   // An older Datajack would read a forget as a remember, hide the option waiting takes, and carry nothing over.
   const needsDatajack20 = languagesOf(project).length > 1 || project.decisions.some(decision => decision.lasting === true) || project.counters.some(counter => counter.lasting === true)
     || documents.some(document => flattenStoredNodes(document.nodes).some(node => (node.type === 'remember' && node.forget === true) || (node.type === 'choice' && node.timeLimitMs !== undefined)))
+  // An older Datajack refuses a command it does not know.
+  if (documents.some(document => flattenStoredNodes(document.nodes).some(node => commandsOf(node).some(command => command.type === 'continued')))) {
+    return '2.1'
+  }
   if (needsDatajack20) {
     return '2.0'
   }
@@ -509,7 +528,10 @@ export function checkGameManifest(value: unknown): GameManifest {
       if (typeof chapterFields.included !== 'boolean') {
         throw new DocumentError(`${path}.included`, 'true or false')
       }
-      return { id: chapterFields.id, title: chapterFields.title, included: chapterFields.included }
+      if (chapterFields.listed !== undefined && chapterFields.listed !== false) {
+        throw new DocumentError(`${path}.listed`, 'false, or nothing')
+      }
+      return { id: chapterFields.id, title: chapterFields.title, included: chapterFields.included, ...(chapterFields.listed === false ? { listed: false as const } : {}) }
     })
     if (chapters.map(chapter => chapter.id).join('/') !== project.chapterOrder.join('/')) {
       throw new DocumentError('game.chapters', 'the chapters of game.project.chapterOrder')

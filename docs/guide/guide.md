@@ -216,7 +216,7 @@ Players open Datajack, press **Add a game…** (or drop the file on it), and pla
 
 > **Tip**
 >
-> Writing chapter by chapter? Tick only the new chapters to make a small update. Players add it like a game, and it joins the one they have, their saves kept.
+> Writing chapter by chapter? Tick only the new chapters to make a small update. Players add it like a game, and it joins the one they have, their saves kept. Players see how many chapters their game lacks; tick **Name the chapters left out** for them to see their titles too, if those give nothing away. At the last chapter they have, the game says *To be continued…*, or what you wrote with `[to be continued: Marie's story goes on next month.]`, the last one they passed: near the top for the whole story, inside a route for that route.
 
 ---
 

@@ -128,6 +128,52 @@ What each application keeps (projects, profiles, installed games, saves) is stor
 for that computer and that browser: back up projects (Cyberdeck's *Back up*) before showing them
 on another computer, and bring the game archive along to install it there.
 
+#### Erasing what the web builds store
+
+The applications have no button for it yet. Erasing deletes every project, profile, installed game
+and save of the copies concerned: back up the projects to keep first (*Back up* in Cyberdeck), and
+save to a file the games worth keeping.
+
+**Put on a web host** (GitHub Pages, for instance), the applications are a site like any other: the
+browser's own "clear site data" for that address erases them.
+
+**Opened as files**, they are not listed among the sites of the browser's settings, and each browser
+keeps them its own way:
+
+- **Firefox** keeps each copy apart, by the path of its `index.html`: every version unzipped has its
+  own data, which stays when the copy is deleted, and "Clear site data" does not reach it. With
+  Firefox closed, delete the folders whose names start with `file++++` in the profile's
+  `storage/default/` folder. `about:support` shows the profile folder (*Profile Folder*, *Open
+  Folder*); it is usually:
+  - Windows: `%APPDATA%\Mozilla\Firefox\Profiles\<profile>\storage\default\`
+  - macOS: `~/Library/Application Support/Firefox/Profiles/<profile>/storage/default/`
+  - Linux: `~/.mozilla/firefox/<profile>/storage/default/`
+
+  The folder names give each copy's path (`file++++home+me+Downloads+Cyberdeck-2.0.3-web+index.html`),
+  so one can be erased and the others kept. For a copy still there, there is also a way from inside
+  Firefox: open it, press F12, and in the *Storage* tab, right-click its database under
+  *Indexed DB* to delete it.
+- **Chrome, Edge, Brave and other Chromium browsers** keep every page opened as a file together,
+  whatever its folder, Cyberdeck and Datajack alike. Open any of them (an old version will do), press
+  F12, and in the *Application* tab, choose *Storage*, then *Clear site data*. Without any copy left,
+  close the browser and delete the folder `file__0.indexeddb.leveldb` and the file
+  `file__0.localstorage` (when there is one), in the profile's `IndexedDB` and `Local Storage`
+  folders. `chrome://version` (or `edge://version`) shows the profile folder (*Profile Path*); for
+  Chrome it is usually:
+  - Windows: `%LOCALAPPDATA%\Google\Chrome\User Data\Default\`
+  - macOS: `~/Library/Application Support/Google/Chrome/Default/`
+  - Linux: `~/.config/google-chrome/Default/`
+
+  Edge's is `Microsoft\Edge\User Data\Default` instead of `Google\Chrome\User Data\Default`
+  (`~/.config/microsoft-edge/Default/` on Linux), Brave's `BraveSoftware/Brave-Browser/Default`, and
+  Chromium's `~/.config/chromium/Default/` on Linux.
+- **Safari** has not been tried. Its *Settings*, *Privacy*, *Manage Website Data…* lists what sites
+  keep; when the copies are not listed there, *Remove All* erases the data of every site, which also
+  signs out of all of them.
+
+The desktop builds keep their projects and saves as folders on the disk (see
+[Editing](#editing-cyberdeck) and [Profiles](#profiles)), deleted like any other folder.
+
 The usual `npm run build` (in `dist/`) is for putting the applications on a web host, GitHub
 Pages for instance; opened as files, it shows a blank page.
 
@@ -226,6 +272,7 @@ one per language, of the same shape: another language is one more table each.
 | `[if: Trust >= 3]`, `Trust < 2`, `Trust is 3`, `Trust is not 0` | Compares a counter with a number: `>`, `>=`, `<`, `<=`, `is`, `is not`; combines with the rest by `and` / `or`. |
 | `[unset: Clues = Key]`, `[unset: Clues]` | Takes a value away from a decision, or every value: tests of it no longer hold, as if it had never been set. |
 | `[ending: The Empty Room]`, `[ending: The Empty Room = La Chambre vide]` | Ends the path here: the player has reached this ending (named endings are counted). After `=`, what players read of it in the text's language, the name before it being how the story knows it. |
+| `[to be continued: Marie's story goes on in the next update.]` | What players read when the game runs out of the chapters it holds, a game exported with only some of them: the last one passed counts, so one at the start speaks for the whole story and one inside a route for that route. `[to be continued: none]` goes back to the default, *To be continued…*. Needs Datajack 2.1. |
 | `[remember: The ghost's name]` | The profile remembers it for good, in every later playthrough; going back or loading an older save does not forget. |
 | `[forget: The ghost's name]` | The profile forgets it, for good: a lasting flag the story can also clear, a key used up or a promise broken. Going back does not undo it either. Needs Datajack 2.0. |
 | `[if: remembered The ghost's name]`, `[if: not seen ending Departure]` | Tests what the profile remembers, or the endings it has reached in any playthrough; combines with decisions by `and` / `or`. A memory or ending may be tested before the place naming it; one named nowhere is reported as a typo. |
@@ -514,7 +561,8 @@ A **project** holds the whole game. Its screens:
   bytes, never from elsewhere.
 - **Details**: description, credits and cover, shown in players' libraries. The cover is shown at
   16:9, cut to fill it; Details says when an image is far from that shape.
-- **Export**: the release label, the chapters to include and, in a story of several languages, the
+- **Export**: the release label, the chapters to include (of those left out, players see their
+  titles, only how many there are, or nothing at all, as the author chooses) and, in a story of several languages, the
   languages players get (the first always; another only once it has a text for every chapter
   included and every scene, the tab naming those it lacks); and the whole story **as text**, in the
   language shown, its paragraphs one page each or as written.
@@ -624,7 +672,7 @@ and selected chapters; the last two are this archive, made from a project's *Exp
 ### Library
 
 After the profile, Datajack opens the library: the installed games with their cover, description,
-release and chapters (those not installed are named), *Continue* from the profile's autosave, *New
+release and chapters (those not installed counted, named, or not mentioned, as the author chose), *Continue* from the profile's autosave, *New
 game*, credits, the *Map* and the *Gallery* of illustrations seen, and removal (saves are kept).
 *Add a game…* or dropping an archive installs it. A game in several languages has **Play in** on
 its card: the language picked is kept for that game, by each profile; Datajack's own is taken first when
@@ -732,19 +780,162 @@ through a short list of channels whose arguments the main process checks again: 
 lists of strings only; identifiers that cannot leave their folder; asset files whose content matches
 the SHA-256 in their name; and only save folders the player picked in the system dialog.
 
-## Known problems, for the next version
+## Known problems and ideas, for the next versions
 
-- **Chapter names give the story away.** A game exported with only some of its chapters lists the
-  names of the missing ones on its library card ("not installed: Chapter 2 — Tuesday, …"). An author
-  should be able to export without naming them: the missing chapters left out entirely, or counted
-  without their names.
-- **The map loses its order when the rest of a game is installed.** After playing a game with only
-  its first chapter, then installing the whole game, the map started rows over at its left edge:
-  Chapter 2 began a row of its own, and the last scene of Chapter 6 sat alone in the first column
-  instead of at the far right of its route.
-- **A story without an ending looks like it has one.** A game that runs out of chapters, such as one
-  exported with only its first, ends with "The end", and the map shows that as an ending box, although
-  the author wrote no ending there.
+### Problems
+
+- **Endings counted in chapters kept quiet about.** A game exported saying nothing of the chapters
+  it leaves out still counts every ending of the story, on its library card and its end screens
+  ("endings reached: 0 of 6"): the endings of those chapters should go uncounted too.
+- **The map loses its links.** After playing a game with only its first chapter, then installing the
+  whole game, the map started rows over at its left edge: Chapter 2 began a row of its own, and the
+  last scene of Chapter 6 sat alone in the first column instead of at the far right of its route.
+  (Part of it is mended: running out of chapters is no longer recorded as an end, which took the
+  place of the link to the next chapter; progress recorded before keeps that end.) It happens
+  within a game too: opening the map mid-game, then going back or playing from a point,
+  loads the game as a save would ("Loaded", an empty log), and the map may then take what follows as
+  a new start, with no line from the choice before. Opened while a choice waits, the map never
+  records the option then taken. The map should rather link points by what truly changes, the
+  values stored: a choice that changes nothing (the breakfast of the sample) need not make a point
+  of its own. Hovering a point could show its values, by the journal's rule of showing only what
+  players may see.
+- **The map tells apart paths that are the same.** A point of the map is a choice, with the values
+  still tested from it on and what the stage shows (background, music, characters…): two paths
+  meeting the same choice with the same of these are one point. But a value tested in a scene counts
+  from every choice of the story, scenes being playable anywhere; and a value counts even when the
+  story always sets it again before testing it. In the sample, `Pick` is drawn at random before
+  every test of it, in the Library, Clubroom and Shop scenes, yet the number left by the last draw
+  makes the next points differ, as does the stage a scene leaves. So the more one plays, the more
+  points there are for what is the same state. Some differences are real and worth showing: visit
+  the sweet shop a second time before seeing the cat a second time, and you feed the cat, a line of
+  flavour; the map may keep such a route apart, as it already names the option taken.
+- **The map's lines cross.** Points are placed in the order they were reached, each below its parent
+  by the rank of the option leading to it, and endings where they fall: nothing keeps the lines from
+  crossing, and paths that end the same way overlap. The layout should order points and endings to
+  cross as few lines as it can.
+- **Web data cannot be cleared from Firefox.** The web builds keep projects, profiles, games and
+  saves in the browser's storage. Opened from a file, each copy is a site of its own, named by its
+  path, so every version unzipped keeps its own data; Firefox's "Clear site data" lists only sites
+  with a web address, and leaves them all (see [Erasing what the web builds
+  store](#erasing-what-the-web-builds-store)). Each application should offer to erase everything it
+  stores.
+- **Settings from the library.** Datajack's Settings should open from the library, without starting a
+  game: settings for every game, and for those who want, a game's own, from its card. Players would
+  then find the accessibility settings by themselves, such as untimed choices for those who cannot
+  answer in time, rather than being told about them.
+- **The name plate's place.** It always slides to above the character speaking, which a player found
+  distracting; authors cannot change it. A setting could choose: slide, jump straight there, or stay
+  put (left, middle or right). For a game whose author says nothing, staying at the left may be the
+  better default.
+- **Erasing from the applications.** Each application should have a button to erase what it
+  stores, so that no one needs the steps of [Erasing what the web builds
+  store](#erasing-what-the-web-builds-store). In Datajack, a choice: the games alone, or the games
+  with their saves and progress. Removing a game today keeps its saves and progress, which weigh
+  almost nothing, so that installing it again finds them.
+- **A preview closer to playing.** Cyberdeck's preview plays a game as Datajack does, but without
+  what Datajack offers around the game itself, such as the map. And its saves stay (in the
+  browser's storage, under `cyberdeck:preview:`) with no way to erase them, which gets in the way of
+  testing a story from a clean start. The preview should offer what a player has, and a way to
+  start over: erasing its saves and progress, for the project or for all.
+- **Previewing a late page reaches it one way only.** Previewing from a page plays the shortest way
+  a player could get there, and starts with the values of that way. A late chapter thus starts with
+  the values of a few early choices, and an ending that needs others may be out of reach; the State
+  panel shows the values but cannot change them.
+- **Previewing as a player or as the author.** The preview could play in two ways, switched at any
+  moment of a game:
+  - **as a player**: what players see and may do, the journal and the map as they would have them,
+    to check, for instance, what the journal shows before the game is finished;
+  - **as the author**: every value can be changed by hand, in the journal or the State panel,
+    including what no way through the story can give, such as memories and endings of earlier
+    playthroughs (the cat knowing you, as on a second playthrough, on a first one); the map shows
+    every path, as if all were played, each point with the values of its path; skipping is always
+    allowed, and previewing from a point starts with its values, so the author chooses the way to a
+    late page rather than taking the shortest. The map can also hide the paths not played, keeping
+    only the one played (or the one leading to where the preview started).
+- **Numbers typed by players.** `[ask]` takes a name, text the story shows but cannot count with.
+  A number asked for would go into a counter, to add, compare and show like any other:
+  `[ask number: Bet = 10, from 1 to {Money}]`, the bounds plain numbers or counters. The field
+  takes whole numbers only, a minus sign included when the lower bound is below zero (a temperature
+  from -30 to 50), a decimal point too for a counter with decimals (below), and refuses what lies outside the bounds, saying which they are, so that a
+  player can bet neither a negative amount nor more money than they have. Blackjack would use it for
+  a bet of any amount.
+- **Counters with decimals.** Counters hold whole numbers; money in cents, or a temperature of
+  21.5, would need decimals. A counter would take the decimals it is declared with:
+  `[counter: Money = 1000.00]` counts in hundredths, adds, compares and asks for numbers to that
+  precision, and shows them with it (`{Money}` → `1000.50`). Kept inside as a whole number of
+  hundredths, it never shows the rounding errors of computer arithmetic (`0.1 + 0.2` giving
+  `0.30000000000000004`). Numbers are written as the language the game is played in writes
+  them, by the browser's own rules (`Intl.NumberFormat`): `1,000.50` in English, `1 000,50` in
+  French. The browser does not read numbers back, so the field reads them itself, as a browser's
+  number field does: plain digits with one decimal sign, a comma or a point whatever the language,
+  since players type as they are used to (`13,37` is 13.37 in a game played in English too);
+  thousands separators are never needed (`1000000.05`), and spaces are ignored. A comma read as a
+  decimal sign may not be what an English player meant (`1,000`), so the field shows, as it is
+  typed, the number it understood, written as the game writes it (`13.37`), and refuses one with
+  more decimals than the counter keeps, saying why.
+- **Progress as a file.** Saves can be written to a file, but not a game's progress (endings, map,
+  gallery, lasting values). Players should be able to export it, and load it back: to carry a game
+  over to another computer or another build (web to desktop, for instance) and play on where they
+  were, nothing of it being online.
+- **Opening a game in Cyberdeck.** An exported game holds what its project needs; Cyberdeck could
+  open one as a project, for an author who lost theirs.
+
+### Samples to make: mini games, in `docs/sample/minigames/`
+
+Conditions, loops, scenes, counters and decisions make a small programming language: these samples
+show authors what the engine can do beyond a story.
+
+Every picture and sound of these samples is made for them, generated by code, so that nothing is
+downloaded and all of it is as free as the rest of the repository.
+
+- **Rock, paper, scissors** (done: `rock-paper-scissors/`, the text and its sounds zipped; the
+  sounds are made by `scripts/samples/rock_paper_scissors_sounds.py`). Three choices against a random pick,
+  text alone on a black screen ("You chose Rock. The computer chose Scissors."). The journal counts
+  wins, losses and draws, of this game and of every game played (lasting counters); players keep
+  playing or stop, and the last page gives the final score. An ending's name cannot show values, so
+  the ending is called "Final score". Short sounds for a pick, the reveal, and a win, a loss or a
+  draw; no music.
+- **Blackjack**, with all its rules. It first offers to read the rules or skip them, then asks
+  how many decks the shoe holds (1, 2, 4, 6 or 8, as casinos deal). Players start with $1,000, bet,
+  play or leave; the bet is
+  picked among choices ($10, $50, $100, everything, or another amount, typed); the journal shows their money, and having none left is game over. Drawn cards, table and
+  chips, and styles or CSS to make it move: cards flying into place as they are dealt, the dealer's
+  hidden card turned over. Turning a card could be its back shrinking, then its front growing, with a
+  few frames between for a smoother look; or animated GIFs made to play once (back, then front, then
+  the still card), which needs tight timing. The same trick of frames suits a character standing,
+  stumbling, then falling.
+  Sounds: chips at every bet, a card sliding onto the felt at every deal, a card turned over, a
+  shuffle, short tunes for a win and a loss, and a loop of soft casino jazz (piano, walking bass,
+  brushed drums) for music.
+- **A virtual pet.** The engine has no clock, but a timed choice can stand for one: the pet's
+  choice (feed, play, clean, sleep) waits a few seconds, and its timed option, "Just watch", is
+  life going on. Each time it runs out, the pet does something of its own (eats, naps, wanders,
+  asks for attention) and its hunger, mood and tiredness change; so players may leave it living its
+  life, the choice always there, and step in when they like. Hiding the text (H) shows the pet
+  alone. Counters for hunger, mood and age; a lasting one for its age across sessions; its
+  expressions and moves as characters and their expressions. It never dies nor runs away: left
+  without care, it is only sad for a while (a pout, a sigh, sitting with its back turned), and a
+  little care brings it back to its usual self. It is glad to see players come back, the gladder
+  the longer they were away, which needs a new feature: the engine does not know the time.
+- **The time away.** A story cannot tell how long players were gone. Datajack knows when the game
+  was last played by the profile; a value such as `{time away}`, in minutes, tested as any counter
+  (`[if: time away > 1440]` for more than a day), would let a story greet them, or have time pass
+  in it.
+- **The hour of the day.** A value such as `{hour}` (0 to 23), and the day of the week, read from
+  the player's computer: a pet asleep at night, a shop closed on Sundays, a greeting by the time of
+  day. A story using it plays differently depending on when it is played, which is what its author
+  wants of it.
+- **Pairs**, of cute animals drawn as simple shapes, like the sample's cat. Needs a new feature: a
+  choice laid out as a grid of buttons, each showing a picture, where a visual novel lists its
+  options one under another. A grid may serve stories too (a map to pick a place from, a keypad),
+  beyond games.
+- **Minesweeper.** On the same grid: three levels as the classic game has them (beginner 9 × 9 with
+  10 mines, intermediate 16 × 16 with 40, expert 30 × 16 with 99), or a custom board, as classic
+  Minesweeper allows: 9 to 30 columns, 9 to 24 rows, and from 10 mines to one less than the cells
+  of a board a row and a column smaller ((columns − 1) × (rows − 1)). The first cell opened is never
+  a mine. Beyond the grid, it needs what the engine lacks: a value per cell (up to 720), counting the
+  mines around a cell, and opening the empty cells around an empty one in turn. Lists of values, and
+  loops over them, would be the features to add; they would serve Pairs and Blackjack's shoe too.
 
 ## License
 

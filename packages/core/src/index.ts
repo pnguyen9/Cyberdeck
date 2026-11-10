@@ -32,11 +32,12 @@ export {
   safeFileName,
   type ArchivedAssetFile,
   type ArchivedChapter,
+  type LeftOutChapters,
   type GameArchive,
   type GameArchiveSource,
   type GameManifest,
 } from './archive/gameArchive'
-export { chaptersInOrder, scenesOf, type PlayableStory } from './runtime/playableStory'
+export { chaptersInOrder, isMissingChapters, scenesOf, type PlayableStory } from './runtime/playableStory'
 export { createStageCatalog, type StageCatalog } from './runtime/stageCatalog'
 export {
   applyStageCommand,

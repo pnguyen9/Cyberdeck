@@ -61,6 +61,7 @@ const TAG_TEMPLATES: { id: keyof TagTextMessages['templates']; text: string; gro
   { id: 'remember', text: '[remember: ', group: 'story' },
   { id: 'forget', text: '[forget: ', group: 'story' },
   { id: 'ending', text: '[ending: ', group: 'story' },
+  { id: 'toBeContinued', text: '[to be continued: ', group: 'story' },
 ]
 const TEMPLATE_GROUPS = ['stage', 'screen', 'characters', 'story'] as const
 

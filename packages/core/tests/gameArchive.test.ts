@@ -16,6 +16,7 @@ import {
   writeZip,
   type ProjectDocument,
   type StoredNode,
+  type LeftOutChapters,
 } from '../src/index'
 import { monospaceLayout } from './monospaceLayout'
 
@@ -57,10 +58,11 @@ function buildGame() {
     chapters: stored.chapters,
     one: one!,
     two: two!,
-    archive: (includedChapterIds = project.chapterOrder, release = '1.0') => createGameArchive({
+    archive: (includedChapterIds = project.chapterOrder, release = '1.0', leftOutChapters: LeftOutChapters = 'named') => createGameArchive({
       project,
       chapters: stored.chapters,
       includedChapterIds,
+      leftOutChapters,
       readAsset: async asset => bytesByAssetId.get(asset.id)!,
       release,
       exportedAt: EXPORTED_AT,
@@ -154,6 +156,20 @@ describe('game archives', () => {
     expect(Object.keys(archive.manifest.assetFiles).sort()).toEqual(['asset-marie-smile.png', 'asset-rooftop.webp'])
   })
 
+  it('lists the chapters left out as the author wishes: counted without their titles, or not at all', async () => {
+    const game = buildGame()
+    const counted = await readGameArchive(await game.archive([game.two.id], '1.0', 'counted'))
+    expect(counted.manifest.chapters).toEqual([
+      { id: game.one.id, title: null, included: false },
+      { id: game.two.id, title: 'Two', included: true },
+    ])
+    const hidden = await readGameArchive(await game.archive([game.two.id], '1.0', 'hidden'))
+    expect(hidden.manifest.chapters).toEqual([
+      { id: game.one.id, title: null, included: false, listed: false },
+      { id: game.two.id, title: 'Two', included: true },
+    ])
+  })
+
   it('carries every scene with the assets it uses, even in an archive of a chapter that does not play it', async () => {
     let nextId = 1
     const environment = { createId: () => `id-${nextId++}`, now: () => '2026-10-26T09:00:00.000Z' }
@@ -204,7 +220,7 @@ describe('game archives', () => {
         manifest.archiveFormat = 2
       }))).toBe('This game was made for a newer Datajack: download the latest one')
       expect(await refusal((files, game) => changeJson(files, chapterPath(game.one.id), chapter => {
-        chapter.formatVersion = '2.1'
+        chapter.formatVersion = '2.2'
       }))).toMatch(/chapter\.json is invalid: chapter\.formatVersion: expected a format version this player reads$/)
     })
 
@@ -242,7 +258,7 @@ describe('game archives', () => {
         manifest.archiveFormat = 2
       }))).toEqual({ code: 'newerPlayer' })
       expect(await problemOf((files, game) => changeJson(files, chapterPath(game.one.id), chapter => {
-        chapter.formatVersion = '2.1'
+        chapter.formatVersion = '2.2'
       }))).toMatchObject({ code: 'newerFormat', path: chapterPath(buildGame().one.id), detail: 'chapter.formatVersion: expected a format version this player reads' })
       expect(await problemOf(files => changeJson(files, MANIFEST_PATH, manifest => {
         manifest.project.id = '../escape'
@@ -296,7 +312,7 @@ describe('checkChapterDocument', () => {
   })
 
   it('refuses documents from a newer minor version, which may hold nodes this player does not know', () => {
-    expect(() => checkChapterDocument({ formatVersion: '2.1', id: 'chapter', title: null, nodes: [], createdAt: '', updatedAt: '' }, 'chapter'))
+    expect(() => checkChapterDocument({ formatVersion: '2.2', id: 'chapter', title: null, nodes: [], createdAt: '', updatedAt: '' }, 'chapter'))
       .toThrow('chapter.formatVersion: expected a format version this player reads')
   })
 })

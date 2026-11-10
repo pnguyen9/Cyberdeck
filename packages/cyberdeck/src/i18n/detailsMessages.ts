@@ -17,6 +17,12 @@ const en = {
   release: 'Release, as players will see it',
   chapters: 'Chapters',
   noChapters: 'No chapters yet.',
+  leftOutChapters: 'What players see of the chapters left out',
+  leftOut: {
+    named: 'Their titles, among the chapters they do not have',
+    counted: 'Only how many there are, nothing of what they hold',
+    hidden: 'Nothing: their game seems whole, for a story still being written or kept a mystery',
+  } as Record<'named' | 'counted' | 'hidden', string>,
   scenesToo: (count: number, names: string) => `Every archive carries the ${count === 1 ? 'scene' : `${count} scenes`} too (${names}): any chapter may play them.`,
   export: 'Export',
   firstLanguage: 'the story’s first language: always in the game',
@@ -51,6 +57,12 @@ const fr: DetailsMessages = {
   release: 'Version affichée aux joueurs',
   chapters: 'Chapitres',
   noChapters: 'Pas encore de chapitre.',
+  leftOutChapters: 'Ce que les joueurs voient des chapitres laissés de côté',
+  leftOut: {
+    named: 'Leurs titres, parmi les chapitres qui leur manquent',
+    counted: 'Seulement leur nombre, rien de ce qu’ils contiennent',
+    hidden: 'Rien : leur jeu paraît complet, pour une histoire encore en cours d’écriture ou gardée secrète',
+  },
   scenesToo: (count, names) => count <= 1
     ? `Chaque archive contient aussi la scène ${names}, que n’importe quel chapitre peut jouer.`
     : `Chaque archive contient aussi les ${count} scènes (${names}), que n’importe quel chapitre peut jouer.`,

@@ -150,6 +150,7 @@ export class StageRegistry {
       case 'flash':
       case 'fade':
       case 'tint':
+      case 'continued':
       case 'textMode':
       case 'clear':
         return instruction
