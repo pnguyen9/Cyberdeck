@@ -118,6 +118,14 @@ export function unusedNames(project: ProjectDocument, documents: readonly Chapte
           used.add(node.from.counterId)
         }
         break
+      case 'grid':
+        // A grid's tiles may show any of its character's pictures.
+        used.add(node.counterId)
+        if (node.characterId !== null) {
+          used.add(node.characterId)
+          project.characters.find(character => character.id === node.characterId)?.expressions.forEach(expression => used.add(expression.id))
+        }
+        break
       case 'copy':
         used.add(node.decisionId)
         used.add(node.fromDecisionId)

@@ -42,6 +42,10 @@
 - A counter counting with another: `[add: Money -{Bet}]`, `[add: Money {Bet} * 2.5]`,
   `[set: Score = {Points}]`, `[if: Money >= {Bet}]`.
 - All of these need Datajack 2.1 (format 2.1).
+- **Lists** (format 3.0): `[list: Board = 16 × none]`, places given, tested and shown by a number or
+  a counter, `[add]` and `[take]` as a queue, `[shuffle]`, kept by saves.
+- **A grid of picture buttons**, `[choice: Cell grid 4 × 4 from Shown with tile]`: each tile the
+  picture its list's place names; the arrows and Enter, or the mouse, pick one.
 
 ### Cyberdeck, the editor
 - The preview's **State** panel changes values by hand: decisions, counters, names, and memories and

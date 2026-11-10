@@ -305,6 +305,8 @@ Three counters come from the player's clock, with nothing to declare: `hour` (0 
 
 A decision's value can choose a picture: with `[decision: Mood = calm | angry]`, `[marie: {Mood}]` shows Marie's *calm* or *angry* picture, whichever Mood holds, with no `[if]`. Counters can count with each other too: `[add: Money -{Bet}]`, `[if: Money >= {Bet}]`. `[set: Mood = random]` draws one of its values, and `[character: twin = marie]` lets a second character show Marie's pictures, without giving it files of its own.
 
+For games, a **list** keeps values in numbered places: `[list: Board = 16 × none]`, `[set: Board 3 = cat]`, `{Board 3}`, `[shuffle: Board]`. And `[choice: Cell grid 4 × 4 from Board with tile]` shows a grid of picture buttons, one per place; the one picked gives `Cell` its number. The Pairs and Minesweeper samples are made of these.
+
 ## 12. Keeping track of decisions
 
 A decision or a style can be declared anywhere, and used everywhere. Two tabs keep them from getting lost.

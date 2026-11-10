@@ -508,6 +508,10 @@ the field tells them what it understood, and what it cannot take.</p>
 <code>[if]</code>. Counters can count with each other too: <code>[add: Money -{Bet}]</code>,
 <code>[if: Money >= {Bet}]</code>. <code>[set: Mood = random]</code> draws one of its values, and <code>[character: twin = marie]</code>
 lets a second character show Marie's pictures, without giving it files of its own.</p>
+<p>For games, a <strong>list</strong> keeps values in numbered places: <code>[list: Board = 16 × none]</code>,
+<code>[set: Board 3 = cat]</code>, <code>{Board 3}</code>, <code>[shuffle: Board]</code>. And
+<code>[choice: Cell grid 4 × 4 from Board with tile]</code> shows a grid of picture buttons, one per place;
+the one picked gives <code>Cell</code> its number. The Pairs and Minesweeper samples are made of these.</p>
 
 <h2 id="tracking">12. Keeping track of decisions</h2>
 <p>A decision or a style can be declared anywhere, and used everywhere. Two tabs keep them from getting

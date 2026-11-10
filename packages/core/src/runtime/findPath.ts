@@ -13,7 +13,7 @@ export interface FoundPath {
 }
 
 function nodeIdOf(step: PlayerStep): string | null {
-  return step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : step.type === 'ask' || step.type === 'askNumber' ? step.ask.id : null
+  return step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : step.type === 'ask' || step.type === 'askNumber' ? step.ask.id : step.type === 'grid' ? step.grid.id : null
 }
 
 /**
@@ -38,11 +38,13 @@ export function findPathTo(story: PlayableStory, nodeId: string, memory: { memor
     for (let next = 0; next < queue.length; next++) {
       const { runtime, optionIds } = queue[next]!
       // Pages are read on; names asked for are left to their defaults.
-      for (let step = runtime.snapshot.step; budget-- > 0 && (step.type === 'page' || step.type === 'ask' || step.type === 'askNumber') && nodeIdOf(step) !== nodeId; step = runtime.snapshot.step) {
+      for (let step = runtime.snapshot.step; budget-- > 0 && (step.type === 'page' || step.type === 'ask' || step.type === 'askNumber' || step.type === 'grid') && nodeIdOf(step) !== nodeId; step = runtime.snapshot.step) {
         if (step.type === 'page') {
           runtime.next()
         } else if (step.type === 'askNumber') {
           runtime.answerNumber(null)
+        } else if (step.type === 'grid') {
+          runtime.pickCell(1)
         } else {
           runtime.answer('')
         }

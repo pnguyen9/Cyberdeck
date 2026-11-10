@@ -1,4 +1,5 @@
 import { entriesNamedByValue } from '../format/valueTags'
+import { listsOf } from '../format/lists'
 import { checkChapterDocument, checkProjectDocument, DocumentError, isPlainIdentifier } from '../format/checkDocuments'
 import { chapterIn, languagesOf } from '../format/languages'
 import { commandsOf, expressionAssetId, flattenStoredNodes, mapInnerLists, type Asset, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredCondition, type StoredNode } from '../format/storyFormat'
@@ -295,6 +296,10 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   // An older Datajack would read a forget as a remember, hide the option waiting takes, and carry nothing over.
   const needsDatajack20 = languagesOf(project).length > 1 || project.decisions.some(decision => decision.lasting === true) || project.counters.some(counter => counter.lasting === true)
     || documents.some(document => flattenStoredNodes(document.nodes).some(node => (node.type === 'remember' && node.forget === true) || (node.type === 'choice' && node.timeLimitMs !== undefined)))
+  // Datajack 2 does not know lists.
+  if (listsOf(project).length > 0) {
+    return '3.0'
+  }
   // An older Datajack refuses a command it does not know, and would count a counter's hundredths as whole numbers.
   if (project.counters.some(counter => (counter.decimals ?? 0) > 0 || counter.clock !== undefined) || project.characters.some(character => character.picturesFrom !== undefined) || documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'askNumber' || node.type === 'draw' || node.type === 'copy' || (node.type === 'count' && node.from !== undefined) || conditionsOf(node).some(comparesCounters)
     || commandsOf(node).some(command => command.type === 'continued' || ('from' in command && command.from !== undefined))))) {

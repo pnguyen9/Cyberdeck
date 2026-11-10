@@ -23,6 +23,8 @@ import {
 import { parseLine, type ParsedLine } from './parseLine'
 import { closestStageKeyword, interpretStageDirective } from '../stage/stageDirectives'
 import { flattenNodes, normalizeName } from './storyNodes'
+import { readListItems } from '../format/lists'
+import { MAXIMUM_GRID } from '../format/storyFormat'
 import {
   argumentText,
   isControlDirective,
@@ -418,6 +420,35 @@ class TextImporter {
         }
         return
       }
+      case 'list': {
+        // `[list: Board = 16 × none]`, `[list: Hand = cat | dog]`, `[list: Queue]`.
+        const assignment = text.includes('=') ? readAssignment(text) : { name: text.trim(), value: '' }
+        const items = assignment === null ? null : readListItems(assignment.value)
+        if (assignment === null || assignment.name === '' || items === null) {
+          this.addProblem('error', 'invalidList', lineNumber, text === '' ? undefined : text)
+          return
+        }
+        this.result.lists = [...this.result.lists ?? [], { sourceLine: lineNumber, name: assignment.name, items }]
+        return
+      }
+      case 'shuffle':
+        if (text.trim() === '') {
+          this.addProblem('error', 'invalidList', lineNumber)
+          return
+        }
+        this.flushPendingDirectives()
+        this.addNode({ type: 'shuffle', sourceLine: lineNumber, list: text.trim() })
+        return
+      case 'take': {
+        const take = /^(.+?)\s*=\s*(first|last)\s+of\s+(.+)$/i.exec(directive.written ?? text)
+        if (take === null) {
+          this.addProblem('error', 'invalidTake', lineNumber, text === '' ? undefined : text)
+          return
+        }
+        this.flushPendingDirectives()
+        this.addNode({ type: 'take', sourceLine: lineNumber, into: take[1]!.trim(), end: take[2]!.toLowerCase() as 'first' | 'last', list: take[3]!.trim() })
+        return
+      }
       case 'character': {
         // A character showing another's pictures: `[character: card1 = card]`.
         const assignment = readAssignment(text)
@@ -449,6 +480,13 @@ class TextImporter {
         return
       }
       case 'add': {
+        // `[add: Queue = {Cell}]`: a value at the end of a list.
+        const appended = (directive.written ?? text).includes('=') ? readAssignment(directive.written ?? text) : null
+        if (appended !== null) {
+          this.flushPendingDirectives()
+          this.addNode({ type: 'listAdd', sourceLine: lineNumber, list: appended.name, value: appended.value })
+          return
+        }
         const addition = readAddition(text)
         if (addition === null) {
           this.addProblem('error', 'invalidAdd', lineNumber, text === '' ? undefined : text)
@@ -461,6 +499,19 @@ class TextImporter {
       case 'choice': {
         if (text === '') {
           this.addProblem('error', 'missingDecisionName', lineNumber)
+          return
+        }
+        // `[choice: Cell grid 4 × 4 from Shown with tile]`: a grid of picture buttons, no options written.
+        const grid = /^(.+?)\s+grid\s+(\d{1,2})\s*[×x*]\s*(\d{1,2})\s+from\s+(.+?)(?:\s+with\s+(.+))?$/i.exec(text.trim())
+        if (grid !== null || /\sgrid\s/i.test(` ${text} `)) {
+          const columns = Number(grid?.[2])
+          const rows = Number(grid?.[3])
+          if (grid === null || columns < 1 || rows < 1 || columns > MAXIMUM_GRID.columns || rows > MAXIMUM_GRID.rows) {
+            this.addProblem('error', 'invalidGrid', lineNumber, text)
+            return
+          }
+          this.flushPendingDirectives()
+          this.addNode({ type: 'grid', sourceLine: lineNumber, counter: grid[1]!.trim(), columns, rows, list: grid[4]!.trim(), character: grid[5]?.trim() ?? null })
           return
         }
         this.flushPendingDirectives()

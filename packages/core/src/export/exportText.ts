@@ -1,6 +1,7 @@
 import { writtenAmount } from '../format/counterNumbers'
 import { valueWritten } from '../format/valueTags'
-import { counterValueText, describeAskNumber, describeCopy, describeDraw } from '../storyboard/describeNodes'
+import { counterValueText, describeAskNumber, describeCondition, describeCopy, describeDraw, describeGrid, describeListNode } from '../storyboard/describeNodes'
+import { listName, listPlaceText, listsOf } from '../format/lists'
 import { firstLanguageOf } from '../format/languages'
 import { effectText } from '../storyboard/describeNodes'
 import { ENDINGS_REACHED, flattenStoredNodes } from '../format/storyFormat'
@@ -105,6 +106,8 @@ export function globalDefinitionLines(project: ProjectDocument, documents: reado
     // The clock's counters are every story's: never declared.
     ...project.counters.filter(counter => counter.clock === undefined && !homed.has(counter.id) && !(counter.implicit === true && added.has(counter.id))).map(counter => definitionLine(project, 'counter', counter.id)!),
     ...project.styles.filter(style => style.implicit !== true && !homed.has(style.id) && !isPropertyAlone(style)).map(style => definitionLine(project, 'style', style.id)!),
+    // Lists are every chapter's: declared with the definitions.
+    ...listsOf(project).map(list => `[list: ${list.name}${listItemsText(list.initial)}]`),
     ...project.characters.flatMap(character => {
       const lender = project.characters.find(candidate => candidate.id === character.picturesFrom)
       return lender === undefined ? [] : [`[character: ${character.name} = ${lender.name}]`]
@@ -273,6 +276,13 @@ class TextWriter {
         case 'copy':
           this.line(`[set: ${describeCopy(node, this.project)}]`)
           break
+        case 'list':
+        case 'take':
+          this.line(`[${describeListNode(node, this.project)}]`)
+          break
+        case 'grid':
+          this.line(`[${describeGrid(node, this.project)}]`)
+          break
         case 'ask': {
           const asked = this.project.askedNames.find(candidate => candidate.id === node.askedNameId)
           this.line(`[ask: ${asked?.name ?? '?'}${asked === undefined || asked.defaultName === '' ? '' : ` = ${asked.defaultName}`}]`)
@@ -311,7 +321,8 @@ class TextWriter {
         case 'count': {
           const name = this.counterName(node.counterId)
           const amount = (units: number) => this.amount(units, node.counterId)
-          const from = node.from === undefined ? null : counterValueText(node.from, this.project)
+          const from = node.fromItem !== undefined ? `{${listName(node.fromItem.listId, this.project)} ${listPlaceText(node.fromItem.place, this.project)}}`
+            : node.from === undefined ? null : counterValueText(node.from, this.project)
           this.line(node.operation === 'add' ? `[add: ${name} ${from ?? amount(node.amount)}]`
             : node.operation === 'random' ? `[set: ${name} = random ${amount(node.amount)} ${amount(node.maximum ?? node.amount)}]`
               : `[set: ${name} = ${from ?? amount(node.amount)}]`)
@@ -436,6 +447,9 @@ class TextWriter {
         : requirement.operator === '!=' ? `${name} is not ${amount}`
           : `${name} ${requirement.operator} ${amount}`
     }
+    if (requirement.type === 'listItem' || requirement.type === 'listSize') {
+      return describeCondition(requirement, this.project)
+    }
     const not = requirement.negated ? 'not ' : ''
     switch (requirement.type) {
       case 'is': {
@@ -504,4 +518,12 @@ function animationWords(animation: AnimationSpec): string {
 
 function words(...parts: string[]): string {
   return parts.filter(part => part !== '').join(' ')
+}
+
+/** What a list holds at first, as its declaration writes it: ` = 16 × none`, ` = cat | dog`, or nothing. */
+function listItemsText(items: readonly string[]): string {
+  if (items.length === 0) {
+    return ''
+  }
+  return items.length > 1 && items.every(item => item === items[0]) ? ` = ${items.length} × ${items[0]}` : ` = ${items.join(' | ')}`
 }

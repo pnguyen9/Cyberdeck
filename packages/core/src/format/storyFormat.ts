@@ -5,7 +5,7 @@ import type { StyleProperty } from './textStyles'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '2.1'
+export const FORMAT_VERSION = '3.0'
 
 /** True when this version of the code can read a document written in `version`: any version up to its own, every earlier major one included. */
 export function isSupportedFormatVersion(version: string): boolean {
@@ -50,6 +50,67 @@ export interface Decision {
  * A number the story counts with, `[counter: Trust = 2]`: added to, set, and compared. One never
  * changed holds `initial`. Since 1.3.
  */
+/**
+ * A numbered row of values under one name, `[list: Board = 16 × none]`, its places counted from 1:
+ * names, as a decision's values are, read back as numbers by counters. Since 3.0.
+ */
+export interface StoryList {
+  id: string
+  name: string
+  /** What it holds when a game starts. */
+  initial: string[]
+}
+
+/** A place in a list: a number, or what a counter holds. */
+export type ListPlace = { type: 'number'; number: number } | { type: 'counter'; counterId: string }
+
+/** A value given to or tested in a list: written as such, or what a decision, a counter or another place holds. */
+export type ListValue =
+  | { type: 'text'; text: string }
+  | { type: 'decision'; decisionId: string }
+  | { type: 'counter'; counterId: string }
+  | { type: 'item'; listId: string; place: ListPlace }
+
+/** `[set: Board 3 = cat]`, `[add: Queue = {Cell}]`, `[shuffle: Board]`, `[unset: Board]`. Since 3.0. */
+export interface StoredListChange {
+  type: 'list'
+  id: string
+  listId: string
+  change:
+    | { type: 'set'; place: ListPlace; value: ListValue }
+    | { type: 'add'; value: ListValue }
+    | { type: 'shuffle' }
+    | { type: 'clear' }
+}
+
+/** `[take: Cell = first of Queue]`: the first or last value of a list, taken out of it into a counter or a decision. Since 3.0. */
+export interface StoredTake {
+  type: 'take'
+  id: string
+  listId: string
+  end: 'first' | 'last'
+  into: { type: 'counter'; counterId: string } | { type: 'decision'; decisionId: string }
+}
+
+/** The largest grid: Minesweeper's expert board. */
+export const MAXIMUM_GRID = { columns: 30, rows: 24 } as const
+
+/**
+ * `[choice: Cell grid 4 × 4 from Shown with tile]`: a choice shown as rows of picture buttons, numbered
+ * from 1 left to right, top to bottom; each shows the picture of `characterId` named like the value
+ * its place of the list holds (the value itself without one); picking one gives the counter its
+ * number. Since 3.0.
+ */
+export interface StoredGrid {
+  type: 'grid'
+  id: string
+  counterId: string
+  columns: number
+  rows: number
+  listId: string
+  characterId: string | null
+}
+
 /** What the player's clock tells a story: the hour, the day of the week, the minutes since the profile last played. */
 export type ClockValue = 'hour' | 'weekday' | 'timeAway'
 
@@ -324,6 +385,8 @@ export interface ProjectDocument extends Audited {
   decisions: Decision[]
   /** Since 1.3. */
   counters: Counter[]
+  /** Since 3.0; absent before. */
+  lists?: StoryList[]
   /** Since 1.4. */
   askedNames: AskedName[]
   endings: Ending[]
@@ -474,6 +537,10 @@ export type CounterOperator = '=' | '!=' | '<' | '<=' | '>' | '>='
 export type StoredCondition =
   | { type: 'is'; decisionId: string; valueId: string; negated: boolean }
   /** The counter compared with `amount`: `Trust >= 3`. Since 1.3. */
+  /** `Board Cell is cat`: what a place of a list holds. Since 3.0. */
+  | { type: 'listItem'; listId: string; place: ListPlace; value: ListValue; negated: boolean }
+  /** `Queue size > 0`: how many values a list holds. Since 3.0. */
+  | { type: 'listSize'; listId: string; operator: CounterOperator; amount: number }
   /** `otherCounterId`: compared with what another counter holds, `Money >= {Bet}`, in place of `amount`. Since 2.1. */
   | { type: 'counter'; counterId: string; operator: CounterOperator; amount: number; otherCounterId?: string }
   | { type: 'remembered'; memoryId: string; negated: boolean }
@@ -513,6 +580,8 @@ export interface StoredCount {
   amount: number
   /** `[add: Money -{Bet}]`, `[set: Score = {Points}]`: another counter's value times `factor`, in place of `amount`. Since 2.1. */
   from?: { counterId: string; factor: number }
+  /** `[set: Near = {Board 3}]`: the number a place of a list holds, in place of `amount`. Since 3.0. */
+  fromItem?: { listId: string; place: ListPlace }
   /** For `random`: the highest number drawn, `amount` the lowest. */
   maximum?: number
 }
@@ -613,7 +682,7 @@ export interface StoredBreak {
   id: string
 }
 
-export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredCount | StoredDraw | StoredCopy | StoredAsk | StoredAskNumber | StoredDefinition | StoredEnding | StoredRemember
+export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredCount | StoredDraw | StoredCopy | StoredListChange | StoredTake | StoredGrid | StoredAsk | StoredAskNumber | StoredDefinition | StoredEnding | StoredRemember
 
 /** A list of nodes inside a block: a branch of a condition, or the body of a loop, which bears the loop's identifier. */
 export interface InnerList {
@@ -654,6 +723,15 @@ export function testedIdsIn(condition: StoredCondition): string[] {
       return [condition.decisionId]
     case 'counter':
       return condition.otherCounterId === undefined ? [condition.counterId] : [condition.counterId, condition.otherCounterId]
+    case 'listItem': {
+      const fromPlace = condition.place.type === 'counter' ? [condition.place.counterId] : []
+      const value = condition.value
+      const fromValue = value.type === 'decision' ? [value.decisionId] : value.type === 'counter' ? [value.counterId]
+        : value.type === 'item' ? [value.listId, ...(value.place.type === 'counter' ? [value.place.counterId] : [])] : []
+      return [condition.listId, ...fromPlace, ...fromValue]
+    }
+    case 'listSize':
+      return [condition.listId]
     case 'remembered':
     case 'endingSeen':
       return []

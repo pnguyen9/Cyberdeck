@@ -95,6 +95,10 @@ const en: ProblemMessages = {
   tagValueNotHere: subject => `A value in braces names a picture only in [enter], [bg], [illustration] and a character's own tag: "${subject}" cannot take one.`,
   tagValueNeedsDecision: subject => `${subject} is a counter: a picture is named by a decision's value, whose values are the pictures' names, [decision: ${subject} = …].`,
   invalidSharedPictures: subject => `${subject === '' ? '[character: …]' : `"${subject}"`} should look like: card1 = card, a character, then the one whose pictures it shows.`,
+  invalidList: subject => `${subject === '' ? '[list: …]' : `"${subject}"`} should look like: Board = 16 × none, a list and what it holds at first (a number of the same value, or values with |), or the name alone for an empty list.`,
+  unknownList: subject => `No list is called "${subject}": declare it with [list: ${subject}].`,
+  invalidTake: subject => `${subject === '' ? '[take: …]' : `"${subject}"`}: [take: Cell = first of Queue] takes a value out of a list into a counter or a decision.`,
+  invalidGrid: subject => `"${subject}" should look like: Cell grid 4 × 4 from Shown with tile: a counter, columns × rows (at most 30 × 24), a list naming each tile's picture, and if wished the character whose pictures they are.`,
   duplicateCounter: (subject, suggestion) => suggestion === ''
     ? `The counter "${subject}" is declared twice.`
     : `The counter "${subject}" is already declared in ${suggestion}: change it there, or move it to Definitions first.`,
@@ -216,6 +220,10 @@ const fr: ProblemMessages = {
   tagValueNotHere: subject => `Une valeur entre accolades ne nomme une image que dans [enter], [bg], [illustration] et la balise d’un personnage\u00a0: ${quoted(subject)} ne peut pas en prendre.`,
   tagValueNeedsDecision: subject => `${subject} est un compteur\u00a0: une image se nomme par la valeur d’une décision, dont les valeurs sont les noms des images, [decision: ${subject} = …].`,
   invalidSharedPictures: subject => `${subject === '' ? '[character: …]' : quoted(subject)} devrait avoir cette forme\u00a0: carte1 = carte, un personnage, puis celui dont il montre les images.`,
+  invalidList: subject => `${subject === '' ? '[list: …]' : quoted(subject)} devrait avoir cette forme\u00a0: Plateau = 16 × none, une liste et ce qu’elle contient au départ (un nombre d’une même valeur, ou des valeurs avec |), ou le nom seul pour une liste vide.`,
+  unknownList: subject => `Aucune liste ne s’appelle ${quoted(subject)}\u00a0: déclarez-la avec [list: ${subject}].`,
+  invalidTake: subject => `${subject === '' ? '[take: …]' : quoted(subject)}\u00a0: [take: Case = first of File] sort une valeur d’une liste vers un compteur ou une décision.`,
+  invalidGrid: subject => `${quoted(subject)} devrait avoir cette forme\u00a0: Case grid 4 × 4 from Montré with tuile\u00a0: un compteur, colonnes × lignes (30 × 24 au plus), une liste qui nomme l’image de chaque case, et si besoin le personnage dont ce sont les images.`,
   duplicateCounter: (subject, suggestion) => suggestion === ''
     ? `Le compteur ${quoted(subject)} est déclaré deux fois.`
     : `Le compteur ${quoted(subject)} est déjà déclaré dans ${suggestion}\u00a0: modifiez-le là-bas, ou déplacez-le d’abord dans Définitions.`,

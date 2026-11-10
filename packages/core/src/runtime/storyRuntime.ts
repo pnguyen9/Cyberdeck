@@ -9,11 +9,13 @@ import type {
   StoredNode,
   StoredPage,
 } from '../format/storyFormat'
-import { flattenStoredNodes, innerListsOf, type AskedName, type ProjectDocument, type ClockValue, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
+import { flattenStoredNodes, innerListsOf, type AskedName, type ProjectDocument, type ClockValue, type ListPlace, type ListValue, type StoredGrid, type StoredListChange, type StoredTake, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
 import { givenName, pageWithValues, withValues, type ValueOf } from '../format/textValues'
 import { normalizeName } from '../importer/storyNodes'
 import { drawFrom, newSeed } from './chance'
 import { withValueChosen } from '../format/valueTags'
+import { listsOf } from '../format/lists'
+import { writtenAmount } from '../format/counterNumbers'
 import { valuesReader, type HeldValues } from './storyValues'
 import { chaptersInOrder, scenesOf, type PlayableStory } from './playableStory'
 import { applyStageCommand, createStageContext, EMPTY_STAGE, showPage, type StageContext, type StageState } from './stageState'
@@ -30,6 +32,8 @@ export type PlayerStep =
    * no bound. The number proposed is kept within them too.
    */
   | { type: 'askNumber'; ask: StoredAskNumber; minimum: number | null; maximum: number | null; proposed: number }
+  /** A grid of picture buttons, each place with what its list holds there. */
+  | { type: 'grid'; grid: StoredGrid; items: readonly string[] }
   /** The end of the story, or of this path when an `[ending: …]` was reached. */
   | { type: 'end'; endingId: string | null }
 
@@ -72,7 +76,12 @@ export interface PlayerSnapshot {
   seed: number
   /** Every option picked so far: the playthrough itself, from which it could be replayed. */
   choices: readonly ChoiceRecord[]
+  /** What each list holds, by identifier, for those changed so far. Since 3.0. */
+  lists?: ListState
 }
+
+/** What each list changed so far holds, by identifier; one never changed holds what it starts with. */
+export type ListState = Readonly<Record<string, readonly string[]>>
 
 /** An effect played once as it is reached, leaving nothing on stage. */
 export type Cue = Extract<StageCommand, { type: 'sound' | 'voice' | 'video' | 'shake' | 'flash' }>
@@ -93,6 +102,7 @@ export interface RuntimeState {
   seed: number
   stage: StageState
   choices: readonly ChoiceRecord[]
+  lists?: ListState
 }
 
 /** How closely a restored state matches what was saved, when the story changed in between. */
@@ -167,10 +177,13 @@ export class StoryRuntime {
   /** Counters the clock gives, and the clock, once the player's is given. */
   private readonly clockCounters: readonly { id: string; clock: ClockValue }[]
   private readonly project: ProjectDocument
+  /** What each list holds when a game starts. */
+  private readonly initialLists: ReadonlyMap<string, readonly string[]>
   private clock: { now: () => Date; minutesAway: number } | null = null
 
   constructor(story: PlayableStory) {
     this.project = story.project
+    this.initialLists = new Map(listsOf(story.project).map(list => [list.id, list.initial]))
     this.clockCounters = story.project.counters.flatMap(counter => counter.clock === undefined ? [] : [{ id: counter.id, clock: counter.clock }])
     this.counterDecimals = new Map(story.project.counters.flatMap(counter => counter.decimals === undefined ? [] : [[counter.id, counter.decimals] as const]))
     this.chapters = chaptersInOrder(story)
@@ -312,7 +325,7 @@ export class StoryRuntime {
   exportState(): RuntimeState {
     const step = this.currentSnapshot.step
     const chapter = this.chapters[this.chapterIndex]
-    const nodeId = step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : step.type === 'ask' || step.type === 'askNumber' ? step.ask.id : null
+    const nodeId = step.type === 'page' ? step.page.id : step.type === 'choice' ? step.choice.id : step.type === 'ask' || step.type === 'askNumber' ? step.ask.id : step.type === 'grid' ? step.grid.id : null
     const playedFrom = this.frames.flatMap(frame => frame.playId === undefined ? [] : [frame.playId])
     return {
       page: chapter === undefined || nodeId === null ? null : { chapterId: chapter.id, nodeId, ...(playedFrom.length === 0 ? {} : { playedFrom }) },
@@ -320,6 +333,7 @@ export class StoryRuntime {
       counters: this.currentSnapshot.counters,
       names: this.currentSnapshot.names,
       seed: this.currentSnapshot.seed,
+      ...(this.currentSnapshot.lists === undefined ? {} : { lists: this.currentSnapshot.lists }),
       stage: this.currentSnapshot.stage,
       choices: this.currentSnapshot.choices,
     }
@@ -370,6 +384,7 @@ export class StoryRuntime {
       names: state.names,
       seed: state.seed,
       choices: state.choices,
+      ...(state.lists === undefined ? {} : { lists: state.lists }),
     }
     this.playUntilStop()
     return outcome
@@ -509,6 +524,18 @@ export class StoryRuntime {
     this.playUntilStop()
   }
 
+  /** Picks a place of the grid shown, from 1: its counter takes that number. */
+  pickCell(number: number) {
+    const step = this.currentSnapshot.step
+    if (step.type !== 'grid' || number < 1 || number > step.grid.columns * step.grid.rows) {
+      return
+    }
+    this.isReplaying = false
+    const scale = 10 ** (this.counterDecimals.get(step.grid.counterId) ?? 0)
+    this.currentSnapshot = { ...this.currentSnapshot, counters: { ...this.currentSnapshot.counters, [step.grid.counterId]: number * scale } }
+    this.playUntilStop()
+  }
+
   /** Leaves the current page; inline commands not reached yet still apply. */
   next() {
     if (this.currentSnapshot.step.type !== 'page') {
@@ -589,6 +616,11 @@ export class StoryRuntime {
         case 'ask':
           this.setStep({ type: 'ask', ask: node })
           return
+        case 'grid': {
+          const items = this.listOf(node.listId)
+          this.setStep({ type: 'grid', grid: node, items: Array.from({ length: node.columns * node.rows }, (_, index) => items[index] ?? '') })
+          return
+        }
         case 'askNumber': {
           const minimum = this.boundOf(node.minimum, node.counterId, 'up')
           const maximum = this.boundOf(node.maximum, node.counterId, 'down')
@@ -601,6 +633,18 @@ export class StoryRuntime {
         case 'set':
           this.decide(node.decisionId, node.valueId)
           break
+        case 'list':
+          this.changeList(node)
+          break
+        case 'take': {
+          const items = this.listOf(node.listId)
+          if (items.length > 0) {
+            const taken = node.end === 'first' ? items[0]! : items.at(-1)!
+            this.setList(node.listId, node.end === 'first' ? items.slice(1) : items.slice(0, -1))
+            this.giveTaken(node.into, taken)
+          }
+          break
+        }
         case 'copy': {
           const from = this.decisionsById.get(node.fromDecisionId)
           const name = from?.values.find(value => value.id === this.heldValues(node.fromDecisionId)[0])?.name
@@ -627,7 +671,9 @@ export class StoryRuntime {
           break
         case 'count': {
           // Another counter's value, `{Bet} * 2.5`, in this counter's units, rounded to what it keeps.
-          const amount = node.from === undefined ? node.amount : Math.round(this.inUnitsOf(this.countOf(node.from.counterId), node.from.counterId, node.counterId) * node.from.factor)
+          const fromItem = node.fromItem === undefined ? null : Number(this.itemAt(node.fromItem.listId, node.fromItem.place).replace(',', '.'))
+          const amount = fromItem !== null ? (Number.isFinite(fromItem) ? Math.round(fromItem * 10 ** (this.counterDecimals.get(node.counterId) ?? 0)) : 0)
+            : node.from === undefined ? node.amount : Math.round(this.inUnitsOf(this.countOf(node.from.counterId), node.from.counterId, node.counterId) * node.from.factor)
           let count = node.operation === 'add' ? this.countOf(node.counterId) + amount : amount
           let seed = this.currentSnapshot.seed
           if (node.operation === 'random') {
@@ -754,6 +800,90 @@ export class StoryRuntime {
     return units * 10 ** ((this.counterDecimals.get(toCounterId) ?? 0) - (this.counterDecimals.get(fromCounterId) ?? 0))
   }
 
+  /** What a list holds now. */
+  private listOf(listId: string): readonly string[] {
+    const lists = this.currentSnapshot.lists ?? {}
+    return Object.hasOwn(lists, listId) ? lists[listId] ?? [] : this.initialLists.get(listId) ?? []
+  }
+
+  private setList(listId: string, items: readonly string[]) {
+    this.currentSnapshot = { ...this.currentSnapshot, lists: { ...this.currentSnapshot.lists, [listId]: [...items] } }
+  }
+
+  /** The number of a place: written, or what a counter holds, whole. */
+  private placeNumber(place: ListPlace): number {
+    return place.type === 'number' ? place.number : Math.trunc(this.countOf(place.counterId) / 10 ** (this.counterDecimals.get(place.counterId) ?? 0))
+  }
+
+  /** What a place of a list holds; nothing outside the list. */
+  private itemAt(listId: string, place: ListPlace): string {
+    return this.listOf(listId)[this.placeNumber(place) - 1] ?? ''
+  }
+
+  /** A value as text: written, a decision's value, a counter's number, another place's value. */
+  private textOf(value: ListValue): string {
+    switch (value.type) {
+      case 'text':
+        return value.text
+      case 'decision':
+        return this.decisionsById.get(value.decisionId)?.values.find(candidate => candidate.id === this.heldValues(value.decisionId)[0])?.name ?? ''
+      case 'counter':
+        return writtenAmount(this.countOf(value.counterId), { decimals: this.counterDecimals.get(value.counterId) ?? 0 })
+      case 'item':
+        return this.itemAt(value.listId, value.place)
+    }
+  }
+
+  private changeList(node: StoredListChange) {
+    const items = [...this.listOf(node.listId)]
+    switch (node.change.type) {
+      case 'set': {
+        // A place past the end makes the list longer, the places between holding nothing.
+        const index = this.placeNumber(node.change.place) - 1
+        if (index < 0 || index >= 10_000) {
+          return
+        }
+        while (items.length <= index) {
+          items.push('')
+        }
+        items[index] = this.textOf(node.change.value)
+        break
+      }
+      case 'add':
+        items.push(this.textOf(node.change.value))
+        break
+      case 'shuffle':
+        // Fisher–Yates, from the seed: a save resumed shuffles as the game would have.
+        for (let index = items.length - 1; index > 0; index--) {
+          const draw = drawFrom(this.currentSnapshot.seed)
+          this.currentSnapshot = { ...this.currentSnapshot, seed: draw.seed }
+          const other = Math.floor(draw.fraction * (index + 1))
+          ;[items[index], items[other]] = [items[other]!, items[index]!]
+        }
+        break
+      case 'clear':
+        items.length = 0
+        break
+    }
+    this.setList(node.listId, items)
+  }
+
+  /** A value taken out of a list, into a counter (as a number) or a decision (as the value of that name). */
+  private giveTaken(into: StoredTake['into'], taken: string) {
+    if (into.type === 'counter') {
+      const amount = Number(taken.replace(',', '.'))
+      if (Number.isFinite(amount)) {
+        const units = Math.round(amount * 10 ** (this.counterDecimals.get(into.counterId) ?? 0))
+        this.currentSnapshot = { ...this.currentSnapshot, counters: { ...this.currentSnapshot.counters, [into.counterId]: units } }
+      }
+      return
+    }
+    const value = this.decisionsById.get(into.decisionId)?.values.find(candidate => normalizeName(candidate.name) === normalizeName(taken))
+    if (value !== undefined) {
+      this.decide(into.decisionId, value.id)
+    }
+  }
+
   private countOf(counterId: string): number {
     return Object.hasOwn(this.currentSnapshot.counters, counterId) ? this.currentSnapshot.counters[counterId] ?? 0 : this.initialCounts.get(counterId) ?? 0
   }
@@ -771,6 +901,10 @@ export class StoryRuntime {
         const isHeld = this.heldValues(condition.decisionId).includes(condition.valueId)
         return condition.negated ? !isHeld : isHeld
       }
+      case 'listItem':
+        return (normalizeName(this.itemAt(condition.listId, condition.place)) === normalizeName(this.textOf(condition.value))) !== condition.negated
+      case 'listSize':
+        return compare(this.listOf(condition.listId).length, condition.operator, condition.amount)
       case 'remembered':
         return this.rememberedIds.has(condition.memoryId) !== condition.negated
       case 'endingSeen':

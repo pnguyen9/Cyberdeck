@@ -1,6 +1,7 @@
 import { writtenAmount } from '../format/counterNumbers'
 import { valueWritten } from '../format/valueTags'
-import type { AnimationSpec, DefinitionKind, Placement, ProjectDocument, StageCommand, StoredAskBound, StoredAskNumber, StoredCondition, StoredCopy, StoredCount, StoredDraw } from '../format/storyFormat'
+import { listName, listPlaceText, listValueText } from '../format/lists'
+import type { AnimationSpec, DefinitionKind, Placement, ProjectDocument, StageCommand, StoredAskBound, StoredAskNumber, StoredCondition, StoredCopy, StoredCount, StoredDraw, StoredGrid, StoredListChange, StoredTake } from '../format/storyFormat'
 import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
 
 /** Short descriptions of what nodes do, in the words of the writing syntax, for the storyboard. */
@@ -70,6 +71,12 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
 
 export function describeCondition(condition: StoredCondition, project: ProjectDocument): string {
   switch (condition.type) {
+    case 'listItem':
+      return `${listName(condition.listId, project)} ${listPlaceText(condition.place, project)} ${condition.negated ? 'is not' : 'is'} ${listValueText(condition.value, project)}`
+    case 'listSize': {
+      const operator = condition.operator === '=' ? 'is' : condition.operator === '!=' ? 'is not' : condition.operator
+      return `${listName(condition.listId, project)} size ${operator} ${condition.amount}`
+    }
     case 'counter': {
       const counter = project.counters.find(candidate => candidate.id === condition.counterId)
       const operator = condition.operator === '=' ? 'is' : condition.operator === '!=' ? 'is not' : condition.operator
@@ -103,6 +110,9 @@ export function describeCount(node: StoredCount, project: ProjectDocument): stri
   const counter = project.counters.find(candidate => candidate.id === node.counterId)
   const name = counter?.name ?? '?'
   const amount = (units: number) => writtenAmount(units, counter ?? {})
+  if (node.fromItem !== undefined) {
+    return `${name} = {${listName(node.fromItem.listId, project)} ${listPlaceText(node.fromItem.place, project)}}`
+  }
   if (node.from !== undefined) {
     const value = counterValueText(node.from, project)
     return node.operation === 'set' ? `${name} = ${value}` : `${name} + ${value}`
@@ -117,6 +127,34 @@ export function counterValueText(from: { counterId: string; factor: number }, pr
   const name = project.counters.find(counter => counter.id === from.counterId)?.name ?? '?'
   const size = Math.abs(from.factor)
   return `${from.factor < 0 ? '-' : ''}{${name}}${size === 1 ? '' : ` * ${size}`}`
+}
+
+/** `choice: Cell grid 4 × 4 from Shown with tile`, as the tag is written. */
+export function describeGrid(node: StoredGrid, project: ProjectDocument): string {
+  const counter = project.counters.find(candidate => candidate.id === node.counterId)?.name ?? '?'
+  const character = node.characterId === null ? null : project.characters.find(candidate => candidate.id === node.characterId)?.name ?? '?'
+  return `choice: ${counter} grid ${node.columns} × ${node.rows} from ${listName(node.listId, project)}${character === null ? '' : ` with ${character}`}`
+}
+
+/** A list's change or a value taken from it, as the tag is written: `set: Board 3 = cat`, `shuffle: Board`. */
+export function describeListNode(node: StoredListChange | StoredTake, project: ProjectDocument): string {
+  const name = listName(node.listId, project)
+  if (node.type === 'take') {
+    const target = node.into
+    const into = target.type === 'counter' ? project.counters.find(counter => counter.id === target.counterId)?.name
+      : project.decisions.find(decision => decision.id === target.decisionId)?.name
+    return `take: ${into ?? '?'} = ${node.end} of ${name}`
+  }
+  switch (node.change.type) {
+    case 'set':
+      return `set: ${name} ${listPlaceText(node.change.place, project)} = ${listValueText(node.change.value, project)}`
+    case 'add':
+      return `add: ${name} = ${listValueText(node.change.value, project)}`
+    case 'shuffle':
+      return `shuffle: ${name}`
+    case 'clear':
+      return `unset: ${name}`
+  }
 }
 
 /** `Dealt = {Drawn}`, as the tag is written. */

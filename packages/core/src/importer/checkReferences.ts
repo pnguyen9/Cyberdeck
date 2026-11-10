@@ -1,6 +1,7 @@
 import { CLOCK_COUNTERS, ENDINGS_REACHED } from '../format/storyFormat'
 import { STAGE_KEYWORDS } from '../stage/stageDirectives'
 import { valueNamedIn } from '../format/valueTags'
+import { splitListPlace } from '../format/lists'
 
 /** Tags showing a picture, which a decision's value may name: besides a character's own, `[marie: {Mood}]`. */
 const PICTURE_TAGS: ReadonlySet<string> = new Set(['enter', 'bg', 'background', 'illustration', 'cg'])
@@ -38,6 +39,8 @@ export interface KnownNames {
   counters?: KnownDefinition[]
   /** Names the player gives, which `{Name}` shows. */
   askedNames?: string[]
+  /** The project's lists. */
+  lists?: string[]
   endings?: string[]
   memories?: string[]
   /** The project's styles; a name alone is declared elsewhere. */
@@ -100,6 +103,10 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
 
   const allNodes = [...result.chapters, ...result.scenes].flatMap(chapter => flattenNodes(chapter.nodes))
   const counters = checkCounters(result, allNodes, knownNames.counters ?? [], problems)
+  // Lists: the project's and those declared here; a place is written after a list's name, `Board Cell`.
+  const listNames = [...knownNames.lists ?? [], ...(result.lists ?? []).map(declaration => declaration.name)]
+  const isList = (name: string) => listNames.some(list => normalizeName(list) === normalizeName(name))
+  const placeOf = (written: string) => splitListPlace(written, listNames)
   for (const name of counters) {
     // A choice on a counter's name, or a declaration, would make it a decision as well.
     const clash = result.decisions.find(declaration => normalizeName(declaration.name) === name)
@@ -179,6 +186,30 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
   }
 
   /** The decimals each counter keeps, by name normalised: as declared here, or as the project has it. */
+  /** A place must be a number from 1, or a counter; `size` only where a number is read. */
+  const checkPlace = (place: string, line: number, sizeAllowed = false) => {
+    if (/^\d+$/.test(place.trim()) ? Number(place) < 1 : !(counters.has(normalizeName(place)) || (sizeAllowed && normalizeName(place) === 'size'))) {
+      problems.push({ severity: 'error', code: 'unknownCounter', line, subject: place })
+    }
+  }
+  /** A value given or tested: written as such, or in braces a place, a decision or a counter. */
+  const checkListValue = (written: string, line: number) => {
+    const braced = valueNamedIn(written)
+    if (braced === null) {
+      return
+    }
+    const placed = placeOf(braced)
+    if (placed !== null) {
+      checkPlace(placed.place, line)
+    } else if (!decisionValues.has(normalizeName(braced)) && !counters.has(normalizeName(braced))) {
+      problems.push({ severity: 'error', code: 'unknownValue', line, subject: braced })
+    }
+  }
+  const checkList = (name: string, line: number) => {
+    if (!isList(name)) {
+      problems.push({ severity: 'error', code: 'unknownList', line, subject: name })
+    }
+  }
   const decimalsByCounter = new Map([
     ...(knownNames.counters ?? []).map(counter => [normalizeName(counter.name), counter.decimals ?? 0] as const),
     ...result.counters.map(declaration => [normalizeName(declaration.name), declaration.decimals] as const),
@@ -200,6 +231,10 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
   const checkCounterValue = (name: string, value: string, line: number, mayDraw = false) => {
     // Another counter's value, `{Points}`: it must be a counter.
     const other = readCounterValue(value)
+    if (other !== null && placeOf(other.counter) !== null) {
+      checkPlace(placeOf(other.counter)!.place, line)
+      return
+    }
     if (other !== null) {
       if (!isCounter(other.counter)) {
         problems.push({ severity: 'error', code: 'unknownCounter', line, subject: other.counter })
@@ -217,6 +252,14 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
 
   const checkCondition = (condition: Condition | null | undefined, line: number) => {
     for (const part of partsOf(condition ?? null)) {
+      const placed = part.type === 'is' ? placeOf(part.decision) : part.type === 'compare' ? placeOf(part.counter) : null
+      if (placed !== null) {
+        checkPlace(placed.place, line, true)
+        if (part.type === 'is' && normalizeName(placed.place) !== 'size') {
+          checkListValue(part.value, line)
+        }
+        continue
+      }
       if (part.type === 'is' && isCounter(part.decision)) {
         checkCounterValue(part.decision, part.value, line)
       } else if (part.type === 'is') {
@@ -244,6 +287,12 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     }
     if (node.type === 'choice') {
       node.options.forEach(option => checkCondition(option.condition, option.sourceLine))
+    }
+    if (node.type === 'set' && placeOf(node.decision) !== null) {
+      // A place of a list given a value: `[set: Board Cell = {Animal}]`.
+      checkPlace(placeOf(node.decision)!.place, node.sourceLine)
+      checkListValue(node.value, node.sourceLine)
+      continue
     }
     if (node.type === 'set') {
       const draw = isCounter(node.decision) ? null : readDraw(node.value)
@@ -285,6 +334,24 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
         }
       }
     }
+    if (node.type === 'grid') {
+      checkList(node.list, node.sourceLine)
+    }
+    if (node.type === 'listAdd' || node.type === 'shuffle') {
+      checkList(node.list, node.sourceLine)
+      if (node.type === 'listAdd') {
+        checkListValue(node.value, node.sourceLine)
+      }
+    }
+    if (node.type === 'take') {
+      checkList(node.list, node.sourceLine)
+      if (!isCounter(node.into) && !decisionValues.has(normalizeName(node.into))) {
+        problems.push({ severity: 'error', code: 'invalidTake', line: node.sourceLine, subject: node.into })
+      }
+    }
+    if (node.type === 'unset' && isList(node.decision)) {
+      continue
+    }
     if (node.type === 'unset') {
       if (isCounter(node.decision)) {
         problems.push({ severity: 'error', code: 'unsetCounter', line: node.sourceLine, subject: node.decision })
@@ -309,7 +376,7 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
       }
     }
   }
-  problems.push(...checkPlaceholders(result, allNodes, knownNames.askedNames ?? [], new Set([...decisionValues.keys(), ...counters])))
+  problems.push(...checkPlaceholders(result, allNodes, knownNames.askedNames ?? [], new Set([...decisionValues.keys(), ...counters]), name => placeOf(name) !== null))
   return problems.sort((first, second) => first.line - second.line)
 }
 
@@ -318,12 +385,12 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
  * counter, no decision. A name asked for that is also a counter's or a decision's is reported where
  * it is asked: `{…}` could not tell which is meant.
  */
-function checkPlaceholders(result: ImportResult, allNodes: readonly StoryNode[], knownAskedNames: readonly string[], counterAndDecisionNames: ReadonlySet<string>): ImportProblem[] {
+function checkPlaceholders(result: ImportResult, allNodes: readonly StoryNode[], knownAskedNames: readonly string[], counterAndDecisionNames: ReadonlySet<string>, isListPlace: (name: string) => boolean): ImportProblem[] {
   const asks = allNodes.flatMap(node => node.type === 'ask' ? [node] : [])
   const asked = new Set([...knownAskedNames, ...asks.map(node => node.name)].map(normalizeName))
   const textsOf = (node: StoryNode): string[] => node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : []
   const unknown = allNodes.flatMap(node => [...new Set(textsOf(node).flatMap(placeholdersIn))]
-    .filter(name => !asked.has(normalizeName(name)) && !counterAndDecisionNames.has(normalizeName(name)))
+    .filter(name => !asked.has(normalizeName(name)) && !counterAndDecisionNames.has(normalizeName(name)) && !isListPlace(name))
     .map((name): ImportProblem => ({ severity: 'error', code: 'unknownValue', line: node.sourceLine, subject: name })))
   const taken = asks.filter(node => counterAndDecisionNames.has(normalizeName(node.name)))
     .map((node): ImportProblem => ({ severity: 'error', code: 'askedNameTaken', line: node.sourceLine, subject: node.name }))
@@ -363,7 +430,7 @@ function checkCounters(result: ImportResult, allNodes: readonly StoryNode[], kno
     names.add(name)
   }
   for (const node of allNodes) {
-    if (node.type === 'add' || node.type === 'askNumber') {
+    if (node.type === 'add' || node.type === 'askNumber' || node.type === 'grid') {
       names.add(normalizeName(node.counter))
     }
   }

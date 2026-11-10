@@ -88,6 +88,41 @@ export interface AskNode {
   defaultName: string | null
 }
 
+/** `[add: Queue = {Cell}]`: a value added at the end of a list. */
+export interface ListAddNode {
+  type: 'listAdd'
+  sourceLine: number
+  list: string
+  value: string
+}
+
+/** `[choice: Cell grid 4 × 4 from Shown with tile]`. */
+export interface GridNode {
+  type: 'grid'
+  sourceLine: number
+  counter: string
+  columns: number
+  rows: number
+  list: string
+  character: string | null
+}
+
+/** `[shuffle: Board]`. */
+export interface ShuffleNode {
+  type: 'shuffle'
+  sourceLine: number
+  list: string
+}
+
+/** `[take: Cell = first of Queue]`, `last of`. */
+export interface TakeNode {
+  type: 'take'
+  sourceLine: number
+  into: string
+  end: 'first' | 'last'
+  list: string
+}
+
 /** A bound of a number asked for: a number written, or what a counter holds when it is asked. */
 export type AskBound = { type: 'amount'; amount: number } | { type: 'counter'; counter: string }
 
@@ -212,7 +247,7 @@ export interface PlayNode {
   scene: string
 }
 
-export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | AddNode | AskNode | AskNumberNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
+export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | AddNode | ListAddNode | ShuffleNode | TakeNode | GridNode | AskNode | AskNumberNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
 
 /**
  * `[decision: Confession = Accept | Refuse]`, or `[decision multi: …]` when several values can hold at
@@ -298,6 +333,10 @@ export type ImportProblemCode =
   | 'clockReadOnly'
   | 'tagValueNotHere'
   | 'invalidSharedPictures'
+  | 'invalidList'
+  | 'unknownList'
+  | 'invalidTake'
+  | 'invalidGrid'
   | 'tagValueNeedsDecision'
   | 'duplicateCounter'
   | 'counterNamedLikeDecision'
@@ -345,6 +384,8 @@ export interface ImportResult {
   scenes: ImportedChapter[]
   /** `[shown: Bag, Trust]`, `[shown after an ending: …]`: what players may see, `endings reached` among the names for the endings. */
   shown: ShownDeclaration[]
+  /** `[list: Board = 16 × none]`: lists, with what they hold at first. */
+  lists?: { sourceLine: number; name: string; items: string[] }[]
   /** `[character: card1 = card]`: a character showing another's pictures. */
   sharedPictures?: { sourceLine: number; name: string; from: string }[]
   problems: ImportProblem[]

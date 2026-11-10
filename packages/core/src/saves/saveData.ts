@@ -1,4 +1,5 @@
 import { savedAmount, unitsFromSaved } from '../format/counterNumbers'
+import { listsOf } from '../format/lists'
 import { normalizeName } from '../importer/storyNodes'
 import { givenName, withValues } from '../format/textValues'
 import { valuesReader } from '../runtime/storyValues'
@@ -28,6 +29,8 @@ export interface SaveData {
   counters?: Record<string, number>
   /** Asked name → the name the player gave, for those given so far; absent when none was. */
   names?: Record<string, string>
+  /** List name → what it holds, for those changed so far. Since 3.0. */
+  lists?: Record<string, string[]>
   /** Where the draws of `random` stand; absent from saves of games that never draw. */
   seed?: number
   /** The stage when it was saved, a small JPEG as a data URL, for the list of saves; absent when it could not be drawn. */
@@ -66,6 +69,10 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
     // The clock's counters are read again when the game resumes: a save keeps none.
     return counter === undefined || counter.clock !== undefined ? [] : [[counter.name, savedAmount(count, counter)] as const]
   })
+  const listEntries = Object.entries(state.lists ?? {}).flatMap(([listId, items]) => {
+    const list = listsOf(project).find(candidate => candidate.id === listId)
+    return list === undefined ? [] : [[list.name, [...items]] as [string, string[]]]
+  })
   const names = Object.entries(state.names).flatMap(([askedNameId, given]) => {
     const asked = project.askedNames.find(candidate => candidate.id === askedNameId)
     return asked === undefined ? [] : [[asked.name, given] as const]
@@ -91,6 +98,7 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
     })),
     ...(counters.length === 0 ? {} : { counters: Object.fromEntries(counters) }),
     ...(names.length === 0 ? {} : { names: Object.fromEntries(names) }),
+    ...(listEntries.length === 0 ? {} : { lists: Object.fromEntries(listEntries) }),
     ...(drawsNumbers(story.chapters) ? { seed: state.seed } : {}),
     // A game of several languages is played in one, which `projectIn` made the story's locale.
     ...(story.project.languages.length > 1 ? { language: story.project.locale } : {}),
@@ -174,6 +182,12 @@ export function stateFromSave(story: PlayableStory, save: SaveData): RuntimeStat
     decisions: decisions satisfies DecisionState,
     counters: counters satisfies CounterState,
     names: names satisfies NameState,
+    ...(save.lists === undefined ? {} : {
+      lists: Object.fromEntries(Object.entries(save.lists).flatMap(([listName, items]) => {
+        const list = listsOf(project).find(candidate => normalizeName(candidate.name) === normalizeName(listName))
+        return list === undefined ? [] : [[list.id, items] as const]
+      })),
+    }),
     seed: save.seed ?? newSeed(),
     stage: {
       ...EMPTY_STAGE,
@@ -209,6 +223,7 @@ export function parseSave(value: unknown): SaveData | null {
     && isRecord(decisions) && Object.values(decisions).every(values => Array.isArray(values) && values.every(isString))
     && (value.counters === undefined || (isRecord(value.counters) && Object.values(value.counters).every(count => typeof count === 'number' && Number.isFinite(count) && Math.abs(count) < 1e15)))
     && (value.names === undefined || (isRecord(value.names) && Object.values(value.names).every(isString)))
+    && (value.lists === undefined || (isRecord(value.lists) && Object.values(value.lists).every(items => Array.isArray(items) && items.length <= 10_000 && items.every(isString))))
     && (value.seed === undefined || (Number.isSafeInteger(value.seed) && (value.seed as number) >= 0))
     && (value.language === undefined || (typeof value.language === 'string' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8}){0,3}$/.test(value.language)))
     && (value.picture === undefined || (isString(value.picture) && value.picture.length <= MAXIMUM_PICTURE_LENGTH && value.picture.startsWith('data:image/jpeg;base64,')))

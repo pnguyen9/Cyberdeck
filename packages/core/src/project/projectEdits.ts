@@ -108,6 +108,10 @@ export function refersOnlyToKnownDefinitions(chapter: ChapterDocument, project: 
         return counterIds.has(node.counterId)
       case 'copy':
         return valueIds.has(node.decisionId) && valueIds.has(node.fromDecisionId)
+      case 'list':
+      case 'take':
+      case 'grid':
+        return (project.lists ?? []).some(list => list.id === node.listId)
       case 'draw':
         return valueIds.has(node.decisionId) && (node.notInDecisionId === null || valueIds.has(node.notInDecisionId))
       case 'askNumber':
@@ -144,6 +148,7 @@ export function knownNamesFor(project: ProjectDocument, documents: readonly Chap
       decisions: project.decisions.map(decision => ({ name: decision.name, values: decision.values.map(value => value.name), declaredIn: '' })),
       counters: project.counters.map(counter => ({ name: counter.name, declaredIn: '', ...(counter.decimals === undefined ? {} : { decimals: counter.decimals }), ...(counter.clock === undefined ? {} : { clock: true }) })),
       askedNames: project.askedNames.map(asked => asked.name),
+      lists: (project.lists ?? []).map(list => list.name),
       endings,
       memories,
       styles: project.styles.map(style => style.name),
@@ -177,6 +182,7 @@ export function knownNamesFor(project: ProjectDocument, documents: readonly Chap
     }),
     counters: project.counters.map(counter => ({ name: counter.name, declaredIn: declaredIn('counter', counter.id), ...(counter.implicit === true ? { implicit: true } : {}), ...(counter.decimals === undefined ? {} : { decimals: counter.decimals }), ...(counter.clock === undefined ? {} : { clock: true }) })),
     askedNames: project.askedNames.map(asked => asked.name),
+    lists: (project.lists ?? []).map(list => list.name),
     endings,
     memories,
     styles: project.styles.map(style => ({ name: style.name, declaredIn: declaredIn('style', style.id), ...(style.implicit === true ? { implicit: true } : {}) })),

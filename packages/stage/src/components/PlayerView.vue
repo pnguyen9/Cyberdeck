@@ -55,6 +55,7 @@ import { STAGE_HEIGHT, STAGE_WIDTH } from '../textboxLayout'
 import BacklogPanel, { type BacklogLine } from './BacklogPanel.vue'
 import JournalPanel from './JournalPanel.vue'
 import ChoiceMenu from './ChoiceMenu.vue'
+import GridMenu from './GridMenu.vue'
 import SaveLoadPanel, { type SlotSummary } from './SaveLoadPanel.vue'
 import SettingsPanel from './SettingsPanel.vue'
 import StatePanel from './StatePanel.vue'
@@ -130,6 +131,8 @@ let lastWheelTime = Number.NEGATIVE_INFINITY
 
 const page = computed(() => snapshot.value.step.type === 'page' ? snapshot.value.step.page : null)
 const choice = computed(() => snapshot.value.step.type === 'choice' ? snapshot.value.step.choice : null)
+/** A grid of picture buttons, with what its list holds at each place. */
+const grid = computed(() => snapshot.value.step.type === 'grid' ? snapshot.value.step : null)
 /** The name the player is asked for, with what stands in for it. */
 const asked = computed(() => {
   const step = snapshot.value.step
@@ -947,6 +950,11 @@ function timeRunsOut() {
   }
 }
 
+/** A tile of the grid picked: its counter takes its number. */
+function pickCell(number: number) {
+  playForward(() => runtime.pickCell(number))
+}
+
 function choose(optionId: string) {
   pendingOption = currentPointKey === null ? null : { pointKey: currentPointKey, optionId }
   playForward(() => runtime.choose(optionId))
@@ -1231,6 +1239,7 @@ onUnmounted(() => {
         :plate-color="pagePlate.color"
       />
       <ChoiceMenu v-if="choice !== null && isHudShown" :key="choice.id" :choice="choice" :time="choiceTime" @choose="choose" />
+      <GridMenu v-if="grid !== null && isHudShown" :key="grid.grid.id" :grid="grid.grid" :items="grid.items" :catalog="catalog" :start="snapshot.counters[grid.grid.counterId] ?? 1" @pick="pickCell" />
       <form v-if="asked !== null && isHudShown" class="ask" @click.stop @submit.prevent="answer">
         <label class="ask-label" for="asked-name">{{ asked.name }}</label>
         <input

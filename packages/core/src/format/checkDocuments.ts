@@ -5,6 +5,8 @@ import {
   type ClockValue,
   type ChapterDocument,
   type InlineStageCommand,
+  type ListPlace,
+  type ListValue,
   type Placement,
   type ProjectDocument,
   type StageCommand,
@@ -204,6 +206,12 @@ function condition(value: unknown, path: string, depth: number): StoredCondition
     const compared = object({ type: oneOf('counter'), counterId: string, operator: oneOf('=', '!=', '<', '<=', '>', '>='), amount: integer })(value, path)
     return fields.otherCounterId === undefined ? compared : { ...compared, otherCounterId: string(fields.otherCounterId, `${path}.otherCounterId`) }
   }
+  if (fields.type === 'listItem') {
+    return { type: 'listItem', listId: string(fields.listId, `${path}.listId`), place: listPlace(fields.place, `${path}.place`), value: listValue(fields.value, `${path}.value`), negated: boolean(fields.negated, `${path}.negated`) }
+  }
+  if (fields.type === 'listSize') {
+    return object({ type: oneOf('listSize'), listId: string, operator: oneOf('=', '!=', '<', '<=', '>', '>='), amount: integer })(value, path)
+  }
   if (fields.type === 'and' || fields.type === 'or') {
     const conditions = Array.isArray(fields.conditions) ? fields.conditions : fail(`${path}.conditions`, 'a list')
     return { type: fields.type, conditions: conditions.map((part, index) => condition(part, `${path}.conditions[${index}]`, depth + 1)) }
@@ -252,6 +260,34 @@ function node(value: unknown, path: string, depth: number): StoredNode {
     }
     case 'ask':
       return object({ type: oneOf('ask'), id: string, askedNameId: string })(value, path)
+    case 'list': {
+      const change = record(fields.change, `${path}.change`)
+      const id = string(fields.id, `${path}.id`)
+      const listId = string(fields.listId, `${path}.listId`)
+      switch (change.type) {
+        case 'set':
+          return { type: 'list', id, listId, change: { type: 'set', place: listPlace(change.place, `${path}.change.place`), value: listValue(change.value, `${path}.change.value`) } }
+        case 'add':
+          return { type: 'list', id, listId, change: { type: 'add', value: listValue(change.value, `${path}.change.value`) } }
+        case 'shuffle':
+        case 'clear':
+          return { type: 'list', id, listId, change: { type: change.type } }
+        default:
+          return fail(`${path}.change.type`, 'set, add, shuffle or clear')
+      }
+    }
+    case 'grid':
+      return object({ type: oneOf('grid'), id: string, counterId: string, columns: integer, rows: integer, listId: string, characterId: nullable(string) })(value, path)
+    case 'take': {
+      const into = record(fields.into, `${path}.into`)
+      return {
+        type: 'take',
+        id: string(fields.id, `${path}.id`),
+        listId: string(fields.listId, `${path}.listId`),
+        end: oneOf('first', 'last')(fields.end, `${path}.end`),
+        into: into.type === 'decision' ? { type: 'decision', decisionId: string(into.decisionId, `${path}.into.decisionId`) } : { type: 'counter', counterId: string(into.counterId, `${path}.into.counterId`) },
+      }
+    }
     case 'copy':
       return object({ type: oneOf('copy'), id: string, decisionId: string, fromDecisionId: string })(value, path)
     case 'draw':
@@ -267,6 +303,10 @@ function node(value: unknown, path: string, depth: number): StoredNode {
       if (fields.from !== undefined) {
         const from = record(fields.from, `${path}.from`)
         count.from = { counterId: string(from.counterId, `${path}.from.counterId`), factor: finiteNumber(from.factor, `${path}.from.factor`) }
+      }
+      if (fields.fromItem !== undefined) {
+        const fromItem = record(fields.fromItem, `${path}.fromItem`)
+        count.fromItem = { listId: string(fromItem.listId, `${path}.fromItem.listId`), place: listPlace(fromItem.place, `${path}.fromItem.place`) }
       }
       if (count.operation === 'random') {
         const maximum = integer(fields.maximum, `${path}.maximum`)
@@ -343,8 +383,37 @@ export const MAXIMUM_CSS_LENGTH = 200_000
 /** Longer, the CSS is left out rather than the whole project or game refused: the story still plays, plainer. */
 const css: Check<string> = (value, path) => string(value, path).length <= MAXIMUM_CSS_LENGTH ? value as string : ''
 
-export const checkProjectDocument: Check<ProjectDocument> = (value, path) =>
-  checkProjectFields(typeof value === 'object' && value !== null && !Array.isArray(value) ? { ...LATER_PROJECT_FIELDS, ...value } : value, path)
+export const checkProjectDocument: Check<ProjectDocument> = (value, path) => {
+  const project = checkProjectFields(typeof value === 'object' && value !== null && !Array.isArray(value) ? { ...LATER_PROJECT_FIELDS, ...value } : value, path)
+  // Lists, since 3.0: kept only by projects that have some.
+  const lists = record(value, path).lists
+  return lists === undefined ? project : { ...project, lists: array(object({ id: string, name: string, initial: array(string) }))(lists, `${path}.lists`) }
+}
+
+/** A place in a list: a number from 1, or a counter. */
+const listPlace: Check<ListPlace> = (value, path) => {
+  const fields = record(value, path)
+  return fields.type === 'number' ? { type: 'number', number: integer(fields.number, `${path}.number`) }
+    : fields.type === 'counter' ? { type: 'counter', counterId: string(fields.counterId, `${path}.counterId`) }
+      : fail(`${path}.type`, 'number or counter')
+}
+
+/** A value given to or tested in a list. */
+const listValue: Check<ListValue> = (value, path) => {
+  const fields = record(value, path)
+  switch (fields.type) {
+    case 'text':
+      return { type: 'text', text: string(fields.text, `${path}.text`) }
+    case 'decision':
+      return { type: 'decision', decisionId: string(fields.decisionId, `${path}.decisionId`) }
+    case 'counter':
+      return { type: 'counter', counterId: string(fields.counterId, `${path}.counterId`) }
+    case 'item':
+      return { type: 'item', listId: string(fields.listId, `${path}.listId`), place: listPlace(fields.place, `${path}.place`) }
+    default:
+      return fail(`${path}.type`, 'text, decision, counter or item')
+  }
+}
 
 const checkProjectFields: Check<ProjectDocument> = object({
   formatVersion,

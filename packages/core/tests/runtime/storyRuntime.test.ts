@@ -38,6 +38,9 @@ function playThrough(lines: string[], optionTexts: string[] = []): string[] {
     } else if (step.type === 'askNumber') {
       shown.push(`? ${step.ask.counterId}`)
       runtime.answerNumber(null)
+    } else if (step.type === 'grid') {
+      shown.push(`# ${step.grid.counterId}`)
+      runtime.pickCell(Number(remainingOptions.shift() ?? 1))
     } else {
       const optionText = remainingOptions.shift()
       const option = step.choice.options.find(candidate => candidate.text === optionText)

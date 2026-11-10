@@ -9,6 +9,8 @@ export interface StageCatalog {
   drawnFacing: (characterId: string) => Facing | null
   expressionName: (characterId: string, expressionId: string) => string
   expressionUrl: (characterId: string, expressionId: string) => string | null
+  /** The file of a character's picture of that name, a grid's tile: null when it has none. */
+  expressionUrlByName: (characterId: string, name: string) => string | null
   musicName: (musicId: string) => string
   musicUrl: (musicId: string) => string | null
   soundUrl: (soundId: string) => string | null
@@ -44,6 +46,11 @@ export function createStageCatalog(story: PlayableStory): StageCatalog {
     drawnFacing: characterId => characters.get(characterId)?.drawnFacing ?? null,
     expressionName: (characterId, expressionId) => expressionOf(characterId, expressionId)?.name ?? '',
     expressionUrl: (characterId, expressionId) => urlOf(expressionAssetId(project.characters, characters.get(characterId), expressionOf(characterId, expressionId))),
+    expressionUrlByName: (characterId, name) => {
+      const character = characters.get(characterId)
+      const wanted = name.trim().toLowerCase()
+      return urlOf(expressionAssetId(project.characters, character, character?.expressions.find(expression => expression.name.trim().toLowerCase() === wanted)))
+    },
     musicName: musicId => music.get(musicId)?.name ?? '',
     musicUrl: musicId => urlOf(music.get(musicId)?.assetId),
     soundUrl: soundId => urlOf(sounds.get(soundId)?.assetId),

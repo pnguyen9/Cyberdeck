@@ -12,6 +12,9 @@ import {
   CLOCK_COUNTERS,
   type ChapterDocument,
   type Counter,
+  type ListPlace,
+  type ListValue,
+  type StoryList,
   type Decision,
   type Ending,
   type DecisionValue,
@@ -28,6 +31,7 @@ import {
 } from './storyFormat'
 import { readStyleProperty, type StyleProperty } from './textStyles'
 import { placeholdersIn } from './textValues'
+import { splitListPlace } from './lists'
 import { valueNamedIn } from './valueTags'
 
 export interface StoredImport {
@@ -81,12 +85,32 @@ export function storeImport(
       counters.use(node.counter)
     } else if (node.type === 'askNumber') {
       counters.use(node.counter, node.decimals)
+    } else if (node.type === 'grid') {
+      counters.use(node.counter)
     }
   }
   // A clock's counter shown in the text, `{hour}`, is made as one tested would be.
   for (const node of importedNodes) {
     const texts = node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : []
     texts.flatMap(placeholdersIn).forEach(name => counters.get(name))
+  }
+  const lists = new ListRegistry(project.lists ?? [], environment)
+  for (const declaration of result.lists ?? []) {
+    lists.declare(declaration.name, declaration.items)
+  }
+  /** A place of a list as written: a number, or a counter's name. */
+  const listPlace = (written: string): ListPlace => /^\d+$/.test(written.trim()) ? { type: 'number', number: Number(written.trim()) } : { type: 'counter', counterId: counters.find(written).id }
+  /** A value as written: itself, or in braces what a place, a decision or a counter holds. */
+  const listValue = (written: string): ListValue => {
+    const braced = valueNamedIn(written)
+    if (braced === null) {
+      return { type: 'text', text: written.trim() }
+    }
+    const placed = splitListPlace(braced, lists.names())
+    if (placed !== null) {
+      return { type: 'item', listId: lists.find(placed.list).id, place: listPlace(placed.place) }
+    }
+    return decisions.has(braced) ? { type: 'decision', decisionId: decisions.find(braced).id } : { type: 'counter', counterId: counters.find(braced).id }
   }
   const askedNames = new AskedNameRegistry(project.askedNames, environment)
   for (const node of importedNodes) {
@@ -99,6 +123,24 @@ export function storeImport(
   const registry = new StageRegistry(project, environment, name => decisions.has(name) ? decisions.find(name) : undefined)
   for (const shared of result.sharedPictures ?? []) {
     registry.sharePictures(shared.name, shared.from)
+  }
+  // A grid's tiles show the pictures of a character named like the values its list may hold: what
+  // lists hold at first, what the story writes in them, and every value of a decision it copies there.
+  const gridCharacters = importedNodes.flatMap(node => node.type === 'grid' && node.character !== null ? [node.character] : [])
+  if (gridCharacters.length > 0) {
+    const written = importedNodes.flatMap(node => node.type === 'listAdd' ? [node.value] : node.type === 'set' && splitListPlace(node.decision, lists.names()) !== null ? [node.value] : [])
+    const tileNames = new Set([
+      ...lists.all().flatMap(list => list.initial),
+      ...written.filter(value => valueNamedIn(value) === null).map(value => value.trim()),
+      ...written.flatMap(value => {
+        const braced = valueNamedIn(value)
+        return braced !== null && decisions.has(braced) ? decisions.find(braced).values.map(decisionValue => decisionValue.name) : []
+      }),
+    ].filter(name => name !== ''))
+    for (const characterName of gridCharacters) {
+      const character = registry.character(characterName)
+      tileNames.forEach(name => registry.expression(character, name))
+    }
   }
   const toCommand = (directive: Directive) => {
     const instruction = interpretStageDirective(directive, registry.vocabulary())
@@ -122,7 +164,7 @@ export function storeImport(
 
   const endings = new NameRegistry(project.endings, environment)
   const memories = new NameRegistry(project.memories, environment)
-  const toCondition = (condition: Condition) => storeCondition(condition, decisions, counters, endings, memories)
+  const toCondition = (condition: Condition) => storeCondition(condition, decisions, counters, endings, memories, { lists, listPlace, listValue })
   const styles = new StyleRegistry(project.styles, result.styles, environment, new Set(checkAuthorCss(project.css).classes))
   // Plays may name scenes written further down: every scene has its identifier before any node is stored.
   const sceneIds = new Map(knownScenes.map(scene => [normalizeName(scene.name), scene.id]))
@@ -187,9 +229,18 @@ export function storeImport(
         return { type: 'play', id, sceneId }
       }
       case 'set': {
+        // `[set: Board 3 = cat]`: a place of a list.
+        const placed = splitListPlace(node.decision, lists.names())
+        if (placed !== null) {
+          return { type: 'list', id, listId: lists.find(placed.list).id, change: { type: 'set', place: listPlace(placed.place), value: listValue(node.value) } }
+        }
         const counter = counters.get(node.decision)
         if (counter !== undefined) {
           const copied = readCounterValue(node.value)
+          const fromPlace = copied === null ? null : splitListPlace(copied.counter, lists.names())
+          if (fromPlace !== null) {
+            return { type: 'count', id, counterId: counter.id, operation: 'set', amount: 0, fromItem: { listId: lists.find(fromPlace.list).id, place: listPlace(fromPlace.place) } }
+          }
           if (copied !== null) {
             return { type: 'count', id, counterId: counter.id, operation: 'set', amount: 0, from: { counterId: counters.find(copied.counter).id, factor: copied.factor } }
           }
@@ -211,6 +262,28 @@ export function storeImport(
       }
       case 'ask':
         return { type: 'ask', id, askedNameId: askedNames.find(node.name).id }
+      case 'grid':
+        return {
+          type: 'grid',
+          id,
+          counterId: counters.find(node.counter).id,
+          columns: node.columns,
+          rows: node.rows,
+          listId: lists.find(node.list).id,
+          characterId: node.character === null ? null : registry.character(node.character).id,
+        }
+      case 'listAdd':
+        return { type: 'list', id, listId: lists.find(node.list).id, change: { type: 'add', value: listValue(node.value) } }
+      case 'shuffle':
+        return { type: 'list', id, listId: lists.find(node.list).id, change: { type: 'shuffle' } }
+      case 'take':
+        return {
+          type: 'take',
+          id,
+          listId: lists.find(node.list).id,
+          end: node.end,
+          into: decisions.has(node.into) ? { type: 'decision', decisionId: decisions.find(node.into).id } : { type: 'counter', counterId: counters.find(node.into).id },
+        }
       case 'askNumber': {
         const counter = counters.find(node.counter)
         const bound = (written: AskBound | null): StoredAskBound | null => written === null ? null
@@ -225,6 +298,9 @@ export function storeImport(
         return { type: 'count', id, counterId: counter.id, operation: 'add', amount: unitsOf(node.amount, counter) }
       }
       case 'unset': {
+        if (lists.get(node.decision) !== undefined) {
+          return { type: 'list', id, listId: lists.find(node.decision).id, change: { type: 'clear' } }
+        }
         const decision = decisions.find(node.decision)
         return { type: 'unset', id, decisionId: decision.id, valueId: node.value === null ? null : decisions.findValue(decision, node.value).id }
       }
@@ -268,6 +344,7 @@ export function storeImport(
       ...project,
       decisions: decisions.all(),
       counters: counters.all(),
+      ...(lists.all().length === 0 ? {} : { lists: lists.all() }),
       shown: shownWith(project.shown, result.shown, decisions.all(), counters.all()),
       askedNames: askedNames.all(),
       endings: withEndingNames(endings.all(), importedNodes, language),
@@ -553,9 +630,24 @@ class NameRegistry {
   }
 }
 
-function storeCondition(condition: Condition, decisions: DecisionRegistry, counters: CounterRegistry, endings: NameRegistry, memories: NameRegistry): StoredCondition {
+/** How a condition reads lists: their registry, and places and values as written. */
+interface ListReading {
+  lists: ListRegistry
+  listPlace: (written: string) => ListPlace
+  listValue: (written: string) => ListValue
+}
+
+function storeCondition(condition: Condition, decisions: DecisionRegistry, counters: CounterRegistry, endings: NameRegistry, memories: NameRegistry, reading: ListReading): StoredCondition {
   switch (condition.type) {
     case 'is': {
+      const placed = splitListPlace(condition.decision, reading.lists.names())
+      if (placed !== null && normalizeName(placed.place) === 'size') {
+        const amount = readAmount(condition.value) ?? 0
+        return { type: 'listSize', listId: reading.lists.find(placed.list).id, operator: condition.negated ? '!=' : '=', amount }
+      }
+      if (placed !== null) {
+        return { type: 'listItem', listId: reading.lists.find(placed.list).id, place: reading.listPlace(placed.place), value: reading.listValue(condition.value), negated: condition.negated }
+      }
       const counter = counters.get(condition.decision)
       if (counter !== undefined) {
         const other = valueNamedIn(condition.value)
@@ -568,6 +660,10 @@ function storeCondition(condition: Condition, decisions: DecisionRegistry, count
       return { type: 'is', decisionId: decision.id, valueId: decisions.findValue(decision, condition.value).id, negated: condition.negated }
     }
     case 'compare': {
+      const sized = splitListPlace(condition.counter, reading.lists.names())
+      if (sized !== null && normalizeName(sized.place) === 'size') {
+        return { type: 'listSize', listId: reading.lists.find(sized.list).id, operator: condition.operator, amount: condition.amount }
+      }
       const counter = counters.find(condition.counter)
       if (condition.other !== undefined) {
         return { type: 'counter', counterId: counter.id, operator: condition.operator, amount: 0, otherCounterId: counters.find(condition.other).id }
@@ -580,8 +676,48 @@ function storeCondition(condition: Condition, decisions: DecisionRegistry, count
       return { type: 'endingSeen', endingId: endings.idOf(condition.ending), negated: condition.negated }
     case 'and':
     case 'or':
-      return { type: condition.type, conditions: condition.conditions.map(part => storeCondition(part, decisions, counters, endings, memories)) }
+      return { type: condition.type, conditions: condition.conditions.map(part => storeCondition(part, decisions, counters, endings, memories, reading)) }
     case 'invalid':
       throw new Error(`Invalid condition "${condition.text}": the import reported it as an error`)
+  }
+}
+
+/** The project's lists plus those the import declares, looked up by name ignoring case. */
+class ListRegistry {
+  private readonly lists: StoryList[]
+
+  constructor(existing: readonly StoryList[], private readonly environment: Environment) {
+    this.lists = [...existing]
+  }
+
+  /** A declaration: makes the list, or gives one declared again what it starts with, keeping its identifier. */
+  declare(name: string, initial: string[]) {
+    const existing = this.get(name)
+    const list: StoryList = { id: existing?.id ?? this.environment.createId(), name, initial }
+    if (existing === undefined) {
+      this.lists.push(list)
+    } else {
+      this.lists[this.lists.indexOf(existing)] = list
+    }
+  }
+
+  get(name: string): StoryList | undefined {
+    return this.lists.find(candidate => normalizeName(candidate.name) === normalizeName(name))
+  }
+
+  find(name: string): StoryList {
+    const list = this.get(name)
+    if (list === undefined) {
+      throw new Error(`Unknown list "${name}": check the import with checkReferences before storing it`)
+    }
+    return list
+  }
+
+  names(): string[] {
+    return this.lists.map(list => list.name)
+  }
+
+  all(): StoryList[] {
+    return this.lists
   }
 }

@@ -253,7 +253,7 @@ describe('game archives', () => {
         manifest.archiveFormat = 2
       }))).toBe('This game was made for a newer Datajack: download the latest one')
       expect(await refusal((files, game) => changeJson(files, chapterPath(game.one.id), chapter => {
-        chapter.formatVersion = '2.2'
+        chapter.formatVersion = '3.1'
       }))).toMatch(/chapter\.json is invalid: chapter\.formatVersion: expected a format version this player reads$/)
     })
 
@@ -291,7 +291,7 @@ describe('game archives', () => {
         manifest.archiveFormat = 2
       }))).toEqual({ code: 'newerPlayer' })
       expect(await problemOf((files, game) => changeJson(files, chapterPath(game.one.id), chapter => {
-        chapter.formatVersion = '2.2'
+        chapter.formatVersion = '3.1'
       }))).toMatchObject({ code: 'newerFormat', path: chapterPath(buildGame().one.id), detail: 'chapter.formatVersion: expected a format version this player reads' })
       expect(await problemOf(files => changeJson(files, MANIFEST_PATH, manifest => {
         manifest.project.id = '../escape'
@@ -345,7 +345,7 @@ describe('checkChapterDocument', () => {
   })
 
   it('refuses documents from a newer minor version, which may hold nodes this player does not know', () => {
-    expect(() => checkChapterDocument({ formatVersion: '2.2', id: 'chapter', title: null, nodes: [], createdAt: '', updatedAt: '' }, 'chapter'))
+    expect(() => checkChapterDocument({ formatVersion: '3.1', id: 'chapter', title: null, nodes: [], createdAt: '', updatedAt: '' }, 'chapter'))
       .toThrow('chapter.formatVersion: expected a format version this player reads')
   })
 })
