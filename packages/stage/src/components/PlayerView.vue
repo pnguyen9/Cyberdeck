@@ -34,6 +34,7 @@ import {
   styleClassName,
   StoryRuntime,
   toSave,
+  splitAtFirstWait,
   waitMillisecondsOf,
   EFFECT_DEFAULTS,
   MAXIMUM_ASKED_NAME_LENGTH,
@@ -47,6 +48,7 @@ import {
   type ProgressData,
   type RestoreOutcome,
   type SaveData,
+  type StageCommand,
   type StoredPage,
   type HeldChange,
 } from '@cyberdeck/core'
@@ -778,14 +780,27 @@ function startTyping() {
   if (playingVideo.value !== null) {
     return
   }
-  const delayMilliseconds = (page.value?.commandsBefore ?? []).reduce((total, command) => total + waitMillisecondsOf(command, runtime.context), 0)
+  const delayMilliseconds = splitAtFirstWait(page.value?.commandsBefore ?? []).untilWait.reduce((total, command) => total + waitMillisecondsOf(command, runtime.context), 0)
   const type = settings.value.textSpeed === 0 ? showWholePage : typeNextCharacter
   if (delayMilliseconds > 0) {
-    typingTimer = setTimeout(type, delayMilliseconds)
+    typingTimer = setTimeout(() => playHeldBackThen(type), delayMilliseconds)
   } else {
-    type()
+    playHeldBackThen(type)
   }
   continueSkipping()
+}
+
+/** Plays the tags a `[wait]` held back before the text, each wait in turn, then goes on. */
+function playHeldBackThen(next: () => void) {
+  if (!runtime.hasCommandsWaiting(0)) {
+    next()
+    return
+  }
+  let reachedCommands: StageCommand[] = []
+  act(() => {
+    reachedCommands = runtime.reachOffset(0, true)
+  })
+  typingTimer = setTimeout(() => playHeldBackThen(next), reachedCommands.reduce((total, command) => total + waitMillisecondsOf(command, runtime.context), 0))
 }
 
 /** Passes the page if it was read before; new text, a choice or the end stops skipping. */
@@ -825,9 +840,9 @@ function typeNextCharacter() {
   if (text === undefined) {
     return
   }
-  let reachedCommands: ReturnType<StoryRuntime['reachOffset']> = []
+  let reachedCommands: StageCommand[] = []
   act(() => {
-    reachedCommands = runtime.reachOffset(visibleLength.value)
+    reachedCommands = runtime.reachOffset(visibleLength.value, true)
   })
   // A video reached in the text holds it back until it ends.
   if (visibleLength.value >= text.length || playingVideo.value !== null) {
@@ -835,6 +850,11 @@ function typeNextCharacter() {
   }
 
   const waitMilliseconds = reachedCommands.reduce((total, command) => total + waitMillisecondsOf(command, runtime.context), 0)
+  // Tags written after a `[wait]` at this point play once it is over, before the text goes on.
+  if (runtime.hasCommandsWaiting(visibleLength.value)) {
+    typingTimer = setTimeout(typeNextCharacter, waitMilliseconds)
+    return
+  }
   typingTimer = setTimeout(() => {
     visibleLength.value++
     typeNextCharacter()

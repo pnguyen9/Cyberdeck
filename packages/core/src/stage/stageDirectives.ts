@@ -1,4 +1,4 @@
-import type { AnimationKind, Depth, Facing, FadeColor, FlashColor, ShakeStrength, TintName } from '../format/storyFormat'
+import type { AnimationKind, Depth, Facing, FadeColor, FlashColor, PictureTurn, ShakeStrength, TintName } from '../format/storyFormat'
 import type { Directive } from '../importer/importTypes'
 import { CONTROL_DIRECTIVE_NAMES } from '../importer/readControl'
 import { normalizeName } from '../importer/storyNodes'
@@ -17,7 +17,7 @@ export type StageInstruction =
   | { type: 'enter'; character: string; position: PositionWord | null; facing: Facing | null; depth: Depth | null; expression: string | null; animation: AnimationWords }
   | { type: 'exit'; character: string; animation: AnimationWords }
   | { type: 'move'; character: string; position: PositionWord | null; depth: Depth | null; animation: AnimationWords }
-  | { type: 'expression'; character: string; expression: string }
+  | { type: 'expression'; character: string; expression: string; turn: PictureTurn | null }
   | { type: 'wait'; seconds: number }
   | { type: 'shake'; strength: ShakeStrength; durationMs: number | null }
   | { type: 'flash'; color: FlashColor; durationMs: number | null }
@@ -83,6 +83,16 @@ export const ANIMATIONS_BY_DIRECTIVE: Readonly<Record<'enter' | 'exit' | 'move',
 const ALL_ANIMATIONS = new Set<string>([...ANIMATIONS_BY_DIRECTIVE.enter, ...ANIMATIONS_BY_DIRECTIVE.exit])
 
 const DEFAULT_WAIT_SECONDS = 0.5
+/** How long a picture takes to turn over when the tag does not say. */
+export const DEFAULT_TURN_MS = 400
+
+/** A turnover as a tag writes it: `flip`, its time unless the usual one, `wait` if the text waits. */
+export function pictureTurnWords(turn: PictureTurn | undefined): string {
+  if (turn === undefined) {
+    return ''
+  }
+  return ['flip', turn.durationMs === DEFAULT_TURN_MS ? '' : `${turn.durationMs / 1000}s`, turn.wait === true ? 'wait' : ''].filter(word => word !== '').join(' ')
+}
 
 /** A word after the character name, sorted into what it sets; `other` words are expressions or mistakes. */
 type ArgumentWord =
@@ -280,8 +290,18 @@ export function interpretStageDirective(directive: Directive, vocabulary: StageV
       const seconds = Number(argumentText)
       return Number.isFinite(seconds) && seconds >= 0 ? { type: 'wait', seconds } : null
     }
-    default:
-      return argumentText === '' ? null : { type: 'expression', character: directive.name, expression: argumentText }
+    default: {
+      if (argumentText === '') {
+        return null
+      }
+      // `[card: {Drawn} flip 0.4s wait]`: the picture turns over; a picture named `flip` alone stays a picture.
+      const turned = /^(.+?)\s+flip(?:\s+(\d+(?:\.\d+)?)(s|ms))?(\s+wait)?$/i.exec(argumentText)
+      if (turned === null) {
+        return { type: 'expression', character: directive.name, expression: argumentText, turn: null }
+      }
+      const durationMs = turned[2] === undefined ? DEFAULT_TURN_MS : Number(turned[2]) * (turned[3]!.toLowerCase() === 's' ? 1000 : 1)
+      return { type: 'expression', character: directive.name, expression: turned[1]!, turn: { durationMs, ...(turned[4] === undefined ? {} : { wait: true as const }) } }
+    }
   }
 }
 

@@ -103,7 +103,7 @@ The classroom was empty.
 | `[enter: marie]` | Marie walks in. The first character stands on the left, the second on the right, the third in the middle. |
 | `[marie: smile]` | Marie changes expression. |
 | `[exit: marie]` | Marie leaves. |
-| `[wait: 0.5]` | The text pauses for half a second. |
+| `[wait: 0.5]` | The text pauses for half a second, and so do the tags after it. |
 
 You never need to declare a character, a background or a track: naming it in the text creates it. If you mistype a word Cyberdeck knows, like `[backgound: …]`, it tells you instead of creating a character called “Backgound”.
 
@@ -303,7 +303,18 @@ Players can give a number too: `[ask number: Bet = 10, from 1 to {Money}]` asks 
 
 Three counters come from the player's clock, with nothing to declare: `hour` (0 to 23), `weekday` (1 for Monday to 7 for Sunday) and `time away`, the minutes since they last played. `[if: hour >= 22 or hour < 6]` can put a character to sleep at night, and `[if: time away > 1440]` greet players back after a day.
 
-A decision's value can choose a picture: with `[decision: Mood = calm | angry]`, `[marie: {Mood}]` shows Marie's *calm* or *angry* picture, whichever Mood holds, with no `[if]`. Counters can count with each other too: `[add: Money -{Bet}]`, `[if: Money >= {Bet}]`. `[set: Mood = random]` draws one of its values, and `[character: twin = marie]` lets a second character show Marie's pictures, without giving it files of its own.
+A decision's value can choose a picture: with `[decision: Mood = calm | angry]`, `[marie: {Mood}]` shows Marie's *calm* or *angry* picture, whichever Mood holds, with no `[if]`. Counters can count with each other too: `[add: Money -{Bet}]`, `[if: Money >= {Bet}]`. `[set: Mood = random]` draws one of its values, and `[character: twin = marie]` lets a second character show Marie's pictures, without giving it files of its own. A card can turn over: `[card: {Drawn} flip]` narrows the old picture to its edge and widens the new one from it.
+
+A picture can move by itself, too: an animated WebP, GIF or PNG plays as it is, each time it is shown. Saved to play once, it stops on its last frame, so a character can fall:
+
+```text
+[kai: falling]
+[wait: 1]
+[kai: lying]
+— Kai: Ow.
+```
+
+`kai-falling.webp` plays the fall; `[wait]` lets it finish before Kai lies still and speaks. This example is in [examples/falling](examples/falling/falling.txt), its three pictures beside it: import the text, then drop the pictures in Cast & files. Prefer WebP to GIF for characters: a GIF's 256 colours and hard-edged transparency show around them. The animation is the file's own, so players who ask for less motion still see it.
 
 For games, a **list** keeps values in numbered places: `[list: Board = 16 × none]`, `[set: Board 3 = cat]`, `{Board 3}`, `[shuffle: Board]`. And `[choice: Cell grid 4 × 4 from Board with tile]` shows a grid of picture buttons, one per place; the one picked gives `Cell` its number. The Pairs and Minesweeper samples are made of these.
 

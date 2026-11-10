@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { effectiveFacing, type ResolvedAnimation, type StageCatalog, type StageState } from '@cyberdeck/core'
 
 const props = defineProps<{ stage: StageState; catalog: StageCatalog }>()
@@ -41,14 +41,46 @@ const DEPTH_STYLES = {
   far: { scale: '0.75', zIndex: 1, filter: 'brightness(0.85)' },
 } as const
 
+/**
+ * Pictures turning over, `[card: {Drawn} flip]`, by character: the old picture narrows to nothing,
+ * then the new one widens from it, each half of the time given.
+ */
+const turnovers = ref<Readonly<Record<string, { expressionId: string; half: 'out' | 'in'; halfMs: number }>>>({})
+const turnoverTimers = new Map<string, ReturnType<typeof setTimeout>>()
+function endTurnover(characterId: string) {
+  const { [characterId]: _, ...others } = turnovers.value
+  turnovers.value = others
+  turnoverTimers.delete(characterId)
+}
+watch(() => props.stage.characters.map(onStage => ({ characterId: onStage.characterId, expressionId: onStage.expressionId, turnMs: onStage.turnMs })), (current, previous) => {
+  for (const { characterId, expressionId, turnMs } of current) {
+    const before = previous?.find(candidate => candidate.characterId === characterId)
+    if (before === undefined || before.expressionId === expressionId || turnMs === undefined || turnMs <= 0) {
+      continue
+    }
+    clearTimeout(turnoverTimers.get(characterId))
+    const halfMs = turnMs / 2
+    turnovers.value = { ...turnovers.value, [characterId]: { expressionId: before.expressionId, half: 'out', halfMs } }
+    turnoverTimers.set(characterId, setTimeout(() => {
+      turnovers.value = { ...turnovers.value, [characterId]: { expressionId, half: 'in', halfMs } }
+      turnoverTimers.set(characterId, setTimeout(() => endTurnover(characterId), halfMs))
+    }, halfMs))
+  }
+})
+onBeforeUnmount(() => turnoverTimers.forEach(timer => clearTimeout(timer)))
+
 const characters = computed(() => props.stage.characters.map(onStage => {
   const facing = effectiveFacing(onStage)
   const drawnFacing = props.catalog.drawnFacing(onStage.characterId)
+  const turnover = turnovers.value[onStage.characterId]
+  const expressionId = turnover?.expressionId ?? onStage.expressionId
   return {
     characterId: onStage.characterId,
     name: props.catalog.characterName(onStage.characterId),
-    expression: props.catalog.expressionName(onStage.characterId, onStage.expressionId),
-    imageUrl: props.catalog.expressionUrl(onStage.characterId, onStage.expressionId),
+    expression: props.catalog.expressionName(onStage.characterId, expressionId),
+    imageUrl: props.catalog.expressionUrl(onStage.characterId, expressionId),
+    turnClass: turnover === undefined ? null : `turning-${turnover.half}`,
+    turnStyle: turnover === undefined ? {} : { '--turn-ms': `${turnover.halfMs}ms` },
     facingArrow: facing === 'left' ? '←' : facing === 'right' ? '→' : '',
     isMirrored: drawnFacing !== null && facing !== null && facing !== drawnFacing,
     style: { left: `${onStage.x}%`, transitionDuration: `${onStage.moveDurationMs}ms`, ...DEPTH_STYLES[onStage.depth] },
@@ -142,19 +174,21 @@ function onLeave(element: Element, done: () => void) {
         :data-character-id="character.characterId"
         :style="character.style"
       >
-        <img
-          v-if="character.imageUrl !== null"
-          class="sprite"
-          :class="{ mirrored: character.isMirrored }"
-          :src="character.imageUrl"
-          :alt="`${character.name}, ${character.expression}`"
-        >
-        <template v-else>
-          <div class="silhouette">
-            <span class="placeholder-label character-label">{{ character.name }} · {{ character.expression }}</span>
-            {{ character.name.charAt(0).toUpperCase() }}<span class="facing">{{ character.facingArrow }}</span>
-          </div>
-        </template>
+        <div class="turn" :class="character.turnClass" :style="character.turnStyle">
+          <img
+            v-if="character.imageUrl !== null"
+            class="sprite"
+            :class="{ mirrored: character.isMirrored }"
+            :src="character.imageUrl"
+            :alt="`${character.name}, ${character.expression}`"
+          >
+          <template v-else>
+            <div class="silhouette">
+              <span class="placeholder-label character-label">{{ character.name }} · {{ character.expression }}</span>
+              {{ character.name.charAt(0).toUpperCase() }}<span class="facing">{{ character.facingArrow }}</span>
+            </div>
+          </template>
+        </div>
       </div>
     </TransitionGroup>
 
@@ -223,6 +257,30 @@ function onLeave(element: Element, done: () => void) {
 
 .mirrored {
   transform: scaleX(-1);
+}
+
+/* A picture turning over: narrowing to its edge, then widening as the new one. */
+.turning-out {
+  animation: turn-out var(--turn-ms) ease-in forwards;
+}
+
+.turning-in {
+  animation: turn-in var(--turn-ms) ease-out;
+}
+
+@keyframes turn-out {
+  to { transform: scaleX(0); }
+}
+
+@keyframes turn-in {
+  from { transform: scaleX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turning-out,
+  .turning-in {
+    animation: none;
+  }
 }
 
 .silhouette {

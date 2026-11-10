@@ -300,7 +300,7 @@ The classroom was empty.
   <tr><td><code>[enter: marie]</code></td><td>Marie walks in. The first character stands on the left, the second on the right, the third in the middle.</td></tr>
   <tr><td><code>[marie: smile]</code></td><td>Marie changes expression.</td></tr>
   <tr><td><code>[exit: marie]</code></td><td>Marie leaves.</td></tr>
-  <tr><td><code>[wait: 0.5]</code></td><td>The text pauses for half a second.</td></tr>
+  <tr><td><code>[wait: 0.5]</code></td><td>The text pauses for half a second, and so do the tags after it.</td></tr>
 </table>
 <p>You never need to declare a character, a background or a track: naming it in the text creates it. If you
 mistype a word Cyberdeck knows, like <code>[backgound: …]</code>, it tells you instead of creating a
@@ -507,7 +507,19 @@ the field tells them what it understood, and what it cannot take.</p>
 <code>[marie: {Mood}]</code> shows Marie's <em>calm</em> or <em>angry</em> picture, whichever Mood holds, with no
 <code>[if]</code>. Counters can count with each other too: <code>[add: Money -{Bet}]</code>,
 <code>[if: Money >= {Bet}]</code>. <code>[set: Mood = random]</code> draws one of its values, and <code>[character: twin = marie]</code>
-lets a second character show Marie's pictures, without giving it files of its own.</p>
+lets a second character show Marie's pictures, without giving it files of its own. A card can turn over:
+<code>[card: {Drawn} flip]</code> narrows the old picture to its edge and widens the new one from it.</p>
+<p>A picture can move by itself, too: an animated WebP, GIF or PNG plays as it is, each time it is
+shown. Saved to play once, it stops on its last frame, so a character can fall:</p>
+<pre><code>[kai: falling]
+[wait: 1]
+[kai: lying]
+— Kai: Ow.</code></pre>
+<p><code>kai-falling.webp</code> plays the fall; <code>[wait]</code> lets it finish before Kai lies still
+and speaks. This example is in <a href="examples/falling/falling.txt">examples/falling</a>, its three
+pictures beside it: import the text, then drop the pictures in Cast &amp; files. Prefer WebP to GIF for
+characters: a GIF's 256 colours and hard-edged transparency show around them. The animation is the
+file's own, so players who ask for less motion still see it.</p>
 <p>For games, a <strong>list</strong> keeps values in numbered places: <code>[list: Board = 16 × none]</code>,
 <code>[set: Board 3 = cat]</code>, <code>{Board 3}</code>, <code>[shuffle: Board]</code>. And
 <code>[choice: Cell grid 4 × 4 from Board with tile]</code> shows a grid of picture buttons, one per place;

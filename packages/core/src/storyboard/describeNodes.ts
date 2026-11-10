@@ -1,5 +1,6 @@
 import { writtenAmount } from '../format/counterNumbers'
 import { valueWritten } from '../format/valueTags'
+import { pictureTurnWords } from '../stage/stageDirectives'
 import { listName, listPlaceText, listValueText } from '../format/lists'
 import type { AnimationSpec, DefinitionKind, Placement, ProjectDocument, StageCommand, StoredAskBound, StoredAskNumber, StoredCondition, StoredCopy, StoredCount, StoredDraw, StoredGrid, StoredListChange, StoredTake } from '../format/storyFormat'
 import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
@@ -63,7 +64,7 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
     case 'move':
       return `move: ${[characterName(command.characterId), command.placement === null ? '' : placementWords(command.placement, project), command.depth ?? '', animationWords(command.animation)].filter(word => word !== '').join(' ')}`
     case 'expression':
-      return `${characterName(command.characterId)}: ${valueWritten(command, project) ?? expressionName(command.characterId, command.expressionId)}`
+      return `${characterName(command.characterId)}: ${[valueWritten(command, project) ?? expressionName(command.characterId, command.expressionId), pictureTurnWords(command.turn)].filter(word => word !== '').join(' ')}`
     case 'wait':
       return `wait: ${command.seconds}`
   }

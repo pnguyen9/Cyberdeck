@@ -18,6 +18,8 @@ export interface CharacterOnStage {
   entrance: ResolvedAnimation
   /** Duration of the glide to the current `x`; 0 to jump. */
   moveDurationMs: number
+  /** Set when the last change of picture turned it over, `flip`: how long that takes. */
+  turnMs?: number
 }
 
 /** How a background appears: `fade`, `black`, `white`; any other name is a cut. */
@@ -159,7 +161,10 @@ export function applyStageCommand(stage: StageState, command: StageCommand, cont
         moveDurationMs: command.animation.kind === 'instant' ? 0 : command.animation.durationMs ?? context.defaults.move.durationMs,
       }))
     case 'expression':
-      return updateCharacter(stage, command.characterId, onStage => ({ ...onStage, expressionId: command.expressionId }))
+      return updateCharacter(stage, command.characterId, onStage => {
+        const { turnMs: _, ...changed } = onStage
+        return { ...changed, expressionId: command.expressionId, ...(command.turn === undefined ? {} : { turnMs: command.turn.durationMs }) }
+      })
     case 'wait':
       return stage
   }
@@ -188,6 +193,8 @@ export function waitMillisecondsOf(command: StageCommand, context: StageContext)
       const animation = resolveAnimation(command.animation, context.defaults[command.type])
       return animation.wait && animation.kind !== 'instant' ? animation.durationMs : 0
     }
+    case 'expression':
+      return command.turn?.wait === true ? command.turn.durationMs : 0
     case 'move':
       return command.animation.wait && command.animation.kind !== 'instant'
         ? command.animation.durationMs ?? context.defaults.move.durationMs

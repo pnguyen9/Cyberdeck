@@ -259,6 +259,11 @@ export function completionAt(text: string, caret: number, vocabulary: TagVocabul
     }
     default: {
       const character = vocabulary.characters.find(candidate => sameName(candidate.name, name))
+      // After the picture, `flip` turns it over, `[card1: {Drawn} flip]`.
+      if (previousWords.length > 0 && !(character?.expressions ?? []).some(expression => startsWith(expression, wholeArgument))) {
+        return completion(wordFrom, (previousWords.at(-1)?.toLowerCase() === 'flip' ? closing(['wait'], details.textWaits) : closing(['flip'], details.turnOver))
+          .filter(item => startsWith(item.label, lastWord)))
+      }
       return completion(wholeFrom, closing(character?.expressions ?? [], details.expression).filter(item => startsWith(item.label, wholeArgument)))
     }
   }

@@ -87,11 +87,6 @@ def back():
         w=CARD_WIDTH - 3, h=CARD_HEIGHT - 3, iw=CARD_WIDTH - 24, ih=CARD_HEIGHT - 24, x2=CARD_WIDTH - 12, y2=CARD_HEIGHT - 12)
 
 
-def edge():
-    """The card turned side on, halfway through a flip: a thin sliver."""
-    return '<rect x="{0}" y="1.5" width="14" height="{1}" rx="5" fill="#e9e3d6" stroke="#bdb6a8" stroke-width="3"/>'.format(CARD_WIDTH / 2 - 7, CARD_HEIGHT - 3)
-
-
 # The player's row stands with its cards' tops at y 410 of the stage, clear of the menu, the dealer's at y 90.
 PLAYER_PICTURE_HEIGHT = 1080 - 410
 DEALER_PICTURE_HEIGHT = 1080 - 90
@@ -222,10 +217,9 @@ def main():
         for rank in RANKS:
             for suit_name in SUITS:
                 (folder / f'{lender}-{rank}-{suit_name}.svg').write_text(tall(face(rank, suit_name), height))
-        # Only the dealer's hidden card is ever face down, and turned over.
+        # Only the dealer's hidden card is ever face down: `flip` turns it over.
         if lender == 'dcard':
             (folder / f'{lender}-back.svg').write_text(tall(back(), height))
-            (folder / f'{lender}-flip.svg').write_text(tall(edge(), height))
     generator = numpy.random.default_rng(21)
     write_sound(folder, 'chips', mix([(index * 0.07, ring(2600 + index * 230, 0.12, 0.03)) for index in range(4)]), loudness=0.45)
     write_sound(folder, 'deal', noise(0.22, 0.07, 1200, 7000, generator), loudness=0.4)

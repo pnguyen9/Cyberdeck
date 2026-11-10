@@ -55,6 +55,7 @@ export {
   type StageState,
 } from './runtime/stageState'
 export {
+  splitAtFirstWait,
   StoryRuntime,
   type BacklogEntry,
   type Cue,

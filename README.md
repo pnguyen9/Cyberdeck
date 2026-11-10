@@ -259,7 +259,8 @@ one per language, of the same shape: another language is one more table each.
 | `[enter: marie facing-left]` | Forces the way a character looks. |
 | `[enter: marie near]`, `[move: marie far]` | Depth: `near` is larger and in front, `far` smaller, behind and a little dimmer, `middle` by default. A move may change the depth alone, the position, or both. Saves keep it. |
 | `[marie: surprised]` | Marie changes expression. Any name that is not a keyword is a character. |
-| `[wait: 0.5]` | Pauses the text, in seconds. |
+| `[card: ace flip]`, `[card: {Drawn} flip 0.6s wait]` | The picture turns over, as a card does: the old one narrows to its edge, the new one widens from it, in 0.4 s unless told; `wait` holds the text until it is done. A picture named `flip` alone is still a picture. Players who ask for less motion see it change at once. Needs Datajack 3.1. |
+| `[wait: 0.5]` | Pauses the text, in seconds, and the tags written after it: `[card: back] [wait: 0.3] [card: ace]` shows the back, then the ace. |
 | `[decision: Confession = Accept \| Refuse]` | Declares a decision and its possible values. Optional: a choice declares its own. |
 | `[decision multi: Clues = Letter \| Key]` | A decision where several values can hold at once. |
 | `[choice: Confession]` then `> Yes = Accept` lines | Offers a choice; the option picked becomes the decision's value. From five options on, they are drawn closer; a list longer than its place above the text box scrolls, its edges fading where more lie beyond, and past eight the import points it out. Without `= Value`, an option's value is its letter: `A`, `B`, `C`… |
@@ -452,7 +453,9 @@ taken for a new character. Images and sounds are then given to these entries by 
 `rooftop.jpg`, `marie-smile.png` (Marie's `smile`), `marie.png` (her `normal`), `calm.mp3`,
 `door.wav`, `opening.webm` and its captions `opening.vtt`, the frames `text-box.png` and
 `name-plate.png`; case, spaces, hyphens and underscores do not matter. An entry without a file shows as
-a placeholder.
+a placeholder. An animated picture (WebP, GIF or PNG) plays as it is, from its start each time it is
+shown; one that plays once stops on its last frame: `docs/guide/examples/falling/` makes a character
+fall that way, its pictures made by `scripts/examples/falling_assets.py`.
 
 A paragraph longer than the textbox is cut into several pages: between sentences first, then
 after `,` `;` `:` or a spaced dash, then between words as a last resort.
@@ -869,6 +872,13 @@ cannot play.
 
 ### 3. Then, in no particular order
 
+- **Upper-body characters**, as most Japanese visual novels draw them: a framing chosen per character
+  or for the whole project in Cast & files, *full body* as today or *upper body*. Framed so, the
+  picture is scaled to a set height whatever its file's size, may go past the bottom of the stage
+  (the text box hiding the rest), and `near`/`far` zoom around the face rather than growing and
+  shrinking from the feet, which today pushes a tall picture's head off the top. Until then,
+  upper-body art up to the stage's height shows correctly without `near` or `far`. The game's CSS
+  stays out of the stage, a downloaded game being trusted with the text's looks only.
 - **The map: paths that differ only by the stage.** A point of the map is a choice, with the values
   still able to change what follows and what the stage shows; two paths whose stage differs (the one
   a scene leaves) make two points for what may be the same state. Progress recorded before 2.1 keeps

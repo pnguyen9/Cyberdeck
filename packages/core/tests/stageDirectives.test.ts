@@ -80,8 +80,8 @@ describe('interpretStageDirective', () => {
   })
 
   it('reads any other name as a character changing expression', () => {
-    expect(interpret('marie', ['surprised'])).toEqual({ type: 'expression', character: 'marie', expression: 'surprised' })
-    expect(interpret('old marie', ['sad'])).toEqual({ type: 'expression', character: 'old marie', expression: 'sad' })
+    expect(interpret('marie', ['surprised'])).toEqual({ type: 'expression', character: 'marie', expression: 'surprised', turn: null })
+    expect(interpret('old marie', ['sad'])).toEqual({ type: 'expression', character: 'old marie', expression: 'sad', turn: null })
   })
 
   it('reads screen effects: shakes, flashes, fades and tints, leaving durations to defaults', () => {

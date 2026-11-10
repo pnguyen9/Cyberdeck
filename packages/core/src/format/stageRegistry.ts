@@ -236,7 +236,7 @@ export class StageRegistry {
       case 'expression': {
         const character = this.character(instruction.character)
         const chosen = this.expressionChosen(character, instruction.expression)
-        return { type: 'expression', characterId: character.id, expressionId: chosen.expressionId, ...(chosen.from === undefined ? {} : { from: chosen.from }) }
+        return { type: 'expression', characterId: character.id, expressionId: chosen.expressionId, ...(chosen.from === undefined ? {} : { from: chosen.from }), ...(instruction.turn === null ? {} : { turn: instruction.turn }) }
       }
       case 'wait':
         return { type: 'wait', seconds: instruction.seconds }

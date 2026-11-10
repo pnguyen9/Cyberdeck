@@ -1,0 +1,12 @@
+[enter: kai center standing]
+Kai steps onto the frozen pond.
+[kai: falling]
+[wait: 1]
+[kai: lying]
+— Kai: Ow.
+[kai: standing]
+Kai gets up, and tries again.
+[kai: falling]
+[wait: 1]
+[kai: lying]
+— Kai: Twice!

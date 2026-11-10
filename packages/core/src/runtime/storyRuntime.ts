@@ -2,7 +2,6 @@ import type {
   ChapterDocument,
   CounterOperator,
   Decision,
-  InlineStageCommand,
   StageCommand,
   StoredChoice,
   StoredCondition,
@@ -164,6 +163,8 @@ export class StoryRuntime {
   private queuedCues: Cue[] = []
   private isReplaying = false
   private appliedInlineCommandCount = 0
+  /** The tags before the page's text written after a `[wait]`: they play once the wait is over. */
+  private pendingCommandsBefore: readonly StageCommand[] = []
   private currentSnapshot: PlayerSnapshot = START_SNAPSHOT
   /** Stops reached so far, the current one last. */
   private history: Stop[] = []
@@ -437,24 +438,38 @@ export class StoryRuntime {
       this.chapterIndex = previousStop.chapterIndex
       this.frames = copyFrames(previousStop.frames)
       this.appliedInlineCommandCount = 0
+      this.pendingCommandsBefore = previousStop.snapshot.step.type === 'page' ? splitAtFirstWait(previousStop.snapshot.step.page.commandsBefore).afterWait : []
     }
   }
 
   /**
-   * Called as the typewriter shows the page text: applies the inline commands written up to
-   * `offset` and returns them, so that the interface can act on those it handles itself (`wait`).
+   * Called as the typewriter shows the page text: applies the tags waiting until `offset`, those
+   * before the text a `[wait]` held back, then those written in the text up to there, and returns
+   * them, so that the interface can act on those it handles itself (`wait`). `untilWait` stops after
+   * the first `[wait]`, so that what follows it plays once it is over.
    */
-  reachOffset(offset: number): InlineStageCommand[] {
+  reachOffset(offset: number, untilWait = false): StageCommand[] {
     const step = this.currentSnapshot.step
     if (step.type !== 'page') {
       return []
     }
-    const reachedCommands = step.page.inlineCommands
-      .slice(this.appliedInlineCommandCount)
-      .filter(command => command.offset <= offset)
-    this.appliedInlineCommandCount += reachedCommands.length
+    const waiting: StageCommand[] = [
+      ...this.pendingCommandsBefore,
+      ...step.page.inlineCommands.slice(this.appliedInlineCommandCount).filter(command => command.offset <= offset),
+    ]
+    const waitAt = waiting.findIndex(command => command.type === 'wait')
+    const reachedCommands = untilWait && waitAt !== -1 ? waiting.slice(0, waitAt + 1) : waiting
+    const fromBefore = Math.min(reachedCommands.length, this.pendingCommandsBefore.length)
+    this.pendingCommandsBefore = this.pendingCommandsBefore.slice(fromBefore)
+    this.appliedInlineCommandCount += reachedCommands.length - fromBefore
     reachedCommands.forEach(command => this.applyToStage(command))
     return reachedCommands
+  }
+
+  /** Whether tags still wait to play by `offset`: held back by a `[wait]`. */
+  hasCommandsWaiting(offset: number): boolean {
+    const step = this.currentSnapshot.step
+    return step.type === 'page' && (this.pendingCommandsBefore.length > 0 || (step.page.inlineCommands[this.appliedInlineCommandCount]?.offset ?? Number.POSITIVE_INFINITY) <= offset)
   }
 
   /**
@@ -600,12 +615,16 @@ export class StoryRuntime {
       frame.index++
 
       switch (node.type) {
-        case 'page':
-          node.commandsBefore.forEach(command => this.applyToStage(command))
+        case 'page': {
+          // A `[wait]` holds back the tags written after it: they play as the text begins.
+          const { untilWait, afterWait } = splitAtFirstWait(node.commandsBefore)
+          untilWait.forEach(command => this.applyToStage(command))
           this.currentSnapshot = { ...this.currentSnapshot, stage: showPage(this.currentSnapshot.stage, node.id) }
           this.appliedInlineCommandCount = 0
+          this.pendingCommandsBefore = afterWait
           this.setStep({ type: 'page', page: pageWithValues(node, this.valueOf()) })
           return
+        }
         case 'choice': {
           // The step carries the choice as offered: options whose condition does not hold are left out,
           // and a choice none of whose options holds is skipped.
@@ -1018,6 +1037,12 @@ function framesLeadingTo(nodes: StoredNode[], nodeId: string): Frame[] | null {
     }
   }
   return null
+}
+
+/** The tags before a page's text: those played on arriving, up to the first `[wait]`, and those it holds back. */
+export function splitAtFirstWait(commands: readonly StageCommand[]): { untilWait: readonly StageCommand[]; afterWait: readonly StageCommand[] } {
+  const waitAt = commands.findIndex(command => command.type === 'wait')
+  return waitAt === -1 ? { untilWait: commands, afterWait: [] } : { untilWait: commands.slice(0, waitAt + 1), afterWait: commands.slice(waitAt + 1) }
 }
 
 /** The node a player stops at: a page, a choice, a question; null at the end or before the start. */

@@ -139,6 +139,8 @@ function createPage(outputDirectory, connection, stop) {
     /** Starts noting the content security policy violations of the page, until it is left. */
     watchViolations: () => page.evaluate(`window.violations ??= []; document.addEventListener('securitypolicyviolation', event => window.violations.push(event.violatedDirective + ' ' + event.blockedURI)); true`),
     violations: () => page.evaluate(`JSON.stringify(window.violations ?? null)`),
+    /** What the page shows inside `clip` ({ x, y, width, height }, in CSS pixels), as base64 PNG: to compare frames. */
+    capture: async clip => (await send('Page.captureScreenshot', { format: 'png', clip: { ...clip, scale: 1 } })).result.data,
     screenshot: async name => {
       const { result } = await send('Page.captureScreenshot', { format: 'png' })
       writeFileSync(`${outputDirectory}/${name}.png`, Buffer.from(result.data, 'base64'))

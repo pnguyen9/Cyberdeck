@@ -1,5 +1,6 @@
 import { writtenAmount } from '../format/counterNumbers'
 import { valueWritten } from '../format/valueTags'
+import { pictureTurnWords } from '../stage/stageDirectives'
 import { counterValueText, describeAskNumber, describeCondition, describeCopy, describeDraw, describeGrid, describeListNode } from '../storyboard/describeNodes'
 import { listsOf, listValueText } from '../format/lists'
 import { firstLanguageOf } from '../format/languages'
@@ -426,7 +427,7 @@ class TextWriter {
       case 'move':
         return `[move: ${words(this.characterName(command.characterId), command.placement === null ? '' : this.placement(command.placement), command.depth ?? '', animationWords(command.animation))}]`
       case 'expression':
-        return `[${this.characterName(command.characterId)}: ${valueWritten(command, this.project) ?? this.expressionName(command.characterId, command.expressionId)}]`
+        return `[${this.characterName(command.characterId)}: ${words(valueWritten(command, this.project) ?? this.expressionName(command.characterId, command.expressionId), pictureTurnWords(command.turn))}]`
       case 'wait':
         return `[wait: ${command.seconds}]`
     }

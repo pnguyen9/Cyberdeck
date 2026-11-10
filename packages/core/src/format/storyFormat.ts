@@ -6,7 +6,7 @@ import { idsReadBy } from './lists'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '3.0'
+export const FORMAT_VERSION = '3.1'
 
 /** True when this version of the code can read a document written in `version`: any version up to its own, every earlier major one included. */
 export function isSupportedFormatVersion(version: string): boolean {
@@ -465,12 +465,19 @@ export type StageCommand =
   | { type: 'exit'; characterId: string; animation: AnimationSpec }
   /** A null placement or depth keeps the current one; at least one of them is given. */
   | { type: 'move'; characterId: string; placement: Placement | null; depth: Depth | null; animation: AnimationSpec }
-  | { type: 'expression'; characterId: string; expressionId: string; from?: string }
-  /** Pauses the typewriter; meaningful inline only. */
+  /** `turn`: the picture turns over to the new one, as a card does, holding the text if `wait`. Since 3.1. */
+  | { type: 'expression'; characterId: string; expressionId: string; from?: string; turn?: PictureTurn }
+  /** Pauses the typewriter, and holds the tags written after it until it is over. */
   | { type: 'wait'; seconds: number }
 
 /** A command written after some text: it runs when the typewriter reaches `offset` in the page text. */
 export type InlineStageCommand = StageCommand & { offset: number }
+
+/** A picture turning over, `[card: {Drawn} flip 0.4s wait]`: how long it takes, and whether the text waits for it. */
+export interface PictureTurn {
+  durationMs: number
+  wait?: true
+}
 
 /** `chapters/<id>.json`. */
 export interface ChapterDocument extends Audited {

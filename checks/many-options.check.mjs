@@ -1,10 +1,10 @@
 // Choices with many options: six fit above the text box, none cut nor under the menu buttons; twelve
 // scroll in their place, the last reached from the keyboard, the wheel scrolling them rather than
-// going back; past eight, the import says the list is long.
+// going back; past eight, the import says the list is long. Options of different lengths share one width.
 import { createProject, pause } from './harness.mjs'
 
 const optionsOf = count => Array.from({ length: count }, (_, index) => `> Option number ${index + 1} = O${index + 1}`).join('\n')
-const STORY = `Hello.\n[choice: Six]\n${optionsOf(6)}\nBetween.\n[choice: Twelve]\n${optionsOf(12)}\nThe end.`
+const STORY = `Hello.\n[choice: Six]\n${optionsOf(6).replace('Option number 1 =', 'Option number 1, much longer than any of the others below it =')}\nBetween.\n[choice: Twelve]\n${optionsOf(12)}\nThe end.`
 
 export default async function check(page, { url }) {
   await createProject(page, url, 'Many options')
@@ -31,9 +31,10 @@ export default async function check(page, { url }) {
       count: options.length,
       inside: options.every(option => option.top >= viewport.top && option.bottom <= buttons.top),
       shown: options.filter(option => option.top >= menu.top - 1 && option.bottom <= menu.bottom + 1).length,
+      widths: new Set(options.map(option => Math.round(option.width))).size,
     }
   })()`
-  page.check('six options all fit, none cut nor under the menu buttons', await page.evaluate(layout), { count: 6, inside: true, shown: 6 })
+  page.check('six options all fit, none cut nor under the menu buttons', await page.evaluate(layout), { count: 6, inside: true, shown: 6, widths: 1 })
   await page.screenshot('six')
 
   await page.evaluate(`document.querySelector('.viewport .option').click()`)

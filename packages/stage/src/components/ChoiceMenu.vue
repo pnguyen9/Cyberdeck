@@ -129,11 +129,12 @@ onUnmounted(() => {
 .choice-menu {
   position: absolute;
   inset: 24px 0 360px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  /* One column as wide as the widest option, so that all of them share its width. */
+  display: grid;
+  grid-template-columns: fit-content(100%);
+  justify-content: center;
   /* Centred while the options fit; from the top once they overflow, so that none is out of reach. */
-  justify-content: safe center;
+  align-content: safe center;
   gap: 28px;
   overflow-y: auto;
   padding: 12px 0;

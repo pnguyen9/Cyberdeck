@@ -280,7 +280,5 @@ You cash out with {Money} dollars.
 
 # Scene: Reveal
 [sound: flip]
-[d2: flip]
-[wait: 0.15]
-[d2: {Hole}]
+[d2: {Hole} flip 0.4s wait]
 The dealer turns over the hidden card: {Dealer}.

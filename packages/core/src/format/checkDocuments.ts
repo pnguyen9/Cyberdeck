@@ -172,7 +172,7 @@ const STAGE_COMMANDS: { [Type in StageCommand['type']]: Check<Extract<StageComma
   enter: withValueFrom(object({ type: oneOf('enter'), characterId: string, expressionId: string, placement, facing: nullable(facing), depth: nullable(depth), animation })),
   exit: object({ type: oneOf('exit'), characterId: string, animation }),
   move: object({ type: oneOf('move'), characterId: string, placement: nullable(placement), depth: nullable(depth), animation }),
-  expression: withValueFrom(object({ type: oneOf('expression'), characterId: string, expressionId: string })),
+  expression: withOptional('turn', withFlag('wait', object({ durationMs: duration })), withValueFrom(object({ type: oneOf('expression'), characterId: string, expressionId: string }))),
   wait: object({ type: oneOf('wait'), seconds: (value, path) => finiteNumber(value, path) >= 0 && (value as number) <= 600 ? value as number : fail(path, 'at most ten minutes, in seconds') }),
 }
 

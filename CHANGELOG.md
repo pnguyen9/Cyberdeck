@@ -1,5 +1,28 @@
 # Changelog
 
+## 3.1.0 — 2026-11-10
+
+### Stories
+- A picture turns over, as a card does: `[card: {Hole} flip]` narrows the old picture to its edge,
+  then widens the new one from it, in 0.4 s unless told (`flip 0.6s`), holding the text with `wait`.
+  Players who ask for less motion see it change at once. Stories that use it need Datajack 3.1
+  (format 3.1).
+- `[wait]` holds the tags written after it too, before the text and inside it: `[card: back]
+  [wait: 0.3] [card: ace]` shows the back, then the ace. Before, they all played at once and only
+  the text waited.
+
+### Datajack, the player
+- The options of a choice share one width, the widest one's: a long option no longer stands out
+  wider than the others.
+
+### Cyberdeck, the editor
+- After a picture's name in a tag, the suggestions offer `flip`, then `wait`.
+
+### Samples
+- Blackjack turns the dealer's hidden card over, rather than showing it face up at once.
+- A short example in the guide, `docs/guide/examples/falling/`: a character falls, an animated WebP
+  that plays once, each time it is shown, `[wait]` letting it finish before the next picture.
+
 ## 3.0.0 — 2026-11-10
 
 ### Datajack, the player
