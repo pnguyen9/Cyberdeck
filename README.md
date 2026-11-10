@@ -521,7 +521,11 @@ A **project** holds the whole game. Its screens:
   preview opens with the stage and decisions of that path, as a save made there would. A page only
   reached through memories or endings of earlier playthroughs is previewed taking them as known.
   The preview's **State** button shows, beside the stage, each decision, counter and name as they
-  stand on the page shown, what the profile remembers and the endings it has seen.
+  stand on the page shown, what the profile remembers and the endings it has seen, and lets the
+  author change any of them by hand to try what follows: a decision's value, a counter's number,
+  a name, and memories and endings seen that no way through one playthrough could give (the cat
+  knowing the player, as on a second playthrough). Memories and endings so changed are kept for the
+  next previews, as a player's would be; the clock's counters stay as the clock reads them.
   Ctrl+Enter saves, Esc cancels, Ctrl+Z undoes. The card being edited is marked (✎), the panel's
   title too while changes are not saved (●). Nothing written is thrown away unasked: opening
   another card, Esc, another chapter, another tab or leaving the project first asks to **Save**,
@@ -845,7 +849,7 @@ the SHA-256 in their name; and only save folders the player picked in the system
   moment of a game:
   - **as a player**: what players see and may do, the journal and the map as they would have them,
     to check, for instance, what the journal shows before the game is finished;
-  - **as the author**: every value can be changed by hand, in the journal or the State panel,
+  - **as the author**: every value can be changed by hand (the State panel does it now),
     including what no way through the story can give, such as memories and endings of earlier
     playthroughs (the cat knowing you, as on a second playthrough, on a first one); the map shows
     every path, as if all were played, each point with the values of its path; skipping is always
@@ -869,7 +873,9 @@ pictures and sounds were made outside this repository: `sakura-week-assets.zip` 
   playing or stop, and the last page gives the final score. An ending's name cannot show values, so
   the ending is called "Final score". Short sounds for a pick, the reveal, and a win, a loss or a
   draw; no music.
-- **Blackjack**, with all its rules. It first offers to read the rules or skip them, then asks
+- **Blackjack**, with all its rules (waiting on a feature: a story cannot yet choose a picture from a
+  value, `[card1: {Drawn}]`, so each card dealt would need a condition for each of the 52, at each
+  place on the table). It first offers to read the rules or skip them, then asks
   how many decks the shoe holds (1, 2, 4, 6 or 8, as casinos deal). Players start with $1,000, bet,
   play or leave; the bet is
   picked among choices ($10, $50, $100, everything, or another amount, typed with `[ask number]`); the journal shows their money, and having none left is game over. Drawn cards, table and

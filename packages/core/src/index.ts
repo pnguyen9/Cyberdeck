@@ -62,6 +62,7 @@ export {
   type LastingValues,
   type NameState,
   type DecisionState,
+  type HeldChange,
   type PlayerSnapshot,
   type PlayerStep,
   type RestoreOutcome,

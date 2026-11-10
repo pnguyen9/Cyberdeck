@@ -47,6 +47,7 @@ import {
   type RestoreOutcome,
   type SaveData,
   type StoredPage,
+  type HeldChange,
 } from '@cyberdeck/core'
 import { AUTOSAVE_SLOT, MANUAL_SLOTS, type SaveStore } from '../saveStore'
 import { stagePicture } from '../stagePicture'
@@ -879,6 +880,22 @@ function answerNumber() {
   playForward(() => runtime.answerNumber('units' in reading ? reading.units : null))
 }
 
+/**
+ * A value an author changed by hand in the State panel: the story reads it from now on, and what the
+ * profile remembers or has seen is kept for the next previews, as a player's would be.
+ */
+function changeHeld(change: HeldChange) {
+  runtime.change(change)
+  snapshot.value = runtime.snapshot
+  let recorded = recordMemories(progress.value, runtime.memoryIds, runtime.forgottenMemoryIds)
+  if (change.type === 'ending') {
+    recorded = { ...recorded, endingIds: runtime.endingIds }
+  }
+  recorded = recordLasting(recorded, runtime.lastingValues)
+  progress.value = recorded
+  void props.saveStore.writeProgress(props.story.project.id, recorded)
+}
+
 /** Gives the name typed; nothing typed keeps the default. */
 function answer() {
   const typed = typedName.value
@@ -1269,6 +1286,8 @@ onUnmounted(() => {
         :snapshot="snapshot"
         :memory-ids="remembered.memoryIds"
         :ending-ids="remembered.endingIds"
+        editable
+        @change="changeHeld"
         @close="isStateShown = false"
       />
       <JournalPanel v-if="openPanel === 'journal'" :story="story" :snapshot="snapshot" :ending-ids="remembered.endingIds" @close="openPanel = 'none'" />

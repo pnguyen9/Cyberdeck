@@ -76,3 +76,30 @@ describe('the clock’s counters', () => {
     expect(minutesAway(playing, new Date('2026-11-11T10:00:00.000Z'))).toBe(1440)
   })
 })
+
+describe('values changed by hand, as an author testing the story', () => {
+  it('are read by what follows: a decision, a counter, a memory no playthrough could give', () => {
+    const story = storyFromText([
+      '[decision: Way = Left | Right]', '[counter: Coins = 0]',
+      'Before.',
+      '[if: remembered Met the cat]', 'The cat knows you.', '[else if: Way is Right and Coins > 5]', 'Rich, on the right.', '[else]', 'Nothing.', '[end]',
+      '[remember: Met the cat]',
+    ])
+    const playThrough = (changes: (runtime: StoryRuntime) => void) => {
+      const runtime = new StoryRuntime(story)
+      runtime.start()
+      changes(runtime)
+      runtime.next()
+      return shownText(runtime)
+    }
+    const way = story.project.decisions[0]!
+    const coins = story.project.counters[0]!
+    const cat = story.project.memories[0]!
+    expect(playThrough(() => undefined)).toBe('Nothing.')
+    expect(playThrough(runtime => {
+      runtime.change({ type: 'decision', decisionId: way.id, valueIds: [way.values[1]!.id] })
+      runtime.change({ type: 'counter', counterId: coins.id, units: 9 })
+    })).toBe('Rich, on the right.')
+    expect(playThrough(runtime => runtime.change({ type: 'memory', memoryId: cat.id, isHeld: true }))).toBe('The cat knows you.')
+  })
+})

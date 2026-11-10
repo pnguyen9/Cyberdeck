@@ -129,6 +129,6 @@ export default async function check(page, { url }) {
   await pause(800)
   await page.evaluate(`[...document.querySelectorAll('.viewport .quick-button')].find(button => button.textContent.trim() === 'State').click()`)
   await pause(300)
-  page.check('the preview shows the state of the story beside the stage', await page.evaluate(`[...document.querySelectorAll('.state-panel dt')].map(term => term.textContent + '=' + term.nextElementSibling.textContent)`), ['Pairing=none', 'Trust=0'])
+  page.check('the preview shows the state of the story beside the stage', await page.evaluate(`[...document.querySelectorAll('.state-panel dt')].map(term => { const value = term.nextElementSibling; const field = value.querySelector('select, input'); return term.textContent + '=' + (field?.tagName === 'SELECT' ? field.selectedOptions[0].textContent : field?.value ?? value.textContent) })`), ['Pairing=none', 'Trust=0'])
   await page.screenshot('state')
 }

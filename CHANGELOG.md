@@ -37,6 +37,8 @@
 - All three need Datajack 2.1 (format 2.1).
 
 ### Cyberdeck, the editor
+- The preview's **State** panel changes values by hand: decisions, counters, names, and memories and
+  endings seen, which no single playthrough could give, to try a branch without playing to it.
 - A **Text** view in the storyboard, beside Grid, Tree and Graph: the chapter, or the block opened,
   as the text it imports from, edited like a document and saved in place; pages and choices left as
   they were keep their identifiers, so that saves on them still resume there.

@@ -32,6 +32,14 @@ export type PlayerStep =
   /** The end of the story, or of this path when an `[ending: …]` was reached. */
   | { type: 'end'; endingId: string | null }
 
+/** A value changed by hand, by an author testing the story: what a playthrough holds, or what the profile has. */
+export type HeldChange =
+  | { type: 'decision'; decisionId: string; valueIds: readonly string[] }
+  | { type: 'counter'; counterId: string; units: number }
+  | { type: 'name'; askedNameId: string; name: string }
+  | { type: 'memory'; memoryId: string; isHeld: boolean }
+  | { type: 'ending'; endingId: string; isHeld: boolean }
+
 /** Values held by each decision, by identifier. A decision nobody made yet is absent. */
 export type DecisionState = Readonly<Record<string, readonly string[]>>
 
@@ -228,6 +236,57 @@ export class StoryRuntime {
     return {
       decisions: Object.fromEntries(Object.entries(values.decisions).filter(([decisionId]) => this.lastingDecisionIds.has(decisionId))),
       counters: Object.fromEntries(Object.entries(values.counters).filter(([counterId]) => this.lastingCounterIds.has(counterId))),
+    }
+  }
+
+  /**
+   * Changes a value by hand, as an author testing the story may: a decision, a counter, a name
+   * given, or what the profile remembers and the endings it has seen, which no way through one
+   * playthrough could give. The page shown stays as it is; what follows reads the new value.
+   */
+  change(change: HeldChange) {
+    const snapshot = this.currentSnapshot
+    switch (change.type) {
+      case 'decision': {
+        const decisions = { ...snapshot.decisions }
+        if (change.valueIds.length === 0) {
+          delete decisions[change.decisionId]
+        } else {
+          decisions[change.decisionId] = [...change.valueIds]
+        }
+        this.currentSnapshot = { ...snapshot, decisions }
+        break
+      }
+      case 'counter':
+        this.currentSnapshot = { ...snapshot, counters: { ...snapshot.counters, [change.counterId]: change.units } }
+        break
+      case 'name': {
+        const names = { ...snapshot.names }
+        const given = givenName(change.name)
+        if (given === '') {
+          delete names[change.askedNameId]
+        } else {
+          names[change.askedNameId] = given
+        }
+        this.currentSnapshot = { ...snapshot, names }
+        break
+      }
+      case 'memory':
+        if (change.isHeld) {
+          this.rememberedIds.add(change.memoryId)
+          this.forgottenIds.delete(change.memoryId)
+        } else {
+          this.rememberedIds.delete(change.memoryId)
+          this.forgottenIds.add(change.memoryId)
+        }
+        break
+      case 'ending':
+        if (change.isHeld) {
+          this.endingsSeenIds.add(change.endingId)
+        } else {
+          this.endingsSeenIds.delete(change.endingId)
+        }
+        break
     }
   }
 
