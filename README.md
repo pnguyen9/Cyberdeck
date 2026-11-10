@@ -150,6 +150,8 @@ keeps them its own way:
   `storage/default/` folder. `about:support` shows the profile folder (*Profile Folder*, *Open
   Folder*); it is usually:
   - Windows: `%APPDATA%\Mozilla\Firefox\Profiles\<profile>\storage\default\`
+  - Windows, Firefox installed from the Microsoft Store (a WindowsApp):
+    `%LOCALAPPDATA%\Packages\Mozilla.Firefox_n80bbvh6b1yt2\LocalCache\Roaming\Mozilla\Firefox\Profiles\<profile>\storage\default\`
   - macOS: `~/Library/Application Support/Firefox/Profiles/<profile>/storage/default/`
   - Linux: `~/.mozilla/firefox/<profile>/storage/default/`
 
