@@ -16,6 +16,7 @@ import {
   writeZip,
   type ProjectDocument,
   type StoredNode,
+  projectFromGame,
   type LeftOutChapters,
   uncountedEndingIds,
 } from '../src/index'
@@ -185,6 +186,21 @@ describe('game archives', () => {
     expect(archive.manifest.chapters.find(chapter => chapter.id === two!.id)).toEqual({ id: two!.id, title: null, included: false, listed: false, endingIds: [far.id] })
     expect([...uncountedEndingIds(archive.manifest.chapters)]).toEqual([far.id])
     expect(uncountedEndingIds(archive.manifest.chapters.map(chapter => ({ ...chapter, included: true }))).size).toBe(0)
+  })
+
+  it('becomes a project again: what it carries as written, entries whose file it left out waiting for one', async () => {
+    const game = buildGame()
+    const whole = projectFromGame(await readGameArchive(await game.archive()))
+    expect(whole.chaptersLeftOut).toBe(0)
+    expect(checkProjectDocument(whole.backup.project, 'project')).toEqual(whole.backup.project)
+    expect([whole.backup.project.id, whole.backup.project.chapterOrder, whole.backup.chapters.map(chapter => chapter.title)]).toEqual([game.project.id, game.project.chapterOrder, ['One', 'Two']])
+    expect([...whole.backup.assetFiles.keys()].sort()).toEqual(whole.backup.project.assets.map(asset => asset.id).sort())
+
+    const partial = projectFromGame(await readGameArchive(await game.archive([game.two.id])))
+    expect([partial.chaptersLeftOut, partial.backup.project.chapterOrder]).toEqual([1, [game.two.id]])
+    expect(partial.backup.project.assets.map(asset => asset.id).sort()).toEqual(['asset-marie-smile.png', 'asset-rooftop.webp'])
+    const street = partial.backup.project.backgrounds.find(background => background.name === 'street')
+    expect(street?.assetId).toBeNull()
   })
 
   it('carries every scene with the assets it uses, even in an archive of a chapter that does not play it', async () => {

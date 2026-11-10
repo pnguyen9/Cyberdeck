@@ -218,7 +218,8 @@ describe('projects', () => {
     const backup = await open.backup(new Date(NOW))
 
     const elsewhere = memoryProjectStore()
-    const restored = await restoreBackup(elsewhere.store, backup)
+    const { project: restored, fromGame } = await restoreBackup(elsewhere.store, backup)
+    expect(fromGame).toBe(false)
     await restoreBackup(elsewhere.store, backup)
 
     const reopened = await OpenProject.open(elsewhere.store, restored.id)
@@ -226,6 +227,17 @@ describe('projects', () => {
     expect(reopened.chapters).toEqual(open.chapters)
     expect(await elsewhere.store.readAsset(restored.id, open.project.assets[0]!.id)).toEqual(new Uint8Array([1]))
     expect((await listProjects(elsewhere.store))).toHaveLength(1)
+  })
+
+  it('makes a project again from a game exported, under the same identifier, saying which chapters it left out', async () => {
+    const { open } = await projectWith('# One\nHello.\n# Two\nGoodbye.')
+    const game = await open.exportGame('1.0', [open.project.chapterOrder[1]!], new Date(NOW))
+
+    const elsewhere = memoryProjectStore()
+    const restored = await restoreBackup(elsewhere.store, game)
+    expect([restored.fromGame, restored.chaptersLeftOut, restored.project.id]).toEqual([true, 1, open.project.id])
+    const reopened = await OpenProject.open(elsewhere.store, open.project.id)
+    expect(reopened.chapters.map(chapter => chapter.title)).toEqual(['Two'])
   })
 
   it('preview from a chapter', async () => {

@@ -461,7 +461,7 @@ From the keyboard, <kbd>Tab</kbd> goes from box to box, bringing each into view,
 
 **Shortcuts** (or <kbd>?</kbd>) lists every key by screen; click one to change it.
 
-**Back up** downloads your whole project as one file. **Restore a backup…**, on the projects screen, brings it back, on this computer or another. Do it now and then.
+**Back up** downloads your whole project as one file. **Restore a backup…**, on the projects screen, brings it back, on this computer or another. Do it now and then. Lost your project, but still have your game? Give the game's file to the same button: the project comes back from it, with all the chapters the game carried.
 
 ## 22. What your players see
 

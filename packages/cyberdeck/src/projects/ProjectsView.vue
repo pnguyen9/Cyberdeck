@@ -66,9 +66,9 @@ function restore(fileList: FileList | null) {
     return
   }
   return attempt(async () => {
-    const project = await restoreBackup(props.store, new Uint8Array(await file.arrayBuffer()))
+    const restored = await restoreBackup(props.store, new Uint8Array(await file.arrayBuffer()))
     await refresh()
-    message.value = text.value.restored(project.name)
+    message.value = restored.fromGame ? text.value.openedFromGame(restored.project.name, restored.chaptersLeftOut) : text.value.restored(restored.project.name)
   })
 }
 

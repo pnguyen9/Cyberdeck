@@ -62,6 +62,9 @@ import {
   type ChapterView,
   type SaveData,
   type LeftOutChapters,
+  projectFromGame,
+  readGameArchive,
+  type ProjectBackup,
 } from '@cyberdeck/core'
 import type { Locale } from '@cyberdeck/stage'
 import { castMessages } from '../i18n/castMessages'
@@ -138,8 +141,24 @@ export async function createNewProject(store: ProjectStore, name: string, locale
 }
 
 /** Restores a backup, replacing the project of the same identifier if there is one. */
-export async function restoreBackup(store: ProjectStore, bytes: Uint8Array<ArrayBuffer>): Promise<ProjectDocument> {
-  const backup = await readProjectBackup(bytes)
+/**
+ * Restores a backup, or a game exported, for an author who no longer has the project: its chapters
+ * left out are said, so that they know what to bring back. Throws the backup's error for anything else.
+ */
+export async function restoreBackup(store: ProjectStore, bytes: Uint8Array<ArrayBuffer>): Promise<{ project: ProjectDocument; fromGame: boolean; chaptersLeftOut: number }> {
+  let backup: ProjectBackup
+  let fromGame = false
+  let chaptersLeftOut = 0
+  try {
+    backup = await readProjectBackup(bytes)
+  } catch (backupError) {
+    try {
+      ;({ backup, chaptersLeftOut } = projectFromGame(await readGameArchive(bytes)))
+      fromGame = true
+    } catch {
+      throw backupError
+    }
+  }
   await store.deleteProject(backup.project.id)
   for (const chapter of backup.chapters) {
     await store.writeChapter(backup.project.id, chapter)
@@ -148,7 +167,7 @@ export async function restoreBackup(store: ProjectStore, bytes: Uint8Array<Array
     await store.writeAsset(backup.project.id, asset.id, backup.assetFiles.get(asset.id)!, asset.mediaType)
   }
   await store.writeProject(backup.project)
-  return backup.project
+  return { project: backup.project, fromGame, chaptersLeftOut }
 }
 
 /**

@@ -596,8 +596,11 @@ author chooses another folder on the projects screen (a synced one, for instance
 `<project id>/project.json`, `chapters/<id>.json` and `assets/<asset id>`, each written beside the
 old version and swapped in one move. Deleting a project moves its folder to the system's trash.
 In the browser, projects live in IndexedDB (the browser is asked to keep them). In both,
-**Back up** downloads the project folder zipped, and **Restore a backup** reads it back, on this
-computer or another.
+**Back up** downloads the project folder zipped, and **Restore a backup or a game** reads it back, on
+this computer or another. Given a game exported, it makes the project again, for an author who lost
+it: under the same identifier, so that players' saves still know the game, with what the game
+carries (its chapters, scenes and files, the names and definitions of the project); the chapters it
+left out are said, to be imported again, and entries whose file it did not carry wait for one.
 
 **Several languages.** A story has one structure, its chapters in order, its scenes and its names
 (decisions and their values, counters, endings, memories), and each language is a text laid over it;
@@ -825,6 +828,13 @@ the SHA-256 in their name; and only save folders the player picked in the system
   character speaking, jumps there or stays put. Authors cannot choose it for their game yet: a game
   could say the name stays at the left, players' own choice still winning; and for a game that says
   nothing, staying at the left may be the better default than sliding.
+- **A Text view, beside Grid, Tree and Graph.** The level of the storyboard being worked on, as the
+  text it imports from, edited like a document: the chapter, or the block opened, its pages, tags
+  and branches written out, with the tag editor's chips and suggestions. Applying it re-imports only
+  that part, in place, as a page or a block edited with Enter already does; the problems are listed
+  as in Import, and nothing changes until they are fixed. It spares exporting a chapter, editing it
+  in Word and importing it back for a few lines, and keeps to where the author is rather than the
+  whole story.
 - **A preview closer to playing.** Cyberdeck's preview plays a game as Datajack does, but without
   what Datajack offers around the game itself, such as the map. The preview should offer what a
   player has. (Its saves and progress can now be erased, from the projects page, to test a story
@@ -844,8 +854,6 @@ the SHA-256 in their name; and only save folders the player picked in the system
     allowed, and previewing from a point starts with its values, so the author chooses the way to a
     late page rather than taking the shortest. The map can also hide the paths not played, keeping
     only the one played (or the one leading to where the preview started).
-- **Opening a game in Cyberdeck.** An exported game holds what its project needs; Cyberdeck could
-  open one as a project, for an author who lost theirs.
 
 ### Samples to make: mini games, in `docs/sample/minigames/`
 

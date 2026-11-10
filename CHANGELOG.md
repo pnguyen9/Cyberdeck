@@ -37,6 +37,9 @@
 - All three need Datajack 2.1 (format 2.1).
 
 ### Cyberdeck, the editor
+- *Restore a backup or a game…* makes a project again from a game exported, for an author who lost
+  it: under the same identifier, players' saves still knowing the game, with the chapters and files
+  the game carried; the chapters it left out are said.
 - *Erase what Cyberdeck keeps…*, below the projects, erases the saves and progress of the previews,
   for a story played from a clean start, its lasting values back to what it declares; and if wished,
   every project too (on the desktop, to the system's trash).
