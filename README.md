@@ -836,6 +836,9 @@ of it is as free as the rest of the repository.
   stand, double down, the dealer's hidden card turned over, blackjack paying 3 to 2. Ten places on
   the table show one shared deck (`[character: p1 = card]`), each card named by the card drawn
   (`[enter: p1 {Card}]`).
+- **Pairs** (`pairs/`): 16 tiles, 8 animals drawn as shapes, shuffled; a grid of picture buttons
+  (`[choice: Cell grid 4 × 4 from Shown with tile]`) over two lists, the deck and what is shown; a
+  pair stays face up, two different animals turn back at the next pick; the best number of turns kept.
 
 ## Plan
 
@@ -858,8 +861,7 @@ A new major version of the format: stories using lists need Datajack 3.0.
 - **The grid**: `[choice: Cell grid 4 × 4 from Shown]`, a choice shown as rows of picture buttons,
   numbered from 1, each showing the picture named by its place in the list (`Shown 7` holding `cat`),
   picking one giving the counter its number. Up to 30 × 16. Keyboard: the arrows move, Enter picks.
-- **Pairs** (`minigames/pairs/`): 16 tiles, 8 animals drawn as simple shapes, shuffled; two turned
-  at a time, a pair found stays face up; the turns counted in the journal.
+- **Pairs**: done (see Samples).
 - **Minesweeper** (`minigames/minesweeper/`): beginner 9 × 9 with 10 mines, intermediate 16 × 16
   with 40, expert 30 × 16 with 99, or a custom board, 9 to 30 columns, 9 to 24 rows, 10 mines to
   (columns − 1) × (rows − 1); the first cell opened never a mine; empty areas opened in turn.

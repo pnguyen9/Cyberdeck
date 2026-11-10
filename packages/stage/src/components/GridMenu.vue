@@ -11,8 +11,8 @@ import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 const props = defineProps<{ grid: StoredGrid; items: readonly string[]; catalog: StageCatalog; start: number }>()
 const emit = defineEmits<{ pick: [number: number] }>()
 
-/** The area the grid may take on the stage, above the menu. */
-const AREA = { width: 1600, height: 860 }
+/** The area the grid may take on the stage: above the menu, which stands 310 pixels over the bottom. */
+const AREA = { width: 1600, height: 660 }
 const GAP = 6
 const tileSize = computed(() => Math.floor(Math.min((AREA.width - GAP * (props.grid.columns - 1)) / props.grid.columns, (AREA.height - GAP * (props.grid.rows - 1)) / props.grid.rows)))
 const tiles = computed(() => props.items.map((item, index) => ({
