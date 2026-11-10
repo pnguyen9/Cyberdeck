@@ -216,7 +216,7 @@ Players open Datajack, press **Add a game…** (or drop the file on it), and pla
 
 > **Tip**
 >
-> Writing chapter by chapter? Tick only the new chapters to make a small update. Players add it like a game, and it joins the one they have, their saves kept. Players see how many chapters their game lacks; tick **Name the chapters left out** for them to see their titles too, if those give nothing away. At the last chapter they have, the game says *To be continued…*, or what you wrote with `[to be continued: Marie's story goes on next month.]`, the last one they passed: near the top for the whole story, inside a route for that route.
+> Writing chapter by chapter? Tick only the new chapters to make a small update. Players add it like a game, and it joins the one they have, their saves kept. Players see how many chapters their game lacks; you can also show their titles, if those give nothing away, or say nothing of them, for a story still being written or kept a mystery. At the last chapter they have, the game says *To be continued…*, or what you wrote with `[to be continued: Marie's story goes on next month.]`, the last one they passed: near the top for the whole story, inside a route for that route.
 
 ---
 
@@ -457,11 +457,11 @@ From the keyboard, <kbd>Tab</kbd> goes from box to box, bringing each into view,
 
 ## 22. What your players see
 
-Players have their own **Settings**, in three categories. **General**: text speed, volumes (music and videos, sounds, voices), the speed of auto mode, full screen. **Accessibility**: larger text, a plainer font, a stronger contrast, pages read aloud, choices that wait for them, and captions on videos. Players with a screen reader hear each page whole as it appears. **Controls**: their own keys. You have nothing to do for any of it: it works in every game.
+Players have their own **Settings**, in three categories. **General**: text speed, volumes (music and videos, sounds, voices), the speed of auto mode, full screen. **Accessibility**: larger text, a plainer font, a stronger contrast, pages read aloud, choices that wait for them, captions on videos, and a name over the text box that slides to who speaks, jumps there, or stays put. Players with a screen reader hear each page whole as it appears. **Controls**: their own keys. You have nothing to do for any of it: it works in every game.
 
 ![The Settings screen, General: text speed, the volumes of music, sounds and voices, full screen.](images/settings.png)
 
-![The Settings screen, Accessibility: text size at 100, 125 or 150 %, a plainer font, stronger contrast, reading aloud, and choices that wait.](images/accessibility.png)
+![The Settings screen, Accessibility: text size at 100, 125 or 150 %, a plainer font, stronger contrast, reading aloud, choices that wait, and where the name over the text box goes.](images/accessibility.png)
 
 The **Log** shows what they read and picked. Clicking a line goes back to it. The **Journal** (<kbd>J</kbd>) shows what you chose to let them see (see section 10). A game in several languages asks which one, on its card in the library: **Play in**.
 

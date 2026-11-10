@@ -19,6 +19,9 @@ const props = defineProps<{
   styles?: readonly StyledPart[]
   /** Where the speaker stands on stage, in percent of its width: the name plate sits above; null at the left. */
   speakerX?: number | null
+  /** As the player chose: sliding to the speaker, jumping there, or staying at one place over the box. */
+  plateMotion?: 'slide' | 'jump' | 'fixed'
+  platePlace?: 'left' | 'middle' | 'right'
   /** The game's looks for the box and the plate: classes of its styles and CSS, a picture frame, the speaker's colour. */
   boxClasses?: readonly string[]
   boxFrame?: string | null
@@ -43,9 +46,14 @@ const BOX_LEFT = (STAGE_WIDTH - BOX_WIDTH) / 2
 const PLATE_MARGIN = 160
 
 const plateStyle = computed(() => {
-  const centre = props.speakerX == null ? null : Math.min(Math.max(props.speakerX / 100 * STAGE_WIDTH - BOX_LEFT, PLATE_MARGIN), BOX_WIDTH - PLATE_MARGIN)
+  const fixedPlace = props.plateMotion === 'fixed' ? props.platePlace ?? 'left' : null
+  const centre = fixedPlace === 'middle'
+    ? BOX_WIDTH / 2
+    : fixedPlace !== null || props.speakerX == null ? null : Math.min(Math.max(props.speakerX / 100 * STAGE_WIDTH - BOX_LEFT, PLATE_MARGIN), BOX_WIDTH - PLATE_MARGIN)
   return {
-    ...(centre === null ? {} : { left: `${centre}px`, transform: 'translateX(-50%)' }),
+    // At the right, the plate keeps the margin it has at the left.
+    ...(fixedPlace === 'right' ? { left: 'auto', right: '56px' } : centre === null ? {} : { left: `${centre}px`, transform: 'translateX(-50%)' }),
+    ...(props.plateMotion === 'slide' || props.plateMotion === undefined ? {} : { transition: 'none' }),
     ...frameStyle(props.plateFrame, 20),
     ...(props.plateColor == null ? {} : { color: props.plateColor }),
   }
@@ -96,6 +104,12 @@ const lineHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT}px`
   transition: left 0.3s ease;
   top: -30px;
   left: 56px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speaker {
+    transition: none;
+  }
 }
 
 :where(.speaker) {

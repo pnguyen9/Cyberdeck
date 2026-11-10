@@ -13,6 +13,10 @@ const en = {
   readAloudHelp: 'Leave it off with a screen reader, which reads the text already: you would hear it twice.',
   captions: 'Captions on videos that have them',
   untimedChoices: 'Choices wait for me, even timed ones',
+  namePlate: 'The name over the text box',
+  namePlatePlace: 'Where the name stays',
+  namePlateMotions: { slide: 'Slides to who speaks', jump: 'Jumps to who speaks', fixed: 'Stays put' } as Record<'slide' | 'jump' | 'fixed', string>,
+  namePlatePlaces: { left: 'Left', middle: 'Middle', right: 'Right' } as Record<'left' | 'middle' | 'right', string>,
   accessibilityHelp: 'Larger text makes the text box taller. These settings apply to every game.',
   actions: {
     advance: 'Next',
@@ -74,6 +78,10 @@ const fr: SettingsMessages = {
   readAloudHelp: 'Laissez-la désactivée avec un lecteur d’écran, qui lit déjà le texte\u00a0: vous l’entendriez deux fois.',
   captions: 'Sous-titres sur les vidéos qui en ont',
   untimedChoices: 'Les choix m’attendent, même ceux qui sont minutés',
+  namePlate: 'Le nom au-dessus de la zone de texte',
+  namePlatePlace: 'Où le nom reste',
+  namePlateMotions: { slide: 'Glisse vers qui parle', jump: 'Saute vers qui parle', fixed: 'Reste en place' },
+  namePlatePlaces: { left: 'À gauche', middle: 'Au milieu', right: 'À droite' },
   accessibilityHelp: 'Un texte plus grand agrandit la zone de texte. Ces réglages valent pour tous les jeux.',
   actions: {
     advance: 'Suivant',

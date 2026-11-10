@@ -703,7 +703,9 @@ at once), the speed of auto mode, the volumes of the music (and videos), the sou
 the language. **Accessibility** sets the size of the text (100, 125 or 150 %, the text box growing
 to hold it), a plainer font, a stronger contrast behind the text, pages and options read aloud by
 the voice of the browser or the system (a page with a voice of its own is heard instead), timed
-choices that wait for the player, and the captions of videos that have them. Screen readers (NVDA,
+choices that wait for the player, the captions of videos that have them, and the name over the text
+box: sliding to the character speaking (the default), jumping there, or staying put at the left,
+middle or right, for players whom the moving name distracts. Screen readers (NVDA,
 JAWS, VoiceOver, Orca) read the game as they read any page: each page is announced whole as it
 appears, never letter by letter as it is typed, and choices, the name asked for and every menu are
 buttons and fields they reach. With one, reading aloud is best left off, or the text is heard
@@ -820,10 +822,10 @@ the SHA-256 in their name; and only save folders the player picked in the system
   game: settings for every game, and for those who want, a game's own, from its card. Players would
   then find the accessibility settings by themselves, such as untimed choices for those who cannot
   answer in time, rather than being told about them.
-- **The name plate's place.** It always slides to above the character speaking, which a player found
-  distracting; authors cannot change it. A setting could choose: slide, jump straight there, or stay
-  put (left, middle or right). For a game whose author says nothing, staying at the left may be the
-  better default.
+- **The name plate's place, for authors.** Players choose in Settings whether the name slides to the
+  character speaking, jumps there or stays put. Authors cannot choose it for their game yet: a game
+  could say the name stays at the left, players' own choice still winning; and for a game that says
+  nothing, staying at the left may be the better default than sliding.
 - **Erasing from the applications.** Each application should have a button to erase what it
   stores, so that no one needs the steps of [Erasing what the web builds
   store](#erasing-what-the-web-builds-store). In Datajack, a choice: the games alone, or the games

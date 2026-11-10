@@ -5,6 +5,9 @@
 ### Datajack, the player
 - Settings scroll when a category is taller than the screen: in Datajack, the language, last of the
   General settings, was out of reach.
+- Settings, Accessibility: the name over the text box slides to the character speaking, as before,
+  jumps there, or stays put at the left, middle or right, for players whom the moving name
+  distracts. It no longer slides for players whose system asks for less motion.
 - A game exported with only some of its chapters, played to the last one installed, says *To be
   continued…* rather than *The end.*, and the map no longer shows an end there: once the rest of the
   game is installed, the choice before links to what follows.

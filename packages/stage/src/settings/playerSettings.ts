@@ -23,8 +23,17 @@ export interface PlayerSettings {
   untimedChoices: boolean
   /** The captions of videos that have them, over the picture. */
   captions: boolean
+  /** How the name plate goes to the character speaking: sliding, jumping there, or staying put. */
+  namePlateMotion: NamePlateMotion
+  /** Where the name plate stays when it stays put. */
+  namePlatePlace: NamePlatePlace
   bindings: Bindings
 }
+
+export const NAME_PLATE_MOTIONS = ['slide', 'jump', 'fixed'] as const
+export type NamePlateMotion = (typeof NAME_PLATE_MOTIONS)[number]
+export const NAME_PLATE_PLACES = ['left', 'middle', 'right'] as const
+export type NamePlatePlace = (typeof NAME_PLATE_PLACES)[number]
 
 export const TEXT_SPEED_RANGE = { slowest: 10, fastest: 150 } as const
 
@@ -45,6 +54,8 @@ export const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
   readAloud: false,
   untimedChoices: false,
   captions: false,
+  namePlateMotion: 'slide',
+  namePlatePlace: 'left',
   bindings: DEFAULT_BINDINGS,
 }
 
@@ -70,6 +81,8 @@ export function parsePlayerSettings(value: unknown): PlayerSettings {
     readAloud: fields.readAloud === true,
     untimedChoices: fields.untimedChoices === true,
     captions: fields.captions === true,
+    namePlateMotion: (NAME_PLATE_MOTIONS as readonly unknown[]).includes(fields.namePlateMotion) ? fields.namePlateMotion as NamePlateMotion : DEFAULT_PLAYER_SETTINGS.namePlateMotion,
+    namePlatePlace: (NAME_PLATE_PLACES as readonly unknown[]).includes(fields.namePlatePlace) ? fields.namePlatePlace as NamePlatePlace : DEFAULT_PLAYER_SETTINGS.namePlatePlace,
     bindings: Object.fromEntries(actions.map(action => {
       const saved = savedBindings[action]
       return [action, Array.isArray(saved) ? saved.filter(isInputBinding) : DEFAULT_BINDINGS[action]]

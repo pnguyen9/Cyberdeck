@@ -65,4 +65,31 @@ export default async function check(page, { url }) {
     return Math.abs((plate.left + plate.right) / 2 - (marie.left + marie.right) / 2) < 30
   })()`), true)
   await page.screenshot('plate')
+
+  // A player may keep the name plate in one place: at the left of the box, or at its right.
+  const plateSide = () => page.evaluate(`(() => {
+    const plate = document.querySelector('.viewport .textbox .speaker').getBoundingClientRect()
+    const box = document.querySelector('.viewport .textbox').getBoundingClientRect()
+    return [Math.round(plate.left - box.left) < box.width / 4, Math.round(box.right - plate.right) < box.width / 4]
+  })()`)
+  const pickSetting = async label => {
+    await page.evaluate(`[...document.querySelectorAll('.overlay .choice-button')].find(button => button.textContent.trim() === ${JSON.stringify(label)}).click()`)
+    await pause(100)
+  }
+  await page.press('o')
+  await pause(200)
+  await page.evaluate(`[...document.querySelectorAll('.overlay .category-button')].find(button => button.textContent.trim() === 'Accessibility').click()`)
+  await pause(100)
+  await pickSetting('Stays put')
+  await page.press('Escape')
+  await pause(300)
+  page.check('staying put, the plate stays at the left of the box', await plateSide(), [true, false])
+  await page.press('o')
+  await pause(200)
+  await page.evaluate(`[...document.querySelectorAll('.overlay .category-button')].find(button => button.textContent.trim() === 'Accessibility').click()`)
+  await pause(100)
+  await pickSetting('Right')
+  await page.press('Escape')
+  await pause(300)
+  page.check('or at its right, as the player chooses', await plateSide(), [false, true])
 }

@@ -3,7 +3,7 @@ import { onUnmounted, ref } from 'vue'
 import { actionOf, DEFAULT_BINDINGS, describeInput as describeInputIn, rebind, unbind, type InputBinding, type PlayerAction } from '../input/bindings'
 import { useLocale, useMessages, type LanguageChoice } from '../i18n/locale'
 import { settingsMessages } from '../i18n/settingsMessages'
-import { AUTO_SPEED_RANGE, DEFAULT_PLAYER_SETTINGS, TEXT_SCALES, TEXT_SPEED_RANGE, type PlayerSettings } from '../settings/playerSettings'
+import { AUTO_SPEED_RANGE, DEFAULT_PLAYER_SETTINGS, NAME_PLATE_MOTIONS, NAME_PLATE_PLACES, TEXT_SCALES, TEXT_SPEED_RANGE, type PlayerSettings } from '../settings/playerSettings'
 import LanguageSelect from './LanguageSelect.vue'
 
 /**
@@ -38,8 +38,8 @@ function resetSpeedAndVolumes() {
 }
 
 function resetAccessibility() {
-  const { textScale, readableFont, strongContrast, readAloud, untimedChoices, captions } = DEFAULT_PLAYER_SETTINGS
-  update({ textScale, readableFont, strongContrast, readAloud, untimedChoices, captions })
+  const { textScale, readableFont, strongContrast, readAloud, untimedChoices, captions, namePlateMotion, namePlatePlace } = DEFAULT_PLAYER_SETTINGS
+  update({ textScale, readableFont, strongContrast, readAloud, untimedChoices, captions, namePlateMotion, namePlatePlace })
 }
 
 function update(change: Partial<PlayerSettings>) {
@@ -211,6 +211,35 @@ onUnmounted(stopListening)
         <input type="checkbox" :checked="settings.captions" @change="update({ captions: ($event.target as HTMLInputElement).checked })">
         {{ text.captions }}
       </label>
+      <div class="setting">
+        <span class="setting-name">{{ text.namePlate }}</span>
+        <div class="choices" role="radiogroup" :aria-label="text.namePlate">
+          <button
+            v-for="motion in NAME_PLATE_MOTIONS"
+            :key="motion"
+            class="choice-button"
+            role="radio"
+            :class="{ active: settings.namePlateMotion === motion }"
+            :aria-checked="settings.namePlateMotion === motion"
+            @click="update({ namePlateMotion: motion })"
+          >
+            {{ text.namePlateMotions[motion] }}
+          </button>
+        </div>
+        <div v-if="settings.namePlateMotion === 'fixed'" class="choices" role="radiogroup" :aria-label="text.namePlatePlace">
+          <button
+            v-for="place in NAME_PLATE_PLACES"
+            :key="place"
+            class="choice-button"
+            role="radio"
+            :class="{ active: settings.namePlatePlace === place }"
+            :aria-checked="settings.namePlatePlace === place"
+            @click="update({ namePlatePlace: place })"
+          >
+            {{ text.namePlatePlaces[place] }}
+          </button>
+        </div>
+      </div>
       <p class="setting-value">{{ text.accessibilityHelp }}</p>
       <button class="wide-button" @click="resetAccessibility">{{ text.defaultAccessibility }}</button>
     </section>
