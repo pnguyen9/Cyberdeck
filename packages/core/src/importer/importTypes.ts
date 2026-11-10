@@ -287,6 +287,7 @@ export type ImportProblemCode =
   | 'counterNeedsNumber'
   | 'counterTooPrecise'
   | 'invalidAskNumber'
+  | 'clockReadOnly'
   | 'duplicateCounter'
   | 'counterNamedLikeDecision'
   | 'unsetCounter'

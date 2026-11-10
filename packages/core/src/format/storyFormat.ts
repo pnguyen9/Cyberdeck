@@ -50,6 +50,21 @@ export interface Decision {
  * A number the story counts with, `[counter: Trust = 2]`: added to, set, and compared. One never
  * changed holds `initial`. Since 1.3.
  */
+/** What the player's clock tells a story: the hour, the day of the week, the minutes since the profile last played. */
+export type ClockValue = 'hour' | 'weekday' | 'timeAway'
+
+/**
+ * Counters every story has without declaring them, which it tests and shows as any other but never
+ * changes: `hour` (0 to 23), `weekday` (1 for Monday to 7 for Sunday), `time away` (minutes since the
+ * profile last played the game, 0 the first time). A counter or a decision the story declares under
+ * one of these names is its own instead.
+ */
+export const CLOCK_COUNTERS: readonly { clock: ClockValue; name: string }[] = [
+  { clock: 'hour', name: 'hour' },
+  { clock: 'weekday', name: 'weekday' },
+  { clock: 'timeAway', name: 'time away' },
+]
+
 export interface Counter {
   id: string
   name: string
@@ -61,6 +76,8 @@ export interface Counter {
   initial: number
   /** The decimals it counts with, `[counter: Money = 1000.00]` two; none when absent. Since 2.1. */
   decimals?: number
+  /** A value the player's clock gives rather than the story, read as the story plays: see `CLOCK_COUNTERS`. Since 2.1. */
+  clock?: ClockValue
   /** Declared nowhere: an `[add]` made it, starting at 0. */
   implicit?: true
   /** Its number is kept by the profile from one playthrough to the next. Since 2.0. */

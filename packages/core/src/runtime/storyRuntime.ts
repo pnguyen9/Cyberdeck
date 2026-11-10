@@ -9,7 +9,7 @@ import type {
   StoredNode,
   StoredPage,
 } from '../format/storyFormat'
-import { flattenStoredNodes, innerListsOf, type AskedName, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
+import { flattenStoredNodes, innerListsOf, type AskedName, type ClockValue, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
 import { givenName, pageWithValues, withValues, type ValueOf } from '../format/textValues'
 import { normalizeName } from '../importer/storyNodes'
 import { drawFrom, newSeed } from './chance'
@@ -155,8 +155,12 @@ export class StoryRuntime {
   private lastingStart: LastingValues = { decisions: {}, counters: {} }
   /** The decimals of each counter that keeps some, by identifier: for bounds read from another counter. */
   private readonly counterDecimals: ReadonlyMap<string, number>
+  /** Counters the clock gives, and the clock, once the player's is given. */
+  private readonly clockCounters: readonly { id: string; clock: ClockValue }[]
+  private clock: { now: () => Date; minutesAway: number } | null = null
 
   constructor(story: PlayableStory) {
+    this.clockCounters = story.project.counters.flatMap(counter => counter.clock === undefined ? [] : [{ id: counter.id, clock: counter.clock }])
     this.counterDecimals = new Map(story.project.counters.flatMap(counter => counter.decimals === undefined ? [] : [[counter.id, counter.decimals] as const]))
     this.chapters = chaptersInOrder(story)
     this.scenes = scenesOf(story)
@@ -200,6 +204,14 @@ export class StoryRuntime {
   /** Memories this game took away, so that the profile forgets them as well. */
   get forgottenMemoryIds(): string[] {
     return [...this.forgottenIds]
+  }
+
+  /**
+   * Gives the runtime the player's clock, and how long the profile was away from the game, in
+   * minutes: the clock's counters read them as the story plays. Without it, they hold 0.
+   */
+  useClock(clock: { now: () => Date; minutesAway: number }) {
+    this.clock = clock
   }
 
   /** Gives the runtime the lasting values the profile kept, which the next `start` begins with. */
@@ -464,6 +476,7 @@ export class StoryRuntime {
   }
 
   private playUntilStop() {
+    this.readClock()
     for (let silentNodeCount = 0; silentNodeCount < MAXIMUM_SILENT_NODES; silentNodeCount++) {
       const frame = this.frames.at(-1)
       if (frame === undefined) {
@@ -630,6 +643,25 @@ export class StoryRuntime {
     const decimalsOf = (counterId: string) => this.counterDecimals.get(counterId) ?? 0
     const scaled = this.countOf(bound.counterId) * 10 ** (decimalsOf(askedCounterId) - decimalsOf(bound.counterId))
     return rounding === 'up' ? Math.ceil(scaled) : Math.floor(scaled)
+  }
+
+  /** The clock's counters as the clock reads now: the hour, the day of the week, the time away. */
+  private readClock() {
+    if (this.clockCounters.length === 0 || this.clock === null) {
+      return
+    }
+    const now = this.clock.now()
+    const values: Record<ClockValue, number> = {
+      hour: now.getHours(),
+      // Monday 1 to Sunday 7, as most of the world counts the days of the week.
+      weekday: ((now.getDay() + 6) % 7) + 1,
+      timeAway: Math.max(0, Math.floor(this.clock.minutesAway)),
+    }
+    const counters = { ...this.currentSnapshot.counters }
+    for (const counter of this.clockCounters) {
+      counters[counter.id] = values[counter.clock]
+    }
+    this.currentSnapshot = { ...this.currentSnapshot, counters }
   }
 
   private countOf(counterId: string): number {

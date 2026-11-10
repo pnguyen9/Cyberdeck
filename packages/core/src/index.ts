@@ -132,6 +132,8 @@ export {
   emptyProgress,
   emptyProgressOf,
   mergeProgress,
+  minutesAway,
+  recordPlaying,
   parseProgress,
   pointKeyOf,
   recordChoiceReached,

@@ -28,6 +28,19 @@ export interface ProgressData {
   lasting?: LastingValues
   /** The language the profile plays a game of several languages in. Since 2.0. */
   language?: string
+  /** When the profile last played the game, refreshed as it plays: what `time away` counts from. Since 2.1. */
+  lastPlayedAt?: string
+}
+
+/** How long ago the profile last played, in minutes; 0 the first time. */
+export function minutesAway(progress: ProgressData, now: Date): number {
+  const last = progress.lastPlayedAt === undefined ? Number.NaN : Date.parse(progress.lastPlayedAt)
+  return Number.isNaN(last) ? 0 : Math.max(0, Math.floor((now.getTime() - last) / 60_000))
+}
+
+/** Notes that the profile plays now; refreshed at most once a minute, so that playing writes no more for it. */
+export function recordPlaying(progress: ProgressData, now: Date): ProgressData {
+  return minutesAway(progress, now) < 1 && progress.lastPlayedAt !== undefined ? progress : { ...progress, lastPlayedAt: now.toISOString() }
 }
 
 export interface ProgressPoint {
@@ -157,7 +170,8 @@ export function decisionsTestedFrom(story: PlayableStory, choiceId: string): Rea
   const testedIds = new Set([...chapterConditionIds, ...[...ahead, ...sceneNodes].flatMap(node => node.type === 'condition'
     ? node.branches.flatMap(branch => branch.condition === null ? [] : testedIdsIn(branch.condition))
     : node.type === 'choice' ? node.options.flatMap(option => option.condition === null ? [] : testedIdsIn(option.condition)) : [])])
-  const names = new Set([...story.project.decisions, ...story.project.counters].filter(named => testedIds.has(named.id)).map(named => named.name))
+  // The clock's counters change by themselves: a point of the map is the same whatever the hour.
+  const names = new Set([...story.project.decisions, ...story.project.counters.filter(counter => counter.clock === undefined)].filter(named => testedIds.has(named.id)).map(named => named.name))
   cache.set(choiceId, names)
   return names
 }
@@ -202,6 +216,7 @@ export function mergeProgress(own: ProgressData, brought: ProgressData): Progres
     illustrationIds: union(own.illustrationIds, brought.illustrationIds),
     ...(brought.lasting === undefined ? {} : { lasting: brought.lasting }),
     ...(brought.language === undefined ? {} : { language: brought.language }),
+    ...(brought.lastPlayedAt === undefined ? {} : { lastPlayedAt: brought.lastPlayedAt }),
   }
 }
 
@@ -231,7 +246,8 @@ export function parseProgress(value: unknown): ProgressData | null {
   })
   const lasting = parseLasting(fields.lasting)
   const language = typeof fields.language === 'string' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8}){0,3}$/.test(fields.language) ? fields.language : null
-  return { progressFormat: 1, game: { id: game.id, name: game.name }, points, endingIds: strings(fields.endingIds), memoryIds: strings(fields.memoryIds), readPageIds: strings(fields.readPageIds), illustrationIds: strings(fields.illustrationIds), ...(lasting === null ? {} : { lasting }), ...(language === null ? {} : { language }) }
+  const lastPlayedAt = typeof fields.lastPlayedAt === 'string' && !Number.isNaN(Date.parse(fields.lastPlayedAt)) ? fields.lastPlayedAt : null
+  return { progressFormat: 1, game: { id: game.id, name: game.name }, points, endingIds: strings(fields.endingIds), memoryIds: strings(fields.memoryIds), readPageIds: strings(fields.readPageIds), illustrationIds: strings(fields.illustrationIds), ...(lasting === null ? {} : { lasting }), ...(language === null ? {} : { language }), ...(lastPlayedAt === null ? {} : { lastPlayedAt }) }
 }
 
 /** Lasting values as a progress file holds them, every field checked: anything else is left out. */

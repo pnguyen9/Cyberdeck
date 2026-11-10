@@ -91,6 +91,7 @@ const en: ProblemMessages = {
       : `${counter} keeps ${kept} ${kept === '1' ? 'decimal' : 'decimals'}, as it is declared: ${value} has more.`
   },
   invalidAskNumber: subject => `${subject === '' ? '[ask number: …]' : `"${subject}"`} should look like: Bet = 10, from 1 to {Money}: a counter, the number proposed, and if wished the lowest and highest numbers allowed, each a number or a counter in braces.`,
+  clockReadOnly: subject => `${subject} is read from the player's clock: the story may test it and show it, not change it. To count something of your own, declare a counter of another name.`,
   duplicateCounter: (subject, suggestion) => suggestion === ''
     ? `The counter "${subject}" is declared twice.`
     : `The counter "${subject}" is already declared in ${suggestion}: change it there, or move it to Definitions first.`,
@@ -208,6 +209,7 @@ const fr: ProblemMessages = {
       : `${counter} garde ${kept} ${kept === '1' ? 'décimale' : 'décimales'}, comme il est déclaré\u00a0: ${value} en a davantage.`
   },
   invalidAskNumber: subject => `${subject === '' ? '[ask number: …]' : quoted(subject)} devrait avoir cette forme\u00a0: Mise = 10, from 1 to {Argent}\u00a0: un compteur, le nombre proposé, et si besoin le plus petit et le plus grand nombres permis, chacun un nombre ou un compteur entre accolades.`,
+  clockReadOnly: subject => `${subject} vient de l’horloge du joueur\u00a0: l’histoire peut la tester et l’afficher, pas la changer. Pour compter quelque chose vous-même, déclarez un compteur d’un autre nom.`,
   duplicateCounter: (subject, suggestion) => suggestion === ''
     ? `Le compteur ${quoted(subject)} est déclaré deux fois.`
     : `Le compteur ${quoted(subject)} est déjà déclaré dans ${suggestion}\u00a0: modifiez-le là-bas, ou déplacez-le d’abord dans Définitions.`,

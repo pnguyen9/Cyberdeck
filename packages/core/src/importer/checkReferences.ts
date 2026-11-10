@@ -1,4 +1,4 @@
-import { ENDINGS_REACHED } from '../format/storyFormat'
+import { CLOCK_COUNTERS, ENDINGS_REACHED } from '../format/storyFormat'
 import { styleClassName } from '../format/authorCss'
 import { placeholdersIn } from '../format/textValues'
 import { readStyleProperty } from '../format/textStyles'
@@ -18,6 +18,8 @@ export interface KnownDefinition {
   implicit?: boolean
   /** A counter's decimals, when it counts with some. */
   decimals?: number
+  /** A counter the clock gives: the story may test it, not change it. */
+  clock?: boolean
 }
 
 export interface KnownDecision extends KnownDefinition {
@@ -100,6 +102,23 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     if (clash !== undefined || knownByName.has(name)) {
       const written = firstCounterWritten(result, allNodes, name)
       problems.push({ severity: 'error', code: 'counterNamedLikeDecision', line: clash?.sourceLine ?? written?.line ?? 1, subject: written?.name ?? name })
+    }
+  }
+  // The clock's counters, for names no decision and no counter of the story bears: tested and shown,
+  // never changed but by the clock.
+  const decisionNames = new Set([...knownByName.keys(), ...result.decisions.map(declaration => normalizeName(declaration.name)), ...allNodes.flatMap(node => node.type === 'choice' ? [normalizeName(node.decision)] : [])])
+  const ownCounters = new Set([...result.counters.map(declaration => normalizeName(declaration.name)), ...(knownNames.counters ?? []).filter(counter => counter.clock !== true).map(counter => normalizeName(counter.name))])
+  for (const clock of CLOCK_COUNTERS) {
+    const name = normalizeName(clock.name)
+    if (decisionNames.has(name) || ownCounters.has(name)) {
+      continue
+    }
+    counters.add(name)
+    for (const node of allNodes) {
+      const changed = node.type === 'add' || node.type === 'askNumber' ? node.counter : node.type === 'set' ? node.decision : null
+      if (changed !== null && normalizeName(changed) === name) {
+        problems.push({ severity: 'error', code: 'clockReadOnly', line: node.sourceLine, subject: changed })
+      }
     }
   }
   problems.push(...checkScenes(result, knownNames.scenes ?? []))

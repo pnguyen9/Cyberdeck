@@ -2,6 +2,7 @@ import { MAXIMUM_COUNTER_DECIMALS } from '../importer/readControl'
 import {
   isSupportedFormatVersion,
   type AnimationSpec,
+  type ClockValue,
   type ChapterDocument,
   type InlineStageCommand,
   type Placement,
@@ -81,6 +82,14 @@ function object<Shape extends object>(shape: { [Key in keyof Shape]: Check<Shape
  */
 function withFlag<Shape extends object, Field extends string>(field: Field, check: Check<Shape>): Check<Shape & { [Key in Field]?: true }> {
   return (value, path) => (record(value, path)[field] === true ? { ...check(value, path), [field]: true } : check(value, path)) as Shape & { [Key in Field]?: true }
+}
+
+/** A counter the clock gives, kept only when it is one. */
+function withClock<Shape extends object>(check: Check<Shape>): Check<Shape & { clock?: ClockValue }> {
+  return (value, path) => {
+    const clock = record(value, path).clock
+    return clock === undefined ? check(value, path) : { ...check(value, path), clock: oneOf('hour', 'weekday', 'timeAway')(clock, `${path}.clock`) }
+  }
 }
 
 /** A counter's decimals, kept only when it has some: 1 to the most a counter may count with. */
@@ -329,7 +338,7 @@ const checkProjectFields: Check<ProjectDocument> = object({
   chapterOrder: array(string),
   sceneOrder: array(string),
   decisions: array(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, multiple: boolean, values: array(object({ id: string, name: string })) })))),
-  counters: array(withDecimals(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, initial: integer }))))),
+  counters: array(withClock(withDecimals(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, initial: integer })))))),
   askedNames: array(object({ id: string, name: string, defaultName: string })),
   endings: array((ending, endingPath) => {
     const checked = object({ id: string, name: string })(ending, endingPath)

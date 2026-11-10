@@ -138,7 +138,7 @@ export function knownNamesFor(project: ProjectDocument, documents: readonly Chap
   if (documents === undefined) {
     return {
       decisions: project.decisions.map(decision => ({ name: decision.name, values: decision.values.map(value => value.name), declaredIn: '' })),
-      counters: project.counters.map(counter => ({ name: counter.name, declaredIn: '', ...(counter.decimals === undefined ? {} : { decimals: counter.decimals }) })),
+      counters: project.counters.map(counter => ({ name: counter.name, declaredIn: '', ...(counter.decimals === undefined ? {} : { decimals: counter.decimals }), ...(counter.clock === undefined ? {} : { clock: true }) })),
       askedNames: project.askedNames.map(asked => asked.name),
       endings,
       memories,
@@ -171,7 +171,7 @@ export function knownNamesFor(project: ProjectDocument, documents: readonly Chap
         usedValues: decision.values.filter(value => usedValueIds.has(value.id)).map(value => value.name),
       }
     }),
-    counters: project.counters.map(counter => ({ name: counter.name, declaredIn: declaredIn('counter', counter.id), ...(counter.implicit === true ? { implicit: true } : {}), ...(counter.decimals === undefined ? {} : { decimals: counter.decimals }) })),
+    counters: project.counters.map(counter => ({ name: counter.name, declaredIn: declaredIn('counter', counter.id), ...(counter.implicit === true ? { implicit: true } : {}), ...(counter.decimals === undefined ? {} : { decimals: counter.decimals }), ...(counter.clock === undefined ? {} : { clock: true }) })),
     askedNames: project.askedNames.map(asked => asked.name),
     endings,
     memories,

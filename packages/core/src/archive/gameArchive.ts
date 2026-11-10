@@ -283,7 +283,7 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   const needsDatajack20 = languagesOf(project).length > 1 || project.decisions.some(decision => decision.lasting === true) || project.counters.some(counter => counter.lasting === true)
     || documents.some(document => flattenStoredNodes(document.nodes).some(node => (node.type === 'remember' && node.forget === true) || (node.type === 'choice' && node.timeLimitMs !== undefined)))
   // An older Datajack refuses a command it does not know, and would count a counter's hundredths as whole numbers.
-  if (project.counters.some(counter => (counter.decimals ?? 0) > 0) || documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'askNumber' || commandsOf(node).some(command => command.type === 'continued')))) {
+  if (project.counters.some(counter => (counter.decimals ?? 0) > 0 || counter.clock !== undefined) || documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'askNumber' || commandsOf(node).some(command => command.type === 'continued')))) {
     return '2.1'
   }
   if (needsDatajack20) {

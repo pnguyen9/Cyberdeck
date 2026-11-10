@@ -299,6 +299,8 @@ A counter can count with decimals: write its first number with them, `[counter: 
 
 Players can give a number too: `[ask number: Bet = 10, from 1 to {Money}]` asks them for the bet, 10 if they type nothing, at least 1 and at most the money they have. They may type a comma or a point; the field tells them what it understood, and what it cannot take.
 
+Three counters come from the player's clock, with nothing to declare: `hour` (0 to 23), `weekday` (1 for Monday to 7 for Sunday) and `time away`, the minutes since they last played. `[if: hour >= 22 or hour < 6]` can put a character to sleep at night, and `[if: time away > 1440]` greet players back after a day.
+
 ## 12. Keeping track of decisions
 
 A decision or a style can be declared anywhere, and used everywhere. Two tabs keep them from getting lost.

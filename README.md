@@ -271,6 +271,7 @@ one per language, of the same shape: another language is one more table each.
 | `[counter: Trust = 2]`, `[counter: Trust]` | Declares a counter, a whole number the story counts with, and what it starts at (0 when not given). Optional: an `[add]` makes the counter it names. |
 | `[counter: Money = 1000.00]` | A counter with decimals: as many as its first number is written with, here hundredths (at most 4). It counts exactly, `0.1 + 0.2` being `0.30`; `{Money}` shows it as the game's language writes numbers, `1,000.50` or `1 000,50`; a number with more decimals than it keeps is reported. Saves keep it as it reads, `1000.5`. Needs Datajack 2.1. |
 | `[ask number: Bet = 10, from 1 to {Money}]` | Asks the player for a number, for a counter (made by it when not declared, with the decimals of the number proposed). The bounds are numbers or counters in braces, read when the number is asked; either may go. The field takes digits with one comma or point for decimals, whatever the language, spaces ignored, a minus only when the lowest bound is below zero; it says what it understood, and refuses what lies out of bounds or has too many decimals, saying why. Nothing typed takes the number proposed. Needs Datajack 2.1. |
+| `{hour}`, `[if: hour >= 22 or hour < 6]`, `weekday`, `time away` | Counters every story has, read from the player's clock as the story plays: `hour` (0 to 23), `weekday` (1 for Monday to 7 for Sunday), `time away` (minutes since the profile last played the game, 0 the first time). Tested and shown as any counter, never changed by the story (reported if it tries), kept out of saves and of the map's points. A decision or a counter the story declares under one of these names is its own. A story using them plays differently depending on when it is played. Needs Datajack 2.1. |
 | `[counter lasting: Coins = 0]`, `[decision multi lasting: Bag = Key \| Lamp]` | A counter or a decision the profile keeps from one playthrough to the next: within one it behaves as any other, going back undoing what was added or taken, and a new playthrough starts with what the last one left. What the player carries, apart from what the game knows (`[remember]`). Needs Datajack 2.0. |
 | `[shown: Bag, Coins]`, `[shown after an ending: Trust, endings reached]` | What players see in their **Journal**: decisions while they hold something (a bag its items, until taken away), counters their number, and with `endings reached` the endings reached; always, or once the profile has reached any ending. Nothing unless the author says so. Lines among the definitions, names separated by commas; the Index writes them too. |
 | `[add: Trust]`, `[add: Trust 2]`, `[add: Trust -1]` | Adds to a counter: 1, or the amount after its name. `[set: Trust = 0]` gives it a value. |
@@ -892,15 +893,7 @@ downloaded and all of it is as free as the rest of the repository.
   expressions and moves as characters and their expressions. It never dies nor runs away: left
   without care, it is only sad for a while (a pout, a sigh, sitting with its back turned), and a
   little care brings it back to its usual self. It is glad to see players come back, the gladder
-  the longer they were away, which needs a new feature: the engine does not know the time.
-- **The time away.** A story cannot tell how long players were gone. Datajack knows when the game
-  was last played by the profile; a value such as `{time away}`, in minutes, tested as any counter
-  (`[if: time away > 1440]` for more than a day), would let a story greet them, or have time pass
-  in it.
-- **The hour of the day.** A value such as `{hour}` (0 to 23), and the day of the week, read from
-  the player's computer: a pet asleep at night, a shop closed on Sundays, a greeting by the time of
-  day. A story using it plays differently depending on when it is played, which is what its author
-  wants of it.
+  the longer they were away (`time away`), and asleep at night (`hour`).
 - **Pairs**, of cute animals drawn as simple shapes, like the sample's cat. Needs a new feature: a
   choice laid out as a grid of buttons, each showing a picture, where a visual novel lists its
   options one under another. A grid may serve stories too (a map to pick a place from, a keypad),

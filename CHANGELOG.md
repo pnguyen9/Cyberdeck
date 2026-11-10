@@ -27,7 +27,9 @@
 - `[ask number: Bet = 10, from 1 to {Money}]` asks the player for a number: the field takes a comma
   or a point, says what it understood, and refuses, saying why, a number out of bounds or with too
   many decimals.
-- Both need Datajack 2.1 (format 2.1).
+- The player's clock, with nothing to declare: `hour` (0 to 23), `weekday` (1 for Monday to 7 for
+  Sunday) and `time away` (minutes since the profile last played), tested and shown as counters.
+- All three need Datajack 2.1 (format 2.1).
 
 ### Cyberdeck, the editor
 - *Erase what Cyberdeck keeps…*, below the projects, erases the saves and progress of the previews,

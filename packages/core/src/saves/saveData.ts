@@ -63,7 +63,8 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
   const countersById = new Map(project.counters.map(counter => [counter.id, counter]))
   const counters = Object.entries(state.counters).flatMap(([counterId, count]) => {
     const counter = countersById.get(counterId)
-    return counter === undefined ? [] : [[counter.name, savedAmount(count, counter)] as const]
+    // The clock's counters are read again when the game resumes: a save keeps none.
+    return counter === undefined || counter.clock !== undefined ? [] : [[counter.name, savedAmount(count, counter)] as const]
   })
   const names = Object.entries(state.names).flatMap(([askedNameId, given]) => {
     const asked = project.askedNames.find(candidate => candidate.id === askedNameId)

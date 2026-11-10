@@ -9,6 +9,7 @@ import {
   defaultEnvironment,
   FORMAT_VERSION,
   type AskedName,
+  CLOCK_COUNTERS,
   type ChapterDocument,
   type Counter,
   type Decision,
@@ -26,6 +27,7 @@ import {
   type TextStyle,
 } from './storyFormat'
 import { readStyleProperty, type StyleProperty } from './textStyles'
+import { placeholdersIn } from './textValues'
 
 export interface StoredImport {
   /** A new project document; the one given is left untouched. */
@@ -69,7 +71,7 @@ export function storeImport(
       decisions.offer(node.decision, node.options.map(option => option.value))
     }
   }
-  const counters = new CounterRegistry(project.counters, environment)
+  const counters = new CounterRegistry(project.counters, environment, name => decisions.has(name))
   for (const declaration of result.counters) {
     counters.declare(declaration.name, declaration.initial, declaration.lasting, declaration.decimals)
   }
@@ -79,6 +81,11 @@ export function storeImport(
     } else if (node.type === 'askNumber') {
       counters.use(node.counter, node.decimals)
     }
+  }
+  // A clock's counter shown in the text, `{hour}`, is made as one tested would be.
+  for (const node of importedNodes) {
+    const texts = node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : []
+    texts.flatMap(placeholdersIn).forEach(name => counters.get(name))
   }
   const askedNames = new AskedNameRegistry(project.askedNames, environment)
   for (const node of importedNodes) {
@@ -378,6 +385,10 @@ class DecisionRegistry {
     }
   }
 
+  has(name: string): boolean {
+    return this.decisions.some(candidate => normalizeName(candidate.name) === normalizeName(name))
+  }
+
   find(name: string): Decision {
     const decision = this.decisions.find(candidate => normalizeName(candidate.name) === normalizeName(name))
     if (decision === undefined) {
@@ -403,7 +414,7 @@ class DecisionRegistry {
 class CounterRegistry {
   private readonly counters: Counter[]
 
-  constructor(existing: readonly Counter[], private readonly environment: Environment) {
+  constructor(existing: readonly Counter[], private readonly environment: Environment, private readonly isDecision: (name: string) => boolean = () => false) {
     this.counters = [...existing]
   }
 
@@ -431,8 +442,16 @@ class CounterRegistry {
     }
   }
 
+  /** A counter by name; one of the clock's, made when first named, unless a decision bears that name. */
   get(name: string): Counter | undefined {
-    return this.counters.find(candidate => normalizeName(candidate.name) === normalizeName(name))
+    const found = this.counters.find(candidate => normalizeName(candidate.name) === normalizeName(name))
+    const clock = CLOCK_COUNTERS.find(candidate => normalizeName(candidate.name) === normalizeName(name))
+    if (found !== undefined || clock === undefined || this.isDecision(name)) {
+      return found
+    }
+    const counter: Counter = { id: this.environment.createId(), name: clock.name, initial: 0, implicit: true, clock: clock.clock }
+    this.counters.push(counter)
+    return counter
   }
 
   find(name: string): Counter {

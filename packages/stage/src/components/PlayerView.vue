@@ -17,6 +17,8 @@ import {
   emptyProgress,
   recordChoiceReached,
   recordEndReached,
+  minutesAway,
+  recordPlaying,
   isMissingChapters,
   recordIllustrationSeen,
   hasJournal,
@@ -633,6 +635,7 @@ function recordProgress() {
   }
   recorded = recordMemories(recorded, runtime.memoryIds, runtime.forgottenMemoryIds)
   recorded = recordLasting(recorded, runtime.lastingValues)
+  recorded = recordPlaying(recorded, new Date())
   recorded = recordIllustrationSeen(recorded, runtime.snapshot.stage.illustrationId)
   if (recorded !== progress.value) {
     progress.value = recorded
@@ -1126,6 +1129,7 @@ onMounted(async () => {
     resizeObserver.observe(viewport.value)
   }
   progress.value = await props.saveStore.readProgress(props.story.project.id) ?? progress.value
+  runtime.useClock({ now: () => new Date(), minutesAway: minutesAway(progress.value, new Date()) })
   runtime.useMemory(progress.value)
   runtime.useLasting(progress.value.lasting ?? { decisions: {}, counters: {} })
   if (props.resumeFrom === null) {

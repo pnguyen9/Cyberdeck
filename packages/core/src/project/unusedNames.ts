@@ -1,3 +1,5 @@
+import { placeholdersIn } from '../format/textValues'
+import { normalizeName } from '../importer/storyNodes'
 import { flattenStoredNodes, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredCondition, type StoredNode } from '../format/storyFormat'
 
 /**
@@ -152,6 +154,12 @@ export function unusedNames(project: ProjectDocument, documents: readonly Chapte
     for (const value of decision.values.filter(candidate => !used.has(candidate.id))) {
       unused.push({ kind: 'decisionValue', id: value.id, decisionId: decision.id, name: value.name, isKept: false })
     }
+  }
+  // A clock's counter is used where the text shows it, `{hour}`, as well as where a condition tests it.
+  const shownNames = new Set(documents.flatMap(document => flattenStoredNodes(document.nodes)).flatMap(node =>
+    node.type === 'page' ? placeholdersIn(node.text) : node.type === 'choice' ? node.options.flatMap(option => placeholdersIn(option.text)) : []).map(normalizeName))
+  for (const counter of project.counters.filter(candidate => candidate.clock !== undefined && shownNames.has(normalizeName(candidate.name)))) {
+    used.add(counter.id)
   }
   for (const counter of project.counters.filter(candidate => candidate.implicit === true && !used.has(candidate.id))) {
     unused.push({ kind: 'counter', id: counter.id, name: counter.name, isKept: false })

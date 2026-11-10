@@ -101,7 +101,8 @@ export function globalDefinitionLines(project: ProjectDocument, documents: reado
   const added = new Set(nodes.flatMap(node => (node.type === 'count' && node.operation === 'add') || node.type === 'askNumber' ? [node.counterId] : []))
   return [
     ...project.decisions.filter(decision => !homed.has(decision.id) && !(decision.implicit === true && chosen.has(decision.id))).map(decision => definitionLine(project, 'decision', decision.id)!),
-    ...project.counters.filter(counter => !homed.has(counter.id) && !(counter.implicit === true && added.has(counter.id))).map(counter => definitionLine(project, 'counter', counter.id)!),
+    // The clock's counters are every story's: never declared.
+    ...project.counters.filter(counter => counter.clock === undefined && !homed.has(counter.id) && !(counter.implicit === true && added.has(counter.id))).map(counter => definitionLine(project, 'counter', counter.id)!),
     ...project.styles.filter(style => style.implicit !== true && !homed.has(style.id) && !isPropertyAlone(style)).map(style => definitionLine(project, 'style', style.id)!),
     ...shownLines(project),
   ]
