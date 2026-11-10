@@ -87,9 +87,10 @@ describe('progress', () => {
       '[end]',
       'Home.',
     ])
-    // The park is chosen before and after the book is read: the page before the choice differs.
+    // Before the book is read, and after: two points. The place picked the round before is no
+    // matter, the choice giving it again before anything tests it.
     const progress = play(story, emptyProgress(story), ['The park', 'The library', 'The park', 'Go home'])
-    expect(progress.points).toHaveLength(4)
+    expect(progress.points).toHaveLength(2)
   })
 
   it('records the pages read once', () => {
@@ -178,5 +179,33 @@ describe('progress brought from elsewhere', () => {
     expect(merged.points.map(point => point.key)).toEqual(['door', 'hall'])
     expect(merged.points[0]!.taken).toEqual([{ optionId: 'open', next: { type: 'end', endingId: 'out' } }, { optionId: 'knock', next: { type: 'point', key: 'hall' } }])
     expect([merged.endingIds, merged.readPageIds, merged.lasting]).toEqual([['out', 'in'], ['p1', 'p2'], { decisions: {}, counters: { Coins: 7 } }])
+  })
+})
+
+describe('points of the map', () => {
+  it('lead to their next points in the order of their options, whatever order they were played in, so that lines do not cross', () => {
+    const story = storyFromText(['[choice: Door]', '> Open = Open', '> Leave = Leave', '[if: Door is Open]', 'In.', '[ending: Party]', '[end]', 'Out.', '[ending: Gone]'])
+    let progress = play(story, emptyProgress(story), ['Leave'])
+    progress = play(story, progress, ['Open'])
+    const ends = layOutProgressMap(progress, story).nodes.flatMap(node => node.type === 'end' ? [`${node.endingName} @${node.row}`] : [])
+    expect(ends.sort()).toEqual(['Gone @1', 'Party @0'])
+  })
+
+  it('are not told apart by a value the story always gives again before testing it', () => {
+    const story = storyFromText([
+      '[counter: Pick = 0]',
+      '[loop]',
+      '[choice: Where]', '> The shop = Shop', '> Home = Home',
+      '[if: Where is Home]', '[break]', '[end]',
+      '[play: Extra]',
+      '[end]',
+      'Home.',
+      '# Scene: Extra',
+      '[set: Pick = random 1 3]',
+      '[if: Pick is 1]', 'One.', '[else]', 'Another.', '[end]',
+    ])
+    // Whatever was drawn the first time, coming back to the choice is the same point.
+    const progress = play(story, emptyProgress(story), ['The shop', 'The shop', 'The shop', 'Home'])
+    expect(progress.points).toHaveLength(1)
   })
 })

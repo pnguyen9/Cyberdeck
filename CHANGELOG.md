@@ -7,6 +7,11 @@
   General settings, was out of reach.
 - *Erase what Datajack keeps…*, below the games, removes every game, and if wished the profile's
   saves and progress (removing games alone keeps them, for when the games come back).
+- The map tells paths apart by fewer values: only those that can still change what follows, tested
+  ahead before the story gives them again. A number drawn just before each test of it, or a choice
+  given again each round of a loop, no longer makes new points (progress recorded before keeps its
+  points). Its lines cross less: each column is ordered after what leads to it and what it leads to,
+  each point's lines leaving in the order of its options.
 - *Progress to a file*, on a game's card, writes its progress (endings, map, gallery, read pages,
   lasting values) to carry to another computer or build; *Load a save or progress…* joins it to what
   the profile had reached.

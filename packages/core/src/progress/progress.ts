@@ -1,4 +1,4 @@
-import { flattenStoredNodes, testedIdsIn, type StoredChoice } from '../format/storyFormat'
+import { flattenStoredNodes, innerListsOf, testedIdsIn, type StoredChoice, type StoredNode } from '../format/storyFormat'
 import { chaptersInOrder, scenesOf, type PlayableStory } from '../runtime/playableStory'
 import type { LastingValues, RuntimeState } from '../runtime/storyRuntime'
 import { parseSave, toSave, type SaveData } from '../saves/saveData'
@@ -147,12 +147,104 @@ export function pointKeyOf(choiceId: string, save: SaveData, namesThatMatter: Re
 
 const testedDecisionsByStory = new WeakMap<PlayableStory, Map<string, ReadonlySet<string>>>()
 
+/** A test of a decision or counter, and where the value it reads was last given along the way to it. */
+interface ValueRead {
+  id: string
+  /** The chapters, read in order, are one sequence; each scene is one of its own. */
+  sequence: string
+  /** Positions in the sequence, in reading order. */
+  at: number
+  /** Where the story last gave it a new value before the test, on every way there; null when it may come from anywhere before. */
+  lastSetAt: number | null
+}
+
+const valueReadsByStory = new WeakMap<PlayableStory, readonly ValueRead[]>()
+
 /**
- * Names of the decisions and counters that conditions test from a choice on, in reading order, those deciding
- * which of its options are offered included, those of every scene, which may be played ahead, and
- * those deciding which chapters are played.
- * A loop around the choice, or a scene holding it, may test anything again: every name tested in
- * the story then counts.
+ * Every test of the story, with where its value was last given on the way to it: a counter drawn
+ * just before each test of it, a decision set or chosen right before. Read along the story's lists,
+ * a branch starting from what its block had given; a loop's body runs at least once, so what it gives
+ * before anything that may leave it holds after it; a scene starts from nothing given.
+ */
+function valueReads(story: PlayableStory): readonly ValueRead[] {
+  const known = valueReadsByStory.get(story)
+  if (known !== undefined) {
+    return known
+  }
+  const singleDecisionIds = new Set(story.project.decisions.filter(decision => !decision.multiple).map(decision => decision.id))
+  const reads: ValueRead[] = []
+  const leavesLoop = (node: StoredNode): boolean => node.type === 'break' || node.type === 'ending' || innerListsOf(node).some(list => list.nodes.some(leavesLoop))
+  const readSequence = (sequence: string, documents: readonly { nodes: StoredNode[] }[]) => {
+    const positions = new Map(documents.flatMap(document => flattenStoredNodes(document.nodes)).map((node, index) => [node.id, index]))
+    const read = (ids: readonly string[], node: StoredNode, given: ReadonlyMap<string, number>) => {
+      for (const id of ids) {
+        reads.push({ id, sequence, at: positions.get(node.id) ?? 0, lastSetAt: given.get(id) ?? null })
+      }
+    }
+    /** Walks a list, knowing where each value was last given; returns that as the list ends. */
+    const walk = (nodes: readonly StoredNode[], givenAtStart: ReadonlyMap<string, number>): Map<string, number> => {
+      const given = new Map(givenAtStart)
+      const give = (id: string, node: StoredNode) => given.set(id, positions.get(node.id) ?? 0)
+      for (const node of nodes) {
+        switch (node.type) {
+          case 'count':
+            if (node.operation === 'add') {
+              read([node.counterId], node, given)
+            } else {
+              give(node.counterId, node)
+            }
+            break
+          case 'askNumber':
+            give(node.counterId, node)
+            break
+          case 'set':
+            if (singleDecisionIds.has(node.decisionId)) {
+              give(node.decisionId, node)
+            }
+            break
+          case 'choice':
+            node.options.forEach(option => option.condition !== null && read(testedIdsIn(option.condition), node, given))
+            if (singleDecisionIds.has(node.decisionId)) {
+              give(node.decisionId, node)
+            }
+            break
+          case 'condition':
+            node.branches.forEach(branch => branch.condition !== null && read(testedIdsIn(branch.condition), node, given))
+            node.branches.forEach(branch => walk(branch.nodes, given))
+            break
+          case 'loop': {
+            walk(node.nodes, given)
+            const beforeLeaving = node.nodes.findIndex(leavesLoop)
+            walk(beforeLeaving === -1 ? node.nodes : node.nodes.slice(0, beforeLeaving), given).forEach((at, id) => given.set(id, at))
+            break
+          }
+          default:
+            break
+        }
+      }
+      return given
+    }
+    documents.forEach(document => walk(document.nodes, new Map()))
+  }
+  const chapters = chaptersInOrder(story)
+  readSequence('chapters', chapters)
+  for (const chapter of chapters) {
+    if (chapter.condition !== undefined) {
+      testedIdsIn(chapter.condition).forEach(id => reads.push({ id, sequence: 'chapters', at: 0, lastSetAt: null }))
+    }
+  }
+  for (const [sceneId, scene] of scenesOf(story)) {
+    readSequence(sceneId, [scene])
+  }
+  valueReadsByStory.set(story, reads)
+  return reads
+}
+
+/**
+ * Names of the decisions and counters whose value at a choice may still change what follows: tested
+ * ahead (to offer options, choose branches, play chapters, in the scenes, which may be played ahead)
+ * before the story gives them a new value after the choice. A loop around the choice may test anything
+ * again: every name tested then counts.
  */
 export function decisionsTestedFrom(story: PlayableStory, choiceId: string): ReadonlySet<string> {
   const cache = testedDecisionsByStory.get(story) ?? new Map<string, ReadonlySet<string>>()
@@ -161,17 +253,38 @@ export function decisionsTestedFrom(story: PlayableStory, choiceId: string): Rea
   if (cached !== undefined) {
     return cached
   }
-  const nodes = chaptersInOrder(story).flatMap(chapter => flattenStoredNodes(chapter.nodes))
-  const sceneNodes = [...scenesOf(story).values()].flatMap(scene => flattenStoredNodes(scene.nodes))
-  const choiceIndex = nodes.findIndex(node => node.id === choiceId)
-  const isInLoop = nodes.some(node => node.type === 'loop' && flattenStoredNodes(node.nodes).some(inner => inner.id === choiceId))
-  const ahead = choiceIndex === -1 || isInLoop ? nodes : nodes.slice(choiceIndex)
-  const chapterConditionIds = chaptersInOrder(story).flatMap(chapter => chapter.condition === undefined ? [] : testedIdsIn(chapter.condition))
-  const testedIds = new Set([...chapterConditionIds, ...[...ahead, ...sceneNodes].flatMap(node => node.type === 'condition'
-    ? node.branches.flatMap(branch => branch.condition === null ? [] : testedIdsIn(branch.condition))
-    : node.type === 'choice' ? node.options.flatMap(option => option.condition === null ? [] : testedIdsIn(option.condition)) : [])])
+  const chapterNodes = chaptersInOrder(story).flatMap(chapter => flattenStoredNodes(chapter.nodes))
+  const scenes = [...scenesOf(story)]
+  const sceneOfChoice = scenes.find(([, scene]) => flattenStoredNodes(scene.nodes).some(node => node.id === choiceId))
+  const sequence = sceneOfChoice?.[0] ?? 'chapters'
+  const sequenceNodes = sceneOfChoice === undefined ? chapterNodes : flattenStoredNodes(sceneOfChoice[1].nodes)
+  const choiceAt = sequenceNodes.findIndex(node => node.id === choiceId)
+  // The outermost loop around the choice, by the positions it spans: its body comes round again.
+  const loop = sequenceNodes.flatMap((node, at) => node.type === 'loop' && flattenStoredNodes(node.nodes).some(inner => inner.id === choiceId)
+    ? [{ start: at, end: at + flattenStoredNodes(node.nodes).length }]
+    : [])[0] ?? null
+  // A test ahead finds what the paths to the choice left, unless the story gives it a new value after
+  // the choice, on the way to the test. Every scene may be played ahead, and the chapters after a
+  // scene's choice too, but a test there whose value is given on the way to it never finds what came before.
+  const matters = (read: ValueRead) => {
+    if (read.sequence !== sequence) {
+      return read.lastSetAt === null
+    }
+    if (choiceAt === -1) {
+      return true
+    }
+    if (read.at > choiceAt) {
+      return read.lastSetAt === null || read.lastSetAt < choiceAt
+    }
+    // Before the choice, a test is only ahead on the loop's next round: the value counts unless the
+    // loop gives it again, on that round, before the test.
+    return loop !== null && read.at >= loop.start && read.at <= loop.end
+      && !(read.lastSetAt !== null && read.lastSetAt > loop.start && read.lastSetAt < read.at)
+  }
+  const testedIds = new Set(valueReads(story).filter(matters).map(read => read.id))
   // The clock's counters change by themselves: a point of the map is the same whatever the hour.
-  const names = new Set([...story.project.decisions, ...story.project.counters.filter(counter => counter.clock === undefined)].filter(named => testedIds.has(named.id)).map(named => named.name))
+  const names = new Set([...story.project.decisions, ...story.project.counters.filter(counter => counter.clock === undefined)]
+    .filter(named => testedIds.has(named.id)).map(named => named.name))
   cache.set(choiceId, names)
   return names
 }

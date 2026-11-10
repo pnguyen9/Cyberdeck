@@ -809,20 +809,10 @@ the SHA-256 in their name; and only save folders the player picked in the system
   values stored: a choice that changes nothing (the breakfast of the sample) need not make a point
   of its own. Hovering a point could show its values, by the journal's rule of showing only what
   players may see.
-- **The map tells apart paths that are the same.** A point of the map is a choice, with the values
-  still tested from it on and what the stage shows (background, music, characters…): two paths
-  meeting the same choice with the same of these are one point. But a value tested in a scene counts
-  from every choice of the story, scenes being playable anywhere; and a value counts even when the
-  story always sets it again before testing it. In the sample, `Pick` is drawn at random before
-  every test of it, in the Library, Clubroom and Shop scenes, yet the number left by the last draw
-  makes the next points differ, as does the stage a scene leaves. So the more one plays, the more
-  points there are for what is the same state. Some differences are real and worth showing: visit
-  the sweet shop a second time before seeing the cat a second time, and you feed the cat, a line of
-  flavour; the map may keep such a route apart, as it already names the option taken.
-- **The map's lines cross.** Points are placed in the order they were reached, each below its parent
-  by the rank of the option leading to it, and endings where they fall: nothing keeps the lines from
-  crossing, and paths that end the same way overlap. The layout should order points and endings to
-  cross as few lines as it can.
+- **The map tells apart paths that differ only by the stage.** A point of the map is a choice, with
+  the values still able to change what follows (tested ahead before the story gives them again) and
+  what the stage shows (background, music, characters…). Two paths whose stages differ, the one a
+  scene leaves for instance, make two points for what may be the same state.
 - **Web data cannot be cleared from Firefox.** The web builds keep projects, profiles, games and
   saves in the browser's storage. Opened from a file, each copy is a site of its own, named by its
   path, so every version unzipped keeps its own data; Firefox's "Clear site data" lists only sites

@@ -1,3 +1,4 @@
+import type { StoredChoice } from '../format/storyFormat'
 import type { PlayableStory } from '../runtime/playableStory'
 import { choicesOf, type ProgressData, type ProgressPoint, type ProgressTarget } from './progress'
 
@@ -102,6 +103,8 @@ export function layOutProgressMap(progress: ProgressData, story: PlayableStory):
     nextRootRow = Math.max(nextRootRow, (rows.get(key) ?? 0) + 1)
   }
 
+  untangle(forward, columns, rows, points, choices)
+
   const chapterTitles = new Map(story.chapters.map(chapter => [chapter.id, chapter.title]))
   const nodes: MapNode[] = [
     ...points.map((point): MapNode => {
@@ -136,5 +139,47 @@ export function layOutProgressMap(progress: ProgressData, story: PlayableStory):
     rowCount: Math.max(0, ...nodes.map(node => node.row + 1)),
     endingsReached: progress.endingIds.filter(endingId => story.project.endings.some(ending => ending.id === endingId)).length,
     endingsTotal: story.project.endings.length,
+  }
+}
+
+/**
+ * Reorders each column so that lines cross as little as they may: a point goes level with the
+ * average of what leads to it, then of what it leads to, a few times over, each line leaving a point
+ * in the order of its options. Each keeps the row it would have unless the order asks it to go lower,
+ * so that a path with no branch stays a straight line.
+ */
+function untangle(forward: readonly MapEdge[], columns: ReadonlyMap<string, number>, rows: Map<string, number>, points: readonly ProgressPoint[], choices: ReadonlyMap<string, StoredChoice>) {
+  const optionRank = new Map(points.flatMap(point => (choices.get(point.choiceId)?.options ?? []).map((option, rank) => [`${point.key} ${option.id}`, rank] as const)))
+  const columnCount = Math.max(0, ...columns.values()) + 1
+  const keysIn = (column: number) => [...columns].filter(([, at]) => at === column).map(([key]) => key)
+  const level = (keys: readonly string[], barycentre: (key: string) => number | null) => {
+    const sorted = keys
+      .map(key => ({ key, at: barycentre(key) ?? rows.get(key) ?? 0 }))
+      .sort((first, second) => first.at - second.at || (rows.get(first.key) ?? 0) - (rows.get(second.key) ?? 0))
+    let next = 0
+    for (const { key, at } of sorted) {
+      const row = Math.max(next, Math.floor(at))
+      rows.set(key, row)
+      next = row + 1
+    }
+  }
+  const mean = (values: readonly number[]) => values.length === 0 ? null : values.reduce((sum, value) => sum + value, 0) / values.length
+  const fromParents = (key: string) => mean(forward.filter(edge => edge.to === key)
+    .map(edge => (rows.get(edge.from) ?? 0) + (optionRank.get(`${edge.from} ${edge.optionId}`) ?? 0) / 100))
+  const fromChildren = (key: string) => mean(forward.filter(edge => edge.from === key).map(edge => rows.get(edge.to) ?? 0))
+  for (let sweep = 0; sweep < 4; sweep++) {
+    for (let column = 1; column < columnCount; column++) {
+      level(keysIn(column), fromParents)
+    }
+    if (sweep < 3) {
+      for (let column = columnCount - 2; column >= 0; column--) {
+        level(keysIn(column), fromChildren)
+      }
+    }
+  }
+  // Back to the top, should the sweeps have left the first rows empty.
+  const top = Math.min(...rows.values())
+  if (Number.isFinite(top) && top > 0) {
+    rows.forEach((row, key) => rows.set(key, row - top))
   }
 }
