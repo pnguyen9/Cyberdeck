@@ -859,20 +859,13 @@ Lists, the grid of picture buttons (sized by numbers or counters), and the Pairs
 samples. Left for later: Blackjack's shoe of 2, 4, 6 or 8 real decks as a list of the cards left;
 Minesweeper's flags, which need a second way to pick a tile (a right click, a key).
 
-### 2. Release 3.0.0
+### 2. Release 3.0.0 (built, waiting for the author)
 
-Everything under *Unreleased* in the CHANGELOG ships with it, nothing having been released since
-2.0.3. A story is still marked with the oldest format that plays it: 2.1 for what came before lists,
-3.0 with lists, so that an older Datajack refuses only what it cannot play.
-
-- Versions to 3.0.0 in every `package.json` and in `package-lock.json` (the workspace's own entries
-  only, never a third-party one sharing the number), the CHANGELOG's *Unreleased* titled
-  `3.0.0 — <date>`.
-- `npm run guide:images`, then `rm -rf release/v3.0.0` and `npm run release`: the zips, the
-  documentation, the samples (the release script packs Sakura Week; the mini games to be packed too).
-- Commit; tag, push and the GitHub release only once the author says so; the files uploaded by the
-  author.
-
+Everything since 2.0.3 ships with it. A story is still marked with the oldest format that plays it:
+2.1 for what came before lists, 3.0 with lists, so that an older Datajack refuses only what it
+cannot play. Versions are at 3.0.0, the guide's images taken again, and `npm run release` has made
+the files in `release/v3.0.0` (the mini games packed with their asset scripts). Left: the tag, the
+push and the GitHub release, once the author says so; the files uploaded by the author.
 
 ### 3. Then, in no particular order
 

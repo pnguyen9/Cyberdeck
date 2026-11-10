@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 3.0.0 — 2026-11-10
 
 ### Datajack, the player
 - Settings scroll when a category is taller than the screen: in Datajack, the language, last of the
