@@ -838,20 +838,7 @@ for what it adds, the whole suite run (`npm run typecheck`, `npm test`, `npm run
 `npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the CHANGELOG brought
 up to date, every French text read again.
 
-### 1. Release 2.1.0
-
-Everything under *Unreleased* in the CHANGELOG, already committed: format 2.1, which Datajack 2.0
-refuses, as it should.
-
-- Versions to 2.1.0 in every `package.json` and in `package-lock.json` (the workspace's own entries
-  only, never a third-party one sharing the number), the CHANGELOG's *Unreleased* titled
-  `2.1.0 — <date>`.
-- `npm run guide:images`, then `rm -rf release/v2.1.0` and `npm run release`: the zips, the
-  documentation, the samples (the release script packs Sakura Week; the mini games to be packed too).
-- Commit; tag, push and the GitHub release only once the author says so; the files uploaded by the
-  author.
-
-### 2. Version 3.0: lists and the grid
+### 1. Version 3.0: lists and the grid
 
 A new major version of the format: stories using lists need Datajack 3.0.
 
@@ -872,6 +859,21 @@ A new major version of the format: stories using lists need Datajack 3.0.
   (columns − 1) × (rows − 1); the first cell opened never a mine; empty areas opened in turn.
 - Blackjack's shoe could then hold 2, 4, 6 or 8 real decks (a list of the cards left), and a top 10
   of scores becomes a list kept in order.
+
+### 2. Release 3.0.0
+
+Everything under *Unreleased* in the CHANGELOG ships with it, nothing having been released since
+2.0.3. A story is still marked with the oldest format that plays it: 2.1 for what came before lists,
+3.0 with lists, so that an older Datajack refuses only what it cannot play.
+
+- Versions to 3.0.0 in every `package.json` and in `package-lock.json` (the workspace's own entries
+  only, never a third-party one sharing the number), the CHANGELOG's *Unreleased* titled
+  `3.0.0 — <date>`.
+- `npm run guide:images`, then `rm -rf release/v3.0.0` and `npm run release`: the zips, the
+  documentation, the samples (the release script packs Sakura Week; the mini games to be packed too).
+- Commit; tag, push and the GitHub release only once the author says so; the files uploaded by the
+  author.
+
 
 ### 3. Then, in no particular order
 
