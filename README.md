@@ -810,99 +810,89 @@ through a short list of channels whose arguments the main process checks again: 
 lists of strings only; identifiers that cannot leave their folder; asset files whose content matches
 the SHA-256 in their name; and only save folders the player picked in the system dialog.
 
-## Known problems and ideas, for the next versions
+## Samples
 
-### Problems
+`docs/sample/` holds stories to import, each a text and a zip of its files, dropped together in Cast &
+files: **Sakura Week**, a week of school before a festival, in `sakura-week/` (its pictures and
+sounds were made outside this repository: the zip is their only source), and three mini games in
+`minigames/`, showing what conditions, loops, scenes, counters and decisions can do beyond a story.
+Their pictures and sounds are made by code, `scripts/samples/`, so that nothing is downloaded and all
+of it is as free as the rest of the repository.
 
-- **The map loses its links.** After playing a game with only its first chapter, then installing the
-  whole game, the map started rows over at its left edge: Chapter 2 began a row of its own, and the
-  last scene of Chapter 6 sat alone in the first column instead of at the far right of its route.
-  (Part of it is mended: running out of chapters is no longer recorded as an end, which took the
-  place of the link to the next chapter; progress recorded before keeps that end.) It happens
-  within a game too: opening the map mid-game, then going back or playing from a point,
-  loads the game as a save would ("Loaded", an empty log), and the map may then take what follows as
-  a new start, with no line from the choice before. Opened while a choice waits, the map never
-  records the option then taken. The map should rather link points by what truly changes, the
-  values stored: a choice that changes nothing (the breakfast of the sample) need not make a point
-  of its own. Hovering a point could show its values, by the journal's rule of showing only what
-  players may see.
-- **The map tells apart paths that differ only by the stage.** A point of the map is a choice, with
-  the values still able to change what follows (tested ahead before the story gives them again) and
-  what the stage shows (background, music, characters…). Two paths whose stages differ, the one a
-  scene leaves for instance, make two points for what may be the same state.
-- **Web data cannot be cleared from Firefox.** The web builds keep projects, profiles, games and
-  saves in the browser's storage. Opened from a file, each copy is a site of its own, named by its
-  path, so every version unzipped keeps its own data; Firefox's "Clear site data" lists only sites
-  with a web address, and leaves them all. Each application now erases its own, but a copy deleted
-  can only be erased the browser's way (see [Erasing what the web builds
+- **Rock, paper, scissors** (`rock-paper-scissors/`): three choices against a random pick, text on a
+  black screen, the score of this game and of every game played kept in the journal.
+- **A virtual pet** (`virtual-pet/`): Pip, a round chick. A timed choice is its clock: feed, play,
+  pet, let it nap, or just watch it live its own little life; lasting hunger, mood and energy, kept
+  between 0 and 10. Never dies, only sulks a while; gladder to see players the longer they were
+  away (`time away`); its room tinted at night (`hour`).
+- **Blackjack** (`blackjack/`): one deck, where no card comes out twice until the shuffle, or a
+  six-deck shoe; $1,000.00 to start (a lasting counter with decimals), bets chosen or typed, hit,
+  stand, double down, the dealer's hidden card turned over, blackjack paying 3 to 2. Ten places on
+  the table show one shared deck (`[character: p1 = card]`), each card named by the card drawn
+  (`[enter: p1 {Card}]`).
+
+## Plan
+
+What comes next, in order. Each step ends as every change here does: unit tests and browser checks
+for what it adds, the whole suite run (`npm run typecheck`, `npm test`, `npm run checks`,
+`npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the CHANGELOG brought
+up to date, every French text read again.
+
+### 1. Release 2.1.0
+
+Everything under *Unreleased* in the CHANGELOG, already committed: format 2.1, which Datajack 2.0
+refuses, as it should.
+
+- Versions to 2.1.0 in every `package.json` and in `package-lock.json` (the workspace's own entries
+  only, never a third-party one sharing the number), the CHANGELOG's *Unreleased* titled
+  `2.1.0 — <date>`.
+- `npm run guide:images`, then `rm -rf release/v2.1.0` and `npm run release`: the zips, the
+  documentation, the samples (the release script packs Sakura Week; the mini games to be packed too).
+- Commit; tag, push and the GitHub release only once the author says so; the files uploaded by the
+  author.
+
+### 2. Version 3.0: lists and the grid
+
+A new major version of the format: stories using lists need Datajack 3.0.
+
+- **Lists**, a numbered row of values under one name, numbered from 1:
+  `[list: Board = 16 × none]`; `[set: Board 3 = cat]`, `[set: Board {Cell} = {Animal}]`;
+  `[shuffle: Board]`; `[add: Queue = {Cell}]` and `[take: Cell = first of Queue]` (a queue, for
+  opening the empty cells around an empty one without recursion); tests `[if: Board {Cell} is cat]`;
+  `{Board 3}` in text and in picture tags; a counter reading a place back, `[set: Near = {Board 3}]`.
+  Kept by saves, shown and changed in the State panel, listed in the Index, checked at import
+  (a place out of range, a list unknown), written back by the text export.
+- **The grid**: `[choice: Cell grid 4 × 4 from Shown]`, a choice shown as rows of picture buttons,
+  numbered from 1, each showing the picture named by its place in the list (`Shown 7` holding `cat`),
+  picking one giving the counter its number. Up to 30 × 16. Keyboard: the arrows move, Enter picks.
+- **Pairs** (`minigames/pairs/`): 16 tiles, 8 animals drawn as simple shapes, shuffled; two turned
+  at a time, a pair found stays face up; the turns counted in the journal.
+- **Minesweeper** (`minigames/minesweeper/`): beginner 9 × 9 with 10 mines, intermediate 16 × 16
+  with 40, expert 30 × 16 with 99, or a custom board, 9 to 30 columns, 9 to 24 rows, 10 mines to
+  (columns − 1) × (rows − 1); the first cell opened never a mine; empty areas opened in turn.
+- Blackjack's shoe could then hold 2, 4, 6 or 8 real decks (a list of the cards left), and a top 10
+  of scores becomes a list kept in order.
+
+### 3. Then, in no particular order
+
+- **The map: paths that differ only by the stage.** A point of the map is a choice, with the values
+  still able to change what follows and what the stage shows; two paths whose stage differs (the one
+  a scene leaves) make two points for what may be the same state. Progress recorded before 2.1 keeps
+  its old points.
+- **The map's links when a game is played in parts.** Opening the map mid-game, then going back or
+  playing from a point, loads the game as a save would, and the map may take what follows as a new
+  start, with no line from the choice before; opened while a choice waits, it never records the option
+  then taken. Hovering a point could show its values, by the journal's rule of what players may see.
+- **The author's map in the preview.** Every path drawn as if all were played, each point with the
+  values of its path, skipping always allowed, previewing from a point starting with its values; the
+  map able to keep only the path played. Previewing from a page today plays the shortest way there,
+  and the State panel changes values by hand.
+- **A preview closer to playing**: the map, and erasing the saves and progress of one project only.
+- **A game's own settings**, from its card in the library: a slower text for one, a louder music
+  for another.
+- **Web data of deleted copies.** Each application erases what it keeps, but a copy opened from a
+  file and since deleted can only be erased the browser's way (see [Erasing what the web builds
   store](#erasing-what-the-web-builds-store)).
-- **A game's own settings.** Settings open from the library, for every game; a game's own, from
-  its card, could set some apart for that game (a slower text for one, a louder music for another).
-- **A preview closer to playing.** Cyberdeck's preview plays a game as Datajack does, but without
-  what Datajack offers around the game itself, such as the map. The preview should offer what a
-  player has. (Its saves and progress can now be erased, from the projects page, to test a story
-  from a clean start; for one project at a time, they cannot yet.)
-- **Previewing a late page reaches it one way only.** Previewing from a page plays the shortest way
-  a player could get there, and starts with the values of that way. A late chapter thus starts with
-  the values of a few early choices, and an ending that needs others may be out of reach; the State
-  panel shows the values but cannot change them.
-- **Previewing as a player or as the author.** The preview could play in two ways, switched at any
-  moment of a game:
-  - **as a player**: what players see and may do, the journal and the map as they would have them,
-    to check, for instance, what the journal shows before the game is finished;
-  - **as the author**: every value can be changed by hand (the State panel does it now),
-    including what no way through the story can give, such as memories and endings of earlier
-    playthroughs (the cat knowing you, as on a second playthrough, on a first one); the map shows
-    every path, as if all were played, each point with the values of its path; skipping is always
-    allowed, and previewing from a point starts with its values, so the author chooses the way to a
-    late page rather than taking the shortest. The map can also hide the paths not played, keeping
-    only the one played (or the one leading to where the preview started).
-
-### Samples to make: mini games, in `docs/sample/minigames/`
-
-Conditions, loops, scenes, counters and decisions make a small programming language: these samples
-show authors what the engine can do beyond a story.
-
-Every picture and sound of these samples is made for them, generated by code (`scripts/samples/`), so
-that nothing is downloaded and all of it is as free as the rest of the repository. Sakura Week's
-pictures and sounds were made outside this repository: `sakura-week-assets.zip` is their only source.
-
-- **Rock, paper, scissors** (done: `rock-paper-scissors/`, the text and its sounds zipped; the
-  sounds are made by `scripts/samples/rock_paper_scissors_sounds.py`). Three choices against a random pick,
-  text alone on a black screen ("You chose Rock. The computer chose Scissors."). The journal counts
-  wins, losses and draws, of this game and of every game played (lasting counters); players keep
-  playing or stop, and the last page gives the final score. An ending's name cannot show values, so
-  the ending is called "Final score". Short sounds for a pick, the reveal, and a win, a loss or a
-  draw; no music.
-- **Blackjack** (done: `blackjack/`, its cards, table, sounds and lounge music made by
-  `scripts/samples/blackjack_assets.py`). It offers to read the rules or skip them, then a single deck,
-  where no card comes out twice until the shuffle (`[set: Card = random not in Dealt]`), or a casino
-  shoe of six decks, each card drawn afresh as six decks nearly are. Players start with $1,000.00 (a
-  lasting counter with decimals, refilled by the house when it runs out), bet $10, $50, $100,
-  everything, or a typed amount (`[ask number]`), then hit, stand or double down. The dealer's second
-  card is dealt face down and turned over with a mid-flip picture; blackjack pays 3 to 2
-  (`[add: Money {Bet} * 2.5]`). Cards are ten places on the table, `p1`…`p5` and `d1`…`d5`, each
-  showing the shared deck's pictures (`[character: p1 = card]`), the card drawn named by
-  `[enter: p1 {Card}]`; one scene draws a card and counts it, aces as 11 or 1.
-- **A virtual pet** (done: `virtual-pet/`, its pictures and sounds made by
-  `scripts/samples/virtual_pet_assets.py`). Pip, a round chick, in a basket by the window. A timed
-  choice is its clock: feed, play, pet, let it nap, or say goodbye; "Just watch", taken when the
-  time runs out, is Pip living its own little life, and auto mode (A) lets it go on alone. Hunger,
-  mood and energy are lasting counters kept between 0 and 10 by a scene played after each change,
-  shown in the journal; Pip never dies nor runs away, only sulks a while when left without care. It
-  is gladder to see players the longer they were away (`time away`), hungrier too, and its room is
-  tinted at night (`hour`).
-- **Pairs**, of cute animals drawn as simple shapes, like the sample's cat. Needs a new feature: a
-  choice laid out as a grid of buttons, each showing a picture, where a visual novel lists its
-  options one under another. A grid may serve stories too (a map to pick a place from, a keypad),
-  beyond games.
-- **Minesweeper.** On the same grid: three levels as the classic game has them (beginner 9 × 9 with
-  10 mines, intermediate 16 × 16 with 40, expert 30 × 16 with 99), or a custom board, as classic
-  Minesweeper allows: 9 to 30 columns, 9 to 24 rows, and from 10 mines to one less than the cells
-  of a board a row and a column smaller ((columns − 1) × (rows − 1)). The first cell opened is never
-  a mine. Beyond the grid, it needs what the engine lacks: a value per cell (up to 720), counting the
-  mines around a cell, and opening the empty cells around an empty one in turn. Lists of values, and
-  loops over them, would be the features to add; they would serve Pairs and Blackjack's shoe too.
 
 ## License
 
