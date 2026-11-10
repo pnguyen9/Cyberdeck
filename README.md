@@ -878,20 +878,16 @@ pictures and sounds were made outside this repository: `sakura-week-assets.zip` 
   playing or stop, and the last page gives the final score. An ending's name cannot show values, so
   the ending is called "Final score". Short sounds for a pick, the reveal, and a win, a loss or a
   draw; no music.
-- **Blackjack**, with all its rules (waiting on a feature: a story cannot yet choose a picture from a
-  value, `[card1: {Drawn}]`, so each card dealt would need a condition for each of the 52, at each
-  place on the table). It first offers to read the rules or skip them, then asks
-  how many decks the shoe holds (1, 2, 4, 6 or 8, as casinos deal). Players start with $1,000, bet,
-  play or leave; the bet is
-  picked among choices ($10, $50, $100, everything, or another amount, typed with `[ask number]`); the journal shows their money, and having none left is game over. Drawn cards, table and
-  chips, and styles or CSS to make it move: cards flying into place as they are dealt, the dealer's
-  hidden card turned over. Turning a card could be its back shrinking, then its front growing, with a
-  few frames between for a smoother look; or animated GIFs made to play once (back, then front, then
-  the still card), which needs tight timing. The same trick of frames suits a character standing,
-  stumbling, then falling.
-  Sounds: chips at every bet, a card sliding onto the felt at every deal, a card turned over, a
-  shuffle, short tunes for a win and a loss, and a loop of soft casino jazz (piano, walking bass,
-  brushed drums) for music.
+- **Blackjack** (done: `blackjack/`, its cards, table, sounds and lounge music made by
+  `scripts/samples/blackjack_assets.py`). It offers to read the rules or skip them, then a single deck,
+  where no card comes out twice until the shuffle (`[set: Card = random not in Dealt]`), or a casino
+  shoe of six decks, each card drawn afresh as six decks nearly are. Players start with $1,000.00 (a
+  lasting counter with decimals, refilled by the house when it runs out), bet $10, $50, $100,
+  everything, or a typed amount (`[ask number]`), then hit, stand or double down. The dealer's second
+  card is dealt face down and turned over with a mid-flip picture; blackjack pays 3 to 2
+  (`[add: Money {Bet} * 2.5]`). Cards are ten places on the table, `p1`…`p5` and `d1`…`d5`, each
+  showing the shared deck's pictures (`[character: p1 = card]`), the card drawn named by
+  `[enter: p1 {Card}]`; one scene draws a card and counts it, aces as 11 or 1.
 - **A virtual pet** (done: `virtual-pet/`, its pictures and sounds made by
   `scripts/samples/virtual_pet_assets.py`). Pip, a round chick, in a basket by the window. A timed
   choice is its clock: feed, play, pet, let it nap, or say goodbye; "Just watch", taken when the
