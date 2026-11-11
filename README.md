@@ -257,7 +257,7 @@ one per language, of the same shape: another language is one more table each.
 | `[enter: marie left smile]`, `[enter: marie 35%]` | Positions: presets (`far-left`, `left`, `center`, `right`, `far-right`, or the project's own) or a percentage of the stage width. |
 | `[enter: marie slide-from-right 1.2s wait]`, `[exit: marie slide-to-left]`, `[move: marie right instant]` | Animations: `fade`, `instant`, `slide-from-left/right` (enter), `slide-to-left/right` (exit); a duration in `s` or `ms`; `wait` holds the text until the animation ends. |
 | `[enter: marie facing-left]` | Forces the way a character looks. |
-| `[enter: marie near]`, `[move: marie far]` | Depth: `near` is larger and in front, `far` smaller, behind and a little dimmer, `middle` by default. A move may change the depth alone, the position, or both. Saves keep it. |
+| `[enter: marie near]`, `[move: marie far]` | Depth: `near` is larger and in front, `far` smaller, behind and a little dimmer, `middle` by default. A move may change the depth alone, the position, or both. Saves keep it. A character drawn upper body grows around its face when near, and shrinks from the bottom of the stage when far, so that nothing floats. |
 | `[marie: surprised]` | Marie changes expression. Any name that is not a keyword is a character. |
 | `[card: ace flip]`, `[card: {Drawn} flip 0.6s wait]` | The picture turns over, as a card does: the old one narrows to its edge, the new one widens from it, in 0.4 s unless told; `wait` holds the text until it is done. A picture named `flip` alone is still a picture. Players who ask for less motion see it change at once. Needs Datajack 3.1. |
 | `[wait: 0.5]` | Pauses the text, in seconds, and the tags written after it: `[card: back] [wait: 0.3] [card: ace]` shows the back, then the ace. |
@@ -595,7 +595,10 @@ A **project** holds the whole game. Its screens:
   files dropped, its folders passed over and what systems add beside them left out. Each kind is a section folded until opened, saying how many entries lack a file,
   with a filter by kind; names the story no longer uses but that keep a file come last, to remove.
   Each character may be given a colour for its name. Characters say which way their sprites were
-  drawn looking. A font file (`.woff2`, `.woff`, `.ttf`, `.otf`) becomes a font of its name, which
+  drawn looking, and how they are drawn: *full body*, standing on the bottom of the stage, at most
+  960 pixels of its 1080, or *upper body*, as most Japanese visual novels draw them, at 1300 pixels
+  whatever the file's size, the head near the top and the rest past the bottom of the stage. The
+  project chooses for all its characters, each one may differ (Datajack 3.2). A font file (`.woff2`, `.woff`, `.ttf`, `.otf`) becomes a font of its name, which
   the CSS names: `font-family: "Cinzel"` for `Cinzel.woff2`. It is measured as it is added, how
   much wider or narrower than the text box's font it draws text, and pages in it are cut by that.
   Every game archive carries all the project's fonts; the player loads them from the archive, as
@@ -872,13 +875,6 @@ browser checks for what it adds, the whole suite run (`npm run typecheck`, `npm 
 `npm run checks`, `npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the
 CHANGELOG brought up to date, every French text read again.
 
-- **Upper-body characters**, as most Japanese visual novels draw them: a framing chosen per character
-  or for the whole project in Cast & files, *full body* as today or *upper body*. Framed so, the
-  picture is scaled to a set height whatever its file's size, may go past the bottom of the stage
-  (the text box hiding the rest), and `near`/`far` zoom around the face rather than growing and
-  shrinking from the feet, which today pushes a tall picture's head off the top. Until then,
-  upper-body art up to the stage's height shows correctly without `near` or `far`. The game's CSS
-  stays out of the stage, a downloaded game being trusted with the text's looks only.
 - **The author's map in the preview.** Every path drawn as if all were played, each point with the
   values of its path, skipping always allowed, previewing from a point starting with its values; the
   map able to keep only the path played. Previewing from a page today plays the shortest way there,

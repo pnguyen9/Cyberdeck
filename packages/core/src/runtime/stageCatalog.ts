@@ -1,4 +1,4 @@
-import { expressionAssetId, type Facing, type Frames } from '../format/storyFormat'
+import { expressionAssetId, type Facing, type Framing, type Frames } from '../format/storyFormat'
 import type { PlayableStory } from './playableStory'
 
 /** Names and file addresses of what the stage shows, looked up by identifier. */
@@ -7,6 +7,8 @@ export interface StageCatalog {
   backgroundUrl: (backgroundId: string) => string | null
   characterName: (characterId: string) => string
   drawnFacing: (characterId: string) => Facing | null
+  /** How the character's pictures are drawn: its own framing, else the project's. */
+  framing: (characterId: string) => Framing
   expressionName: (characterId: string, expressionId: string) => string
   expressionUrl: (characterId: string, expressionId: string) => string | null
   /** The file of a character's picture of that name, a grid's tile: null when it has none. */
@@ -44,6 +46,7 @@ export function createStageCatalog(story: PlayableStory): StageCatalog {
     backgroundUrl: backgroundId => urlOf(backgrounds.get(backgroundId)?.assetId),
     characterName: characterId => characters.get(characterId)?.name ?? '',
     drawnFacing: characterId => characters.get(characterId)?.drawnFacing ?? null,
+    framing: characterId => characters.get(characterId)?.framing ?? project.characterFraming ?? 'fullBody',
     expressionName: (characterId, expressionId) => expressionOf(characterId, expressionId)?.name ?? '',
     expressionUrl: (characterId, expressionId) => urlOf(expressionAssetId(project.characters, characters.get(characterId), expressionOf(characterId, expressionId))),
     expressionUrlByName: (characterId, name) => {

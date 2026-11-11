@@ -33,6 +33,7 @@ import {
   renameProject,
   setDrawnFacing,
   setNameColor,
+  setFraming,
   chapterIn,
   languagesOf,
   projectIn,
@@ -51,6 +52,7 @@ import {
   type DefinitionsPreview,
   type Environment,
   type Facing,
+  type Framing,
   type GameDetails,
   type ImportPreview,
   type ImportTarget,
@@ -528,6 +530,11 @@ export class OpenProject {
   /** The colour of a character's name on their plate, `#rrggbb`, or null for the plate's own. */
   setNameColor(characterId: string, nameColor: string | null) {
     return this.saveProject(setNameColor(this.currentProject, characterId, nameColor, this.now()))
+  }
+
+  /** How a character's pictures are drawn, null for as the project's; with no character, the project's own. */
+  setFraming(characterId: string | null, framing: Framing | null) {
+    return this.saveProject(setFraming(this.currentProject, characterId, framing, this.now()))
   }
 
   /** Renames the chapter or scene in the language shown. */

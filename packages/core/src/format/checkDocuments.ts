@@ -386,7 +386,7 @@ const css: Check<string> = (value, path) => string(value, path).length <= MAXIMU
 export const checkProjectDocument: Check<ProjectDocument> = (value, path) => {
   const project = checkProjectFields(typeof value === 'object' && value !== null && !Array.isArray(value) ? { ...LATER_PROJECT_FIELDS, ...value } : value, path)
   // Lists, since 3.0: kept only by projects that have some.
-  return withOptional('lists', array(object({ id: string, name: string, initial: array(string) })), () => project)(value, path)
+  return withOptional('characterFraming', oneOf('fullBody', 'upperBody'), withOptional('lists', array(object({ id: string, name: string, initial: array(string) })), () => project))(value, path)
 }
 
 /** A place in a list: a number from 1, or a counter. */
@@ -434,9 +434,10 @@ const checkProjectFields: Check<ProjectDocument> = object({
   styles: array(withFlag('implicit', object({ id: string, name: string, properties: styleProperties }))),
   characters: array((value, path) => {
     const character: Character = object({ id: string, name: string, expressions: array(withAssetId), drawnFacing: nullable(facing) })(value, path)
-    const { nameColor: color, picturesFrom } = record(value, path)
+    const { nameColor: color, picturesFrom, framing } = record(value, path)
     const colored = color === undefined ? character : { ...character, nameColor: /^#[0-9a-f]{6}$/i.test(String(color)) ? String(color) : fail(`${path}.nameColor`, 'a colour, #rrggbb') }
-    return picturesFrom === undefined ? colored : { ...colored, picturesFrom: string(picturesFrom, `${path}.picturesFrom`) }
+    const lending = picturesFrom === undefined ? colored : { ...colored, picturesFrom: string(picturesFrom, `${path}.picturesFrom`) }
+    return framing === undefined ? lending : { ...lending, framing: oneOf('fullBody', 'upperBody')(framing, `${path}.framing`) }
   }),
   backgrounds: array(withAssetId),
   music: array(withAssetId),

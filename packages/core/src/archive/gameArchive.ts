@@ -305,7 +305,7 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   // clock's `now`: it would refuse them.
   const needsDatajack32Node = (node: StoredNode) => (node.type === 'grid' && (node.caption !== undefined || node.markCounterId !== undefined))
     || commandsOf(node).some(command => command.type === 'gameMode' || command.type === 'noGoingBack')
-  if (project.counters.some(counter => counter.clock === 'now') || documents.some(document => flattenStoredNodes(document.nodes).some(needsDatajack32Node))) {
+  if (project.counters.some(counter => counter.clock === 'now') || project.characterFraming !== undefined || project.characters.some(character => character.framing !== undefined) || documents.some(document => flattenStoredNodes(document.nodes).some(needsDatajack32Node))) {
     return '3.2'
   }
   // Datajack 3.0 does not turn a picture over: it would refuse the tag.

@@ -91,6 +91,7 @@ export {
   renameProject,
   setDrawnFacing,
   setNameColor,
+  setFraming,
   setShown,
   setShownEndings,
   shownWhen,

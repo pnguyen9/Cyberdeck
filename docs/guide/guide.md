@@ -399,7 +399,7 @@ On the story's level of the storyboard, chapters following one another under the
 | `[enter: marie near]`, `far` | Closer (larger, in front) or further away. |
 | `[enter: marie facing-left]` | Which way she looks. By default characters look towards the middle. |
 
-In **Cast & files**, tell Cyberdeck which way each character was drawn looking, and it turns them the right way.
+In **Cast & files**, tell Cyberdeck which way each character was drawn looking, and it turns them the right way. Drawn from the waist up, as most Japanese visual novels draw them? Choose *upper body* there, for all your characters or for one: they are drawn taller than the screen, the head near its top, and `near` zooms on the face.
 
 ## 17. Sounds, voices, videos and screen effects
 

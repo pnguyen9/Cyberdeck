@@ -40,6 +40,10 @@
   than as written, `Everything: {Money} dollars`.
 
 ### Cyberdeck, the editor
+- Upper-body characters, as most Japanese visual novels draw them, chosen in Cast & files for the
+  project or for one character: drawn taller than the stage, whatever the file's size, the head near
+  its top and the rest past its bottom; `near` zooms on the face, `far` shrinks from the bottom of
+  the stage. Games that use it need Datajack 3.2.
 - From a `[play]` to its scene and back: the play's panel opens the scene, and a scene's board says
   where it is played from, each a link to that `[play]`.
 - A choice of many options keeps its card readable in the storyboard grid: the first options and how

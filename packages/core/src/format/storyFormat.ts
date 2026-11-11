@@ -199,6 +199,8 @@ export interface Character {
   drawnFacing: Facing | null
   /** The colour of the name on their plate, `#rrggbb`; absent for the plate's own. Since 1.5. */
   nameColor?: string
+  /** How the character's pictures are drawn, when not as the project's: see `Framing`. Since 3.2. */
+  framing?: Framing
   /**
    * The character whose pictures it shows, `[character: card1 = card]`: an expression with no file
    * of its own shows that character's of the same name. Look-alikes, cards on a table. Since 2.1.
@@ -384,6 +386,14 @@ export interface GameDetails {
 }
 
 /** `project.json`, at the root of the project folder named after `id`. */
+/**
+ * How characters' pictures are drawn. `fullBody`, head to feet, standing on the bottom of the stage,
+ * at most its height. `upperBody`, as most Japanese visual novels draw them: at a set height, taller
+ * than the stage, the head near its top and the rest going past its bottom; `near` and `far` zoom
+ * around the face rather than from the feet.
+ */
+export type Framing = 'fullBody' | 'upperBody'
+
 export interface ProjectDocument extends Audited {
   formatVersion: string
   id: string
@@ -400,6 +410,8 @@ export interface ProjectDocument extends Audited {
   counters: Counter[]
   /** Since 3.0; absent before. */
   lists?: StoryList[]
+  /** How the characters' pictures are drawn, unless a character says otherwise; absent for full body. Since 3.2. */
+  characterFraming?: Framing
   /** Since 1.4. */
   askedNames: AskedName[]
   endings: Ending[]

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { unusedNames, type Facing, type UnusedName } from '@cyberdeck/core'
+import { unusedNames, type Facing, type Framing, type UnusedName } from '@cyberdeck/core'
 import { useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { castMessages } from '../i18n/castMessages'
@@ -35,6 +35,7 @@ const characters = computed(() => project.value.characters.map(character => ({
   name: character.name,
   drawnFacing: character.drawnFacing ?? 'viewer',
   nameColor: character.nameColor ?? null,
+  framing: character.framing ?? 'project',
   /** The character whose pictures it shows, `[character: card1 = card]`: its own wait for no file. */
   lenderName: project.value.characters.find(candidate => candidate.id === character.picturesFrom)?.name ?? null,
   expressions: character.picturesFrom === undefined ? character.expressions.map(expression => entry(expression.id, expression.name, expression.assetId)) : [],
@@ -109,6 +110,12 @@ function setNameColor(characterId: string, color: string | null) {
   void act(() => open.setNameColor(characterId, color))
 }
 
+/** How a character's pictures are drawn, `project` for as the project's; with no character, the project's own. */
+function setFraming(characterId: string | null, value: string) {
+  const framing: Framing | null = value === 'fullBody' || value === 'upperBody' ? value : null
+  void act(() => open.setFraming(characterId, framing))
+}
+
 /** The frames of the text box and the name plate, when the project has their pictures. */
 const frames = computed(() => (['textBox', 'namePlate'] as const).flatMap(frame => {
   const file = fileOf(project.value.frames[frame])
@@ -143,9 +150,24 @@ function setDrawnFacing(characterId: string, value: string) {
     <KindFilter v-if="kindsPresent.length > 1" :kinds="filterKinds" :shown="kindShown" :all-label="text.allKinds" @show="showKind" />
 
     <FoldedSection v-if="isShown('characters')" class="cast-section" :title="text.characters" :count="counts.characters" :missing-text="missingText(characters.flatMap(character => character.expressions))" :open="isOpen('characters')" @toggle="toggleSection('characters', $event)">
+      <label class="drawn-facing muted project-framing" :title="text.framingHelp">
+        {{ text.projectFraming }}
+        <select :value="project.characterFraming ?? 'fullBody'" @change="setFraming(null, ($event.target as HTMLSelectElement).value)">
+          <option value="fullBody">{{ text.framings.fullBody }}</option>
+          <option value="upperBody">{{ text.framings.upperBody }}</option>
+        </select>
+      </label>
       <div v-for="character in characters" :key="character.id" class="group">
         <div class="group-name">
           {{ character.name }}
+          <label class="drawn-facing muted" :title="text.framingHelp">
+            {{ text.framing }}
+            <select :value="character.framing" @change="setFraming(character.id, ($event.target as HTMLSelectElement).value)">
+              <option value="project">{{ text.framingAsProject(text.framings[project.characterFraming ?? 'fullBody']) }}</option>
+              <option value="fullBody">{{ text.framings.fullBody }}</option>
+              <option value="upperBody">{{ text.framings.upperBody }}</option>
+            </select>
+          </label>
           <label class="drawn-facing muted">
             {{ text.nameColor }}
             <input type="color" :value="character.nameColor ?? '#9eeaff'" @change="setNameColor(character.id, ($event.target as HTMLInputElement).value)">

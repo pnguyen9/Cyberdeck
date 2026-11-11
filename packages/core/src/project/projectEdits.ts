@@ -21,6 +21,7 @@ import {
   type DefinitionKind,
   type Environment,
   type Facing,
+  type Framing,
   type GameDetails,
   type ProjectDocument,
   type ShownWhen,
@@ -461,6 +462,25 @@ export function setNameColor(project: ProjectDocument, characterId: string, name
       }
       const { nameColor: _previous, ...rest } = character
       return nameColor === null ? rest : { ...rest, nameColor }
+    }),
+    updatedAt: now,
+  }
+}
+
+/** How a character's pictures are drawn, or null for as the project's; with no character, the project's own. */
+export function setFraming(project: ProjectDocument, characterId: string | null, framing: Framing | null, now: string): ProjectDocument {
+  if (characterId === null) {
+    const { characterFraming: _previous, ...rest } = project
+    return { ...(framing === null || framing === 'fullBody' ? rest : { ...rest, characterFraming: framing }), updatedAt: now }
+  }
+  return {
+    ...project,
+    characters: project.characters.map(character => {
+      if (character.id !== characterId) {
+        return character
+      }
+      const { framing: _previous, ...rest } = character
+      return framing === null ? rest : { ...rest, framing }
     }),
     updatedAt: now,
   }
