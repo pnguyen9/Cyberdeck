@@ -24,7 +24,7 @@ const en = {
   motions: { system: 'As the system asks', less: 'Less motion', full: 'All of it' } as Record<'system' | 'less' | 'full', string>,
   motionHelp: 'Less motion: animated pictures stand still, pictures change without turning, the screen does not shake and flashes are soft.',
   markTileHelp: 'Mark a tile works on a game board that marks, as Minesweeper flags: there its inputs mark the tile; everywhere else they keep their other use.',
-  accessibilityHelp: 'Larger text makes the text box taller. These settings apply to every game.',
+  accessibilityHelp: 'Larger text makes the text box taller.',
   actions: {
     advance: 'Next',
     back: 'Back',
@@ -97,7 +97,7 @@ const fr: SettingsMessages = {
   motions: { system: 'Comme le demande le système', less: 'Moins de mouvements', full: 'Tous' },
   motionHelp: 'Moins de mouvements\u00a0: les images animées restent immobiles, les images changent sans se retourner, l’écran ne tremble pas et les flashs sont doux.',
   markTileHelp: 'Marquer une case agit sur un plateau de jeu qui marque, comme les drapeaux du démineur\u00a0: là, ses touches marquent la case\u00a0; partout ailleurs, elles gardent leur autre usage.',
-  accessibilityHelp: 'Un texte plus grand agrandit la zone de texte. Ces réglages valent pour tous les jeux.',
+  accessibilityHelp: 'Un texte plus grand agrandit la zone de texte.',
   actions: {
     advance: 'Suivant',
     back: 'Retour',
