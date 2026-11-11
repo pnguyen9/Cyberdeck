@@ -25,7 +25,7 @@ export default async function check(page, { url, assets }) {
   // Jules keeps full body, against the project.
   await page.evaluate(`(() => {
     const group = [...document.querySelectorAll('.group')].find(candidate => candidate.querySelector('.group-name')?.textContent.trim().startsWith('jules'))
-    const select = [...group.querySelectorAll('select')].find(candidate => [...candidate.options].some(option => option.value === 'project'))
+    const select = group.querySelector('.framing select')
     select.value = 'fullBody'
     select.dispatchEvent(new Event('change'))
   })()`)

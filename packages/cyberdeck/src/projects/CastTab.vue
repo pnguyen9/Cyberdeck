@@ -150,7 +150,7 @@ function setDrawnFacing(characterId: string, value: string) {
     <KindFilter v-if="kindsPresent.length > 1" :kinds="filterKinds" :shown="kindShown" :all-label="text.allKinds" @show="showKind" />
 
     <FoldedSection v-if="isShown('characters')" class="cast-section" :title="text.characters" :count="counts.characters" :missing-text="missingText(characters.flatMap(character => character.expressions))" :open="isOpen('characters')" @toggle="toggleSection('characters', $event)">
-      <label class="drawn-facing muted project-framing" :title="text.framingHelp">
+      <label class="framing muted project-framing" :title="text.framingHelp">
         {{ text.projectFraming }}
         <select :value="project.characterFraming ?? 'fullBody'" @change="setFraming(null, ($event.target as HTMLSelectElement).value)">
           <option value="fullBody">{{ text.framings.fullBody }}</option>
@@ -160,7 +160,7 @@ function setDrawnFacing(characterId: string, value: string) {
       <div v-for="character in characters" :key="character.id" class="group">
         <div class="group-name">
           {{ character.name }}
-          <label class="drawn-facing muted" :title="text.framingHelp">
+          <label class="framing muted" :title="text.framingHelp">
             {{ text.framing }}
             <select :value="character.framing" @change="setFraming(character.id, ($event.target as HTMLSelectElement).value)">
               <option value="project">{{ text.framingAsProject(text.framings[project.characterFraming ?? 'fullBody']) }}</option>
@@ -297,12 +297,14 @@ function setDrawnFacing(characterId: string, value: string) {
   font-weight: 600;
 }
 
-.drawn-facing {
+.drawn-facing,
+.framing {
   font-size: 14px;
   font-weight: 400;
 }
 
-.drawn-facing select {
+.drawn-facing select,
+.framing select {
   margin-left: 4px;
   padding: 2px 4px;
   border: 1px solid #2c3442;
