@@ -10,6 +10,9 @@
   (format 3.2).
 
 ### Datajack, the player
+- A game's own settings, from its card or its settings in the game: the profile's until the player
+  chooses *its own*, starting from them, then changed for that game alone; back to the profile's,
+  they are forgotten.
 - Each game's card can erase that game's progress alone, its saves alone, or both, the game staying
   installed; *Erase what Datajack keeps…* still erases every game at once.
 - A game removed can be installed again from the same file: picking it again did nothing.

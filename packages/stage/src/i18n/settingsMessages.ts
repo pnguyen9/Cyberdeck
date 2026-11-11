@@ -4,6 +4,9 @@ import type { PlayerAction } from '../input/bindings'
 const en = {
   settings: 'Settings',
   close: 'Close',
+  scopeOf: (gameName: string) => `Settings for ${gameName}:`,
+  profileSettings: 'the profile’s, for every game',
+  ownSettings: 'its own',
   categories: { general: 'General', accessibility: 'Accessibility', controls: 'Controls' },
   textSize: 'Text size',
   readableFont: 'A plainer, more readable font',
@@ -69,6 +72,9 @@ type SettingsMessages = typeof en
 const fr: SettingsMessages = {
   settings: 'Paramètres',
   close: 'Fermer',
+  scopeOf: gameName => `Paramètres pour ${gameName}\u00a0:`,
+  profileSettings: 'ceux du profil, pour tous les jeux',
+  ownSettings: 'les siens',
   categories: { general: 'Général', accessibility: 'Accessibilité', controls: 'Commandes' },
   textSize: 'Taille du texte',
   readableFont: 'Une police plus simple et plus lisible',

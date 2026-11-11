@@ -47,7 +47,54 @@ watch(settingsStore, store => {
   settings.value = store?.read() ?? DEFAULT_PLAYER_SETTINGS
 }, { immediate: true })
 watch(settings, value => settingsStore.value?.write(value))
+
+/** A game's own settings, when the player gave it some, kept beside the profile's. */
+function gameSettingsStore(gameId: string) {
+  return profile.value === null ? null : createStorageSettingsStore(() => window.localStorage, `datajack:settings:${profile.value.id}:game:${gameId}`)
+}
+/** The game played or whose settings are open, and its own settings: null while it uses the profile's. */
+const gameSettingsOf = shallowRef<{ gameId: string; gameName: string; own: PlayerSettings | null } | null>(null)
+function loadGameSettings(gameId: string, gameName: string) {
+  const store = gameSettingsStore(gameId)
+  gameSettingsOf.value = { gameId, gameName, own: store?.has() === true ? store.read() : null }
+}
+/** What the game plays with: its own settings, or the profile's. */
+const gameSettings = computed(() => gameSettingsOf.value?.own ?? settings.value)
+function changeGameSettings(value: PlayerSettings) {
+  const shown = gameSettingsOf.value
+  if (shown?.own != null) {
+    gameSettingsOf.value = { ...shown, own: value }
+    gameSettingsStore(shown.gameId)?.write(value)
+  } else {
+    settings.value = value
+  }
+}
+/** A game given its own settings starts from the profile's; going back to the profile's forgets them. */
+function chooseOwnSettings(isOwn: boolean) {
+  const shown = gameSettingsOf.value
+  const store = shown === null ? null : gameSettingsStore(shown.gameId)
+  if (shown === null || store === null) {
+    return
+  }
+  if (isOwn) {
+    store.write(settings.value)
+  } else {
+    store.remove()
+  }
+  gameSettingsOf.value = { ...shown, own: isOwn ? settings.value : null }
+}
+/** The settings of one game, opened from its card. */
+const gameSettingsShown = ref(false)
+function showGameSettings(gameId: string, gameName: string) {
+  loadGameSettings(gameId, gameName)
+  gameSettingsShown.value = true
+}
 const playing = shallowRef<{ story: PlayableStory; resumeFrom: SaveData | null } | null>(null)
+watch(playing, current => {
+  if (current !== null) {
+    loadGameSettings(current.story.project.id, current.story.project.name)
+  }
+})
 /** The map of a game, and whether closing it returns to the game or to the library. */
 const mapShown = shallowRef<{ story: PlayableStory; progress: ProgressData; returnTo: 'game' | 'library' } | null>(null)
 
@@ -108,14 +155,26 @@ onMounted(async () => {
       @close="closeMap"
     />
     <SettingsScreen v-else-if="settingsShown" v-model="settings" v-model:language-choice="languageChoice" @close="settingsShown = false" />
+    <SettingsScreen
+      v-else-if="gameSettingsShown && gameSettingsOf !== null"
+      :model-value="gameSettings"
+      v-model:language-choice="languageChoice"
+      :scope="{ gameName: gameSettingsOf.gameName, isOwn: gameSettingsOf.own !== null }"
+      @update:model-value="changeGameSettings"
+      @scope="chooseOwnSettings"
+      @close="gameSettingsShown = false"
+    />
     <GalleryView v-else-if="galleryShown !== null" :story="galleryShown.story" :progress="galleryShown.progress" @close="galleryShown = null" />
     <PlayerView
       v-else-if="playing !== null"
       :story="playing.story"
       :save-store="saveStore"
-      v-model:settings="settings"
+      :settings="gameSettings"
       v-model:language-choice="languageChoice"
       :resume-from="playing.resumeFrom"
+      :has-own-settings="gameSettingsOf?.own != null"
+      @update:settings="changeGameSettings"
+      @own-settings="chooseOwnSettings"
       :leave-label="text.library"
       can-open-map
       @leave="playing = null"
@@ -131,6 +190,7 @@ onMounted(async () => {
       @map="story => showMap(story, 'library')"
       @gallery="showGallery"
       @settings="settingsShown = true"
+      @game-settings="showGameSettings"
       @switch-profile="profile = null"
     />
   </template>

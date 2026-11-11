@@ -8,7 +8,7 @@ import type { GameLibrary, LibraryEntry } from './gameLibrary'
 
 const props = defineProps<{ library: GameLibrary; saveStore: SaveStore; profileName: string }>()
 const languageChoice = defineModel<LanguageChoice>('languageChoice', { required: true })
-const emit = defineEmits<{ play: [story: PlayableStory, resumeFrom: SaveData | null]; map: [story: PlayableStory]; gallery: [story: PlayableStory]; settings: []; switchProfile: [] }>()
+const emit = defineEmits<{ play: [story: PlayableStory, resumeFrom: SaveData | null]; map: [story: PlayableStory]; gallery: [story: PlayableStory]; settings: []; gameSettings: [gameId: string, gameName: string]; switchProfile: [] }>()
 
 const entries = shallowRef<LibraryEntry[]>([])
 const autosaves = shallowRef<ReadonlyMap<string, SaveData>>(new Map())
@@ -357,6 +357,7 @@ function onDrop(event: DragEvent) {
             <button v-if="card.entry.illustrationCount > 0" class="button" @click="openMap(card.entry, 'gallery')">{{ text.gallery }}</button>
             <button v-if="card.entry.credits !== ''" class="link-button" @click="shownCredits = shownCredits === card.entry.id ? null : card.entry.id">{{ text.credits }}</button>
             <a v-if="progressByGame.has(card.entry.id)" class="link-button" href="#" :download="text.progressFileName(card.entry.name)" @click="prepareProgressFile($event, card.entry)">{{ text.progressToFile }}</a>
+            <button class="link-button" @click="emit('gameSettings', card.entry.id, card.entry.name)">{{ text.settings }}</button>
             <button class="link-button" @click="confirming = { gameId: card.entry.id, action: 'erase' }">{{ text.eraseGameData }}</button>
             <button class="link-button" @click="confirming = { gameId: card.entry.id, action: 'remove' }">{{ text.remove }}</button>
           </div>

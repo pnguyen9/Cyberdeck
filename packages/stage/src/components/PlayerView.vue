@@ -82,8 +82,10 @@ const props = defineProps<{
   canInspect?: boolean
   /** Lets an author testing the story go back, save and load in a part played as a game, `[game mode]`. */
   ignoresGameMode?: boolean
+  /** Whether the settings are this game's own rather than the profile's; left out, the choice is not offered. */
+  hasOwnSettings?: boolean
 }>()
-const emit = defineEmits<{ leave: []; map: [] }>()
+const emit = defineEmits<{ leave: []; map: []; ownSettings: [isOwn: boolean] }>()
 /** The player's choices: text speed, volumes, inputs. The application keeps them. */
 const settings = defineModel<PlayerSettings>('settings', { default: () => DEFAULT_PLAYER_SETTINGS })
 /** The application's language, which the Settings panel offers when the application gives it. */
@@ -1330,6 +1332,8 @@ onUnmounted(() => {
         v-model="settings"
         v-model:language-choice="languageChoice"
         :is-fullscreen="isFullscreen"
+        :scope="hasOwnSettings === undefined ? null : { gameName: story.project.name, isOwn: hasOwnSettings }"
+        @scope="isOwn => emit('ownSettings', isOwn)"
         @close="openPanel = 'none'"
         @toggle-fullscreen="toggleFullscreen"
       />

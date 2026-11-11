@@ -716,7 +716,7 @@ After the profile, Datajack opens the library: the installed games with their co
 release and chapters (those not installed counted, named, or not mentioned, as the author chose),
 *Continue* from the profile's autosave, *New game*, credits, the *Map* and the *Gallery* of
 illustrations seen, and removal (saves are kept). *Add a game…* or dropping an archive installs it.
-**Settings** opens the profile's settings without starting a game, the same as in a game. A game in several languages has **Play in** on
+**Settings** opens the profile's settings without starting a game, the same as in a game. A game's card has its own **Settings**: they are the profile's until the player chooses *its own* there (or in the game's settings), starting from the profile's; what changes then changes for that game alone, a slower text for one, a louder music for another, and going back to *the profile's* forgets them. Each card can also **Erase…** its game's progress, its saves, or both. A game in several languages has **Play in** on
 its card: the language picked is kept for that game, by each profile; Datajack's own is taken first when
 the game has it. A save resumes in the language it was played in; one loaded in another language from
 the game's own Load panel resumes at the start of its chapter, with its decisions. On
@@ -889,8 +889,6 @@ CHANGELOG brought up to date, every French text read again.
   map able to keep only the path played. Previewing from a page today plays the shortest way there,
   and the State panel changes values by hand.
 - **A preview closer to playing**: the map in Cyberdeck's preview, which only Datajack shows today.
-- **A game's own settings**, from its card in the library: a slower text for one, a louder music
-  for another. Today Settings, in the library or in a game, are the profile's, for every game.
 - **Web data of deleted copies.** Each application erases what it keeps, but a copy opened from a
   file and since deleted can only be erased the browser's way (see [Erasing what the web builds
   store](#erasing-what-the-web-builds-store)).

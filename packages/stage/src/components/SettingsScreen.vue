@@ -9,7 +9,9 @@ import { useFullscreen, useStageScale } from './stageWindow'
 /** The player's settings on a screen of their own, outside any game: drawn on a stage the size of a game's, scaled to the window. */
 const settings = defineModel<PlayerSettings>({ required: true })
 const languageChoice = defineModel<LanguageChoice | undefined>('languageChoice')
-const emit = defineEmits<{ close: [] }>()
+/** `scope`: the settings of one game, opened from its card, which may use the profile's or its own. */
+defineProps<{ scope?: { gameName: string; isOwn: boolean } | null }>()
+const emit = defineEmits<{ close: []; scope: [isOwn: boolean] }>()
 
 const viewport = useTemplateRef<HTMLElement>('viewport')
 const scale = useStageScale(viewport)
@@ -33,6 +35,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
         v-model="settings"
         v-model:language-choice="languageChoice"
         :is-fullscreen="isFullscreen"
+        :scope="scope ?? null"
+        @scope="isOwn => emit('scope', isOwn)"
         @close="emit('close')"
         @toggle-fullscreen="toggleFullscreen"
       />

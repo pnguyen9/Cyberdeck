@@ -486,7 +486,7 @@ From the keyboard, <kbd>Tab</kbd> goes from box to box, bringing each into view,
 
 ## 22. What your players see
 
-Players have their own **Settings**, in three categories. **General**: text speed, volumes (music and videos, sounds, voices), the speed of auto mode, full screen. **Accessibility**: larger text, a plainer font, a stronger contrast, pages read aloud, choices that wait for them, captions on videos, and a name over the text box that slides to who speaks, jumps there, or stays put. Players with a screen reader hear each page whole as it appears. **Controls**: their own keys. They open them in a game, or from their library, before playing. You have nothing to do for any of it: it works in every game.
+Players have their own **Settings**, in three categories. **General**: text speed, volumes (music and videos, sounds, voices), the speed of auto mode, full screen. **Accessibility**: larger text, a plainer font, a stronger contrast, pages read aloud, choices that wait for them, captions on videos, and a name over the text box that slides to who speaks, jumps there, or stays put. Players with a screen reader hear each page whole as it appears. **Controls**: their own keys. They open them in a game, or from their library, before playing; a game can have its own, from its card, a slower text for one, a louder music for another. You have nothing to do for any of it: it works in every game.
 
 ![The Settings screen, General: text speed, the volumes of music, sounds and voices, full screen.](images/settings.png)
 

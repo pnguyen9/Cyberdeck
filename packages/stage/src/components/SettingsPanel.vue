@@ -13,8 +13,9 @@ import LanguageSelect from './LanguageSelect.vue'
 const settings = defineModel<PlayerSettings>({ required: true })
 /** The language of the application, offered when it is given: an application may choose it elsewhere. */
 const languageChoice = defineModel<LanguageChoice | undefined>('languageChoice')
-defineProps<{ isFullscreen: boolean }>()
-const emit = defineEmits<{ close: []; toggleFullscreen: [] }>()
+/** `scope`: settings shown for one game, which may use the profile's or its own. */
+defineProps<{ isFullscreen: boolean; scope?: { gameName: string; isOwn: boolean } | null }>()
+const emit = defineEmits<{ close: []; toggleFullscreen: []; scope: [isOwn: boolean] }>()
 
 const locale = useLocale()
 const text = useMessages(settingsMessages)
@@ -113,6 +114,12 @@ onUnmounted(stopListening)
       <h2>{{ text.settings }}</h2>
       <button class="close-button" @click="emit('close')">{{ text.close }} <kbd>{{ describeInput({ type: 'key', code: 'Escape' }) }}</kbd></button>
     </header>
+
+    <div v-if="scope != null" class="scope" role="radiogroup" :aria-label="text.scopeOf(scope.gameName)">
+      <span>{{ text.scopeOf(scope.gameName) }}</span>
+      <label><input type="radio" :checked="!scope.isOwn" @change="emit('scope', false)"> {{ text.profileSettings }}</label>
+      <label><input type="radio" :checked="scope.isOwn" @change="emit('scope', true)"> {{ text.ownSettings }}</label>
+    </div>
 
     <nav class="categories" :aria-label="text.settings">
       <button
@@ -304,6 +311,27 @@ kbd {
   margin-left: 8px;
   font: inherit;
   opacity: 0.6;
+}
+
+.scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  align-items: center;
+  margin: -8px 0 28px;
+  font: 26px/1.3 system-ui, sans-serif;
+  color: #dfe6f0;
+}
+
+.scope label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.scope input {
+  width: 22px;
+  height: 22px;
 }
 
 .categories {

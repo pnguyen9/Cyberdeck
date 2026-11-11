@@ -108,6 +108,21 @@ export function createStorageSettingsStore(storage: () => Storage, key: string) 
         return false
       }
     },
+    /** Whether settings were written here: a game without its own uses the profile's. */
+    has(): boolean {
+      try {
+        return storage().getItem(key) !== null
+      } catch {
+        return false
+      }
+    },
+    remove() {
+      try {
+        storage().removeItem(key)
+      } catch {
+        // Storage refused: nothing was kept there to remove.
+      }
+    },
   }
 }
 
