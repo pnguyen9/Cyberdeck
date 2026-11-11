@@ -951,7 +951,7 @@ function answer() {
  * The time left to pick in a timed choice, counted while the choice is shown: a panel opened over it
  * pauses it. Nothing counts when the player asked choices to wait for them.
  */
-const choiceTime = ref<{ step: PlayerStep; leftMs: number; limitMs: number } | null>(null)
+const choiceTime = shallowRef<{ step: PlayerStep; leftMs: number; limitMs: number } | null>(null)
 let choiceTimer: ReturnType<typeof setTimeout> | undefined
 let choiceTimerStartedAt = 0
 

@@ -13,6 +13,8 @@
 - Each game's card can erase that game's progress alone, its saves alone, or both, the game staying
   installed; *Erase what Datajack keeps…* still erases every game at once.
 - A game removed can be installed again from the same file: picking it again did nothing.
+- A timed choice goes on from the time it had left once a panel opened over it is closed: the log,
+  the settings or the journal gave it the whole time again.
 - An animated picture plays from its start each time it is shown, in Firefox too, which played it
   once per page and then showed its last frame: the stage now plays it frame by frame itself, for
   characters, backgrounds, illustrations and a grid's tiles, and so does the gallery, enlarged.

@@ -863,6 +863,9 @@ browser checks for what it adds, the whole suite run (`npm run typecheck`, `npm 
 `npm run checks`, `npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the
 CHANGELOG brought up to date, every French text read again.
 
+- **Game mode lifted once the game is won.** `[game mode]` could end for a player who has reached an
+  ending once, `[game mode: until an ending]`, letting them go back and try other ways the second
+  time, as an author may want for a puzzle.
 - **The mini games' leftovers.** Blackjack's shoe of 2, 4, 6 or 8 real decks, as a list of the cards
   left; Minesweeper's flags, which need a second way to pick a tile (a right click, a key).
 - **Upper-body characters**, as most Japanese visual novels draw them: a framing chosen per character
