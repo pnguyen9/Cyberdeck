@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { isStageLocked, layOutProgressMap, type MapNode, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
+import { isStageLocked, journalOf, layOutProgressMap, stateFromSave, type MapNode, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
 import { computed } from 'vue'
 import { useMessages } from '../i18n/locale'
 import { mapMessages } from '../i18n/mapMessages'
@@ -7,6 +7,12 @@ import { mapMessages } from '../i18n/mapMessages'
 const props = defineProps<{ story: PlayableStory; progress: ProgressData; closeLabel: string }>()
 const emit = defineEmits<{ play: [save: SaveData]; close: [] }>()
 const text = useMessages(mapMessages)
+/** What the point held of what the journal shows players, as it was then: shown on hovering it. */
+function valuesAt(save: SaveData): string | undefined {
+  const entries = journalOf(props.story.project, stateFromSave(props.story, save), props.progress.endingIds).entries
+  return entries.length === 0 ? undefined : entries.map(entry => `${entry.name}: ${entry.items.join(', ')}`).join('\n')
+}
+
 /** Playing from a point reached where the story goes only forward would take the player back: not while that holds. */
 function canPlayFrom(save: SaveData): boolean {
   return !isStageLocked({ gameMode: save.stage.game ?? null, noGoingBack: save.stage.locked ?? null }, props.progress.endingIds.length > 0)
@@ -72,6 +78,7 @@ const curves = computed(() => {
           :key="node.key"
           class="node"
           :class="node.type"
+          :title="node.type === 'point' ? valuesAt(node.point.save) : undefined"
           :style="{ left: `${positionOf(node).x}px`, top: `${positionOf(node).y}px`, width: `${CARD_WIDTH}px`, height: `${heightOf(node)}px` }"
         >
           <template v-if="node.type === 'point'">

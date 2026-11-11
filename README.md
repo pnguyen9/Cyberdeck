@@ -780,8 +780,9 @@ read, and what it remembers. The story reads only the memories and endings, thro
 
 **Map** (in the game, on the end screen and on the library card) shows the routes explored left to
 right: each choice reached, its options (those not tried yet marked `?`), curves to where the tried
-ones led, and the endings. **Play from here** resumes the choice exactly as it was reached, a new
-path for the autosave to follow. Two paths reaching the same choice merge on the map only when
+ones led, and the endings. Hovering a choice tells what the journal showed when it was reached, by
+the same rule (nothing the author keeps from players). **Play from here** resumes the choice exactly
+as it was reached, a new path for the autosave to follow. Two paths reaching the same choice merge on the map only when
 they agree on the stage and on the decisions the story still tests from there on; otherwise
 characters could react differently ahead, and they stay apart.
 
@@ -883,8 +884,6 @@ CHANGELOG brought up to date, every French text read again.
   still able to change what follows and what the stage shows; two paths whose stage differs (the one
   a scene leaves) make two points for what may be the same state. Progress recorded before 2.1 keeps
   its old points.
-- **The map's points with values.** Hovering a point could show its values, by the journal's rule
-  of what players may see.
 - **The author's map in the preview.** Every path drawn as if all were played, each point with the
   values of its path, skipping always allowed, previewing from a point starting with its values; the
   map able to keep only the path played. Previewing from a page today plays the shortest way there,
