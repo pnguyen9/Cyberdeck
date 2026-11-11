@@ -4,7 +4,8 @@ import { computed } from 'vue'
 import { useMessages } from '../i18n/locale'
 import { mapMessages } from '../i18n/mapMessages'
 
-const props = defineProps<{ story: PlayableStory; progress: ProgressData; closeLabel: string }>()
+/** `ignoresLocks`: an author testing the story plays from any point, `[no going back]` or not. */
+const props = defineProps<{ story: PlayableStory; progress: ProgressData; closeLabel: string; ignoresLocks?: boolean }>()
 const emit = defineEmits<{ play: [save: SaveData]; close: [] }>()
 const text = useMessages(mapMessages)
 /** What the point held of what the journal shows players, as it was then: shown on hovering it. */
@@ -15,7 +16,7 @@ function valuesAt(save: SaveData): string | undefined {
 
 /** Playing from a point reached where the story goes only forward would take the player back: not while that holds. */
 function canPlayFrom(save: SaveData): boolean {
-  return !isStageLocked({ gameMode: save.stage.game ?? null, noGoingBack: save.stage.locked ?? null }, props.progress.endingIds.length > 0)
+  return props.ignoresLocks === true || !isStageLocked({ gameMode: save.stage.game ?? null, noGoingBack: save.stage.locked ?? null }, props.progress.endingIds.length > 0)
 }
 
 const CARD_WIDTH = 260

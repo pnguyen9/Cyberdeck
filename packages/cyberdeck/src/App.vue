@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { PlayableStory, SaveData } from '@cyberdeck/core'
-import { createStorageSaveStore, createStorageSettingsStore, localeOfChoice, PlayerView, provideLocale, type PlayerSettings } from '@cyberdeck/stage'
+import { emptyProgress, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
+import { AUTOSAVE_SLOT, createStorageSaveStore, createStorageSettingsStore, localeOfChoice, MapView, PlayerView, provideLocale, type PlayerSettings } from '@cyberdeck/stage'
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch, watchEffect } from 'vue'
 import { appMessages } from './i18n/appMessages'
 import { createDesktopProjectStore } from './projects/desktopProjectStore'
@@ -23,6 +23,33 @@ watch(previewSettings, value => previewSettingsStore.write(value))
 const openProjectId = ref<string | null>(null)
 const previewing = shallowRef<{ story: PlayableStory; resumeFrom: SaveData | null } | null>(null)
 const { shortcuts, isPanelOpen } = useShortcuts()
+
+/** The map of the story previewed: the routes the previews explored, as Datajack shows players theirs. */
+const previewMap = shallowRef<{ story: PlayableStory; progress: ProgressData } | null>(null)
+
+async function showPreviewMap(story: PlayableStory) {
+  const progress = await previewSaves.readProgress(story.project.id) ?? emptyProgress(story)
+  previewing.value = null
+  previewMap.value = { story, progress }
+}
+
+/** Back to the preview, where it was left to look at the map: its autosave. */
+async function closePreviewMap() {
+  const shown = previewMap.value
+  previewMap.value = null
+  if (shown !== null) {
+    previewing.value = { story: shown.story, resumeFrom: await previewSaves.read(shown.story.project.id, AUTOSAVE_SLOT) }
+  }
+}
+
+/** Previewing from a point of the map starts there, its state as it was reached. */
+function previewFromPoint(save: SaveData) {
+  const shown = previewMap.value
+  previewMap.value = null
+  if (shown !== null) {
+    previewing.value = { story: shown.story, resumeFrom: save }
+  }
+}
 
 /** Every screen below speaks it, the preview's player included. */
 const languageChoice = useLanguageChoice()
@@ -50,7 +77,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 <template>
   <template v-if="openProjectId !== null">
     <!-- Kept while previewing, so that the author comes back to the same tab and draft. -->
-    <ProjectView v-show="previewing === null" :store="store" :project-id="openProjectId" @close="openProjectId = null" @preview="(story, resumeFrom) => previewing = { story, resumeFrom }" />
+    <ProjectView v-show="previewing === null && previewMap === null" :store="store" :project-id="openProjectId" @close="openProjectId = null" @preview="(story, resumeFrom) => previewing = { story, resumeFrom }" />
     <PlayerView
       v-if="previewing !== null"
       v-model:settings="previewSettings"
@@ -59,8 +86,19 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :resume-from="previewing.resumeFrom"
       :leave-label="text.leaveLabel"
       can-inspect
+      can-open-map
       ignores-game-mode
       @leave="previewing = null"
+      @map="showPreviewMap(previewing.story)"
+    />
+    <MapView
+      v-if="previewMap !== null"
+      :story="previewMap.story"
+      :progress="previewMap.progress"
+      :close-label="text.previewLabel"
+      ignores-locks
+      @play="previewFromPoint"
+      @close="closePreviewMap"
     />
   </template>
   <ProjectsView v-else :store="store" :preview-saves="previewSaves" @open="projectId => openProjectId = projectId" />

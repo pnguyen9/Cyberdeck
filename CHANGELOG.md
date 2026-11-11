@@ -40,6 +40,8 @@
   than as written, `Everything: {Money} dollars`.
 
 ### Cyberdeck, the editor
+- The preview has the map, as Datajack shows players theirs: the routes its previews explored,
+  previewing from any point, `[no going back]` or not.
 - Upper-body characters, as most Japanese visual novels draw them, chosen in Cast & files for the
   project or for one character: drawn taller than the stage, whatever the file's size, the head near
   its top and the rest past its bottom; `near` zooms on the face, `far` shrinks from the bottom of

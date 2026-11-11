@@ -550,7 +550,9 @@ A **project** holds the whole game. Its screens:
   author change any of them by hand to try what follows: a decision's value, a counter's number,
   a name, and memories and endings seen that no way through one playthrough could give (the cat
   knowing the player, as on a second playthrough). Memories and endings so changed are kept for the
-  next previews, as a player's would be; the clock's counters stay as the clock reads them.
+  next previews, as a player's would be; the clock's counters stay as the clock reads them. The
+  preview has the **Map** too, as Datajack shows players theirs: the routes the previews explored,
+  previewing from any point of them, `[no going back]` or not.
   Ctrl+Enter saves, Esc cancels, Ctrl+Z undoes. The card being edited is marked (✎), the panel's
   title too while changes are not saved (●). Nothing written is thrown away unasked: opening
   another card, Esc, another chapter, another tab or leaving the project first asks to **Save**,
@@ -879,7 +881,6 @@ CHANGELOG brought up to date, every French text read again.
   values of its path, skipping always allowed, previewing from a point starting with its values; the
   map able to keep only the path played. Previewing from a page today plays the shortest way there,
   and the State panel changes values by hand.
-- **A preview closer to playing**: the map in Cyberdeck's preview, which only Datajack shows today.
 - **Web data of deleted copies.** Each application erases what it keeps, but a copy opened from a
   file and since deleted can only be erased the browser's way (see [Erasing what the web builds
   store](#erasing-what-the-web-builds-store)).

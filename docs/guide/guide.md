@@ -255,7 +255,7 @@ lasting: Bag = Key | Lamp]`. In a playthrough it behaves as any other, going bac
 
 Previews remember too, as players do. To try the story again from a clean start, the projects page has **Erase what Cyberdeck keeps…**: erasing the saves and progress of the previews leaves your projects alone.
 
-To try a branch without playing all the way to it, open **State** in the preview and change what you need: a decision, a counter, or what the player remembers, as if it were their second time. What follows reads the new values.
+To try a branch without playing all the way to it, open **State** in the preview and change what you need: a decision, a counter, or what the player remembers, as if it were their second time. What follows reads the new values. The preview has the **Map** too, as players see it: the routes you have tried, and a choice to preview from again.
 
 Players can see some of this in their **Journal**, but only what you choose:
 
