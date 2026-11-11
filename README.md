@@ -553,9 +553,11 @@ A **project** holds the whole game. Its screens:
   next previews, as a player's would be; the clock's counters stay as the clock reads them. The
   preview has the **Map** too, as Datajack shows players theirs: the routes the previews explored,
   previewing from any point of them, `[no going back]` or not; **Every path** shows the map explored
-  from the story itself, every option of every choice taken from the start (each choice from a few of
-  the states it is reached in, the map saying so when that leaves some out), each point telling,
-  hovered, all its values, and previewing from it with them.
+  from the story itself, every option of every choice taken from the start, each choice from a few
+  of the states it is reached in; a choice or an ending still missing, opened only by some values
+  (Sakura Week's bonds of 2 or more), is searched for, the paths nearest to those values first, and
+  its way drawn. The map says when some are still not on it, past a grid of picture buttons for
+  instance. Each point tells, hovered, all its values, and previews from them.
   Ctrl+Enter saves, Esc cancels, Ctrl+Z undoes. The card being edited is marked (✎), the panel's
   title too while changes are not saved (●). Nothing written is thrown away unasked: opening
   another card, Esc, another chapter, another tab or leaving the project first asks to **Save**,
@@ -880,11 +882,7 @@ browser checks for what it adds, the whole suite run (`npm run typecheck`, `npm 
 `npm run checks`, `npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the
 CHANGELOG brought up to date, every French text read again.
 
-- **The author's map, whole in large stories.** The preview's *Every path* explores each choice
-  from a few states only, the values that matter ahead combining into thousands: Sakura Week's map
-  shows 24 points (a scene's choice once for each place it is played from) but 2 of its 6 endings,
-  the others needing bonds of 2 or more that no path explored gathered. A search aimed at what is missing, guided by the conditions that open it (which
-  options raise the counters an ending tests), would draw them.
+Nothing planned for now: what comes next is added here.
 
 ## License
 

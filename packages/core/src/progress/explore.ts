@@ -1,4 +1,6 @@
+import { flattenStoredNodes } from '../format/storyFormat'
 import type { PlayableStory } from '../runtime/playableStory'
+import { findGuidedPath } from './guidedSearch'
 import { StoryRuntime, type RuntimeState } from '../runtime/storyRuntime'
 import { toSave } from '../saves/saveData'
 import { decisionsTestedFrom, emptyProgress, pointKeyOf, type PendingOption, type ProgressData, type ProgressTarget } from './progress'
@@ -13,6 +15,8 @@ const MAXIMUM_STATES = 5000
 const STATES_PER_CHOICE = 8
 /** Stops visited at most, pages and choices together: a story that never ends stops being explored. */
 const MAXIMUM_STOPS = 60_000
+/** Searching for what the broad exploration missed stops after this long, so that the editor answers. */
+const SEARCH_MILLISECONDS = 2000
 /** Every point explored is dated alike: the exploration is the story's, not a player's. */
 const EXPLORED_AT = '1970-01-01T00:00:00.000Z'
 
@@ -24,16 +28,18 @@ const EXPLORED_AT = '1970-01-01T00:00:00.000Z'
  * a few states per choice at most: the values that matter ahead combine. Pages are read on, names and
  * numbers asked for left to what is proposed; a grid of picture buttons, a board to play rather than a
  * choice to map, ends a path. A part played as a game, `[game mode]`, makes no points: its options are
- * explored all the same, the paths out of it linked to the choice before it. `isWhole` is false when
- * states were left unexplored: the map shows what was found, an ending missing may need values no
- * path explored gathered.
+ * explored all the same, the paths out of it linked to the choice before it. A choice or an ending
+ * still missing is then searched for, the paths nearest to the values that open it first, and its way
+ * drawn. `isWhole` is false when some choice or ending is not on the map: past a grid, or opened by
+ * values no search gathered in time.
  */
 export function exploreStory(story: PlayableStory, memory: { memoryIds: readonly string[]; endingIds: readonly string[] } = { memoryIds: [], endingIds: [] }): { progress: ProgressData; isWhole: boolean } {
   let progress = emptyProgress(story)
   let stops = MAXIMUM_STOPS
-  let isWhole = true
   const exploredStates = new Set<string>()
   const statesByChoice = new Map<string, number>()
+  /** Choices reached in a part played as a game: they make no points, and are no less explored. */
+  const gameChoiceIds = new Set<string>()
   const first = new StoryRuntime(story)
   first.useMemory(memory)
   // The same draws at every exploration, so that the map is drawn the same way each time.
@@ -99,7 +105,6 @@ export function exploreStory(story: PlayableStory, memory: { memoryIds: readonly
       continue
     }
     if (stops <= 0) {
-      isWhole = false
       break
     }
     const step = runtime.snapshot.step
@@ -108,7 +113,6 @@ export function exploreStory(story: PlayableStory, memory: { memoryIds: readonly
       continue
     }
     if (step.type !== 'choice') {
-      isWhole = isWhole && step.type !== 'grid'
       continue
     }
     const state = runtime.exportState()
@@ -118,18 +122,15 @@ export function exploreStory(story: PlayableStory, memory: { memoryIds: readonly
     const choiceAt = `${step.choice.id}:${JSON.stringify(state.page?.playedFrom ?? [])}`
     const statesHere = statesByChoice.get(choiceAt) ?? 0
     const isNewState = !exploredStates.has(stateKey) && statesHere < STATES_PER_CHOICE
-    if (!exploredStates.has(stateKey) && statesHere >= STATES_PER_CHOICE) {
-      isWhole = false
-    }
     if (isNewState) {
       exploredStates.add(stateKey)
       statesByChoice.set(choiceAt, statesHere + 1)
     }
     if (exploredStates.size > MAXIMUM_STATES) {
-      isWhole = false
       break
     }
     if (runtime.snapshot.stage.gameMode !== null) {
+      gameChoiceIds.add(step.choice.id)
       if (isNewState) {
         step.choice.options.forEach(option => branch(runtime, state, option.id, arrivedBy))
       }
@@ -142,6 +143,53 @@ export function exploreStory(story: PlayableStory, memory: { memoryIds: readonly
     }
   }
 
-  return { progress, isWhole }
+  // What the broad exploration missed, a choice or an ending some values open, is searched for on its
+  // own, the paths nearest to those values first, and its way drawn.
+  const searchEndsAt = Date.now() + SEARCH_MILLISECONDS
+  const nodes = story.chapters.flatMap(chapter => flattenStoredNodes(chapter.nodes))
+  const isMissingNow = (node: (typeof nodes)[number]) => (node.type === 'ending' && !progress.endingIds.includes(node.endingId))
+    || (node.type === 'choice' && !gameChoiceIds.has(node.id) && !progress.points.some(point => point.choiceId === node.id))
+  for (const target of nodes) {
+    if (!isMissingNow(target)) {
+      continue
+    }
+    if (Date.now() > searchEndsAt) {
+      break
+    }
+    const optionIds = findGuidedPath(story, target.id, memory)
+    if (optionIds !== null) {
+      drawPath(optionIds)
+    }
+  }
+  // Whole, for the author, when every choice and every ending of the story is on the map.
+  return { progress, isWhole: !nodes.some(isMissingNow) }
 
+  /** A way found, played from the start and drawn as the exploration draws. */
+  function drawPath(optionIds: readonly string[]) {
+    const runtime = new StoryRuntime(story)
+    runtime.useMemory(memory)
+    runtime.start(0)
+    let arrivedBy: PendingOption | null = null
+    for (const optionId of [...optionIds, null]) {
+      stops = Math.max(stops, 1_000)
+      playOn(runtime)
+      const step = runtime.snapshot.step
+      if (step.type === 'end') {
+        recordEnd(step.endingId, arrivedBy)
+        return
+      }
+      if (step.type !== 'choice' || optionId === null && runtime.snapshot.stage.gameMode !== null) {
+        return
+      }
+      if (runtime.snapshot.stage.gameMode === null) {
+        const pointKey = recordPoint(runtime.exportState(), step.choice.id)
+        link(arrivedBy, { type: 'point', key: pointKey })
+        arrivedBy = optionId === null ? null : { pointKey, optionId }
+      }
+      if (optionId === null) {
+        return
+      }
+      runtime.choose(optionId)
+    }
+  }
 }

@@ -20,6 +20,7 @@ import {
 } from '../../src/index'
 import { storyFromText } from '../runtime/storyFromText'
 import { stagedPointKeyOf } from '../../src/progress/progress'
+import { findGuidedPath } from '../../src/progress/guidedSearch'
 
 const NOW = '2026-10-26T12:00:00.000Z'
 
@@ -136,6 +137,19 @@ describe('progress', () => {
 })
 
 describe('the map', () => {
+  it('searches for an ending only some values open, and draws its way', () => {
+    // Three days, each raising one bond: only a player who chose Mika twice may see her ending.
+    const days = [1, 2, 3].flatMap(day => [`[choice: Day${day}]`, '> Mika = Mika', '> Sota = Sota', '> Rest = Rest', `[if: Day${day} is Mika]`, '[add: MikaBond 1]', `[else if: Day${day} is Sota]`, '[add: SotaBond 1]', '[end]', `Day ${day} ends.`])
+    const story = storyFromText(['[counter: MikaBond = 0]', '[counter: SotaBond = 0]', ...days, '[choice: Evening]', '> Find Mika = Mika [if: MikaBond >= 2]', '> Go home = Home', '[if: Evening is Mika]', '[ending: Fireworks]', '[end]', '[ending: Quiet]'])
+    const fireworks = story.chapters[0]!.nodes.flatMap(function find(node): string[] {
+      return node.type === 'ending' && story.project.endings.find(ending => ending.id === node.endingId)?.name === 'Fireworks' ? [node.id] : node.type === 'condition' ? node.branches.flatMap(branch => branch.nodes.flatMap(find)) : []
+    })[0]!
+    const path = findGuidedPath(story, fireworks)
+    expect(path).not.toBeNull()
+    const { progress, isWhole } = exploreStory(story)
+    expect([progress.endingIds.length, isWhole]).toEqual([2, true])
+  })
+
   it('explores every path of the story, each choice one point, every option taken, every ending found', () => {
     const story = storyFromText(STORY)
     const { progress, isWhole } = exploreStory(story)

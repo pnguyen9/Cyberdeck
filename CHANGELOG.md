@@ -41,8 +41,9 @@
 
 ### Cyberdeck, the editor
 - The preview's map shows *Every path* too, explored from the story itself, every option of every
-  choice taken from the start, each point telling all its values; and the preview's Skip passes any
-  text, read or not.
+  choice taken from the start, and the choices and endings only some values open searched for, the
+  paths nearest to those values first: Sakura Week's six endings are all on it. Each point tells all
+  its values; and the preview's Skip passes any text, read or not.
 - The preview has the map, as Datajack shows players theirs: the routes its previews explored,
   previewing from any point, `[no going back]` or not.
 - Upper-body characters, as most Japanese visual novels draw them, chosen in Cast & files for the

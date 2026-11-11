@@ -2,7 +2,7 @@
 const en = {
   routesExplored: 'routes explored',
   everyPath: 'every path, explored from the story',
-  partly: 'Explored in part: an ending or a choice missing may need values no path explored gathered.',
+  partly: 'Explored in part: some choices or endings are not on the map, past a grid of picture buttons, or opened by values no path explored gathered.',
   endingsReached: (reached: number, total: number) => `Endings reached: ${reached} of ${total}`,
   nothingExplored: 'Nothing explored yet: the map fills in as you reach choices.',
   untitledChapter: 'Untitled chapter',
@@ -16,7 +16,7 @@ type MapMessages = typeof en
 const fr: MapMessages = {
   routesExplored: 'parcours explorés',
   everyPath: 'tous les parcours, explorés à partir de l’histoire',
-  partly: 'Exploré en partie\u00a0: une fin ou un choix absent peut demander des valeurs qu’aucun parcours exploré n’a réunies.',
+  partly: 'Exploré en partie\u00a0: des choix ou des fins manquent à la carte, au-delà d’une grille de boutons-images, ou ouverts par des valeurs qu’aucun parcours exploré n’a réunies.',
   endingsReached: (reached, total) => `Fins atteintes : ${reached} sur ${total}`,
   nothingExplored: 'Rien n’a encore été exploré : la carte se remplit à mesure que vous atteignez des choix.',
   untitledChapter: 'Chapitre sans titre',
