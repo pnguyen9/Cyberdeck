@@ -4,8 +4,8 @@ import { computed } from 'vue'
 import { useMessages } from '../i18n/locale'
 import { mapMessages } from '../i18n/mapMessages'
 
-/** `ignoresLocks`: an author testing the story plays from any point, `[no going back]` or not. */
 /**
+ * `ignoresLocks`: an author testing the story plays from any point, `[no going back]` or not.
  * `everyPath`: the map explored from the story for its author rather than the paths played, whole or
  * in part; its points tell all their values. `switchLabel`: a button to show the other map.
  */

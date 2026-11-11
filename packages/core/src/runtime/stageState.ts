@@ -31,16 +31,38 @@ export interface BackgroundTransition {
 /** Durations of what the text leaves to the player. */
 export const EFFECT_DEFAULTS = { transitionMs: 800, shakeMs: 500, flashMs: 300, fadeMs: 1000 } as const
 
-/** What the player sees and hears, apart from the text. Never modified: each change gives a new state. */
 /** A lock on going back, saving and loading: for good, or until the player has reached an ending of the game. */
 export type StageLock = 'always' | 'untilEnding'
 
-/** Whether a stage forbids going back, saving and loading now, knowing whether an ending was reached. */
-export function isStageLocked(stage: Pick<StageState, 'gameMode' | 'noGoingBack'>, hasReachedEnding: boolean): boolean {
-  const holds = (lock: StageLock | null) => lock === 'always' || (lock === 'untilEnding' && !hasReachedEnding)
-  return holds(stage.gameMode) || holds(stage.noGoingBack)
+/** Whether a value is a lock, as a save holds it. */
+export function isStageLock(value: unknown): value is StageLock {
+  return value === 'always' || value === 'untilEnding'
 }
 
+/** The lock a `[game mode]` or `[no going back]` tag sets, null for one turning it off. */
+function lockOf(command: { on: boolean; untilEnding?: true }): StageLock | null {
+  return command.on ? (command.untilEnding === true ? 'untilEnding' : 'always') : null
+}
+
+/** Whether choices made on this stage are points of the map: not in a part played as a game. */
+export function makesMapPoints(stage: Pick<StageState, 'gameMode'>): boolean {
+  return stage.gameMode === null
+}
+
+/**
+ * Which lock forbids going back, saving and loading now, knowing whether an ending was reached: a part
+ * played as a game first, then one played forward only; null when the player is free.
+ */
+export function stageLockOf(stage: Pick<StageState, 'gameMode' | 'noGoingBack'>, hasReachedEnding: boolean): 'gameMode' | 'noGoingBack' | null {
+  const holds = (lock: StageLock | null) => lock === 'always' || (lock === 'untilEnding' && !hasReachedEnding)
+  return holds(stage.gameMode) ? 'gameMode' : holds(stage.noGoingBack) ? 'noGoingBack' : null
+}
+
+export function isStageLocked(stage: Pick<StageState, 'gameMode' | 'noGoingBack'>, hasReachedEnding: boolean): boolean {
+  return stageLockOf(stage, hasReachedEnding) !== null
+}
+
+/** What the player sees and hears, apart from the text. Never modified: each change gives a new state. */
 export interface StageState {
   backgroundId: string | null
   /** How the current background appeared, from the transition announced before it. */
@@ -132,9 +154,9 @@ export function applyStageCommand(stage: StageState, command: StageCommand, cont
     case 'continued':
       return { ...stage, continuedText: command.text }
     case 'gameMode':
-      return { ...stage, gameMode: command.on ? (command.untilEnding === true ? 'untilEnding' : 'always') : null }
+      return { ...stage, gameMode: lockOf(command) }
     case 'noGoingBack':
-      return { ...stage, noGoingBack: command.on ? (command.untilEnding === true ? 'untilEnding' : 'always') : null }
+      return { ...stage, noGoingBack: lockOf(command) }
     case 'textMode':
       return command.mode === stage.textMode ? stage : { ...stage, textMode: command.mode, screenfulPageIds: [] }
     case 'clear':

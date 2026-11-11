@@ -8,6 +8,11 @@ import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
 /** Short descriptions of what nodes do, in the words of the writing syntax, for the storyboard. */
 
 /** A transition or screen effect as written, defaults left out: `shake: strong 0.4s`, `fade out: white`, `tint: none`. */
+/** A lock as its tag is written, brackets aside: `game mode`, `no going back: until an ending`, `game mode: off`. */
+export function lockText(command: Extract<StageCommand, { type: 'gameMode' | 'noGoingBack' }>): string {
+  return `${command.type === 'gameMode' ? 'game mode' : 'no going back'}${command.on ? (command.untilEnding === true ? ': until an ending' : '') : ': off'}`
+}
+
 export function effectText(command: Extract<StageCommand, { type: 'transition' | 'shake' | 'flash' | 'fade' | 'tint' }>): string {
   const seconds = (durationMs: number | null) => durationMs === null ? '' : `${durationMs / 1000}s`
   const written = (name: string, words: string[]) => {
@@ -45,7 +50,7 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
       return `to be continued: ${command.text ?? 'none'}`
     case 'gameMode':
     case 'noGoingBack':
-      return `${command.type === 'gameMode' ? 'game mode' : 'no going back'}${command.on ? (command.untilEnding === true ? ': until an ending' : '') : ': off'}`
+      return lockText(command)
     case 'textMode':
       return `text: ${command.mode}`
     case 'clear':

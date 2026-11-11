@@ -54,17 +54,14 @@ for (const { product, workspace } of APPS) {
 
 // The guide as it is read in a browser and as Markdown, its images beside them, with the README, the
 // changes and the licence, where the repository has them: the README's links to the guide work in the
-// archive too. What is planned for later versions stays in the repository: the documentation is of
-// this release.
+// archive too.
 const documentationName = `Cyberdeck-${version}-documentation`
 const documentationFolder = join(workFolder, documentationName)
 execFileSync(process.execPath, [join(root, 'scripts', 'guideMarkdown.mjs')], { stdio: 'inherit' })
 cpSync(join(root, 'docs', 'guide'), join(documentationFolder, 'docs', 'guide'), { recursive: true })
-for (const fileName of ['CHANGELOG.md', 'LICENSE']) {
+for (const fileName of ['README.md', 'CHANGELOG.md', 'LICENSE']) {
   cpSync(join(root, fileName), join(documentationFolder, fileName))
 }
-const readme = readFileSync(join(root, 'README.md'), 'utf8')
-writeFileSync(join(documentationFolder, 'README.md'), readme.replace(/^## Plan\b[^\n]*\n[\s\S]*?(?=^## )/m, ''))
 zipFolder(workFolder, documentationName, `${documentationName}.zip`)
 
 // The sample story, to try the editor with: its text to import, and the zip of its files to drop in Cast & files.

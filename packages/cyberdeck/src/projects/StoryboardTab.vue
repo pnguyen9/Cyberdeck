@@ -5,6 +5,7 @@ import {
   describeStageCommand,
   flattenNodes,
   flattenStoredNodes,
+  playNodesOf,
   locateNode,
   moveNodes,
   nodesText,
@@ -78,13 +79,11 @@ const playedFrom = computed(() => {
   if (scene === null || !isScene.value) {
     return []
   }
-  return documents.value.flatMap(document => flattenStoredNodes(document.nodes)
-    .filter(node => node.type === 'play' && node.sceneId === scene.id)
-    .map(node => ({
-      documentId: document.id,
-      nodeId: node.id,
-      title: project.value.sceneOrder.includes(document.id) ? common.value.sceneLabel(document.title ?? '') : document.title ?? common.value.untitledChapter,
-    })))
+  return playNodesOf(documents.value, scene.id).map(({ chapter: document, nodeId }) => ({
+    documentId: document.id,
+    nodeId,
+    title: project.value.sceneOrder.includes(document.id) ? common.value.sceneLabel(document.title ?? '') : document.title ?? common.value.untitledChapter,
+  }))
 })
 const sceneNames = computed(() => new Map(scenes.value.map(scene => [scene.id, scene.title ?? ''])))
 /** The grid sorts cards like slides; the tree shows each condition's branches side by side, for reading, not moving. */

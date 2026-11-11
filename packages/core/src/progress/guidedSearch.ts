@@ -1,12 +1,12 @@
 import { flattenStoredNodes, type ChapterDocument, type StoredCondition, type StoredNode } from '../format/storyFormat'
 import type { PlayableStory } from '../runtime/playableStory'
-import { StoryRuntime, type RuntimeState } from '../runtime/storyRuntime'
-import { toSave } from '../saves/saveData'
-import { decisionsTestedFrom, pointKeyOf } from './progress'
+import type { RuntimeState, StoryRuntime } from '../runtime/storyRuntime'
+import { branchFrom, playToNextStop, startedRuntime, stateKeyOf, type ExploringMemory, type StopBudget } from './playing'
 
 /** Stops visited at most by one search, pages and choices together. */
 const MAXIMUM_STOPS = 40_000
-const SEARCHED_AT = '1970-01-01T00:00:00.000Z'
+/** Paths kept waiting at most: past them, only the most promising half stay. */
+const MAXIMUM_WAITING = 400
 
 /** What a target needs: counters to reach, decisions to hold a value. */
 type Requirement =
@@ -18,7 +18,7 @@ type Requirement =
  * option offered only then: the options to take from the start, null when none was found. The search
  * plays the paths whose values come nearest to what the target needs first, each state once.
  */
-export function findGuidedPath(story: PlayableStory, targetNodeId: string, memory: { memoryIds: readonly string[]; endingIds: readonly string[] } = { memoryIds: [], endingIds: [] }): string[] | null {
+export function findGuidedPath(story: PlayableStory, targetNodeId: string, memory: ExploringMemory = { memoryIds: [], endingIds: [] }): string[] | null {
   const requirements = requirementsOf(story, targetNodeId)
   const target = story.chapters.flatMap(chapter => flattenStoredNodes(chapter.nodes)).find(node => node.id === targetNodeId)
   if (target === undefined) {
@@ -29,34 +29,17 @@ export function findGuidedPath(story: PlayableStory, targetNodeId: string, memor
     return target.type === 'ending' ? step.type === 'end' && step.endingId === target.endingId
       : step.type === 'choice' && step.choice.id === targetNodeId
   }
-  let stops = MAXIMUM_STOPS
-  const playOn = (runtime: StoryRuntime) => {
-    for (let step = runtime.snapshot.step; stops > 0; step = runtime.snapshot.step) {
-      if (step.type === 'page') {
-        runtime.next()
-      } else if (step.type === 'askNumber') {
-        runtime.answerNumber(null)
-      } else if (step.type === 'ask') {
-        runtime.answer('')
-      } else {
-        return
-      }
-      stops--
-    }
-  }
+  const budget: StopBudget = { stops: MAXIMUM_STOPS }
   const scoreOf = (state: RuntimeState) => requirements.reduce((score, requirement) => score + nearness(requirement, state), 0)
 
-  const first = new StoryRuntime(story)
-  first.useMemory(memory)
-  first.start(0)
   const explored = new Set<string>()
-  let waiting: { runtime: StoryRuntime; optionIds: string[]; score: number }[] = [{ runtime: first, optionIds: [], score: 0 }]
+  let waiting: { runtime: StoryRuntime; optionIds: string[]; score: number }[] = [{ runtime: startedRuntime(story, memory), optionIds: [], score: 0 }]
   try {
-    while (waiting.length > 0 && stops > 0) {
+    while (waiting.length > 0 && budget.stops > 0) {
       // The most promising path first; of two alike, the shorter.
       waiting.sort((first, second) => second.score - first.score || first.optionIds.length - second.optionIds.length)
       const { runtime, optionIds } = waiting.shift()!
-      playOn(runtime)
+      playToNextStop(runtime, budget)
       if (isTarget(runtime)) {
         return optionIds
       }
@@ -65,22 +48,18 @@ export function findGuidedPath(story: PlayableStory, targetNodeId: string, memor
         continue
       }
       const state = runtime.exportState()
-      const key = pointKeyOf(step.choice.id, toSave(story, state, SEARCHED_AT), decisionsTestedFrom(story, step.choice.id))
+      const key = stateKeyOf(story, state, step.choice.id)
       if (explored.has(key)) {
         continue
       }
       explored.add(key)
       for (const option of step.choice.options) {
-        const branch = new StoryRuntime(story)
-        branch.useMemory({ memoryIds: [...new Set([...memory.memoryIds, ...runtime.memoryIds])], endingIds: memory.endingIds })
-        branch.restoreState(state)
-        branch.choose(option.id)
-        stops--
+        const branch = branchFrom(story, memory, runtime, state, option.id, budget)
         waiting.push({ runtime: branch, optionIds: [...optionIds, option.id], score: scoreOf(branch.exportState()) })
       }
       // Only the most promising paths are kept waiting: a story of many choices has too many.
-      if (waiting.length > 400) {
-        waiting = waiting.sort((first, second) => second.score - first.score).slice(0, 200)
+      if (waiting.length > MAXIMUM_WAITING) {
+        waiting = waiting.sort((first, second) => second.score - first.score).slice(0, MAXIMUM_WAITING / 2)
       }
     }
   } catch {

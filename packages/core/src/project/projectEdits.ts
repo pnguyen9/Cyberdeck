@@ -369,9 +369,17 @@ export function removeChapter(project: ProjectDocument, chapterId: string, now: 
   }
 }
 
+/** Every `[play]` of a scene, in the chapters and scenes given, the scene itself included: where it is played from. */
+export function playNodesOf(chapters: readonly ChapterDocument[], sceneId: string): { chapter: ChapterDocument; nodeId: string }[] {
+  return chapters.flatMap(chapter => flattenStoredNodes(chapter.nodes)
+    .filter(node => node.type === 'play' && node.sceneId === sceneId)
+    .map(node => ({ chapter, nodeId: node.id })))
+}
+
 /** Chapters and scenes playing a scene: they would play nothing if it were removed. */
 export function playsOf(chapters: readonly ChapterDocument[], sceneId: string): ChapterDocument[] {
-  return chapters.filter(chapter => chapter.id !== sceneId && flattenStoredNodes(chapter.nodes).some(node => node.type === 'play' && node.sceneId === sceneId))
+  const playing = new Set(playNodesOf(chapters, sceneId).map(play => play.chapter))
+  return chapters.filter(chapter => chapter.id !== sceneId && playing.has(chapter))
 }
 
 export function moveChapter(project: ProjectDocument, chapterId: string, toIndex: number, now: string): ProjectDocument {

@@ -36,7 +36,8 @@ import {
   StoryRuntime,
   toSave,
   splitAtFirstWait,
-  isStageLocked,
+  makesMapPoints,
+  stageLockOf,
   waitMillisecondsOf,
   EFFECT_DEFAULTS,
   MAXIMUM_ASKED_NAME_LENGTH,
@@ -82,8 +83,8 @@ const props = defineProps<{
   canOpenMap?: boolean
   /** Offers the state of the story beside the stage: for an author testing it, never for players. */
   canInspect?: boolean
-  /** Lets an author testing the story go back, save and load in a part played as a game, `[game mode]`. */
-  ignoresGameMode?: boolean
+  /** Lets an author testing the story go back, save and load where `[game mode]` or `[no going back]` forbids it. */
+  ignoresLocks?: boolean
   /** Lets an author testing the story skip any text, not only what was read before. */
   skipsUnread?: boolean
   /** Whether the settings are this game's own rather than the profile's; left out, the choice is not offered. */
@@ -121,12 +122,9 @@ const canGoBack = ref(false)
  */
 const lockedNote = computed((): string | null => {
   const stage = snapshot.value.stage
-  const hasReachedEnding = progress.value.endingIds.length > 0
-  if (props.ignoresGameMode === true || !isStageLocked(stage, hasReachedEnding)) {
-    return null
-  }
-  return isStageLocked({ gameMode: stage.gameMode, noGoingBack: null }, hasReachedEnding)
-    ? text.value.gameModeLocked
+  const lock = props.ignoresLocks === true ? null : stageLockOf(stage, progress.value.endingIds.length > 0)
+  return lock === null ? null
+    : lock === 'gameMode' ? text.value.gameModeLocked
     : text.value.storyLocked(stage.noGoingBack === 'untilEnding')
 })
 const isGameLocked = computed(() => lockedNote.value !== null)
@@ -654,7 +652,7 @@ function recordProgress() {
   if (step.type === 'page') {
     pageWasRead = recorded.readPageIds.includes(step.page.id)
     recorded = recordPageRead(recorded, step.page.id)
-  } else if (step.type === 'choice' && runtime.snapshot.stage.gameMode !== null) {
+  } else if (step.type === 'choice' && !makesMapPoints(runtime.snapshot.stage)) {
     // A part played as a game makes no points: the map goes from the choice before it to the one after.
     currentPointKey = null
   } else if (step.type === 'choice') {
@@ -1025,7 +1023,7 @@ function markCell(number: number) {
 }
 
 function choose(optionId: string) {
-  if (runtime.snapshot.stage.gameMode === null) {
+  if (makesMapPoints(runtime.snapshot.stage)) {
     pendingOption = currentPointKey === null ? null : { pointKey: currentPointKey, optionId }
     if (pendingOption !== null) {
       progress.value = recordOptionPicked(progress.value, pendingOption)

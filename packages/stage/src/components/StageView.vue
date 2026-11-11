@@ -86,6 +86,7 @@ const characters = computed(() => props.stage.characters.map(onStage => {
   const drawnFacing = props.catalog.drawnFacing(onStage.characterId)
   const turnover = turnovers.value[onStage.characterId]
   const expressionId = turnover?.expressionId ?? onStage.expressionId
+  const isUpperBody = props.catalog.framing(onStage.characterId) === 'upperBody'
   return {
     characterId: onStage.characterId,
     name: props.catalog.characterName(onStage.characterId),
@@ -95,13 +96,13 @@ const characters = computed(() => props.stage.characters.map(onStage => {
     turnStyle: turnover === undefined ? {} : { '--turn-ms': `${turnover.halfMs}ms` },
     facingArrow: facing === 'left' ? '←' : facing === 'right' ? '→' : '',
     isMirrored: drawnFacing !== null && facing !== null && facing !== drawnFacing,
-    isUpperBody: props.catalog.framing(onStage.characterId) === 'upperBody',
+    isUpperBody,
     style: {
       left: `${onStage.x}%`,
       transitionDuration: `${onStage.moveDurationMs}ms`,
       ...DEPTH_STYLES[onStage.depth],
-      ...(props.catalog.framing(onStage.characterId) === 'upperBody'
-        ? { bottom: `-${UPPER_BODY_BELOW}px`, transformOrigin: onStage.depth === 'near' ? FACE_ORIGIN : STAGE_EDGE_ORIGIN }
+      ...(isUpperBody
+        ? { bottom: `-${UPPER_BODY_BELOW}px`, '--upper-body-height': `${UPPER_BODY_HEIGHT}px`, transformOrigin: onStage.depth === 'near' ? FACE_ORIGIN : STAGE_EDGE_ORIGIN }
         : {}),
     },
   }
@@ -294,7 +295,7 @@ function onLeave(element: Element, done: () => void) {
 
 /* An upper-body picture: at its set height whatever its file's size, taller than the stage. */
 .upper-body .sprite {
-  height: 1300px;
+  height: var(--upper-body-height);
   width: auto;
   max-width: none;
   max-height: none;

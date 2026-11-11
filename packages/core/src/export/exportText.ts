@@ -4,7 +4,7 @@ import { pictureTurnWords } from '../stage/stageDirectives'
 import { counterValueText, describeAskNumber, describeCondition, describeCopy, describeDraw, describeGrid, describeListNode } from '../storyboard/describeNodes'
 import { listsOf, listValueText } from '../format/lists'
 import { firstLanguageOf } from '../format/languages'
-import { effectText } from '../storyboard/describeNodes'
+import { effectText, lockText } from '../storyboard/describeNodes'
 import { ENDINGS_REACHED, flattenStoredNodes } from '../format/storyFormat'
 import { isPropertyAlone } from '../format/textStyles'
 import { measuringValues, possibleValues } from '../format/textValues'
@@ -403,7 +403,7 @@ class TextWriter {
         return `[to be continued: ${command.text ?? 'none'}]`
       case 'gameMode':
       case 'noGoingBack':
-        return `[${command.type === 'gameMode' ? 'game mode' : 'no going back'}${command.on ? (command.untilEnding === true ? ': until an ending' : '') : ': off'}]`
+        return `[${lockText(command)}]`
       case 'textMode':
         return `[text: ${command.mode}]`
       case 'clear':

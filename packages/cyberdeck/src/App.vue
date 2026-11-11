@@ -29,6 +29,8 @@ const previewMap = shallowRef<{ story: PlayableStory; progress: ProgressData; ev
 
 /** Between the paths the previews played and every path, explored from the story once asked for. */
 const isExploring = ref(false)
+/** Each story previewed is explored once: switching back and forth shows the same map. */
+const explored = new WeakMap<PlayableStory, ReturnType<typeof exploreStory>>()
 function switchPreviewMap() {
   const shown = previewMap.value
   if (shown === null || isExploring.value) {
@@ -38,10 +40,17 @@ function switchPreviewMap() {
     previewMap.value = { ...shown, everyPath: null }
     return
   }
+  const known = explored.get(shown.story)
+  if (known !== undefined) {
+    previewMap.value = { ...shown, everyPath: known }
+    return
+  }
   // A large story takes a moment to explore: the button says so before the work begins.
   isExploring.value = true
   setTimeout(() => {
-    previewMap.value = { ...shown, everyPath: exploreStory(shown.story) }
+    const everyPath = exploreStory(shown.story)
+    explored.set(shown.story, everyPath)
+    previewMap.value = { ...shown, everyPath }
     isExploring.value = false
   }, 30)
 }
@@ -106,7 +115,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :leave-label="text.leaveLabel"
       can-inspect
       can-open-map
-      ignores-game-mode
+      ignores-locks
       skips-unread
       @leave="previewing = null"
       @map="showPreviewMap(previewing.story)"
@@ -116,7 +125,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :story="previewMap.story"
       :progress="previewMap.everyPath?.progress ?? previewMap.progress"
       :close-label="text.previewLabel"
-      :every-path="previewMap.everyPath === null ? null : { isWhole: previewMap.everyPath.isWhole }"
+      :every-path="previewMap.everyPath"
       :switch-label="isExploring ? text.exploring : previewMap.everyPath === null ? text.showEveryPath : text.showPlayed"
       ignores-locks
       @switch="switchPreviewMap"

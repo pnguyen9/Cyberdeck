@@ -6,7 +6,7 @@ import { listPlaceSplitter } from '../format/lists'
 /** Tags showing a picture, which a decision's value may name: besides a character's own, `[marie: {Mood}]`. */
 const PICTURE_TAGS: ReadonlySet<string> = new Set(['enter', 'bg', 'background', 'illustration', 'cg'])
 import { styleClassName } from '../format/authorCss'
-import { placeholdersIn } from '../format/textValues'
+import { placeholdersOfNode } from '../format/textValues'
 import { readStyleProperty } from '../format/textStyles'
 import type { Condition, ImportedChapter, ImportProblem, ImportResult, StoryNode } from './importTypes'
 import { decimalsOf, decimalsWritten, readAmount, readCounterValue, readDraw, readRandom } from './readControl'
@@ -395,8 +395,7 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
 function checkPlaceholders(result: ImportResult, allNodes: readonly StoryNode[], knownAskedNames: readonly string[], counterAndDecisionNames: ReadonlySet<string>, isListPlace: (name: string) => boolean): ImportProblem[] {
   const asks = allNodes.flatMap(node => node.type === 'ask' ? [node] : [])
   const asked = new Set([...knownAskedNames, ...asks.map(node => node.name)].map(normalizeName))
-  const textsOf = (node: StoryNode): string[] => node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : node.type === 'grid' ? [node.caption ?? ''] : []
-  const unknown = allNodes.flatMap(node => [...new Set(textsOf(node).flatMap(placeholdersIn))]
+  const unknown = allNodes.flatMap(node => [...new Set(placeholdersOfNode(node))]
     .filter(name => !asked.has(normalizeName(name)) && !counterAndDecisionNames.has(normalizeName(name)) && !isListPlace(name))
     .map((name): ImportProblem => ({ severity: 'error', code: 'unknownValue', line: node.sourceLine, subject: name })))
   const taken = asks.filter(node => counterAndDecisionNames.has(normalizeName(node.name)))

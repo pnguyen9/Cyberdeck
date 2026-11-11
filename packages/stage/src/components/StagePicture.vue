@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
-import { decodedAnimation, type DecodedAnimation } from './animatedPictures'
+import { decodedAnimation, releaseAnimation, type DecodedAnimation } from './animatedPictures'
 
 /**
  * A picture of the stage: a character, a background, an illustration, a grid's tile. An animated one
@@ -38,8 +38,11 @@ function play(decoded: DecodedAnimation, round = 0, frameIndex = 0) {
   frameTimer = setTimeout(() => play(decoded, isLastFrame ? round + 1 : round, isLastFrame ? 0 : frameIndex + 1), decoded.frames[frameIndex]!.durationMs)
 }
 
-watch(() => props.url, async url => {
+watch(() => props.url, async (url, previousUrl) => {
   clearTimeout(frameTimer)
+  if (previousUrl !== undefined) {
+    releaseAnimation(previousUrl)
+  }
   const thisShowing = ++showing
   animation.value = 'pending'
   const decoded = await decodedAnimation(url)
@@ -65,6 +68,7 @@ watch(() => props.url, async url => {
 onBeforeUnmount(() => {
   clearTimeout(frameTimer)
   showing++
+  releaseAnimation(props.url)
 })
 </script>
 

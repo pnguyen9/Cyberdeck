@@ -153,25 +153,25 @@ export function recordEndReached(progress: ProgressData, endingId: string | null
  * part of it: two paths whose stage differs, a scene leaving a character on it, reach the same choice
  * with the same story ahead.
  */
-export function pointKeyOf(choiceId: string, save: SaveData, namesThatMatter: ReadonlySet<string>): string {
+export function pointKeyOf(choiceId: string, save: Pick<SaveData, 'decisions' | 'counters' | 'page'>, namesThatMatter: ReadonlySet<string>): string {
+  return `${choiceId}:${fingerprint(JSON.stringify({ ...valuesThatMatter(save, namesThatMatter), playedFrom: save.page?.playedFrom ?? [] }))}`
+}
+
+/** The decisions and counters a point is told apart by, in the order the keys were always written. */
+function valuesThatMatter(save: Pick<SaveData, 'decisions' | 'counters'>, namesThatMatter: ReadonlySet<string>) {
   const decisions = Object.keys(save.decisions).filter(name => namesThatMatter.has(name)).sort()
     .map(name => [name, [...(save.decisions[name] ?? [])].sort()])
   const counters = Object.keys(save.counters ?? {}).filter(name => namesThatMatter.has(name)).sort()
     .map(name => [name, save.counters?.[name]])
-  const playedFrom = save.page?.playedFrom ?? []
-  return `${choiceId}:${fingerprint(JSON.stringify({ decisions, ...(counters.length === 0 ? {} : { counters }), playedFrom }))}`
+  return { decisions, ...(counters.length === 0 ? {} : { counters }) }
 }
 
 /** The key points had before 3.2, the stage in it: progress recorded then keeps its points. */
 export function stagedPointKeyOf(choiceId: string, save: SaveData, namesThatMatter: ReadonlySet<string>): string {
-  const decisions = Object.keys(save.decisions).filter(name => namesThatMatter.has(name)).sort()
-    .map(name => [name, [...(save.decisions[name] ?? [])].sort()])
-  const counters = Object.keys(save.counters ?? {}).filter(name => namesThatMatter.has(name)).sort()
-    .map(name => [name, save.counters?.[name]])
   const characters = [...save.stage.characters].sort((first, second) => first.name.localeCompare(second.name))
   const playedFrom = save.page?.playedFrom ?? []
   const { background, music, cover, tint, text, illustration } = save.stage
-  return `${choiceId}:${fingerprint(JSON.stringify({ decisions, ...(counters.length === 0 ? {} : { counters }), background, music, characters, cover, tint, text, illustration, playedFrom }))}`
+  return `${choiceId}:${fingerprint(JSON.stringify({ ...valuesThatMatter(save, namesThatMatter), background, music, characters, cover, tint, text, illustration, playedFrom }))}`
 }
 
 const testedDecisionsByStory = new WeakMap<PlayableStory, Map<string, ReadonlySet<string>>>()

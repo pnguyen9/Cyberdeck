@@ -875,15 +875,6 @@ of it is as free as the rest of the repository.
   seconds it took (`now`), and the best time of each level is kept, in the journal. A right click or
   F flags a cell (`marking Flag`), which picking then leaves closed.
 
-## Plan
-
-What comes next, in no particular order. Each change ends as every change here does: unit tests and
-browser checks for what it adds, the whole suite run (`npm run typecheck`, `npm test`,
-`npm run checks`, `npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the
-CHANGELOG brought up to date, every French text read again.
-
-Nothing planned for now: what comes next is added here.
-
 ## License
 
 Released into the public domain under the [Unlicense](LICENSE): anyone may use, change and

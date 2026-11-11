@@ -138,7 +138,7 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
               class="option"
               :title="option.condition === null ? undefined : text.optionOfferedOnlyIf(conditionText(option.condition))"
             >{{ option.timeout === true ? '⏱' : '›' }} {{ option.text }}<span v-if="option.condition !== null" class="option-condition"> · if {{ conditionText(option.condition) }}</span></span>
-            <span v-if="element.entry.node.options.length > OPTION_LINES" class="option more-options">{{ text.moreOptions(element.entry.node.options.length - shownOptions(element.entry.node.options).length) }}</span>
+            <span v-if="element.entry.node.options.length > OPTION_LINES" class="option more-options">{{ text.moreOptions(element.entry.node.options.length - (OPTION_LINES - 1)) }}</span>
           </template>
           <template v-else-if="element.kind === 'entry'">
             <span class="marker-kind">{{ MARKER_SYMBOLS[element.entry.node.type] }}</span>

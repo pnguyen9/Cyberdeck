@@ -30,7 +30,7 @@ import {
   type TextStyle,
 } from './storyFormat'
 import { readStyleProperty, type StyleProperty } from './textStyles'
-import { placeholdersIn } from './textValues'
+import { placeholdersOfNode } from './textValues'
 import { listPlaceSplitter } from './lists'
 import { valueNamedIn } from './valueTags'
 import { unitsFromSaved as unitsOf } from './counterNumbers'
@@ -94,8 +94,7 @@ export function storeImport(
   // A clock's counter shown in the text, `{hour}`, is made as one tested would be.
   const clockNames = new Set(CLOCK_COUNTERS.map(clock => normalizeName(clock.name)))
   for (const node of importedNodes) {
-    const texts = node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : node.type === 'grid' ? [node.caption ?? ''] : []
-    texts.flatMap(placeholdersIn).filter(name => clockNames.has(normalizeName(name))).forEach(name => counters.get(name))
+    placeholdersOfNode(node).filter(name => clockNames.has(normalizeName(name))).forEach(name => counters.get(name))
   }
   const lists = new ListRegistry(project.lists ?? [], environment)
   for (const declaration of result.lists ?? []) {

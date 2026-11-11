@@ -160,7 +160,7 @@ const fr: TagTextMessages = {
     tint: 'sepia, night, grey, ou none',
     'to be continued': 'ce que lisent les joueurs quand le jeu n’a plus de chapitres installés',
     'game mode': 'un passage joué comme un jeu\u00a0: ni retour en arrière, ni sauvegarde, ni chargement, ni points sur la carte, jusqu’à [game mode: off]',
-    'no going back': 'un passage qui ne fait qu’avancer\u00a0: ni retour en arrière, ni sauvegarde, ni chargement, jusqu’à [no going back: off]\u00a0; until an ending, levé une fois une fin atteinte',
+    'no going back': 'un passage qui ne fait qu’avancer\u00a0: ni retour en arrière, ni sauvegarde, ni chargement, jusqu’à [no going back: off]\u00a0; avec until an ending, jusqu’à ce qu’une fin soit atteinte',
     style: 'les mots qui suivent dans un style, jusqu’à [style: none]',
     text: 'full : texte sur tout l’écran ; box : retour dans la zone de texte',
     illustration: 'une image plein écran, jusqu’à none',

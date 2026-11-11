@@ -2,6 +2,7 @@ import { writtenAmount } from './counterNumbers'
 import type { MeasureText } from '../pagination/wrapLines'
 import { normalizeName } from '../importer/storyNodes'
 import type { ProjectDocument, StoredPage } from './storyFormat'
+import type { StoryNode } from '../importer/importTypes'
 
 /** Names given by players are cut to this many characters, so that pages written with them still fit. */
 export const MAXIMUM_ASKED_NAME_LENGTH = 12
@@ -28,6 +29,12 @@ export function isAskableName(name: string): boolean {
 /** The names a text shows with `{…}`, spaces around them left out; `{{` names nothing. */
 export function placeholdersIn(text: string): string[] {
   return placeholdersAsWritten(text).map(name => name.trim())
+}
+
+/** The names an imported node shows with `{…}`: in a page and its speaker, an option, a grid's caption. */
+export function placeholdersOfNode(node: StoryNode): string[] {
+  const texts = node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : node.type === 'grid' ? [node.caption ?? ''] : []
+  return texts.flatMap(placeholdersIn)
 }
 
 /** What each `{…}` of a text holds, spaces included. */

@@ -346,10 +346,7 @@ export class OpenProject {
       const target = matchAssetFile(file.name, mediaType, project)
       // A picture named `cover` covers a game that has none yet: one the author chose stays.
       if (target === null && isCoverFileName(file.name) && mediaType.startsWith('image/') && project.details.coverAssetId === null) {
-        const assetId = this.environment.createId()
-        await this.store.writeAsset(project.id, assetId, file.bytes, mediaType)
-        project = { ...project, assets: [...project.assets, { id: assetId, fileName: file.name, mediaType, byteSize: file.bytes.length }] }
-        project = updateDetails(project, { coverAssetId: assetId }, this.now())
+        project = await this.withCover(project, file, mediaType)
         matches.push({ fileName: file.name, entry: castMessages[locale].coverTarget })
         continue
       }
@@ -374,14 +371,19 @@ export class OpenProject {
       if (!mediaType.startsWith('image/') || !isSupportedAssetMediaType(mediaType)) {
         throw new AuthorError(text => text.coverNotAnImage(file.name))
       }
-      const assetId = this.environment.createId()
-      await this.store.writeAsset(project.id, assetId, file.bytes, mediaType)
-      project = { ...project, assets: [...project.assets, { id: assetId, fileName: file.name, mediaType, byteSize: file.bytes.length }] }
-      project = updateDetails(project, { coverAssetId: assetId }, this.now())
+      project = await this.withCover(project, file, mediaType)
     } else {
       project = updateDetails(project, { coverAssetId: null }, this.now())
     }
     await this.saveWithoutUnusedFiles(project)
+  }
+
+  /** Stores a picture and makes it the game's cover. */
+  private async withCover(project: ProjectDocument, file: GivenFile, mediaType: string): Promise<ProjectDocument> {
+    const assetId = this.environment.createId()
+    await this.store.writeAsset(project.id, assetId, file.bytes, mediaType)
+    const withAsset = { ...project, assets: [...project.assets, { id: assetId, fileName: file.name, mediaType, byteSize: file.bytes.length }] }
+    return updateDetails(withAsset, { coverAssetId: assetId }, this.now())
   }
 
   /** Stores a chapter changed in the storyboard; the version it replaces can be restored with `undo`. */

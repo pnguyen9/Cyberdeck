@@ -7,7 +7,7 @@ import { flattenStoredNodes, type Facing, type FadeColor, type TintName } from '
 import type { PlayableStory } from '../runtime/playableStory'
 import { drawsNumbers, newSeed } from '../runtime/chance'
 import { chaptersInOrder } from '../runtime/playableStory'
-import { EMPTY_STAGE, PAGES_PER_SCREENFUL, type CharacterOnStage, type StageLock } from '../runtime/stageState'
+import { EMPTY_STAGE, isStageLock, PAGES_PER_SCREENFUL, type CharacterOnStage, type StageLock } from '../runtime/stageState'
 import type { CounterState, DecisionState, NameState, RuntimeState } from '../runtime/storyRuntime'
 
 /**
@@ -68,7 +68,11 @@ const EXCERPT_LENGTH = 140
 /** Far beyond the small picture a player draws; a save is refused rather than carry anything bigger. */
 const MAXIMUM_PICTURE_LENGTH = 200_000
 
-export function toSave(story: PlayableStory, state: RuntimeState, savedAt: string): SaveData {
+/**
+ * The decisions and counters of a state as a save holds them, by name: what a point of the map is
+ * keyed by, without the rest of a save, which is slower to make.
+ */
+export function savedValues(story: PlayableStory, state: Pick<RuntimeState, 'decisions' | 'counters'>): Pick<SaveData, 'decisions' | 'counters'> {
   const { project } = story
   const decisionsById = new Map(project.decisions.map(decision => [decision.id, decision]))
   const countersById = new Map(project.counters.map(counter => [counter.id, counter]))
@@ -77,6 +81,21 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
     // The clock's counters are read again when the game resumes: a save keeps none.
     return counter === undefined || counter.clock !== undefined ? [] : [[counter.name, savedAmount(count, counter)] as const]
   })
+  return {
+    decisions: Object.fromEntries(Object.entries(state.decisions).flatMap(([decisionId, valueIds]) => {
+      const decision = decisionsById.get(decisionId)
+      return decision === undefined ? [] : [[
+        decision.name,
+        valueIds.map(valueId => decision.values.find(value => value.id === valueId)?.name).filter(name => name !== undefined),
+      ]]
+    })),
+    ...(counters.length === 0 ? {} : { counters: Object.fromEntries(counters) }),
+  }
+}
+
+export function toSave(story: PlayableStory, state: RuntimeState, savedAt: string): SaveData {
+  const { project } = story
+  const decisionsById = new Map(project.decisions.map(decision => [decision.id, decision]))
   const listEntries = Object.entries(state.lists ?? {}).flatMap(([listId, items]) => {
     const list = listsOf(project).find(candidate => candidate.id === listId)
     return list === undefined ? [] : [[list.name, [...items]] as [string, string[]]]
@@ -97,14 +116,7 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
     chapter: chapter?.title ?? null,
     excerpt: excerptAt(story, state),
     page: state.page,
-    decisions: Object.fromEntries(Object.entries(state.decisions).flatMap(([decisionId, valueIds]) => {
-      const decision = decisionsById.get(decisionId)
-      return decision === undefined ? [] : [[
-        decision.name,
-        valueIds.map(valueId => decision.values.find(value => value.id === valueId)?.name).filter(name => name !== undefined),
-      ]]
-    })),
-    ...(counters.length === 0 ? {} : { counters: Object.fromEntries(counters) }),
+    ...savedValues(story, state),
     ...(names.length === 0 ? {} : { names: Object.fromEntries(names) }),
     ...(listEntries.length === 0 ? {} : { lists: Object.fromEntries(listEntries) }),
     ...(drawsNumbers(story.chapters) ? { seed: state.seed } : {}),
@@ -246,8 +258,8 @@ export function parseSave(value: unknown): SaveData | null {
     && (stage.cover === undefined || stage.cover === 'black' || stage.cover === 'white')
     && (stage.tint === undefined || stage.tint === 'sepia' || stage.tint === 'night' || stage.tint === 'grey')
     && (stage.continued === undefined || isString(stage.continued))
-    && (stage.game === undefined || stage.game === 'always' || stage.game === 'untilEnding')
-    && (stage.locked === undefined || stage.locked === 'always' || stage.locked === 'untilEnding')
+    && (stage.game === undefined || isStageLock(stage.game))
+    && (stage.locked === undefined || isStageLock(stage.locked))
     && (stage.text === undefined || stage.text === 'full')
     && (stage.screen === undefined || (Array.isArray(stage.screen) && stage.screen.length <= PAGES_PER_SCREENFUL && stage.screen.every(isString)))
     && (stage.illustration === undefined || isString(stage.illustration))

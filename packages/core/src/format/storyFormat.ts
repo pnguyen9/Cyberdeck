@@ -385,7 +385,6 @@ export interface GameDetails {
   coverAssetId: string | null
 }
 
-/** `project.json`, at the root of the project folder named after `id`. */
 /**
  * How characters' pictures are drawn. `fullBody`, head to feet, standing on the bottom of the stage,
  * at most its height. `upperBody`, as most Japanese visual novels draw them: at a set height, taller
@@ -394,6 +393,7 @@ export interface GameDetails {
  */
 export type Framing = 'fullBody' | 'upperBody'
 
+/** `project.json`, at the root of the project folder named after `id`. */
 export interface ProjectDocument extends Audited {
   formatVersion: string
   id: string
