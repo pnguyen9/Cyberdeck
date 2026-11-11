@@ -16,6 +16,19 @@ export interface SaveStore {
   writeProgress: (gameId: string, progress: ProgressData) => Promise<boolean>
   /** Erases every save and the progress of every game, those of games no longer installed included. */
   eraseAll: () => Promise<void>
+  /** Erases one game's saves, autosave included, or its progress, or both: the game itself stays. */
+  eraseGame: (gameId: string, erased: ErasedData) => Promise<void>
+}
+
+/** What erasing a game's data takes: its saves, its progress (endings, map, gallery, read pages, lasting values). */
+export interface ErasedData {
+  saves: boolean
+  progress: boolean
+}
+
+/** The slots erasing a game's saves or its progress empties. */
+export function slotsErased(erased: ErasedData): string[] {
+  return [...(erased.saves ? [AUTOSAVE_SLOT, ...MANUAL_SLOTS] : []), ...(erased.progress ? [PROGRESS_SLOT] : [])]
 }
 
 /**
@@ -47,6 +60,13 @@ export function createStorageSaveStore(getStorage: () => Pick<Storage, 'getItem'
     write: async (gameId, slot, save) => writeJson(gameId, slot, save),
     readProgress: async gameId => parseProgress(readJson(gameId, PROGRESS_SLOT)),
     writeProgress: async (gameId, progress) => writeJson(gameId, PROGRESS_SLOT, progress),
+    eraseGame: async (gameId, erased) => {
+      try {
+        slotsErased(erased).forEach(slot => getStorage().removeItem(keyOf(gameId, slot)))
+      } catch {
+        // Storage refused: there is nothing it lets us erase.
+      }
+    },
     eraseAll: async () => {
       try {
         const storage = getStorage()

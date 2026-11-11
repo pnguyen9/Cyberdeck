@@ -8,6 +8,14 @@ const en = {
   confirmDeleteFolder: (name: string) => `Delete ${name}? Its folder goes to the trash, from where it can be brought back.`,
   confirmDelete: (name: string) => `Delete ${name}, its chapters and its files? Download a backup first if you may want it back.`,
   delete: 'Delete',
+  erasePreviewData: 'Erase its previews…',
+  confirmErasePreview: (name: string) => `What should be erased of the previews of ${name}? The project stays as it is.`,
+  erasePreviewProgress: 'Their progress',
+  erasePreviewSaves: 'Their saves',
+  erasePreviewBoth: 'Both',
+  previewDataErased: (name: string, erased: { saves: boolean; progress: boolean }) => erased.saves && erased.progress
+    ? `The saves and progress of the previews of ${name} were erased.`
+    : erased.saves ? `The saves of the previews of ${name} were erased.` : `The progress of the previews of ${name} was erased: endings, map, gallery, pages read and what they remember.`,
   changedOn: (date: string) => `changed ${date}`,
   newProject: 'New project',
   name: 'Name',
@@ -43,6 +51,14 @@ const fr: ProjectsMessages = {
   confirmDeleteFolder: name => `Supprimer ${name} ? Son dossier sera placé dans la corbeille, d’où vous pourrez le récupérer.`,
   confirmDelete: name => `Supprimer ${name}, avec ses chapitres et ses fichiers ? Si vous pensez en avoir encore besoin, téléchargez d’abord une copie de secours.`,
   delete: 'Supprimer',
+  erasePreviewData: 'Effacer ses aperçus…',
+  confirmErasePreview: name => `Qu’effacer des aperçus de ${name}\u00a0? Le projet reste tel qu’il est.`,
+  erasePreviewProgress: 'Leur progression',
+  erasePreviewSaves: 'Leurs sauvegardes',
+  erasePreviewBoth: 'Les deux',
+  previewDataErased: (name, erased) => erased.saves && erased.progress
+    ? `Les sauvegardes et la progression des aperçus de ${name} ont été effacées.`
+    : erased.saves ? `Les sauvegardes des aperçus de ${name} ont été effacées.` : `La progression des aperçus de ${name} a été effacée\u00a0: fins, carte, galerie, pages lues et ce qu’ils se rappellent.`,
   changedOn: date => `modifié le ${date}`,
   newProject: 'Nouveau projet',
   name: 'Nom',

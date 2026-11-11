@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { languageName, languagesOf, type ProjectDocument } from '@cyberdeck/core'
-import { useLocale, useMessages, type SaveStore } from '@cyberdeck/stage'
+import { useLocale, useMessages, type ErasedData, type SaveStore } from '@cyberdeck/stage'
 import { onMounted, ref, shallowRef } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { errorText } from '../i18n/errorMessages'
@@ -81,6 +81,17 @@ function remove(project: ProjectDocument) {
   })
 }
 
+/** The project whose previews' data the author is erasing, waiting to be told what. */
+const erasingId = ref<string | null>(null)
+
+function erasePreviewData(project: ProjectDocument, erased: ErasedData) {
+  erasingId.value = null
+  return attempt(async () => {
+    await props.previewSaves.eraseGame(project.id, erased)
+    message.value = text.value.previewDataErased(project.name, erased)
+  })
+}
+
 /** Erasing what Cyberdeck keeps waits for the author to say what. */
 const isConfirmingErase = ref(false)
 
@@ -124,6 +135,15 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
             <button class="button" @click="deletingId = null">{{ common.cancel }}</button>
           </div>
         </div>
+        <div v-else-if="erasingId === project.id" class="confirmation">
+          <p>{{ text.confirmErasePreview(project.name) }}</p>
+          <div class="actions">
+            <button class="button danger" @click="erasePreviewData(project, { saves: false, progress: true })">{{ text.erasePreviewProgress }}</button>
+            <button class="button danger" @click="erasePreviewData(project, { saves: true, progress: false })">{{ text.erasePreviewSaves }}</button>
+            <button class="button danger" @click="erasePreviewData(project, { saves: true, progress: true })">{{ text.erasePreviewBoth }}</button>
+            <button class="button" @click="erasingId = null">{{ common.cancel }}</button>
+          </div>
+        </div>
         <template v-else>
           <button class="open-project" @click="emit('open', project.id)">
             <span class="project-name">{{ project.name }}</span>
@@ -132,7 +152,8 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
               · {{ languagesOf(project).map(code => languageName(code, locale) ?? code).join(', ') }} · {{ text.changedOn(formatDate(project.updatedAt)) }}
             </span>
           </button>
-          <button class="link-button" @click="deletingId = project.id">{{ text.delete }}</button>
+          <button class="link-button" @click="erasingId = project.id; deletingId = null">{{ text.erasePreviewData }}</button>
+          <button class="link-button" @click="deletingId = project.id; erasingId = null">{{ text.delete }}</button>
         </template>
       </li>
     </ul>

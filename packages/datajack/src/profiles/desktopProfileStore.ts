@@ -1,5 +1,5 @@
 import { parseProgress, parseSave } from '@cyberdeck/core'
-import { PROGRESS_SLOT, type SaveStore } from '@cyberdeck/stage'
+import { PROGRESS_SLOT, slotsErased, type SaveStore } from '@cyberdeck/stage'
 import type { DesktopBridge } from '../../electron/bridge'
 import { createDesktopInvoke } from '../desktop/desktopInvoke'
 import type { ProfileStore } from './profileStore'
@@ -39,6 +39,7 @@ export function createDesktopProfileStore(bridge: DesktopBridge): ProfileStore {
         read: async (gameId, slot) => parseSave(await readJson(gameId, slot)),
         write: (gameId, slot, save) => writeJson(gameId, slot, save),
         eraseAll: () => invoke('saves:eraseAll', profileId),
+        eraseGame: (gameId, erased) => invoke('saves:erase', profileId, gameId, slotsErased(erased)),
         readProgress: async gameId => parseProgress(await readJson(gameId, PROGRESS_SLOT)),
         writeProgress: (gameId, progress) => writeJson(gameId, PROGRESS_SLOT, progress),
       }

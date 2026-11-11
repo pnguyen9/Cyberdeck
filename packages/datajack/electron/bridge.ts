@@ -43,6 +43,7 @@ export interface DesktopChannels {
   'saves:read': (profileId: string, gameId: string, slot: string) => string | null
   'saves:write': (profileId: string, gameId: string, slot: string, text: string) => void
   'saves:eraseAll': (profileId: string) => void
+  'saves:erase': (profileId: string, gameId: string, slots: string[]) => void
   'library:listManifests': () => string[]
   'library:readManifest': (gameId: string) => string | null
   'library:writeManifest': (gameId: string, text: string) => void

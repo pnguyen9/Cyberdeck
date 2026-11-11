@@ -13,6 +13,7 @@ const CHANNELS: Record<DesktopChannel, true> = {
   'saves:read': true,
   'saves:write': true,
   'saves:eraseAll': true,
+  'saves:erase': true,
   'library:listManifests': true,
   'library:readManifest': true,
   'library:writeManifest': true,

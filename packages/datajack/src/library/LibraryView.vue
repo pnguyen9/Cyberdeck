@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { emptyProgressOf, languageName, mergeProgress, parseProgress, parseSave, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
-import { AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
+import { AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type ErasedData, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { describeError } from '../i18n/errorMessages'
 import { describeInstall, libraryMessages } from '../i18n/libraryMessages'
@@ -19,7 +19,7 @@ const isDraggingOver = ref(false)
 const message = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
 /** The game whose removal, or whose restart over an autosave, waits for confirmation. */
-const confirming = ref<{ gameId: string; action: 'remove' | 'restart' } | null>(null)
+const confirming = ref<{ gameId: string; action: 'remove' | 'restart' | 'erase' } | null>(null)
 const shownCredits = ref<string | null>(null)
 const locale = useLocale()
 const text = useMessages(libraryMessages)
@@ -81,8 +81,14 @@ async function refresh() {
   }
 }
 
-async function install(fileList: FileList | null) {
-  const files = [...(fileList ?? [])]
+/** The games picked; the field emptied, so that the same file picked again, a game removed then installed anew, is read again. */
+function installChosen(input: HTMLInputElement) {
+  const files = [...(input.files ?? [])]
+  input.value = ''
+  void install(files)
+}
+
+async function install(files: readonly File[]) {
   if (files.length === 0) {
     return
   }
@@ -132,6 +138,14 @@ function startOver(entry: LibraryEntry, hasAutosave: boolean) {
     return
   }
   void play(entry, null)
+}
+
+/** Erases one game's saves, or its progress, or both; the game stays installed. */
+async function eraseGameData(entry: LibraryEntry, erased: ErasedData) {
+  confirming.value = null
+  await props.saveStore.eraseGame(entry.id, erased)
+  message.value = text.value.erasedGameData(entry.name, erased)
+  await refresh()
 }
 
 async function remove(entry: LibraryEntry) {
@@ -245,7 +259,7 @@ function onDrop(event: DragEvent) {
     void loadSave(save)
     return
   }
-  void install(event.dataTransfer?.files ?? null)
+  void install([...(event.dataTransfer?.files ?? [])])
 }
 </script>
 
@@ -271,7 +285,7 @@ function onDrop(event: DragEvent) {
 
     <div class="toolbar">
       <label class="add-button" :class="{ busy: isInstalling }">
-        <input class="file-input" type="file" accept=".zip,application/zip" multiple :disabled="isInstalling" @change="install(($event.target as HTMLInputElement).files)">
+        <input class="file-input" type="file" accept=".zip,application/zip" multiple :disabled="isInstalling" @change="installChosen($event.target as HTMLInputElement)">
         {{ isInstalling ? text.installing : text.addGame }}
       </label>
       <label class="load-button">
@@ -317,6 +331,15 @@ function onDrop(event: DragEvent) {
                 <button class="button" @click="confirming = null">{{ text.cancel }}</button>
               </div>
             </template>
+            <template v-else-if="confirming.action === 'erase'">
+              <p>{{ text.confirmEraseGame(card.entry.name) }}</p>
+              <div class="actions">
+                <button class="button danger" @click="eraseGameData(card.entry, { saves: false, progress: true })">{{ text.eraseProgress }}</button>
+                <button class="button danger" @click="eraseGameData(card.entry, { saves: true, progress: false })">{{ text.eraseSaves }}</button>
+                <button class="button danger" @click="eraseGameData(card.entry, { saves: true, progress: true })">{{ text.eraseBoth }}</button>
+                <button class="button" @click="confirming = null">{{ text.cancel }}</button>
+              </div>
+            </template>
             <template v-else>
               <p>{{ text.confirmStartOver }}</p>
               <div class="actions">
@@ -334,6 +357,7 @@ function onDrop(event: DragEvent) {
             <button v-if="card.entry.illustrationCount > 0" class="button" @click="openMap(card.entry, 'gallery')">{{ text.gallery }}</button>
             <button v-if="card.entry.credits !== ''" class="link-button" @click="shownCredits = shownCredits === card.entry.id ? null : card.entry.id">{{ text.credits }}</button>
             <a v-if="progressByGame.has(card.entry.id)" class="link-button" href="#" :download="text.progressFileName(card.entry.name)" @click="prepareProgressFile($event, card.entry)">{{ text.progressToFile }}</a>
+            <button class="link-button" @click="confirming = { gameId: card.entry.id, action: 'erase' }">{{ text.eraseGameData }}</button>
             <button class="link-button" @click="confirming = { gameId: card.entry.id, action: 'remove' }">{{ text.remove }}</button>
           </div>
           <p v-if="shownCredits === card.entry.id" class="credits">{{ card.entry.credits }}</p>

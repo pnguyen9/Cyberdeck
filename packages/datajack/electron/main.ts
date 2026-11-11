@@ -70,6 +70,7 @@ function channelsOf(profileFiles: ProfileFiles, libraryFiles: LibraryFiles, { ch
     'saves:read': async (_event, profileId, gameId, slot) => profileFiles.readSave(profileId, gameId, slot),
     'saves:write': async (_event, profileId, gameId, slot, text) => profileFiles.writeSave(profileId, gameId, slot, text),
     'saves:eraseAll': async (_event, profileId) => profileFiles.eraseSaves(profileId),
+    'saves:erase': async (_event, profileId, gameId, slots) => profileFiles.eraseGameSlots(profileId, gameId, slots),
     'library:listManifests': async _event => libraryFiles.listManifests(),
     'library:readManifest': async (_event, gameId) => libraryFiles.readManifest(gameId),
     'library:writeManifest': async (_event, gameId, text) => libraryFiles.writeManifest(gameId, text),

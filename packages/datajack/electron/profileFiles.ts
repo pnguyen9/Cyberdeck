@@ -174,6 +174,21 @@ export class ProfileFiles {
     })
   }
 
+  /** Erases some slots of one game, the folder too once empty; slots not there are already erased. */
+  eraseGameSlots(profileId: string, gameId: string, slots: readonly string[]): Promise<void> {
+    return this.inTurn(async () => {
+      const profile = findProfile(await this.readSettings(), profileId)
+      for (const slot of slots) {
+        await unlink(saveFilePath(profile, gameId, slot)).catch(error => {
+          if (!isFileError(error, 'ENOENT')) {
+            throw error
+          }
+        })
+      }
+      await rmdir(join(profile.saveFolder, gameId)).catch(() => undefined)
+    })
+  }
+
   private inTurn<Result>(operation: () => Promise<Result>): Promise<Result> {
     const result = this.queue.then(operation)
     this.queue = result.catch(() => undefined)

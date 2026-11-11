@@ -18,6 +18,14 @@ const en = {
   illustrationsSeen: (seen: number, total: number) => `illustrations seen: ${seen} of ${total}`,
   confirmRemove: (gameName: string) => `Remove ${gameName}? Your saves are kept, for when you install it again.`,
   remove: 'Remove',
+  eraseGameData: 'Erase…',
+  confirmEraseGame: (gameName: string) => `What should be erased of ${gameName}? The game stays installed.`,
+  eraseProgress: 'Its progress',
+  eraseSaves: 'Its saves',
+  eraseBoth: 'Both',
+  erasedGameData: (gameName: string, erased: { saves: boolean; progress: boolean }) => erased.saves && erased.progress
+    ? `The saves and progress of ${gameName} were erased.`
+    : erased.saves ? `The saves of ${gameName} were erased.` : `The progress of ${gameName} was erased: its endings, map, gallery, pages read and what it remembers.`,
   cancel: 'Cancel',
   eraseAll: 'Erase what Datajack keeps…',
   confirmErase: (profileName: string) => `Erase every game installed? ${profileName}’s saves and progress are kept, unless you erase them too; other profiles keep theirs.`,
@@ -72,6 +80,14 @@ const fr: LibraryMessages = {
   illustrationsSeen: (seen, total) => `illustrations vues : ${seen} sur ${total}`,
   confirmRemove: gameName => `Supprimer ${gameName} ? Vos sauvegardes sont conservées, au cas où vous réinstalleriez ce jeu.`,
   remove: 'Supprimer',
+  eraseGameData: 'Effacer…',
+  confirmEraseGame: gameName => `Qu’effacer de ${gameName}\u00a0? Le jeu reste installé.`,
+  eraseProgress: 'Sa progression',
+  eraseSaves: 'Ses sauvegardes',
+  eraseBoth: 'Les deux',
+  erasedGameData: (gameName, erased) => erased.saves && erased.progress
+    ? `Les sauvegardes et la progression de ${gameName} ont été effacées.`
+    : erased.saves ? `Les sauvegardes de ${gameName} ont été effacées.` : `La progression de ${gameName} a été effacée\u00a0: ses fins, sa carte, sa galerie, les pages lues et ce qu’il se rappelle.`,
   cancel: 'Annuler',
   eraseAll: 'Effacer ce que garde Datajack…',
   confirmErase: profileName => `Effacer tous les jeux installés ? Les sauvegardes et la progression de ${profileName} sont conservées, à moins de les effacer aussi ; les autres profils gardent les leurs.`,

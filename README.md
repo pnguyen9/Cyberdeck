@@ -887,10 +887,6 @@ CHANGELOG brought up to date, every French text read again.
 - **A preview closer to playing**: the map in Cyberdeck's preview, which only Datajack shows today.
 - **A game's own settings**, from its card in the library: a slower text for one, a louder music
   for another. Today Settings, in the library or in a game, are the profile's, for every game.
-- **Erasing one game's data, and choosing what.** *Erase what Datajack keeps…* and *Erase what
-  Cyberdeck keeps…* act on every game or project at once. Each game's card in Datajack, and each
-  project in Cyberdeck (for its previews), should erase its own: its progress alone (endings, map,
-  gallery, read pages, lasting values), its saves alone, or both, the game itself kept.
 - **Web data of deleted copies.** Each application erases what it keeps, but a copy opened from a
   file and since deleted can only be erased the browser's way (see [Erasing what the web builds
   store](#erasing-what-the-web-builds-store)).

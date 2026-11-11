@@ -10,6 +10,9 @@
   (format 3.2).
 
 ### Datajack, the player
+- Each game's card can erase that game's progress alone, its saves alone, or both, the game staying
+  installed; *Erase what Datajack keeps…* still erases every game at once.
+- A game removed can be installed again from the same file: picking it again did nothing.
 - An animated picture plays from its start each time it is shown, in Firefox too, which played it
   once per page and then showed its last frame: the stage now plays it frame by frame itself, for
   characters, backgrounds, illustrations and a grid's tiles, and so does the gallery, enlarged.
@@ -18,6 +21,7 @@
   than as written, `Everything: {Money} dollars`.
 
 ### Cyberdeck, the editor
+- Each project can erase the progress of its previews alone, their saves alone, or both.
 - An exported game carries the pictures of a grid's tiles: Pairs and Minesweeper, exported, showed
   their tiles without pictures, no tag naming them.
 

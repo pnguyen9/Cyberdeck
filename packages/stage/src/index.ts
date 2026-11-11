@@ -16,7 +16,7 @@ export {
   type InputBinding,
   type PlayerAction,
 } from './input/bindings'
-export { AUTOSAVE_SLOT, createStorageSaveStore, MANUAL_SLOTS, PROGRESS_SLOT, type SaveStore } from './saveStore'
+export { AUTOSAVE_SLOT, createStorageSaveStore, MANUAL_SLOTS, PROGRESS_SLOT, slotsErased, type ErasedData, type SaveStore } from './saveStore'
 export { createTextboxLayout, STAGE_HEIGHT, STAGE_WIDTH, TEXTBOX_FONT_FAMILY, TEXTBOX_FONT_SIZE } from './textboxLayout'
 export { default as MapView } from './components/MapView.vue'
 export { default as StagePicture } from './components/StagePicture.vue'
