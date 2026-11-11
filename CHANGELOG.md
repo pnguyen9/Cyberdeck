@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### Stories
+- A list's size compared with a counter, `[if: Cards size < {Cut}]`, compares with what the counter
+  holds: it was read as 0, so the test never held. Games using it need Datajack 3.2.1 to play it
+  right; older ones still read 0.
+
+### Datajack, the player
+- Playing from a point of the map keeps the lasting values as the profile holds them now, the
+  blackjack's money: it brought back what they held then, taking back what was won since or giving
+  back what was lost.
+- The map no longer tells points apart by lasting values: a second game begun with more money is
+  the same choice, not a second start. Points recorded before are joined when the values match.
+
+### Samples
+- Blackjack's shoe is filled again between hands once a quarter is left, never during one: a card
+  could show twice on the table, as two nines of hearts, with a single deck.
+- Blackjack: five cards without going over 21 win at once, a five-card Charlie, rather than a sixth
+  card drawn out of sight; the dealer's sixth to ninth cards fan out over the right of the hand.
+
 ### Cyberdeck, the editor
 - *Every path*: an option only other values open, as Sakura Week's evening with Sota, Hayashi, the
   cat or everyone, has its own ▶ that previews from a path where it is offered; *Play from here*

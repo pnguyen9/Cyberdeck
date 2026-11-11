@@ -865,10 +865,11 @@ of it is as free as the rest of the repository.
   between 0 and 10. Never dies, only sulks a while; gladder to see players the longer they were
   away (`time away`); its room tinted at night (`hour`).
 - **Blackjack** (`blackjack/`): a shoe of 1, 2, 4, 6 or 8 real decks, a list of 52 cards each,
-  shuffled, dealt from the front (`[take]`), shuffled again when a quarter is left; $1,000.00 to
-  start (a lasting counter with decimals), bets chosen or typed, hit, stand, double down, the
-  dealer's hidden card turned over, blackjack paying 3 to 2. Ten places on the table show one shared
-  deck (`[character: p1 = card]`), each card named by the card drawn (`[enter: p1 {Card}]`).
+  shuffled, dealt from the front (`[take]`), shuffled again between hands once a quarter is left;
+  $1,000.00 to start (a lasting counter with decimals), bets chosen or typed, hit, stand, double
+  down, the dealer's hidden card turned over, blackjack paying 3 to 2, five cards without going over
+  winning at once (a five-card Charlie). Fourteen places on the table show one shared deck
+  (`[character: p1 = card]`), each card named by the card drawn (`[enter: p1 {Card}]`).
 - **Pairs** (`pairs/`): 16 tiles, 8 animals drawn as shapes, shuffled; a grid of picture buttons
   (`[choice: Cell grid 4 × 4 from Shown with tile]`) over two lists, the deck and what is shown; a
   pair stays face up, two different animals turn back at the next pick; the best number of turns kept.

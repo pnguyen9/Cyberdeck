@@ -12,6 +12,10 @@
 [character: d3 = dcard]
 [character: d4 = dcard]
 [character: d5 = dcard]
+[character: d6 = dcard]
+[character: d7 = dcard]
+[character: d8 = dcard]
+[character: d9 = dcard]
 
 [decision: Card = ace-spades | ace-hearts | ace-diamonds | ace-clubs | two-spades | two-hearts | two-diamonds | two-clubs | three-spades | three-hearts | three-diamonds | three-clubs | four-spades | four-hearts | four-diamonds | four-clubs | five-spades | five-hearts | five-diamonds | five-clubs | six-spades | six-hearts | six-diamonds | six-clubs | seven-spades | seven-hearts | seven-diamonds | seven-clubs | eight-spades | eight-hearts | eight-diamonds | eight-clubs | nine-spades | nine-hearts | nine-diamonds | nine-clubs | ten-spades | ten-hearts | ten-diamonds | ten-clubs | jack-spades | jack-hearts | jack-diamonds | jack-clubs | queen-spades | queen-hearts | queen-diamonds | queen-clubs | king-spades | king-hearts | king-diamonds | king-clubs]
 [decision: Hole = ace-spades | ace-hearts | ace-diamonds | ace-clubs | two-spades | two-hearts | two-diamonds | two-clubs | three-spades | three-hearts | three-diamonds | three-clubs | four-spades | four-hearts | four-diamonds | four-clubs | five-spades | five-hearts | five-diamonds | five-clubs | six-spades | six-hearts | six-diamonds | six-clubs | seven-spades | seven-hearts | seven-diamonds | seven-clubs | eight-spades | eight-hearts | eight-diamonds | eight-clubs | nine-spades | nine-hearts | nine-diamonds | nine-clubs | ten-spades | ten-hearts | ten-diamonds | ten-clubs | jack-spades | jack-hearts | jack-diamonds | jack-clubs | queen-spades | queen-hearts | queen-diamonds | queen-clubs | king-spades | king-hearts | king-diamonds | king-clubs]
@@ -36,6 +40,7 @@
 [counter: DealerShows = 0]
 [counter: Decks = 1]
 [counter: Cut = 13]
+[counter: InShoe = 52]
 [counter: D = 0]
 [counter: J = 0]
 
@@ -54,7 +59,7 @@ Welcome to the table. You have {Money} dollars to play with; the journal (J) kee
 > I know how to play = Skip
 [if: Rules is Read]
 Get closer to 21 than the dealer, without going over. Number cards count their number, jacks, queens and kings 10, an ace 11, or 1 when 11 would take you over.
-You and the dealer get two cards each; one of the dealer's stays face down. Hit to take a card, stand to keep your hand. Double down on your first two cards: double the bet, take exactly one more card.
+You and the dealer get two cards each; one of the dealer's stays face down. Hit to take a card, stand to keep your hand. Double down on your first two cards: double the bet, take exactly one more card. Five cards without going over 21 win at once: a five-card Charlie.
 The dealer draws until 17 or more. Beat the dealer and your bet is paid back twice over; an ace and a ten-card at once is a blackjack, paid 3 to 2. A tie gives your bet back.
 [end]
 [choice: Shoe]
@@ -89,6 +94,10 @@ The dealer draws until 17 or more. Beat the dealer and your bet is paid back twi
 [exit: d4]
 [exit: p5]
 [exit: d5]
+[exit: d6]
+[exit: d7]
+[exit: d8]
+[exit: d9]
 [set: Player = 0]
 [set: PlayerAces = 0]
 [set: PlayerCards = 0]
@@ -96,6 +105,9 @@ The dealer draws until 17 or more. Beat the dealer and your bet is paid back twi
 [set: DealerAces = 0]
 [set: DealerCards = 0]
 [set: DealerShows = 0]
+[if: InShoe < {Cut}]
+[play: Fill the shoe]
+[end]
 [choice: BetPick]
 > Bet $10 = Ten [if: Money >= 10]
 > Bet $50 = Fifty [if: Money >= 50]
@@ -132,7 +144,7 @@ Blackjack! Paid 3 to 2.
 [end]
 [else]
 [loop]
-[if: Player >= 21]
+[if: Player >= 21 or PlayerCards >= 5]
 [break]
 [end]
 [choice: Move]
@@ -156,6 +168,10 @@ You take a card: {Player}.
 [if: Player > 21]
 [sound: lose]
 You bust with {Player}. The dealer takes your bet.
+[else if: PlayerCards >= 5]
+[sound: win]
+Five cards and {Player}, without going over: a five-card Charlie. You win!
+[add: Money {Bet} * 2]
 [else]
 [play: Reveal]
 [loop]
@@ -201,10 +217,11 @@ You cash out with {Money} dollars.
 [ending: Cashed out]
 
 # Scene: Draw
-[if: Cards size < {Cut}]
+[if: Cards size < 1]
 [play: Fill the shoe]
 [end]
 [take: Card = first of Cards]
+[add: InShoe -1]
 [set: IsAce = 0]
 [if: Card is ace-spades or Card is ace-hearts or Card is ace-diamonds or Card is ace-clubs]
 [set: Points = 11]
@@ -272,8 +289,16 @@ You cash out with {Money} dollars.
 [enter: d3 {Card} 50% slide-from-right 0.4s]
 [else if: DealerCards is 4]
 [enter: d4 {Card} 60.4% slide-from-right 0.4s]
-[else]
+[else if: DealerCards is 5]
 [enter: d5 {Card} 70.8% slide-from-right 0.4s]
+[else if: DealerCards is 6]
+[enter: d6 {Card} 75% slide-from-right 0.4s]
+[else if: DealerCards is 7]
+[enter: d7 {Card} 79.2% slide-from-right 0.4s]
+[else if: DealerCards is 8]
+[enter: d8 {Card} 83.4% slide-from-right 0.4s]
+[else]
+[enter: d9 {Card} 87.6% slide-from-right 0.4s]
 [end]
 
 # Scene: Dealer hole
@@ -311,5 +336,6 @@ The dealer turns over the hidden card: {Dealer}.
 [end]
 [add: D 1]
 [end]
+[set: InShoe = {Decks} * 52]
 [shuffle: Cards]
 [sound: shuffle]

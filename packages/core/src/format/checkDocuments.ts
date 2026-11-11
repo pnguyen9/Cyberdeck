@@ -208,7 +208,7 @@ function condition(value: unknown, path: string, depth: number): StoredCondition
     return { type: 'listItem', listId: string(fields.listId, `${path}.listId`), place: listPlace(fields.place, `${path}.place`), value: listValue(fields.value, `${path}.value`), negated: boolean(fields.negated, `${path}.negated`) }
   }
   if (fields.type === 'listSize') {
-    return object({ type: oneOf('listSize'), listId: string, operator: oneOf('=', '!=', '<', '<=', '>', '>='), amount: integer })(value, path)
+    return withOptional('otherCounterId', string, object({ type: oneOf('listSize'), listId: string, operator: oneOf('=', '!=', '<', '<=', '>', '>='), amount: integer }))(value, path)
   }
   if (fields.type === 'and' || fields.type === 'or') {
     const conditions = Array.isArray(fields.conditions) ? fields.conditions : fail(`${path}.conditions`, 'a list')

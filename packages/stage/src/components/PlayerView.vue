@@ -35,6 +35,7 @@ import {
   styleClassName,
   StoryRuntime,
   toSave,
+  withLasting,
   splitAtFirstWait,
   makesMapPoints,
   stageLockOf,
@@ -78,6 +79,8 @@ const props = defineProps<{
   saveStore: SaveStore
   /** Resumes this save instead of starting the story. */
   resumeFrom: SaveData | null
+  /** `resumeFrom` is a point of the map: the lasting values stay as the profile keeps them. */
+  resumesFromMap?: boolean
   /** Where leaving the game goes: `Library`, `Text`. */
   leaveLabel: string
   /** Offers the map of the routes explored, which the application shows when asked. */
@@ -696,12 +699,14 @@ function showNotice(message: string) {
   }, NOTICE_MILLISECONDS)
 }
 
-function resume(save: SaveData) {
+/** `fromMapPoint`: a point of the map, where the lasting values stay as the profile keeps them now. */
+function resume(save: SaveData, fromMapPoint = false) {
   forgetTitleCard()
   let outcome: RestoreOutcome = 'exact'
   pendingOption = save.arrivedBy ?? null
+  const state = stateFromSave(props.story, save)
   act(() => {
-    outcome = runtime.restoreState(stateFromSave(props.story, save))
+    outcome = runtime.restoreState(fromMapPoint ? withLasting(props.story, state, progress.value.lasting ?? { decisions: {}, counters: {} }) : state)
   })
   errorMessage.value = null
   startTyping()
@@ -1227,7 +1232,7 @@ onMounted(async () => {
   if (props.resumeFrom === null) {
     playForward(() => runtime.start())
   } else {
-    resume(props.resumeFrom)
+    resume(props.resumeFrom, props.resumesFromMap === true)
   }
 })
 

@@ -259,6 +259,10 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
         if (part.type === 'is' && normalizeName(placed.place) !== 'size') {
           checkListValue(part.value, line)
         }
+        const sizedBy = part.type === 'compare' ? part.other : part.type === 'is' && normalizeName(placed.place) === 'size' ? valueNamedIn(part.value) ?? undefined : undefined
+        if (sizedBy !== undefined && !isCounter(sizedBy)) {
+          problems.push({ severity: 'error', code: 'unknownCounter', line, subject: sizedBy })
+        }
         continue
       }
       if (part.type === 'is' && isCounter(part.decision)) {

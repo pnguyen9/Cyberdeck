@@ -122,10 +122,16 @@ export function recordChoiceReached(
     throw new Error('No choice is shown')
   }
   const save = toSave(story, state, now)
-  const namesThatMatter = decisionsTestedFrom(story, state.page.nodeId)
-  // A point recorded before 3.2 was keyed by its stage too: an arrival in the same state joins it.
-  const recordedBefore = stagedPointKeyOf(state.page.nodeId, save, namesThatMatter)
-  const pointKey = progress.points.some(point => point.key === recordedBefore) ? recordedBefore : pointKeyOf(state.page.nodeId, save, namesThatMatter)
+  const testedAhead = decisionsTestedFrom(story, state.page.nodeId)
+  // What the profile carries from one playthrough to the next does not tell points apart: a second
+  // game with more money is the same choice, played from with the money held now.
+  const lastingNames = new Set([...story.project.decisions, ...story.project.counters].filter(value => value.lasting === true).map(value => value.name))
+  const namesThatMatter = new Set([...testedAhead].filter(name => !lastingNames.has(name)))
+  // A point recorded before 3.2.1 was keyed by its lasting values too, and before 3.2 by its stage:
+  // an arrival in the same state joins it.
+  const recordedBefore = [stagedPointKeyOf(state.page.nodeId, save, testedAhead), pointKeyOf(state.page.nodeId, save, testedAhead)]
+    .find(key => progress.points.some(point => point.key === key))
+  const pointKey = recordedBefore ?? pointKeyOf(state.page.nodeId, save, namesThatMatter)
   const points = progress.points.some(point => point.key === pointKey)
     ? progress.points
     : [...progress.points, { key: pointKey, chapterId: state.page.chapterId, choiceId: state.page.nodeId, reachedAt: now, save, taken: [] }]

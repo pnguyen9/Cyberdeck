@@ -92,7 +92,7 @@ function showGameSettings(gameId: string, gameName: string) {
   loadGameSettings(gameId, gameName)
   gameSettingsShown.value = true
 }
-const playing = shallowRef<{ story: PlayableStory; resumeFrom: SaveData | null } | null>(null)
+const playing = shallowRef<{ story: PlayableStory; resumeFrom: SaveData | null; fromMap?: true } | null>(null)
 watch(playing, current => {
   if (current !== null) {
     loadGameSettings(current.story.project.id, current.story.project.name)
@@ -136,7 +136,7 @@ function playFrom(save: SaveData) {
   const shown = mapShown.value
   mapShown.value = null
   if (shown !== null) {
-    playing.value = { story: shown.story, resumeFrom: save }
+    playing.value = { story: shown.story, resumeFrom: save, fromMap: true }
   }
 }
 
@@ -180,6 +180,7 @@ onMounted(async () => {
       :settings="gameSettings"
       v-model:language-choice="languageChoice"
       :resume-from="playing.resumeFrom"
+      :resumes-from-map="playing.fromMap === true"
       :has-own-settings="gameSettingsOf?.own != null"
       @update:settings="changeGameSettings"
       @own-settings="chooseOwnSettings"

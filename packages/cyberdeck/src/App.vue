@@ -21,7 +21,7 @@ const previewSettingsStore = createStorageSettingsStore(() => window.localStorag
 const previewSettings = shallowRef<PlayerSettings>(previewSettingsStore.read())
 watch(previewSettings, value => previewSettingsStore.write(value))
 const openProjectId = ref<string | null>(null)
-const previewing = shallowRef<{ story: PlayableStory; resumeFrom: SaveData | null } | null>(null)
+const previewing = shallowRef<{ story: PlayableStory; resumeFrom: SaveData | null; fromMap?: true } | null>(null)
 const { shortcuts, isPanelOpen } = useShortcuts()
 
 /** The map of the story previewed: the routes the previews explored, as Datajack shows players theirs. */
@@ -75,7 +75,7 @@ function previewFromPoint(save: SaveData) {
   const shown = previewMap.value
   previewMap.value = null
   if (shown !== null) {
-    previewing.value = { story: shown.story, resumeFrom: save }
+    previewing.value = { story: shown.story, resumeFrom: save, fromMap: true }
   }
 }
 
@@ -112,6 +112,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :story="previewing.story"
       :save-store="previewSaves"
       :resume-from="previewing.resumeFrom"
+      :resumes-from-map="previewing.fromMap === true"
       :leave-label="text.leaveLabel"
       can-inspect
       can-open-map

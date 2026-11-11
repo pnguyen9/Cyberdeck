@@ -8,7 +8,7 @@ import type { PlayableStory } from '../runtime/playableStory'
 import { drawsNumbers, newSeed } from '../runtime/chance'
 import { chaptersInOrder } from '../runtime/playableStory'
 import { EMPTY_STAGE, isStageLock, PAGES_PER_SCREENFUL, type CharacterOnStage, type StageLock } from '../runtime/stageState'
-import type { CounterState, DecisionState, NameState, RuntimeState } from '../runtime/storyRuntime'
+import type { CounterState, DecisionState, LastingValues, NameState, RuntimeState } from '../runtime/storyRuntime'
 
 /**
  * A save file: plain JSON a player can read, with names wherever a person might look. Editing it
@@ -150,6 +150,33 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
       }]
     }),
   }
+}
+
+/**
+ * A state as it was, apart from the lasting decisions and counters, which hold what the profile keeps
+ * now: playing from a point of the map neither takes back what was won since nor gives back what was
+ * lost, `[counter lasting: Money]`.
+ */
+export function withLasting(story: PlayableStory, state: RuntimeState, lasting: LastingValues): RuntimeState {
+  const decisions: Record<string, readonly string[]> = { ...state.decisions }
+  const counters: Record<string, number> = { ...state.counters }
+  for (const decision of story.project.decisions.filter(candidate => candidate.lasting === true)) {
+    const values = Object.hasOwn(lasting.decisions, decision.id) ? lasting.decisions[decision.id] : undefined
+    if (values === undefined) {
+      delete decisions[decision.id]
+    } else {
+      decisions[decision.id] = values
+    }
+  }
+  for (const counter of story.project.counters.filter(candidate => candidate.lasting === true)) {
+    const count = Object.hasOwn(lasting.counters, counter.id) ? lasting.counters[counter.id] : undefined
+    if (count === undefined) {
+      delete counters[counter.id]
+    } else {
+      counters[counter.id] = count
+    }
+  }
+  return { ...state, decisions, counters }
 }
 
 /** Reads a save back through its names, ignoring those the story does not have (anymore). */

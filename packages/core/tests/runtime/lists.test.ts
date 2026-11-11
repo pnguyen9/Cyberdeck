@@ -51,6 +51,21 @@ describe('a list', () => {
     ])).toEqual(['Opened 4, 1 left.', 'Opened 7, 0 left.'])
   })
 
+  it('compares its size with a counter, as the storyboard and the text say it', () => {
+    const lines = [
+      '[counter: Cut = 2]',
+      '[list: Shoe = a | b | c]',
+      '[if: Shoe size < {Cut}]', 'Refill.', '[else]', 'Enough.', '[end]',
+      '[take: Cut = first of Shoe]',
+      '[set: Cut = 3]',
+      '[if: Shoe size < {Cut}]', 'Refill now.', '[end]',
+      '[if: Shoe size is {Cut}]', 'Never.', '[end]',
+    ]
+    expect(pagesOf(lines)).toEqual(['Enough.', 'Refill now.'])
+    const story = storyFromText(lines)
+    expect(exportText(story.project, story.chapters, { declareDecisions: false })).toContain('[if: Shoe size < {Cut}]')
+  })
+
   it('shuffles from the seed, every value kept, and is kept by saves', () => {
     const story = storyFromText(['[list: Deck = a | b | c | d | e]', '[shuffle: Deck]', 'Top: {Deck 1}.', 'Next.'])
     const runtime = new StoryRuntime(story)

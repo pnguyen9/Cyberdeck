@@ -88,7 +88,8 @@ export function describeCondition(condition: StoredCondition, project: ProjectDo
     case 'listItem':
       return `${listName(condition.listId, project)} ${listPlaceText(condition.place, project)} ${condition.negated ? 'is not' : 'is'} ${listValueText(condition.value, project)}`
     case 'listSize': {
-      return `${listName(condition.listId, project)} size ${operatorWords(condition.operator)} ${condition.amount}`
+      const other = condition.otherCounterId === undefined ? null : project.counters.find(candidate => candidate.id === condition.otherCounterId)
+      return `${listName(condition.listId, project)} size ${operatorWords(condition.operator)} ${condition.otherCounterId === undefined ? condition.amount : `{${other?.name ?? '?'}}`}`
     }
     case 'counter': {
       const counter = project.counters.find(candidate => candidate.id === condition.counterId)

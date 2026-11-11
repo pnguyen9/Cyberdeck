@@ -578,8 +578,11 @@ export type StoredCondition =
   /** The counter compared with `amount`: `Trust >= 3`. Since 1.3. */
   /** `Board Cell is cat`: what a place of a list holds. Since 3.0. */
   | { type: 'listItem'; listId: string; place: ListPlace; value: ListValue; negated: boolean }
-  /** `Queue size > 0`: how many values a list holds. Since 3.0. */
-  | { type: 'listSize'; listId: string; operator: CounterOperator; amount: number }
+  /**
+   * `Queue size > 0`: how many values a list holds. Since 3.0. `otherCounterId`: compared with what a
+   * counter holds, `Cards size < {Cut}`, in place of `amount`; readers before 3.2.1 compare with 0.
+   */
+  | { type: 'listSize'; listId: string; operator: CounterOperator; amount: number; otherCounterId?: string }
   /** `otherCounterId`: compared with what another counter holds, `Money >= {Bet}`, in place of `amount`. Since 2.1. */
   | { type: 'counter'; counterId: string; operator: CounterOperator; amount: number; otherCounterId?: string }
   | { type: 'remembered'; memoryId: string; negated: boolean }
@@ -765,7 +768,7 @@ export function testedIdsIn(condition: StoredCondition): string[] {
     case 'listItem':
       return [condition.listId, ...idsReadBy(condition.place, condition.value)]
     case 'listSize':
-      return [condition.listId]
+      return condition.otherCounterId === undefined ? [condition.listId] : [condition.listId, condition.otherCounterId]
     case 'remembered':
     case 'endingSeen':
       return []

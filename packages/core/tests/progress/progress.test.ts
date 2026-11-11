@@ -12,6 +12,8 @@ import {
   toSave,
   recordEndReached,
   recordPageRead,
+  recordLasting,
+  withLasting,
   stateFromSave,
   StoryRuntime,
   type PendingOption,
@@ -82,6 +84,22 @@ describe('progress', () => {
     progress = play(story, progress, ['Frown', 'Red hat', 'Leave'])
     expect(progress.points).toHaveLength(5)
     expect(progress.endingIds.map(endingId => story.project.endings.find(ending => ending.id === endingId)?.name)).toEqual(['Party'])
+  })
+
+  it('does not tell points apart by what the profile carries between playthroughs, and plays from them with what it holds now', () => {
+    const story = storyFromText(['[counter lasting: Money = 100]', 'At the table.', '[choice: Table]', '> Play = Play', '> Leave = Leave', '[if: Table is Play]', '[add: Money 50]', '[end]', '[if: Money >= 200]', '[ending: Rich]', '[end]', '[ending: Done]'])
+    const playThrough = (progress: ProgressData) => {
+      const runtime = new StoryRuntime(story)
+      runtime.useLasting(progress.lasting ?? { decisions: {}, counters: {} })
+      runtime.start()
+      const played = play(story, progress, ['Play'], runtime)
+      return recordLasting(played, runtime.lastingValues)
+    }
+    const twice = playThrough(playThrough(emptyProgress(story)))
+    expect(twice.points).toHaveLength(1)
+    const moneyId = story.project.counters.find(counter => counter.name === 'Money')!.id
+    const fromPoint = withLasting(story, stateFromSave(story, twice.points[0]!.save), twice.lasting!)
+    expect([stateFromSave(story, twice.points[0]!.save).counters[moneyId], fromPoint.counters[moneyId]]).toEqual([undefined, 200])
   })
 
   it('keeps apart arrivals at a choice inside a loop that differ on what the loop tests before it', () => {

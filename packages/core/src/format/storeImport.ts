@@ -651,8 +651,12 @@ function storeCondition(condition: Condition, decisions: DecisionRegistry, count
     case 'is': {
       const placed = reading.splitPlace(condition.decision)
       if (placed !== null && normalizeName(placed.place) === 'size') {
-        const amount = readAmount(condition.value) ?? 0
-        return { type: 'listSize', listId: reading.lists.find(placed.list).id, operator: condition.negated ? '!=' : '=', amount }
+        const operator = condition.negated ? '!=' : '='
+        const other = valueNamedIn(condition.value)
+        if (other !== null) {
+          return { type: 'listSize', listId: reading.lists.find(placed.list).id, operator, amount: 0, otherCounterId: counters.find(other).id }
+        }
+        return { type: 'listSize', listId: reading.lists.find(placed.list).id, operator, amount: readAmount(condition.value) ?? 0 }
       }
       if (placed !== null) {
         return { type: 'listItem', listId: reading.lists.find(placed.list).id, place: reading.listPlace(placed.place), value: reading.listValue(condition.value), negated: condition.negated }
@@ -671,7 +675,10 @@ function storeCondition(condition: Condition, decisions: DecisionRegistry, count
     case 'compare': {
       const sized = reading.splitPlace(condition.counter)
       if (sized !== null && normalizeName(sized.place) === 'size') {
-        return { type: 'listSize', listId: reading.lists.find(sized.list).id, operator: condition.operator, amount: condition.amount }
+        const listId = reading.lists.find(sized.list).id
+        return condition.other === undefined
+          ? { type: 'listSize', listId, operator: condition.operator, amount: condition.amount }
+          : { type: 'listSize', listId, operator: condition.operator, amount: 0, otherCounterId: counters.find(condition.other).id }
       }
       const counter = counters.find(condition.counter)
       if (condition.other !== undefined) {

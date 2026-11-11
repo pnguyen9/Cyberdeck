@@ -969,7 +969,9 @@ export class StoryRuntime {
       case 'listItem':
         return (normalizeName(this.itemAt(condition.listId, condition.place)) === normalizeName(this.textOf(condition.value))) !== condition.negated
       case 'listSize':
-        return compare(this.listOf(condition.listId).length, condition.operator, condition.amount)
+        return compare(this.listOf(condition.listId).length, condition.operator, condition.otherCounterId === undefined
+          ? condition.amount
+          : savedAmount(this.countOf(condition.otherCounterId), this.counterOf(condition.otherCounterId)))
       case 'remembered':
         return this.rememberedIds.has(condition.memoryId) !== condition.negated
       case 'endingSeen':

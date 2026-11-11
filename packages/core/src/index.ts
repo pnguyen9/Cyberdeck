@@ -76,7 +76,7 @@ export {
 } from './runtime/storyRuntime'
 export { valuesReader, type HeldValues } from './runtime/storyValues'
 export { hasJournal, journalOf, type Journal, type JournalEntry } from './runtime/journal'
-export { parseSave, stateFromSave, toSave, type SaveData } from './saves/saveData'
+export { parseSave, stateFromSave, toSave, withLasting, type SaveData } from './saves/saveData'
 export {
   addEmptyDocument,
   applyImport,
