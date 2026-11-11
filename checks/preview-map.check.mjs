@@ -1,5 +1,6 @@
 // The map in Cyberdeck's preview, as Datajack shows it: opened from the end screen, the choice and the
-// option tried; playing from the point previews from it, and closing the map goes back to the preview.
+// option tried; every path, explored from the story, or only those played; playing from the point
+// previews from it, and closing the map goes back to the preview.
 import { createProjectWithStory, pause, shownStep } from './harness.mjs'
 
 const STORY = `[no going back]
@@ -28,6 +29,15 @@ export default async function check(page, { url }) {
   await pause(500)
   page.check('the preview has the map: the choice, the option tried, the ending', await page.evaluate(`[...document.querySelectorAll('.map-screen .node')].map(node => node.querySelector('h2')?.textContent ?? node.textContent.trim())`), ['Road', '★ Arrived'])
   page.check('the author plays from any point, [no going back] or not', await page.evaluate(`!!document.querySelector('.map-screen .play-button')`), true)
+  await page.clickButton('Every path', '.switch-button')
+  await pause(600)
+  page.check('every path, explored from the story: both options taken, though one was played', [
+    await page.evaluate(`document.querySelector('.map-screen .subtitle').textContent`),
+    await page.evaluate(`[...document.querySelectorAll('.map-screen .options li')].map(option => option.textContent.trim())`),
+  ], ['every path, explored from the story', ['› Left', '› Right']])
+  await page.clickButton('The paths played', '.switch-button')
+  await pause(600)
+  page.check('and back to the paths played', await page.evaluate(`[...document.querySelectorAll('.map-screen .options li')].map(option => option.textContent.trim())`), ['› Left', '? Right'])
   await page.evaluate(`document.querySelector('.map-screen .play-button').click()`)
   await page.waitFor('.viewport .option')
   await pause(600)

@@ -5,11 +5,20 @@ import { useMessages } from '../i18n/locale'
 import { mapMessages } from '../i18n/mapMessages'
 
 /** `ignoresLocks`: an author testing the story plays from any point, `[no going back]` or not. */
-const props = defineProps<{ story: PlayableStory; progress: ProgressData; closeLabel: string; ignoresLocks?: boolean }>()
-const emit = defineEmits<{ play: [save: SaveData]; close: [] }>()
+/**
+ * `everyPath`: the map explored from the story for its author rather than the paths played, whole or
+ * in part; its points tell all their values. `switchLabel`: a button to show the other map.
+ */
+const props = defineProps<{ story: PlayableStory; progress: ProgressData; closeLabel: string; ignoresLocks?: boolean; everyPath?: { isWhole: boolean } | null; switchLabel?: string }>()
+const emit = defineEmits<{ play: [save: SaveData]; close: []; switch: [] }>()
 const text = useMessages(mapMessages)
 /** What the point held of what the journal shows players, as it was then: shown on hovering it. */
 function valuesAt(save: SaveData): string | undefined {
+  if (props.everyPath != null) {
+    // The author sees every value of the point, not only what players are shown.
+    const lines = [...Object.entries(save.decisions).map(([name, values]) => `${name}: ${values.join(', ')}`), ...Object.entries(save.counters ?? {}).map(([name, count]) => `${name}: ${count}`)]
+    return lines.length === 0 ? undefined : lines.join('\n')
+  }
   const entries = journalOf(props.story.project, stateFromSave(props.story, save), props.progress.endingIds).entries
   return entries.length === 0 ? undefined : entries.map(entry => `${entry.name}: ${entry.items.join(', ')}`).join('\n')
 }
@@ -64,9 +73,11 @@ const curves = computed(() => {
   <div class="map-screen">
     <header class="map-header">
       <button class="close-button" @click="emit('close')">← {{ closeLabel }}</button>
-      <h1>{{ story.project.name }} <span class="subtitle">{{ text.routesExplored }}</span></h1>
+      <h1>{{ story.project.name }} <span class="subtitle">{{ everyPath != null ? text.everyPath : text.routesExplored }}</span></h1>
       <p v-if="map.endingsTotal > 0" class="endings">{{ text.endingsReached(map.endingsReached, map.endingsTotal) }}</p>
+      <button v-if="switchLabel !== undefined" class="close-button switch-button" @click="emit('switch')">{{ switchLabel }}</button>
     </header>
+    <p v-if="everyPath != null && !everyPath.isWhole" class="partly">{{ text.partly }}</p>
 
     <p v-if="map.nodes.length === 0" class="empty">{{ text.nothingExplored }}</p>
     <div v-else class="map-scroll">
@@ -131,6 +142,12 @@ const curves = computed(() => {
 .subtitle {
   font-weight: 400;
   color: #7b8597;
+}
+
+.partly {
+  margin: 0 32px 8px;
+  color: #a3acbb;
+  font-size: 15px;
 }
 
 .endings {

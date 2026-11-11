@@ -84,6 +84,8 @@ const props = defineProps<{
   canInspect?: boolean
   /** Lets an author testing the story go back, save and load in a part played as a game, `[game mode]`. */
   ignoresGameMode?: boolean
+  /** Lets an author testing the story skip any text, not only what was read before. */
+  skipsUnread?: boolean
   /** Whether the settings are this game's own rather than the profile's; left out, the choice is not offered. */
   hasOwnSettings?: boolean
 }>()
@@ -846,7 +848,7 @@ function continueSkipping() {
     return
   }
   const shownPage = page.value
-  if (shownPage === null || !pageWasRead) {
+  if (shownPage === null || !(pageWasRead || props.skipsUnread === true)) {
     isSkipping.value = false
     return
   }
@@ -862,7 +864,7 @@ function toggleSkipping() {
   if (isSkipping.value) {
     isSkipping.value = false
     clearTimeout(skipTimer)
-  } else if (page.value !== null && pageWasRead) {
+  } else if (page.value !== null && (pageWasRead || props.skipsUnread === true)) {
     isSkipping.value = true
     continueSkipping()
   } else {

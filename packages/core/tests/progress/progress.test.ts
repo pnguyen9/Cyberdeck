@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   decisionsTestedFrom,
   emptyProgress,
+  exploreStory,
   layOutProgressMap,
   mergeProgress,
   parseProgress,
@@ -135,6 +136,16 @@ describe('progress', () => {
 })
 
 describe('the map', () => {
+  it('explores every path of the story, each choice one point, every option taken, every ending found', () => {
+    const story = storyFromText(STORY)
+    const { progress, isWhole } = exploreStory(story)
+    const map = layOutProgressMap(progress, story)
+    expect(isWhole).toBe(true)
+    expect([...progress.endingIds].sort()).toEqual(story.project.endings.map(ending => ending.id).sort())
+    expect(map.nodes.every(node => node.type !== 'point' || node.options.every(option => option.isTaken))).toBe(true)
+    expect(map.nodes.filter(node => node.type === 'point').map(node => node.type === 'point' ? node.decisionName : '').sort()).toEqual(['Door', 'Hat', 'Mood'])
+  })
+
   it('joins paths that reach a choice with different stages, and keeps points recorded with the stage', () => {
     const lines = ['[choice: Way]', '> Park = Park', '> Street = Street', '[if: Way is Park]', '[bg: park]', '[enter: marie]', 'Trees.', '[else]', '[bg: street]', 'Cars.', '[end]', '[choice: Then]', '> Home = Home', 'Done.']
     const story = storyFromText(lines)

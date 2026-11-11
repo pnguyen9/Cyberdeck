@@ -157,6 +157,7 @@ export {
 export { layOutProgressMap, type MapEdge, type MapNode, type ProgressMap } from './progress/progressMap'
 export { definitionLine, exportText, globalDefinitionLines, nodesText, type TextExportOptions } from './export/exportText'
 export { applyNodeEdit, previewNodeEdit, type NodeEditTarget } from './project/nodeEdits'
+export { exploreStory } from './progress/explore'
 export { findPathTo, type FoundPath } from './runtime/findPath'
 export { docxToText } from './importer/readDocx'
 export { blockOfContainer, locateNode, stepNodes, storyboardLevel, type LevelElement, type LevelLane, type LevelOptions, type StoryboardLevel } from './storyboard/storyboardLevel'

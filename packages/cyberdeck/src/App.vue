@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { emptyProgress, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
+import { emptyProgress, exploreStory, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
 import { AUTOSAVE_SLOT, createStorageSaveStore, createStorageSettingsStore, localeOfChoice, MapView, PlayerView, provideLocale, type PlayerSettings } from '@cyberdeck/stage'
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch, watchEffect } from 'vue'
 import { appMessages } from './i18n/appMessages'
@@ -25,12 +25,20 @@ const previewing = shallowRef<{ story: PlayableStory; resumeFrom: SaveData | nul
 const { shortcuts, isPanelOpen } = useShortcuts()
 
 /** The map of the story previewed: the routes the previews explored, as Datajack shows players theirs. */
-const previewMap = shallowRef<{ story: PlayableStory; progress: ProgressData } | null>(null)
+const previewMap = shallowRef<{ story: PlayableStory; progress: ProgressData; everyPath: { progress: ProgressData; isWhole: boolean } | null } | null>(null)
+
+/** Between the paths the previews played and every path, explored from the story once asked for. */
+function switchPreviewMap() {
+  const shown = previewMap.value
+  if (shown !== null) {
+    previewMap.value = { ...shown, everyPath: shown.everyPath === null ? exploreStory(shown.story) : null }
+  }
+}
 
 async function showPreviewMap(story: PlayableStory) {
   const progress = await previewSaves.readProgress(story.project.id) ?? emptyProgress(story)
   previewing.value = null
-  previewMap.value = { story, progress }
+  previewMap.value = { story, progress, everyPath: null }
 }
 
 /** Back to the preview, where it was left to look at the map: its autosave. */
@@ -88,15 +96,19 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       can-inspect
       can-open-map
       ignores-game-mode
+      skips-unread
       @leave="previewing = null"
       @map="showPreviewMap(previewing.story)"
     />
     <MapView
       v-if="previewMap !== null"
       :story="previewMap.story"
-      :progress="previewMap.progress"
+      :progress="previewMap.everyPath?.progress ?? previewMap.progress"
       :close-label="text.previewLabel"
+      :every-path="previewMap.everyPath === null ? null : { isWhole: previewMap.everyPath.isWhole }"
+      :switch-label="previewMap.everyPath === null ? text.showEveryPath : text.showPlayed"
       ignores-locks
+      @switch="switchPreviewMap"
       @play="previewFromPoint"
       @close="closePreviewMap"
     />
