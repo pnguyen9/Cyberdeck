@@ -16,7 +16,7 @@ type MapMessages = typeof en
 const fr: MapMessages = {
   routesExplored: 'parcours explorés',
   everyPath: 'tous les parcours, explorés à partir de l’histoire',
-  partly: 'Exploré en partie\u00a0: des choix ou des fins manquent à la carte, au-delà d’une grille de boutons-images, ou ouverts par des valeurs qu’aucun parcours exploré n’a réunies.',
+  partly: 'Exploré en partie\u00a0: des choix ou des fins manquent à la carte, situés au-delà d’une grille de boutons-images ou ouverts par des valeurs qu’aucun parcours exploré n’a réunies.',
   endingsReached: (reached, total) => `Fins atteintes : ${reached} sur ${total}`,
   nothingExplored: 'Rien n’a encore été exploré : la carte se remplit à mesure que vous atteignez des choix.',
   untitledChapter: 'Chapitre sans titre',
