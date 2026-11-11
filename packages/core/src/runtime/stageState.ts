@@ -44,6 +44,8 @@ export interface StageState {
   tint: TintName | null
   /** What a game missing chapters says on running out of them, as the story last wrote it; null for the default. */
   continuedText: string | null
+  /** In a part played as a game, `[game mode]`: the player cannot go back, save or load there. */
+  gameMode: boolean
   /** Over the whole stage, backgrounds and characters, until taken away. */
   illustrationId: string | null
   /** Text in a box, or over the whole screen: there, the pages of one screen pile up. */
@@ -64,6 +66,7 @@ export const EMPTY_STAGE: StageState = {
   coverFadeMs: 0,
   tint: null,
   continuedText: null,
+  gameMode: false,
   illustrationId: null,
   textMode: 'box',
   screenfulPageIds: [],
@@ -116,6 +119,8 @@ export function applyStageCommand(stage: StageState, command: StageCommand, cont
       return { ...stage, tint: command.tint }
     case 'continued':
       return { ...stage, continuedText: command.text }
+    case 'gameMode':
+      return { ...stage, gameMode: command.on }
     case 'textMode':
       return command.mode === stage.textMode ? stage : { ...stage, textMode: command.mode, screenfulPageIds: [] }
     case 'clear':

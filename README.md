@@ -293,6 +293,7 @@ one per language, of the same shape: another language is one more table each.
 | `[if: Trust >= 3]`, `Trust < 2`, `Trust is 3`, `Trust is not 0` | Compares a counter with a number: `>`, `>=`, `<`, `<=`, `is`, `is not`; combines with the rest by `and` / `or`. |
 | `[unset: Clues = Key]`, `[unset: Clues]` | Takes a value away from a decision, or every value: tests of it no longer hold, as if it had never been set. |
 | `[ending: The Empty Room]`, `[ending: The Empty Room = La Chambre vide]` | Ends the path here: the player has reached this ending (named endings are counted). After `=`, what players read of it in the text's language, the name before it being how the story knows it. |
+| `[game mode]` … `[game mode: off]` | A part played as a game: there, players cannot go back, save or load (Back, the keys, the log's lines and the Save and Load buttons say why), so that a card drawn or a mine opened cannot be undone; the log and the journal can still be read, and the game keeps saving itself, to resume where it was left. Its choices make no points on the map, which goes from the choice before it to the one after. Cyberdeck's preview lets the author go back anyway. The mini games are played so. Needs Datajack 3.2. |
 | `[to be continued: Marie's story goes on in the next update.]` | What players read when the game runs out of the chapters it holds, a game exported with only some of them: the last one passed counts, so one at the start speaks for the whole story and one inside a route for that route. `[to be continued: none]` goes back to the default, *To be continued…*. Needs Datajack 2.1. |
 | `[remember: The ghost's name]` | The profile remembers it for good, in every later playthrough; going back or loading an older save does not forget. |
 | `[forget: The ghost's name]` | The profile forgets it, for good: a lasting flag the story can also clear, a key used up or a promise broken. Going back does not undo it either. Needs Datajack 2.0. |
@@ -862,17 +863,6 @@ browser checks for what it adds, the whole suite run (`npm run typecheck`, `npm 
 `npm run checks`, `npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the
 CHANGELOG brought up to date, every French text read again.
 
-- **Mini games played as games.** Going back, the log and loading undo what a game is about: in
-  blackjack, see the next card, go back and stand instead (the draw itself cannot be rolled again:
-  each stop keeps its seed); in Minesweeper, step back from a mine, now knowing where it lies; in
-  Pairs, turn a tile, go back, and pick knowing what it hides; with the virtual pet, less harmful,
-  undo a care that went wrong. And the virtual pet's endless loop
-  makes a new point of the map nearly every round, its values changing each time, for a map that
-  tells the player nothing (a grid's picks make no points: the maps of Minesweeper and Pairs stay
-  small). Two tags for the author, if a game needs them: one turning going back and loading off
-  inside a scene or a chapter, one leaving a scene or a loop out of the map. The first leaves the
-  journal and the log to read, only the log's going back gone; written in the text like any tag, it
-  is added or taken away there, and Cyberdeck's preview could let the author go back anyway.
 - **The mini games' leftovers.** Blackjack's shoe of 2, 4, 6 or 8 real decks, as a list of the cards
   left; Minesweeper's flags, which need a second way to pick a tile (a right click, a key).
 - **Upper-body characters**, as most Japanese visual novels draw them: a framing chosen per character
@@ -894,9 +884,13 @@ CHANGELOG brought up to date, every French text read again.
   values of its path, skipping always allowed, previewing from a point starting with its values; the
   map able to keep only the path played. Previewing from a page today plays the shortest way there,
   and the State panel changes values by hand.
-- **A preview closer to playing**: the map, and erasing the saves and progress of one project only.
+- **A preview closer to playing**: the map in Cyberdeck's preview, which only Datajack shows today.
 - **A game's own settings**, from its card in the library: a slower text for one, a louder music
-  for another.
+  for another. Today Settings, in the library or in a game, are the profile's, for every game.
+- **Erasing one game's data, and choosing what.** *Erase what Datajack keeps…* and *Erase what
+  Cyberdeck keeps…* act on every game or project at once. Each game's card in Datajack, and each
+  project in Cyberdeck (for its previews), should erase its own: its progress alone (endings, map,
+  gallery, read pages, lasting values), its saves alone, or both, the game itself kept.
 - **Web data of deleted copies.** Each application erases what it keeps, but a copy opened from a
   file and since deleted can only be erased the browser's way (see [Erasing what the web builds
   store](#erasing-what-the-web-builds-store)).

@@ -43,6 +43,7 @@ const en = {
   numberDecimals: (decimals: number) => decimals === 0 ? 'Whole numbers only' : `At most ${decimals} ${decimals === 1 ? 'decimal' : 'decimals'}`,
   takenWhenTimeRunsOut: (option: string) => `${option}, taken when the time runs out`,
   fullscreenUnavailable: 'Full screen is not available here.',
+  gameModeLocked: 'This part is played as a game: no going back, saving or loading until it ends.',
 }
 
 type PlayerMessages = typeof en
@@ -90,6 +91,7 @@ const fr: PlayerMessages = {
   numberDecimals: decimals => decimals === 0 ? 'Des nombres entiers seulement' : `${decimals} ${decimals === 1 ? 'décimale' : 'décimales'} au plus`,
   takenWhenTimeRunsOut: option => `${option}, choisi quand le temps est écoulé`,
   fullscreenUnavailable: 'Le plein écran n’est pas disponible ici.',
+  gameModeLocked: 'Ce passage se joue comme un jeu\u00a0: ni retour en arrière, ni sauvegarde, ni chargement avant sa fin.',
 }
 
 export const playerMessages = { en, fr }

@@ -80,6 +80,8 @@ const props = defineProps<{
   canOpenMap?: boolean
   /** Offers the state of the story beside the stage: for an author testing it, never for players. */
   canInspect?: boolean
+  /** Lets an author testing the story go back, save and load in a part played as a game, `[game mode]`. */
+  ignoresGameMode?: boolean
 }>()
 const emit = defineEmits<{ leave: []; map: [] }>()
 /** The player's choices: text speed, volumes, inputs. The application keeps them. */
@@ -106,6 +108,9 @@ const runtime = new StoryRuntime(props.story)
 const catalog = createStageCatalog(props.story)
 const snapshot = shallowRef<PlayerSnapshot>(runtime.snapshot)
 const canGoBack = ref(false)
+/** In a part played as a game, `[game mode]`, the player cannot go back, save or load. */
+const isGameLocked = computed(() => snapshot.value.stage.gameMode && props.ignoresGameMode !== true)
+const canGoBackNow = computed(() => canGoBack.value && !isGameLocked.value)
 const errorMessage = ref<string | null>(null)
 const openPanel = ref<'none' | 'log' | 'journal' | 'save' | 'load' | 'settings'>('none')
 /** The text box and the menu hidden, to look at the picture; any input shows them again. */
@@ -629,6 +634,9 @@ function recordProgress() {
   if (step.type === 'page') {
     pageWasRead = recorded.readPageIds.includes(step.page.id)
     recorded = recordPageRead(recorded, step.page.id)
+  } else if (step.type === 'choice' && runtime.snapshot.stage.gameMode) {
+    // A part played as a game makes no points: the map goes from the choice before it to the one after.
+    currentPointKey = null
   } else if (step.type === 'choice') {
     const reached = recordChoiceReached(recorded, props.story, runtime.exportState(), pendingOption, new Date().toISOString())
     recorded = reached.progress
@@ -730,6 +738,10 @@ function autosave() {
 }
 
 async function openSlots(mode: 'save' | 'load') {
+  if (isGameLocked.value) {
+    showNotice(text.value.gameModeLocked)
+    return
+  }
   const gameId = props.story.project.id
   if (mode === 'save') {
     const now = new Date()
@@ -764,6 +776,9 @@ async function pickSlot(slot: string) {
 }
 
 function goBackTo(stopIndex: number) {
+  if (isGameLocked.value) {
+    return
+  }
   openPanel.value = 'none'
   errorMessage.value = null
   pendingOption = null
@@ -884,6 +899,10 @@ function advance() {
 
 /** The previous page comes back complete: it was already read. */
 function goBack() {
+  if (isGameLocked.value) {
+    showNotice(text.value.gameModeLocked)
+    return
+  }
   if (!runtime.canGoBack) {
     return
   }
@@ -978,7 +997,9 @@ function pickCell(number: number) {
 }
 
 function choose(optionId: string) {
-  pendingOption = currentPointKey === null ? null : { pointKey: currentPointKey, optionId }
+  if (!runtime.snapshot.stage.gameMode) {
+    pendingOption = currentPointKey === null ? null : { pointKey: currentPointKey, optionId }
+  }
   playForward(() => runtime.choose(optionId))
 }
 
@@ -1281,11 +1302,11 @@ onUnmounted(() => {
         <button class="ask-button" type="submit" :disabled="!isTypedNumberTaken">{{ text.confirmName }}</button>
       </form>
       <div v-if="isHudShown" class="quick-menu" :class="{ low: fullScreenPages !== null }" :style="fullScreenPages === null ? { bottom: `${quickMenuBottom}px` } : undefined">
-        <button class="quick-button" :disabled="!canGoBack" @click.stop="fromMenu(goBack)">{{ text.back }}</button>
+        <button class="quick-button" :disabled="!canGoBackNow" @click.stop="fromMenu(goBack)">{{ text.back }}</button>
         <button class="quick-button" @click.stop="fromMenu(openLog)">{{ text.log }}</button>
         <button v-if="isJournalOffered" class="quick-button" @click.stop="fromMenu(() => { openPanel = 'journal' })">{{ text.journal }}</button>
-        <button class="quick-button" @click.stop="fromMenu(() => openSlots('save'))">{{ text.save }}</button>
-        <button class="quick-button" @click.stop="fromMenu(() => openSlots('load'))">{{ text.load }}</button>
+        <button class="quick-button" :disabled="isGameLocked" @click.stop="fromMenu(() => openSlots('save'))">{{ text.save }}</button>
+        <button class="quick-button" :disabled="isGameLocked" @click.stop="fromMenu(() => openSlots('load'))">{{ text.load }}</button>
         <button v-if="canInspect" class="quick-button" :class="{ active: isStateShown }" :aria-pressed="isStateShown" @click.stop="fromMenu(() => { isStateShown = !isStateShown })">{{ text.state }}</button>
         <button class="quick-button auto-button" :class="{ active: isAuto }" :aria-pressed="isAuto" @click.stop="toggleAuto">{{ text.auto }}</button>
         <button class="quick-button" :class="{ active: isSkipping }" :aria-pressed="isSkipping" @click.stop="fromMenu(toggleSkipping)">{{ text.skip }}</button>
@@ -1303,7 +1324,7 @@ onUnmounted(() => {
         @close="isStateShown = false"
       />
       <JournalPanel v-if="openPanel === 'journal'" :story="story" :snapshot="snapshot" :ending-ids="remembered.endingIds" @close="openPanel = 'none'" />
-      <BacklogPanel v-if="openPanel === 'log'" :lines="backlogLines" @close="openPanel = 'none'" @go-back="goBackTo" />
+      <BacklogPanel v-if="openPanel === 'log'" :lines="backlogLines" :locked-note="isGameLocked ? text.gameModeLocked : null" @close="openPanel = 'none'" @go-back="goBackTo" />
       <SettingsPanel
         v-if="openPanel === 'settings'"
         v-model="settings"
@@ -1334,7 +1355,7 @@ onUnmounted(() => {
           {{ storyText.endingsReached(endingsReached, endingsCounted) }}
         </p>
         <div class="end-actions">
-          <button v-if="canGoBack" class="end-button" @click="goBack">{{ text.back }}</button>
+          <button v-if="canGoBackNow" class="end-button" @click="goBack">{{ text.back }}</button>
           <button v-if="isMapOffered && errorMessage === null" class="end-button" @click="emit('map')">{{ text.map }}</button>
           <button class="end-button" @click="emit('leave')">← {{ leaveLabel }}</button>
         </div>

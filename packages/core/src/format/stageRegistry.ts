@@ -191,6 +191,7 @@ export class StageRegistry {
       case 'fade':
       case 'tint':
       case 'continued':
+      case 'gameMode':
       case 'textMode':
       case 'clear':
         return instruction

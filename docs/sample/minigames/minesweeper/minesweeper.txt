@@ -35,6 +35,7 @@
 # Minesweeper
 [bg: field]
 Open every cell that hides no mine. A number tells how many mines touch that cell; the first cell you open never hides one.
+[game mode]
 [loop]
 [choice: Level]
 > Beginner: 9 × 9, 10 mines = Beginner

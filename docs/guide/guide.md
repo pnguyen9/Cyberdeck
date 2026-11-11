@@ -318,6 +318,8 @@ A picture can move by itself, too: an animated WebP, GIF or PNG plays as it is, 
 
 For games, a **list** keeps values in numbered places: `[list: Board = 16 × none]`, `[set: Board 3 = cat]`, `{Board 3}`, `[shuffle: Board]`. And `[choice: Cell grid 4 × 4 from Board with tile]` shows a grid of picture buttons, one per place; the one picked gives `Cell` its number. The Pairs and Minesweeper samples are made of these.
 
+A game played inside the story should not let players undo a bad card or a mine: from `[game mode]` to `[game mode: off]`, they cannot go back, save or load (they can still read the log and the journal), and its choices make no points on the map. Your preview lets you go back anyway, to test it.
+
 ## 12. Keeping track of decisions
 
 A decision or a style can be declared anywhere, and used everywhere. Two tabs keep them from getting lost.

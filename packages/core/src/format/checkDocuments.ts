@@ -162,6 +162,7 @@ const STAGE_COMMANDS: { [Type in StageCommand['type']]: Check<Extract<StageComma
   fade: object({ type: oneOf('fade'), direction: oneOf('out', 'in'), color: oneOf('black', 'white'), durationMs: nullable(duration) }),
   tint: object({ type: oneOf('tint'), tint: nullable(oneOf('sepia', 'night', 'grey')) }),
   continued: object({ type: oneOf('continued'), text: nullable(string) }),
+  gameMode: object({ type: oneOf('gameMode'), on: boolean }),
   textMode: object({ type: oneOf('textMode'), mode: oneOf('box', 'full') }),
   clear: object({ type: oneOf('clear') }),
   illustration: withValueFrom(object({ type: oneOf('illustration'), illustrationId: nullable(string) })),

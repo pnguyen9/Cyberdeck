@@ -6,7 +6,7 @@ import { idsReadBy } from './lists'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '3.1'
+export const FORMAT_VERSION = '3.2'
 
 /** True when this version of the code can read a document written in `version`: any version up to its own, every earlier major one included. */
 export function isSupportedFormatVersion(version: string): boolean {
@@ -454,6 +454,8 @@ export type StageCommand =
   | { type: 'tint'; tint: TintName | null }
   /** What players read when the game runs out of the chapters installed, until another says otherwise; null for the default. */
   | { type: 'continued'; text: string | null }
+  /** A part played as a game, until turned off: no going back, saving or loading, no points on the map. Since 3.2. */
+  | { type: 'gameMode'; on: boolean }
   /** Text in a box at the bottom, or over the whole screen, pages piling up until cleared. Since 1.1. */
   | { type: 'textMode'; mode: 'box' | 'full' }
   /** Starts a new screen of full-screen text. Since 1.1. */

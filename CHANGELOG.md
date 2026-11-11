@@ -1,6 +1,13 @@
 # Changelog
 
-## 3.1.1 — 2026-11-11
+## 3.2.0 — 2026-11-11
+
+### Stories
+- `[game mode]` … `[game mode: off]`: a part played as a game, where players cannot go back, save
+  or load, so that a card drawn or a mine opened cannot be undone; the log and the journal can still
+  be read. Its choices make no points on the map, which goes from the choice before it to the one
+  after. Cyberdeck's preview lets the author go back anyway. Stories that use it need Datajack 3.2
+  (format 3.2).
 
 ### Datajack, the player
 - An animated picture plays from its start each time it is shown, in Firefox too, which played it
@@ -13,6 +20,9 @@
 ### Cyberdeck, the editor
 - An exported game carries the pictures of a grid's tiles: Pairs and Minesweeper, exported, showed
   their tiles without pictures, no tag naming them.
+
+### Samples
+- The mini games are played in game mode, from their first round.
 
 ## 3.1.0 — 2026-11-10
 

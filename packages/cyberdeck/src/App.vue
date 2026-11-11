@@ -59,6 +59,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :resume-from="previewing.resumeFrom"
       :leave-label="text.leaveLabel"
       can-inspect
+      ignores-game-mode
       @leave="previewing = null"
     />
   </template>

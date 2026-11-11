@@ -13,7 +13,8 @@ export interface BacklogLine {
   isChoice: boolean
 }
 
-const props = defineProps<{ lines: BacklogLine[] }>()
+/** `lockedNote`: in a part played as a game, why the lines can only be read, not gone back to. */
+const props = defineProps<{ lines: BacklogLine[]; lockedNote?: string | null }>()
 
 /** Lines in their styles as they were read, without shaking: a list scrolled through stays still. */
 const shownLines = computed(() => props.lines.map(line => ({
@@ -39,13 +40,13 @@ onMounted(() => {
   <div class="overlay" role="dialog" :aria-label="text.log" @click.stop @wheel.stop>
     <header class="overlay-header">
       <h2>{{ text.log }}</h2>
-      <span class="hint">{{ text.hint }}</span>
+      <span class="hint">{{ lockedNote ?? text.hint }}</span>
       <button class="close-button" @click="emit('close')">{{ text.close }} <kbd>{{ escapeKey }}</kbd></button>
     </header>
     <ol ref="list" class="lines">
       <li v-if="lines.length === 0" class="empty">{{ text.nothingRead }}</li>
       <li v-for="line in shownLines" :key="line.stopIndex">
-        <button class="line" :class="{ choice: line.isChoice }" @click="emit('goBack', line.stopIndex)">
+        <button class="line" :class="{ choice: line.isChoice }" :disabled="lockedNote != null" @click="emit('goBack', line.stopIndex)">
           <span v-if="line.speaker !== null" class="speaker">{{ line.speaker }}</span>
           <span class="text"><template v-if="line.isChoice">▸ </template><span v-for="run in line.runs" :key="run.start" :class="run.classes">{{ run.text }}</span></span>
         </button>
@@ -55,6 +56,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.line:disabled {
+  cursor: default;
+}
+
 .overlay {
   position: absolute;
   inset: 0;
