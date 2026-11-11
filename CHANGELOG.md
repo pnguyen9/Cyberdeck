@@ -3,9 +3,10 @@
 ## 3.1.1 — 2026-11-11
 
 ### Datajack, the player
-- An animated character picture plays from its start each time it is shown, in Firefox too, which
-  played it once per page and then showed its last frame: the stage now plays it frame by frame
-  itself. Players who ask for less motion see where it ends at once.
+- An animated picture plays from its start each time it is shown, in Firefox too, which played it
+  once per page and then showed its last frame: the stage now plays it frame by frame itself, for
+  characters, backgrounds, illustrations and a grid's tiles, and so does the gallery, enlarged.
+  Players who ask for less motion see where it ends at once.
 
 ### Cyberdeck, the editor
 - An exported game carries the pictures of a grid's tiles: Pairs and Minesweeper, exported, showed

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { StageCatalog, StoredGrid } from '@cyberdeck/core'
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
+import StagePicture from './StagePicture.vue'
 
 /**
  * A choice shown as rows of picture buttons: each place shows the picture its list names, or the
@@ -66,7 +67,7 @@ function onKeydown(event: KeyboardEvent) {
       @focus="focused = tile.number"
       @click="emit('pick', tile.number)"
     >
-      <img v-if="tile.url !== null" :src="tile.url" alt="" draggable="false">
+      <StagePicture v-if="tile.url !== null" class="picture" :url="tile.url" alt="" />
       <span v-else-if="tile.item !== ''" class="value">{{ tile.item }}</span>
     </button>
   </div>
@@ -101,7 +102,7 @@ function onKeydown(event: KeyboardEvent) {
   box-shadow: 0 0 18px rgb(0 200 255 / 0.35);
 }
 
-.tile img {
+.picture {
   width: 100%;
   height: 100%;
   object-fit: contain;

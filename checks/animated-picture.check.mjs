@@ -2,7 +2,7 @@
 // again the second time, and in a new preview, rather than showing its last frame at once; `[wait]` holds
 // the picture after it. In Firefox too, which plays a picture left to it once per page only.
 import { join } from 'node:path'
-import { readFileSync } from 'node:fs'
+import { copyFileSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { createProject, pause } from './harness.mjs'
 
@@ -11,7 +11,7 @@ export const firefox = true
 
 const example = fileURLToPath(new URL('../docs/guide/examples/falling/', import.meta.url))
 
-export default async function check(page, { url }) {
+export default async function check(page, { url, output }) {
   await createProject(page, url, 'Falling')
   await page.setValue('.import .source', readFileSync(join(example, 'falling.txt'), 'utf8'))
   await pause(800)
@@ -70,4 +70,32 @@ export default async function check(page, { url }) {
   await page.waitFor('.viewport .character .sprite')
   await pause(1500)
   page.check('and the first fall of a new preview too', await fall(), ['Kai, falling', true, true, false])
+
+  // Backgrounds and illustrations too: an animated one is played by the stage, a still one stays a picture.
+  await page.evaluate(`document.querySelector('.leave-button').click()`)
+  await pause(800)
+  copyFileSync(join(example, 'kai-falling.webp'), join(output, 'pond.webp'))
+  copyFileSync(join(example, 'kai-standing.webp'), join(output, 'shore.webp'))
+  copyFileSync(join(example, 'kai-falling.webp'), join(output, 'memory.webp'))
+  await createProject(page, url, 'Backgrounds')
+  await page.setValue('.import .source', '[bg: pond]\nOn the ice.\n[bg: shore]\nOn the shore.\n[illustration: memory]\nA memory.')
+  await pause(800)
+  await page.clickButton('Import', '.import-actions .button')
+  await pause(800)
+  await page.clickButton('Cast & files', '.tab')
+  await page.waitFor('.drop-zone .file-input')
+  await page.setFiles('.drop-zone .file-input', [join(output, 'pond.webp'), join(output, 'shore.webp'), join(output, 'memory.webp')])
+  await page.waitFor('.message[role=status]', 30000)
+  await pause(600)
+  await page.clickButton('Preview ▶', '.button')
+  await page.waitFor('.viewport .background')
+  await pause(1500)
+  const drawnAs = selector => page.evaluate(`document.querySelector('.viewport ${selector} .fill')?.tagName.toLowerCase() ?? null`)
+  const background = [await drawnAs('.background')]
+  await page.press(' ')
+  await pause(1200)
+  background.push(await drawnAs('.background'))
+  await page.press(' ')
+  await pause(1500)
+  page.check('an animated background or illustration is played by the stage, a still one stays a picture', [...background, await drawnAs('.illustration')], ['canvas', 'img', 'canvas'])
 }

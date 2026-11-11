@@ -45,7 +45,7 @@ export default async function check(page, { url, assets, serve }) {
   await page.waitFor('.viewport .text')
   await pause(300)
   page.check('the game starts from the library', (await shownStep(page)).startsWith('The classroom was empty'), true)
-  page.check('the background comes from the installed file', await page.evaluate(`[...document.querySelectorAll('.viewport .background')].some(element => getComputedStyle(element).backgroundImage.includes('blob:'))`), true)
+  page.check('the background comes from the installed file', await page.evaluate(`[...document.querySelectorAll('.viewport .background img')].some(picture => picture.src.includes('blob:'))`), true)
   for (let press = 0; press < 4; press++) {
     await page.press(' ')
   }

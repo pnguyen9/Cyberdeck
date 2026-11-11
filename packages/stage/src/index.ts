@@ -19,6 +19,7 @@ export {
 export { AUTOSAVE_SLOT, createStorageSaveStore, MANUAL_SLOTS, PROGRESS_SLOT, type SaveStore } from './saveStore'
 export { createTextboxLayout, STAGE_HEIGHT, STAGE_WIDTH, TEXTBOX_FONT_FAMILY, TEXTBOX_FONT_SIZE } from './textboxLayout'
 export { default as MapView } from './components/MapView.vue'
+export { default as StagePicture } from './components/StagePicture.vue'
 export { default as SettingsScreen } from './components/SettingsScreen.vue'
 export { default as LanguageSelect } from './components/LanguageSelect.vue'
 export { createStorageSettingsStore, DEFAULT_PLAYER_SETTINGS, parsePlayerSettings, TEXT_SPEED_RANGE, type PlayerSettings } from './settings/playerSettings'

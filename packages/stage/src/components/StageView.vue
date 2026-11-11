@@ -20,17 +20,18 @@ function hueOf(name: string): number {
 const background = computed(() => {
   const backgroundId = props.stage.backgroundId
   if (backgroundId === null) {
-    return { key: 'none', style: { background: '#0b0d12' }, placeholderName: null }
+    return { key: 'none', style: { background: '#0b0d12' }, url: null, placeholderName: null }
   }
   const url = props.catalog.backgroundUrl(backgroundId)
   if (url !== null) {
-    return { key: backgroundId, style: { backgroundImage: `url("${url}")` }, placeholderName: null }
+    return { key: backgroundId, style: {}, url, placeholderName: null }
   }
   const name = props.catalog.backgroundName(backgroundId)
   const hue = hueOf(name)
   return {
     key: backgroundId,
     style: { background: `linear-gradient(160deg, hsl(${hue} 45% 30%), hsl(${(hue + 40) % 360} 50% 12%))` },
+    url: null,
     placeholderName: name,
   }
 })
@@ -108,8 +109,8 @@ const illustration = computed(() => {
   }
   const url = props.catalog.illustrationUrl(illustrationId)
   return url !== null
-    ? { key: illustrationId, style: { backgroundImage: `url("${url}")` }, placeholderName: null }
-    : { key: illustrationId, style: { background: 'linear-gradient(160deg, #2a2440, #0d0b14)' }, placeholderName: props.catalog.illustrationName(illustrationId) }
+    ? { key: illustrationId, style: {}, url, placeholderName: null }
+    : { key: illustrationId, style: { background: 'linear-gradient(160deg, #2a2440, #0d0b14)' }, url: null, placeholderName: props.catalog.illustrationName(illustrationId) }
 })
 
 /** Music with a file is heard; without one, its name stands in. */
@@ -164,7 +165,9 @@ function onLeave(element: Element, done: () => void) {
 <template>
   <div class="stage" :class="stage.tint === null ? null : `tint-${stage.tint}`" :style="transition.style">
     <Transition :name="transition.name" :mode="transition.mode">
-      <div :key="background.key" class="background" :style="background.style" />
+      <div :key="background.key" class="background" :style="background.style">
+        <StagePicture v-if="background.url !== null" class="fill" :url="background.url" alt="" />
+      </div>
     </Transition>
 
     <TransitionGroup tag="div" class="characters" :css="false" @enter="onEnter" @leave="onLeave">
@@ -178,9 +181,10 @@ function onLeave(element: Element, done: () => void) {
         <div class="turn" :class="character.turnClass" :style="character.turnStyle">
           <StagePicture
             v-if="character.imageUrl !== null"
+            class="sprite"
+            :class="{ mirrored: character.isMirrored }"
             :url="character.imageUrl"
             :alt="`${character.name}, ${character.expression}`"
-            :mirrored="character.isMirrored"
           />
           <template v-else>
             <div class="silhouette">
@@ -194,6 +198,7 @@ function onLeave(element: Element, done: () => void) {
 
     <Transition name="illustration">
       <div v-if="illustration !== null" :key="illustration.key" class="illustration" :style="illustration.style">
+        <StagePicture v-if="illustration.url !== null" class="fill" :url="illustration.url" alt="" />
         <span v-if="illustration.placeholderName !== null" class="placeholder-label illustration-label">{{ illustration.placeholderName }}</span>
       </div>
     </Transition>
@@ -214,6 +219,15 @@ function onLeave(element: Element, done: () => void) {
 .background {
   background-size: cover;
   background-position: center;
+}
+
+/* A background or an illustration covers the stage, its middle kept, as `background-size: cover` would. */
+.fill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .placeholder-label {

@@ -27,7 +27,7 @@ export default async function check(page, { home, output, assets, serve }) {
   await page.waitFor('.viewport .text')
   await pause(500)
   page.check('the game starts', (await shownText())?.startsWith('The classroom was empty'), true)
-  page.check('the background is the installed file', await page.evaluate(`[...document.querySelectorAll('.viewport .background')].some(element => getComputedStyle(element).backgroundImage.includes('datajack://app/installed-assets/'))`), true)
+  page.check('the background is the installed file', await page.evaluate(`[...document.querySelectorAll('.viewport .background img')].some(picture => picture.src.includes('datajack://app/installed-assets/'))`), true)
   for (let press = 0; press < 3; press++) {
     await page.press(' ')
   }

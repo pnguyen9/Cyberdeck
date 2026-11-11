@@ -3,13 +3,14 @@ import { nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
 import { decodedAnimation, type DecodedAnimation } from './animatedPictures'
 
 /**
- * A character's picture. An animated one (GIF, WebP, PNG) is played here, frame by frame on a canvas,
+ * A picture of the stage: a character, a background, an illustration, a grid's tile. An animated one
+ * (GIF, WebP, PNG) is played here, frame by frame on a canvas,
  * from its first frame each time it is shown: a browser left to play it may play it once per page
  * only (Firefox shows its last frame from then on). It holds its last frame once played, and shows it
  * at once to players who ask for less motion. A still picture, or a browser that cannot decode
- * frames, is an image as before.
+ * frames, is an image as before. Classes given to it, for its size and place, go to either.
  */
-const props = defineProps<{ url: string; alt: string; mirrored: boolean }>()
+const props = defineProps<{ url: string; alt: string }>()
 
 /** `pending` while it is found out whether the picture moves: nothing is shown, rather than the browser's own playing. */
 const animation = ref<DecodedAnimation | null | 'pending'>('pending')
@@ -71,19 +72,18 @@ onBeforeUnmount(() => {
   <canvas
     v-if="animation !== null && animation !== 'pending'"
     ref="canvas"
-    class="sprite"
-    :class="{ mirrored }"
     :width="animation.width"
     :height="animation.height"
-    role="img"
-    :aria-label="alt"
+    :role="alt === '' ? undefined : 'img'"
+    :aria-label="alt === '' ? undefined : alt"
+    :aria-hidden="alt === '' ? 'true' : undefined"
   />
   <img
     v-else
-    class="sprite"
-    :class="{ mirrored, pending: animation === 'pending' }"
+    :class="{ pending: animation === 'pending' }"
     :src="url"
     :alt="alt"
+    draggable="false"
   >
 </template>
 

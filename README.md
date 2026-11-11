@@ -453,8 +453,9 @@ taken for a new character. Images and sounds are then given to these entries by 
 `rooftop.jpg`, `marie-smile.png` (Marie's `smile`), `marie.png` (her `normal`), `calm.mp3`,
 `door.wav`, `opening.webm` and its captions `opening.vtt`, the frames `text-box.png` and
 `name-plate.png`; case, spaces, hyphens and underscores do not matter. An entry without a file shows as
-a placeholder. An animated character picture (WebP, GIF or PNG) is played by the stage itself, frame
-by frame, from its start each time it is shown, in every browser (Firefox, left to it, plays a
+a placeholder. An animated picture (WebP, GIF or PNG: a character, a background, an illustration, a
+grid's tile, the gallery's picture enlarged) is played by the stage itself, frame by frame, from its
+start each time it is shown, in every browser (Firefox, left to it, plays a
 picture once per page); one that plays once stops on its last frame, which players who ask for less
 motion see at once. `docs/guide/examples/falling/` makes a character fall that way, its pictures
 made by `scripts/examples/falling_assets.py`. Browsers without `ImageDecoder` show the file as it is.

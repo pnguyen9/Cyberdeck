@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PlayableStory, ProgressData } from '@cyberdeck/core'
-import { describeInput, useLocale, useMessages } from '@cyberdeck/stage'
+import { describeInput, StagePicture, useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { galleryMessages } from '../i18n/galleryMessages'
 
@@ -51,7 +51,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       </li>
     </ul>
     <div v-if="shown !== null" class="shown" role="dialog" :aria-label="shown.name" @click="shown = null">
-      <img v-if="shown.url !== null" :src="shown.url" :alt="shown.name">
+      <StagePicture v-if="shown.url !== null" class="shown-picture" :url="shown.url" :alt="shown.name" />
       <span v-else class="tile-name">{{ shown.name }}</span>
     </div>
   </section>
@@ -150,7 +150,7 @@ kbd {
   cursor: pointer;
 }
 
-.shown img {
+.shown-picture {
   max-width: 100%;
   max-height: 100%;
 }

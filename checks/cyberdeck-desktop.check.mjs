@@ -32,7 +32,7 @@ export default async function check(page, { home, assets }) {
   await page.clickButton('Preview ▶', '.button')
   await page.waitFor('.viewport .text')
   await pause(800)
-  page.check('the preview plays them', await page.evaluate(`[...document.querySelectorAll('.viewport .background')].some(element => getComputedStyle(element).backgroundImage.includes('cyberdeck://app/project-assets/'))`), true)
+  page.check('the preview plays them', await page.evaluate(`[...document.querySelectorAll('.viewport .background img')].some(picture => picture.src.includes('cyberdeck://app/project-assets/'))`), true)
   await page.screenshot('desktop-preview')
 
   await page.restart()

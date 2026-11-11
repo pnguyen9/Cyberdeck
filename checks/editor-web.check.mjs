@@ -77,7 +77,7 @@ export default async function check(page, { url, assets, serve }) {
   await page.waitFor('.viewport .text')
   await pause(500)
   page.check('previewing from a chapter plays it', await shownStep(page), 'Here again.')
-  page.check('with the background given', await page.evaluate(`[...document.querySelectorAll('.viewport .background')].some(element => getComputedStyle(element).backgroundImage.includes('blob:'))`), true)
+  page.check('with the background given', await page.evaluate(`[...document.querySelectorAll('.viewport .background img')].some(picture => picture.src.includes('blob:'))`), true)
   await page.screenshot('editor-preview')
   await page.evaluate(`document.querySelector('.leave-button').click()`)
   await pause(500)
