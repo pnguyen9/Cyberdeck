@@ -5,6 +5,7 @@ const en = {
   nothingExplored: 'Nothing explored yet: the map fills in as you reach choices.',
   untitledChapter: 'Untitled chapter',
   playFromHere: 'Play from here',
+  forwardOnly: 'The story only goes forward here',
   theEnd: 'The end',
 }
 
@@ -16,6 +17,7 @@ const fr: MapMessages = {
   nothingExplored: 'Rien n’a encore été exploré : la carte se remplit à mesure que vous atteignez des choix.',
   untitledChapter: 'Chapitre sans titre',
   playFromHere: 'Jouer à partir d’ici',
+  forwardOnly: 'Ici, l’histoire ne fait qu’avancer',
   theEnd: 'Fin',
 }
 

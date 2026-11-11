@@ -8,6 +8,9 @@
   be read. Its choices make no points on the map, which goes from the choice before it to the one
   after. Cyberdeck's preview lets the author go back anyway. Stories that use it need Datajack 3.2
   (format 3.2).
+- `[no going back]` … `[no going back: off]`: a part played forward only, for a story whose choices
+  are final: the same lock, its choices still points of the map, shown without *Play from here*.
+- `: until an ending`, for either: the lock lifts once the player has reached an ending of the game.
 
 ### Datajack, the player
 - A game's own settings, from its card or its settings in the game: the profile's until the player
@@ -22,6 +25,8 @@
   once per page and then showed its last frame: the stage now plays it frame by frame itself, for
   characters, backgrounds, illustrations and a grid's tiles, and so does the gallery, enlarged.
   Players who ask for less motion see where it ends at once.
+- The map records an option as soon as it is picked, and links it to the next choice even when the
+  game was left, or the map opened, in between: it kept points with nothing picked, and lines missing.
 - The map shows each option with the values of its moment, `Everything: 1,000.00 dollars`, rather
   than as written, `Everything: {Money} dollars`.
 

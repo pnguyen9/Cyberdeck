@@ -47,11 +47,13 @@ export {
   EFFECT_DEFAULTS,
   effectiveFacing,
   EMPTY_STAGE,
+  isStageLocked,
   waitMillisecondsOf,
   type BackgroundTransition,
   type CharacterOnStage,
   type ResolvedAnimation,
   type StageContext,
+  type StageLock,
   type StageState,
 } from './runtime/stageState'
 export {
@@ -140,6 +142,7 @@ export {
   parseProgress,
   pointKeyOf,
   recordChoiceReached,
+  recordOptionPicked,
   recordEndReached,
   recordIllustrationSeen,
   recordLasting,

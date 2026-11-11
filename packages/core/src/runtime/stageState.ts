@@ -32,6 +32,15 @@ export interface BackgroundTransition {
 export const EFFECT_DEFAULTS = { transitionMs: 800, shakeMs: 500, flashMs: 300, fadeMs: 1000 } as const
 
 /** What the player sees and hears, apart from the text. Never modified: each change gives a new state. */
+/** A lock on going back, saving and loading: for good, or until the player has reached an ending of the game. */
+export type StageLock = 'always' | 'untilEnding'
+
+/** Whether a stage forbids going back, saving and loading now, knowing whether an ending was reached. */
+export function isStageLocked(stage: Pick<StageState, 'gameMode' | 'noGoingBack'>, hasReachedEnding: boolean): boolean {
+  const holds = (lock: StageLock | null) => lock === 'always' || (lock === 'untilEnding' && !hasReachedEnding)
+  return holds(stage.gameMode) || holds(stage.noGoingBack)
+}
+
 export interface StageState {
   backgroundId: string | null
   /** How the current background appeared, from the transition announced before it. */
@@ -44,8 +53,10 @@ export interface StageState {
   tint: TintName | null
   /** What a game missing chapters says on running out of them, as the story last wrote it; null for the default. */
   continuedText: string | null
-  /** In a part played as a game, `[game mode]`: the player cannot go back, save or load there. */
-  gameMode: boolean
+  /** In a part played as a game, `[game mode]`: no going back, saving or loading, no points on the map. */
+  gameMode: StageLock | null
+  /** In a part played forward only, `[no going back]`: no going back, saving or loading. */
+  noGoingBack: StageLock | null
   /** Over the whole stage, backgrounds and characters, until taken away. */
   illustrationId: string | null
   /** Text in a box, or over the whole screen: there, the pages of one screen pile up. */
@@ -66,7 +77,8 @@ export const EMPTY_STAGE: StageState = {
   coverFadeMs: 0,
   tint: null,
   continuedText: null,
-  gameMode: false,
+  gameMode: null,
+  noGoingBack: null,
   illustrationId: null,
   textMode: 'box',
   screenfulPageIds: [],
@@ -120,7 +132,9 @@ export function applyStageCommand(stage: StageState, command: StageCommand, cont
     case 'continued':
       return { ...stage, continuedText: command.text }
     case 'gameMode':
-      return { ...stage, gameMode: command.on }
+      return { ...stage, gameMode: command.on ? (command.untilEnding === true ? 'untilEnding' : 'always') : null }
+    case 'noGoingBack':
+      return { ...stage, noGoingBack: command.on ? (command.untilEnding === true ? 'untilEnding' : 'always') : null }
     case 'textMode':
       return command.mode === stage.textMode ? stage : { ...stage, textMode: command.mode, screenfulPageIds: [] }
     case 'clear':

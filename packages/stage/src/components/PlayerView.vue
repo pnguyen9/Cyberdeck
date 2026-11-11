@@ -16,6 +16,7 @@ import {
   createStageCatalog,
   emptyProgress,
   recordChoiceReached,
+  recordOptionPicked,
   recordEndReached,
   minutesAway,
   recordPlaying,
@@ -35,6 +36,7 @@ import {
   StoryRuntime,
   toSave,
   splitAtFirstWait,
+  isStageLocked,
   waitMillisecondsOf,
   EFFECT_DEFAULTS,
   MAXIMUM_ASKED_NAME_LENGTH,
@@ -110,8 +112,22 @@ const runtime = new StoryRuntime(props.story)
 const catalog = createStageCatalog(props.story)
 const snapshot = shallowRef<PlayerSnapshot>(runtime.snapshot)
 const canGoBack = ref(false)
-/** In a part played as a game, `[game mode]`, the player cannot go back, save or load. */
-const isGameLocked = computed(() => snapshot.value.stage.gameMode && props.ignoresGameMode !== true)
+/**
+ * In a part played as a game, `[game mode]`, or forward only, `[no going back]`, the player cannot go
+ * back, save or load; a lock `until an ending` lifts once they have reached an ending of the game.
+ * The reason the player is told, null while nothing is locked.
+ */
+const lockedNote = computed((): string | null => {
+  const stage = snapshot.value.stage
+  const hasReachedEnding = progress.value.endingIds.length > 0
+  if (props.ignoresGameMode === true || !isStageLocked(stage, hasReachedEnding)) {
+    return null
+  }
+  return isStageLocked({ gameMode: stage.gameMode, noGoingBack: null }, hasReachedEnding)
+    ? text.value.gameModeLocked
+    : text.value.storyLocked(stage.noGoingBack === 'untilEnding')
+})
+const isGameLocked = computed(() => lockedNote.value !== null)
 const canGoBackNow = computed(() => canGoBack.value && !isGameLocked.value)
 const errorMessage = ref<string | null>(null)
 const openPanel = ref<'none' | 'log' | 'journal' | 'save' | 'load' | 'settings'>('none')
@@ -636,7 +652,7 @@ function recordProgress() {
   if (step.type === 'page') {
     pageWasRead = recorded.readPageIds.includes(step.page.id)
     recorded = recordPageRead(recorded, step.page.id)
-  } else if (step.type === 'choice' && runtime.snapshot.stage.gameMode) {
+  } else if (step.type === 'choice' && runtime.snapshot.stage.gameMode !== null) {
     // A part played as a game makes no points: the map goes from the choice before it to the one after.
     currentPointKey = null
   } else if (step.type === 'choice') {
@@ -672,6 +688,7 @@ function showNotice(message: string) {
 function resume(save: SaveData) {
   forgetTitleCard()
   let outcome: RestoreOutcome = 'exact'
+  pendingOption = save.arrivedBy ?? null
   act(() => {
     outcome = runtime.restoreState(stateFromSave(props.story, save))
   })
@@ -716,7 +733,9 @@ watch(openPanel, panel => {
 
 /** The playthrough as it stands, with a picture of its stage for the list of saves to show. */
 async function currentSave(now = new Date()): Promise<SaveData> {
-  const save = toSave(props.story, runtime.exportState(), now.toISOString())
+  const made = toSave(props.story, runtime.exportState(), now.toISOString())
+  // The option picked last travels with the save, so that resuming it links the choice it leads to.
+  const save = pendingOption === null ? made : { ...made, arrivedBy: pendingOption }
   const picture = await stagePicture(runtime.snapshot.stage, catalog).catch(() => null)
   return picture === null ? save : { ...save, picture }
 }
@@ -741,7 +760,7 @@ function autosave() {
 
 async function openSlots(mode: 'save' | 'load') {
   if (isGameLocked.value) {
-    showNotice(text.value.gameModeLocked)
+    showNotice(lockedNote.value ?? '')
     return
   }
   const gameId = props.story.project.id
@@ -902,7 +921,7 @@ function advance() {
 /** The previous page comes back complete: it was already read. */
 function goBack() {
   if (isGameLocked.value) {
-    showNotice(text.value.gameModeLocked)
+    showNotice(lockedNote.value ?? '')
     return
   }
   if (!runtime.canGoBack) {
@@ -999,8 +1018,12 @@ function pickCell(number: number) {
 }
 
 function choose(optionId: string) {
-  if (!runtime.snapshot.stage.gameMode) {
+  if (runtime.snapshot.stage.gameMode === null) {
     pendingOption = currentPointKey === null ? null : { pointKey: currentPointKey, optionId }
+    if (pendingOption !== null) {
+      progress.value = recordOptionPicked(progress.value, pendingOption)
+      void props.saveStore.writeProgress(props.story.project.id, progress.value)
+    }
   }
   playForward(() => runtime.choose(optionId))
 }
@@ -1326,7 +1349,7 @@ onUnmounted(() => {
         @close="isStateShown = false"
       />
       <JournalPanel v-if="openPanel === 'journal'" :story="story" :snapshot="snapshot" :ending-ids="remembered.endingIds" @close="openPanel = 'none'" />
-      <BacklogPanel v-if="openPanel === 'log'" :lines="backlogLines" :locked-note="isGameLocked ? text.gameModeLocked : null" @close="openPanel = 'none'" @go-back="goBackTo" />
+      <BacklogPanel v-if="openPanel === 'log'" :lines="backlogLines" :locked-note="lockedNote" @close="openPanel = 'none'" @go-back="goBackTo" />
       <SettingsPanel
         v-if="openPanel === 'settings'"
         v-model="settings"

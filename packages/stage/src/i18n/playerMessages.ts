@@ -44,6 +44,7 @@ const en = {
   takenWhenTimeRunsOut: (option: string) => `${option}, taken when the time runs out`,
   fullscreenUnavailable: 'Full screen is not available here.',
   gameModeLocked: 'This part is played as a game: no going back, saving or loading until it ends.',
+  storyLocked: (untilEnding: boolean) => `Here the story only goes forward: no going back, saving or loading${untilEnding ? ' until you have reached an ending' : ''}.`,
 }
 
 type PlayerMessages = typeof en
@@ -92,6 +93,7 @@ const fr: PlayerMessages = {
   takenWhenTimeRunsOut: option => `${option}, choisi quand le temps est écoulé`,
   fullscreenUnavailable: 'Le plein écran n’est pas disponible ici.',
   gameModeLocked: 'Ce passage se joue comme un jeu\u00a0: ni retour en arrière, ni sauvegarde, ni chargement avant sa fin.',
+  storyLocked: untilEnding => `Ici, l’histoire ne fait qu’avancer\u00a0: ni retour en arrière, ni sauvegarde, ni chargement${untilEnding ? ' avant d’avoir atteint une fin' : ''}.`,
 }
 
 export const playerMessages = { en, fr }

@@ -7,7 +7,7 @@ import { flattenStoredNodes, type Facing, type FadeColor, type TintName } from '
 import type { PlayableStory } from '../runtime/playableStory'
 import { drawsNumbers, newSeed } from '../runtime/chance'
 import { chaptersInOrder } from '../runtime/playableStory'
-import { EMPTY_STAGE, PAGES_PER_SCREENFUL, type CharacterOnStage } from '../runtime/stageState'
+import { EMPTY_STAGE, PAGES_PER_SCREENFUL, type CharacterOnStage, type StageLock } from '../runtime/stageState'
 import type { CounterState, DecisionState, NameState, RuntimeState } from '../runtime/storyRuntime'
 
 /**
@@ -37,6 +37,11 @@ export interface SaveData {
   picture?: string
   /** The language the game was played in, for a game of several: resumed in it. Since 2.0. */
   language?: string
+  /**
+   * The option last picked, at a point of the map, whose next choice is not reached yet: resuming the
+   * save links that option to it, as if the game had never been left. Since 3.2.
+   */
+  arrivedBy?: { pointKey: string; optionId: string }
   stage: {
     background: string | null
     music: string | null
@@ -47,8 +52,9 @@ export interface SaveData {
     tint?: TintName
     /** What running out of chapters says, when the story wrote its own. */
     continued?: string
-    /** In a part played as a game, `[game mode]`. */
-    game?: true
+    /** In a part played as a game, `[game mode]`, or forward only, `[no going back]`: for good, or until an ending. */
+    game?: StageLock
+    locked?: StageLock
     text?: 'full'
     /** In full-screen text, the pages already on the screen, the saved one last. */
     screen?: string[]
@@ -117,7 +123,8 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
       ...(state.stage.cover === null ? {} : { cover: state.stage.cover }),
       ...(state.stage.tint === null ? {} : { tint: state.stage.tint }),
       ...(state.stage.continuedText === null ? {} : { continued: state.stage.continuedText }),
-      ...(state.stage.gameMode ? { game: true as const } : {}),
+      ...(state.stage.gameMode === null ? {} : { game: state.stage.gameMode }),
+      ...(state.stage.noGoingBack === null ? {} : { locked: state.stage.noGoingBack }),
       ...(state.stage.textMode === 'full' ? { text: 'full' as const, screen: [...state.stage.screenfulPageIds] } : {}),
       ...(state.stage.illustrationId === null ? {} : { illustration: project.illustrations.find(illustration => illustration.id === state.stage.illustrationId)?.name ?? '' }),
     },
@@ -200,7 +207,8 @@ export function stateFromSave(story: PlayableStory, save: SaveData): RuntimeStat
       cover: save.stage.cover ?? null,
       tint: save.stage.tint ?? null,
       continuedText: save.stage.continued ?? null,
-      gameMode: save.stage.game === true,
+      gameMode: save.stage.game ?? null,
+      noGoingBack: save.stage.locked ?? null,
       textMode: save.stage.text ?? 'box',
       screenfulPageIds: save.stage.text === 'full' ? save.stage.screen ?? [] : [],
       illustrationId: save.stage.illustration === undefined ? null : findNamed(project.illustrations, save.stage.illustration)?.id ?? null,
@@ -229,6 +237,7 @@ export function parseSave(value: unknown): SaveData | null {
     && (value.names === undefined || (isRecord(value.names) && Object.values(value.names).every(isString)))
     && (value.lists === undefined || (isRecord(value.lists) && Object.values(value.lists).every(items => Array.isArray(items) && items.length <= 10_000 && items.every(isString))))
     && (value.seed === undefined || (Number.isSafeInteger(value.seed) && (value.seed as number) >= 0))
+    && (value.arrivedBy === undefined || (isRecord(value.arrivedBy) && isString(value.arrivedBy.pointKey) && isString(value.arrivedBy.optionId)))
     && (value.language === undefined || (typeof value.language === 'string' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8}){0,3}$/.test(value.language)))
     && (value.picture === undefined || (isString(value.picture) && value.picture.length <= MAXIMUM_PICTURE_LENGTH && value.picture.startsWith('data:image/jpeg;base64,')))
     && isRecord(stage)
@@ -237,7 +246,8 @@ export function parseSave(value: unknown): SaveData | null {
     && (stage.cover === undefined || stage.cover === 'black' || stage.cover === 'white')
     && (stage.tint === undefined || stage.tint === 'sepia' || stage.tint === 'night' || stage.tint === 'grey')
     && (stage.continued === undefined || isString(stage.continued))
-    && (stage.game === undefined || stage.game === true)
+    && (stage.game === undefined || stage.game === 'always' || stage.game === 'untilEnding')
+    && (stage.locked === undefined || stage.locked === 'always' || stage.locked === 'untilEnding')
     && (stage.text === undefined || stage.text === 'full')
     && (stage.screen === undefined || (Array.isArray(stage.screen) && stage.screen.length <= PAGES_PER_SCREENFUL && stage.screen.every(isString)))
     && (stage.illustration === undefined || isString(stage.illustration))

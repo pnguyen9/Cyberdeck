@@ -124,6 +124,21 @@ export function recordChoiceReached(
   return { progress: linkOption({ ...progress, points }, arrivedBy, { type: 'point', key: pointKey }), pointKey }
 }
 
+/**
+ * An option picked at a point: marked taken at once, where it leads learnt later, so that a game left
+ * before the next choice still shows what was picked.
+ */
+export function recordOptionPicked(progress: ProgressData, picked: PendingOption): ProgressData {
+  const point = progress.points.find(candidate => candidate.key === picked.pointKey)
+  if (point === undefined || point.taken.some(option => option.optionId === picked.optionId)) {
+    return progress
+  }
+  return {
+    ...progress,
+    points: progress.points.map(candidate => candidate !== point ? candidate : { ...point, taken: [...point.taken, { optionId: picked.optionId, next: null }] }),
+  }
+}
+
 export function recordEndReached(progress: ProgressData, endingId: string | null, arrivedBy: PendingOption | null): ProgressData {
   const endingIds = endingId === null || progress.endingIds.includes(endingId) ? progress.endingIds : [...progress.endingIds, endingId]
   return linkOption({ ...progress, endingIds }, arrivedBy, { type: 'end', endingId })

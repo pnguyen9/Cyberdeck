@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { layOutProgressMap, type MapNode, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
+import { isStageLocked, layOutProgressMap, type MapNode, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
 import { computed } from 'vue'
 import { useMessages } from '../i18n/locale'
 import { mapMessages } from '../i18n/mapMessages'
@@ -7,6 +7,10 @@ import { mapMessages } from '../i18n/mapMessages'
 const props = defineProps<{ story: PlayableStory; progress: ProgressData; closeLabel: string }>()
 const emit = defineEmits<{ play: [save: SaveData]; close: [] }>()
 const text = useMessages(mapMessages)
+/** Playing from a point reached where the story goes only forward would take the player back: not while that holds. */
+function canPlayFrom(save: SaveData): boolean {
+  return !isStageLocked({ gameMode: save.stage.game ?? null, noGoingBack: save.stage.locked ?? null }, props.progress.endingIds.length > 0)
+}
 
 const CARD_WIDTH = 260
 const COLUMN_GAP = 90
@@ -80,7 +84,8 @@ const curves = computed(() => {
                 <span>{{ option.isTaken ? '›' : '?' }}</span> {{ option.text }}
               </li>
             </ul>
-            <button class="play-button" @click="emit('play', node.point.save)">{{ text.playFromHere }}</button>
+            <button v-if="canPlayFrom(node.point.save)" class="play-button" @click="emit('play', node.point.save)">{{ text.playFromHere }}</button>
+            <p v-else class="forward-only">{{ text.forwardOnly }}</p>
           </template>
           <p v-else class="ending">{{ node.endingName === null ? text.theEnd : `★ ${node.endingName}` }}</p>
         </section>
@@ -220,6 +225,12 @@ const curves = computed(() => {
 
 .options li.untried span {
   color: #7b8597;
+}
+
+.forward-only {
+  margin: 0;
+  font: italic 14px/1.3 system-ui, sans-serif;
+  color: #8a94a6;
 }
 
 .play-button {

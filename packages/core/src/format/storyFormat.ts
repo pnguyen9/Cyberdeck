@@ -454,8 +454,13 @@ export type StageCommand =
   | { type: 'tint'; tint: TintName | null }
   /** What players read when the game runs out of the chapters installed, until another says otherwise; null for the default. */
   | { type: 'continued'; text: string | null }
-  /** A part played as a game, until turned off: no going back, saving or loading, no points on the map. Since 3.2. */
-  | { type: 'gameMode'; on: boolean }
+  /**
+   * A part played as a game, until turned off: no going back, saving or loading, no points on the
+   * map; `untilEnding`, the lock lifts once the player has reached an ending of the game. Since 3.2.
+   */
+  | { type: 'gameMode'; on: boolean; untilEnding?: true }
+  /** A part played forward only: no going back, saving or loading, the map recorded as usual. Since 3.2. */
+  | { type: 'noGoingBack'; on: boolean; untilEnding?: true }
   /** Text in a box at the bottom, or over the whole screen, pages piling up until cleared. Since 1.1. */
   | { type: 'textMode'; mode: 'box' | 'full' }
   /** Starts a new screen of full-screen text. Since 1.1. */

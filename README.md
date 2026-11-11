@@ -293,7 +293,8 @@ one per language, of the same shape: another language is one more table each.
 | `[if: Trust >= 3]`, `Trust < 2`, `Trust is 3`, `Trust is not 0` | Compares a counter with a number: `>`, `>=`, `<`, `<=`, `is`, `is not`; combines with the rest by `and` / `or`. |
 | `[unset: Clues = Key]`, `[unset: Clues]` | Takes a value away from a decision, or every value: tests of it no longer hold, as if it had never been set. |
 | `[ending: The Empty Room]`, `[ending: The Empty Room = La Chambre vide]` | Ends the path here: the player has reached this ending (named endings are counted). After `=`, what players read of it in the text's language, the name before it being how the story knows it. |
-| `[game mode]` … `[game mode: off]` | A part played as a game: there, players cannot go back, save or load (Back, the keys, the log's lines and the Save and Load buttons say why), so that a card drawn or a mine opened cannot be undone; the log and the journal can still be read, and the game keeps saving itself, to resume where it was left. Its choices make no points on the map, which goes from the choice before it to the one after. Cyberdeck's preview lets the author go back anyway. The mini games are played so. Needs Datajack 3.2. |
+| `[no going back]` … `[no going back: off]`, `[no going back: until an ending]` | A part played forward only: as in game mode below, no going back, saving or loading, but its choices are points of the map as usual; the map shows them without *Play from here*, which would take the player back. `until an ending` lifts it once the player has reached an ending of the game: a second playthrough may go back, save, load and play from the map. Needs Datajack 3.2. |
+| `[game mode]` … `[game mode: off]`, `[game mode: until an ending]` | A part played as a game: there, players cannot go back, save or load (Back, the keys, the log's lines and the Save and Load buttons say why), so that a card drawn or a mine opened cannot be undone; the log and the journal can still be read, and the game keeps saving itself, to resume where it was left. Its choices make no points on the map, which goes from the choice before it to the one after. Cyberdeck's preview lets the author go back anyway. The mini games are played so. `until an ending` lifts the lock once the player has reached an ending, the map still leaving the game out. Needs Datajack 3.2. |
 | `[to be continued: Marie's story goes on in the next update.]` | What players read when the game runs out of the chapters it holds, a game exported with only some of them: the last one passed counts, so one at the start speaks for the whole story and one inside a route for that route. `[to be continued: none]` goes back to the default, *To be continued…*. Needs Datajack 2.1. |
 | `[remember: The ghost's name]` | The profile remembers it for good, in every later playthrough; going back or loading an older save does not forget. |
 | `[forget: The ghost's name]` | The profile forgets it, for good: a lasting flag the story can also clear, a key used up or a promise broken. Going back does not undo it either. Needs Datajack 2.0. |
@@ -864,9 +865,6 @@ browser checks for what it adds, the whole suite run (`npm run typecheck`, `npm 
 `npm run checks`, `npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the
 CHANGELOG brought up to date, every French text read again.
 
-- **Game mode lifted once the game is won.** `[game mode]` could end for a player who has reached an
-  ending once, `[game mode: until an ending]`, letting them go back and try other ways the second
-  time, as an author may want for a puzzle.
 - **The mini games' leftovers.** Blackjack's shoe of 2, 4, 6 or 8 real decks, as a list of the cards
   left; Minesweeper's flags, which need a second way to pick a tile (a right click, a key).
 - **Upper-body characters**, as most Japanese visual novels draw them: a framing chosen per character
@@ -880,10 +878,8 @@ CHANGELOG brought up to date, every French text read again.
   still able to change what follows and what the stage shows; two paths whose stage differs (the one
   a scene leaves) make two points for what may be the same state. Progress recorded before 2.1 keeps
   its old points.
-- **The map's links when a game is played in parts.** Opening the map mid-game, then going back or
-  playing from a point, loads the game as a save would, and the map may take what follows as a new
-  start, with no line from the choice before; opened while a choice waits, it never records the option
-  then taken. Hovering a point could show its values, by the journal's rule of what players may see.
+- **The map's points with values.** Hovering a point could show its values, by the journal's rule
+  of what players may see.
 - **The author's map in the preview.** Every path drawn as if all were played, each point with the
   values of its path, skipping always allowed, previewing from a point starting with its values; the
   map able to keep only the path played. Previewing from a page today plays the shortest way there,

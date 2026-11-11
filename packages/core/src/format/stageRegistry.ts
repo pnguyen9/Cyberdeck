@@ -192,6 +192,7 @@ export class StageRegistry {
       case 'tint':
       case 'continued':
       case 'gameMode':
+      case 'noGoingBack':
       case 'textMode':
       case 'clear':
         return instruction

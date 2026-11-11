@@ -24,7 +24,7 @@ export type StageInstruction =
   | { type: 'fade'; direction: 'out' | 'in'; color: FadeColor; durationMs: number | null }
   | { type: 'tint'; tint: TintName | null }
   | { type: 'continued'; text: string | null }
-  | { type: 'gameMode'; on: boolean }
+  | { type: 'gameMode' | 'noGoingBack'; on: boolean; untilEnding?: true }
   | { type: 'textMode'; mode: 'box' | 'full' }
   | { type: 'illustration'; illustration: string | null }
   | { type: 'clear' }
@@ -47,7 +47,7 @@ export interface StageVocabulary {
   positionNames: readonly string[]
 }
 
-export const STAGE_KEYWORDS: readonly string[] = ['bg', 'background', 'transition', 'music', 'sound', 'voice', 'video', 'enter', 'exit', 'move', 'wait', 'shake', 'flash', 'fade out', 'fade in', 'tint', 'text', 'clear', 'illustration', 'cg', 'style', 'to be continued', 'game mode']
+export const STAGE_KEYWORDS: readonly string[] = ['bg', 'background', 'transition', 'music', 'sound', 'voice', 'video', 'enter', 'exit', 'move', 'wait', 'shake', 'flash', 'fade out', 'fade in', 'tint', 'text', 'clear', 'illustration', 'cg', 'style', 'to be continued', 'game mode', 'no going back']
 
 const SHAKE_STRENGTHS: readonly ShakeStrength[] = ['light', 'strong']
 const FLASH_COLORS: readonly FlashColor[] = ['white', 'red', 'black']
@@ -241,9 +241,13 @@ export function interpretStageDirective(directive: Directive, vocabulary: StageV
       const written = (directive.written ?? argumentText).trim()
       return written === '' ? null : { type: 'continued', text: written.toLowerCase() === 'none' ? null : written }
     }
-    case 'game mode': {
-      const mode = argumentText.toLowerCase()
-      return mode === '' || mode === 'on' ? { type: 'gameMode', on: true } : mode === 'off' ? { type: 'gameMode', on: false } : null
+    case 'game mode':
+    case 'no going back': {
+      const type = directive.name === 'game mode' ? 'gameMode' : 'noGoingBack'
+      const mode = argumentText.toLowerCase().replace(/\s+/g, ' ')
+      return mode === '' || mode === 'on' ? { type, on: true }
+        : mode === 'off' ? { type, on: false }
+          : mode === 'until an ending' ? { type, on: true, untilEnding: true } : null
     }
     case 'tint': {
       const tint = argumentText.toLowerCase()

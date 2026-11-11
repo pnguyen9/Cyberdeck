@@ -527,8 +527,10 @@ motion see where the animation ends, at once.</p>
 the one picked gives <code>Cell</code> its number. The Pairs and Minesweeper samples are made of these.</p>
 <p>A game played inside the story should not let players undo a bad card or a mine: from
 <code>[game mode]</code> to <code>[game mode: off]</code>, they cannot go back, save or load (they can
-still read the log and the journal), and its choices make no points on the map. Your preview lets you
-go back anyway, to test it.</p>
+still read the log and the journal), and its choices make no points on the map. A story whose choices are meant to be final writes
+<code>[no going back]</code> instead: the same, its choices still on the map, without playing from them.
+Either can end once the player has reached an ending, <code>[no going back: until an ending]</code>, for a
+second playthrough free to explore. Your preview lets you go back anyway, to test it.</p>
 
 <h2 id="tracking">12. Keeping track of decisions</h2>
 <p>A decision or a style can be declared anywhere, and used everywhere. Two tabs keep them from getting

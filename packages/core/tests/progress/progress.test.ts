@@ -5,6 +5,9 @@ import {
   mergeProgress,
   parseProgress,
   recordChoiceReached,
+  recordOptionPicked,
+  parseSave,
+  toSave,
   recordEndReached,
   recordPageRead,
   stateFromSave,
@@ -130,6 +133,30 @@ describe('progress', () => {
 })
 
 describe('the map', () => {
+  it('marks an option taken when picked, and links it to the next choice after the game was left and resumed', () => {
+    const story = storyFromText(STORY)
+    const runtime = startedRuntime(story)
+    const onAPage = () => runtime.snapshot.step.type === 'page'
+    while (onAPage()) {
+      runtime.next()
+    }
+    const reached = recordChoiceReached(emptyProgress(story), story, runtime.exportState(), null, NOW)
+    const step = runtime.snapshot.step
+    const smile = step.type === 'choice' ? step.choice.options[0]!.id : ''
+    const picked = { pointKey: reached.pointKey, optionId: smile }
+    let progress = recordOptionPicked(reached.progress, picked)
+    expect(progress.points[0]?.taken).toEqual([{ optionId: smile, next: null }])
+    runtime.choose(smile)
+    // Left on the page after the choice: the autosave keeps the option picked.
+    const autosave = parseSave(JSON.parse(JSON.stringify({ ...toSave(story, runtime.exportState(), NOW), arrivedBy: picked })))
+    expect(autosave?.arrivedBy).toEqual(picked)
+    while (onAPage()) {
+      runtime.next()
+    }
+    progress = recordChoiceReached(progress, story, runtime.exportState(), autosave?.arrivedBy ?? null, NOW).progress
+    expect(progress.points[0]?.taken).toEqual([{ optionId: smile, next: { type: 'point', key: progress.points[1]!.key } }])
+  })
+
   it('shows each option with the values its point held, as the choice did', () => {
     const story = storyFromText(['[counter: Money = 1000.00]', '[choice: Bet]', '> Ten = Ten', '> Everything: {Money} dollars = All', 'Done.'])
     const progress = play(story, emptyProgress(story), ['Everything: 1,000.00 dollars'])

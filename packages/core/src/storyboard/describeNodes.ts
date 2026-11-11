@@ -44,7 +44,8 @@ export function describeStageCommand(command: StageCommand, project: ProjectDocu
     case 'continued':
       return `to be continued: ${command.text ?? 'none'}`
     case 'gameMode':
-      return command.on ? 'game mode' : 'game mode: off'
+    case 'noGoingBack':
+      return `${command.type === 'gameMode' ? 'game mode' : 'no going back'}${command.on ? (command.untilEnding === true ? ': until an ending' : '') : ': off'}`
     case 'textMode':
       return `text: ${command.mode}`
     case 'clear':
