@@ -11,6 +11,10 @@
 - `[no going back]` … `[no going back: off]`: a part played forward only, for a story whose choices
   are final: the same lock, its choices still points of the map, shown without *Play from here*.
 - `: until an ending`, for either: the lock lifts once the player has reached an ending of the game.
+- A grid's caption: a line under it, `> {Left} cells left to open`, shown in the text box while the
+  grid waits, its values filled in each time.
+- `now`, the player's clock in seconds, beside `hour`, `weekday` and `time away`: a story keeps it
+  when something starts and takes it away at the end, to time the player.
 
 ### Datajack, the player
 - A game's own settings, from its card or its settings in the game: the profile's until the player
@@ -39,6 +43,8 @@
 
 ### Samples
 - The mini games are played in game mode, from their first round.
+- Minesweeper tells the cells left to open under the board, the seconds a board cleared took, and
+  keeps each level's best time, in the journal.
 
 ## 3.1.0 — 2026-11-10
 

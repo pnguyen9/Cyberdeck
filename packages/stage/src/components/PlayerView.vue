@@ -1287,6 +1287,18 @@ onUnmounted(() => {
         :plate-frame="plateFrame"
         :plate-color="pagePlate.color"
       />
+      <!-- A grid's caption, its values filled in: the text box keeps it in view while the grid waits, without the mark to go on. -->
+      <TextBox
+        v-else-if="grid?.grid.caption !== undefined && isHudShown"
+        :speaker="null"
+        :text="grid.grid.caption"
+        :visible-length="grid.grid.caption.length"
+        :is-complete="false"
+        :plate-motion="settings.namePlateMotion"
+        :plate-place="settings.namePlatePlace"
+        :box-classes="boxClasses"
+        :box-frame="boxFrame"
+      />
       <ChoiceMenu v-if="choice !== null && isHudShown" :key="choice.id" :choice="choice" :time="choiceTime" @choose="choose" />
       <GridMenu v-if="grid !== null && isHudShown" :key="grid.grid.id" :grid="grid.grid" :items="grid.items" :catalog="catalog" :start="snapshot.counters[grid.grid.counterId] ?? 1" @pick="pickCell" />
       <form v-if="asked !== null && isHudShown" class="ask" @click.stop @submit.prevent="answer">

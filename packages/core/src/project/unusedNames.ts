@@ -195,7 +195,7 @@ export function unusedNames(project: ProjectDocument, documents: readonly Chapte
   const clockCounters = project.counters.filter(candidate => candidate.clock !== undefined)
   if (clockCounters.length > 0) {
     const shownNames = new Set(documents.flatMap(document => flattenStoredNodes(document.nodes)).flatMap(node =>
-      node.type === 'page' ? placeholdersIn(node.text) : node.type === 'choice' ? node.options.flatMap(option => placeholdersIn(option.text)) : []).map(normalizeName))
+      node.type === 'page' ? placeholdersIn(node.text) : node.type === 'choice' ? node.options.flatMap(option => placeholdersIn(option.text)) : node.type === 'grid' ? placeholdersIn(node.caption ?? '') : []).map(normalizeName))
     clockCounters.filter(counter => shownNames.has(normalizeName(counter.name))).forEach(counter => used.add(counter.id))
   }
   for (const counter of project.counters.filter(candidate => candidate.implicit === true && !used.has(candidate.id))) {

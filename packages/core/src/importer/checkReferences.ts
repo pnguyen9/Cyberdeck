@@ -395,7 +395,7 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
 function checkPlaceholders(result: ImportResult, allNodes: readonly StoryNode[], knownAskedNames: readonly string[], counterAndDecisionNames: ReadonlySet<string>, isListPlace: (name: string) => boolean): ImportProblem[] {
   const asks = allNodes.flatMap(node => node.type === 'ask' ? [node] : [])
   const asked = new Set([...knownAskedNames, ...asks.map(node => node.name)].map(normalizeName))
-  const textsOf = (node: StoryNode): string[] => node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : []
+  const textsOf = (node: StoryNode): string[] => node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : node.type === 'grid' ? [node.caption ?? ''] : []
   const unknown = allNodes.flatMap(node => [...new Set(textsOf(node).flatMap(placeholdersIn))]
     .filter(name => !asked.has(normalizeName(name)) && !counterAndDecisionNames.has(normalizeName(name)) && !isListPlace(name))
     .map((name): ImportProblem => ({ severity: 'error', code: 'unknownValue', line: node.sourceLine, subject: name })))

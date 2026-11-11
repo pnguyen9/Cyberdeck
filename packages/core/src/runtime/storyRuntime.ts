@@ -645,7 +645,12 @@ export class StoryRuntime {
           // A size given by counters, `grid {Columns} × {Rows}`, is read now, within what a grid may be.
           const sized = (counterId: string | undefined, written: number, largest: number) => counterId === undefined ? written
             : within(this.wholeCountOf(counterId), 1, largest)
-          const grid = { ...node, columns: sized(node.columnsFrom, node.columns, MAXIMUM_GRID.columns), rows: sized(node.rowsFrom, node.rows, MAXIMUM_GRID.rows) }
+          const grid = {
+            ...node,
+            columns: sized(node.columnsFrom, node.columns, MAXIMUM_GRID.columns),
+            rows: sized(node.rowsFrom, node.rows, MAXIMUM_GRID.rows),
+            ...(node.caption === undefined ? {} : { caption: withValues(node.caption, this.valueOf()) }),
+          }
           const items = this.listOf(node.listId)
           this.setStep({ type: 'grid', grid, items: Array.from({ length: grid.columns * grid.rows }, (_, index) => items[index] ?? '') })
           return
@@ -812,6 +817,7 @@ export class StoryRuntime {
       // Monday 1 to Sunday 7, as most of the world counts the days of the week.
       weekday: ((now.getDay() + 6) % 7) + 1,
       timeAway: Math.max(0, Math.floor(this.clock.minutesAway)),
+      now: Math.floor(now.getTime() / 1000),
     }
     const counters = { ...this.currentSnapshot.counters }
     for (const counter of this.clockCounters) {

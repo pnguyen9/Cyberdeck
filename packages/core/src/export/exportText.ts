@@ -283,6 +283,9 @@ class TextWriter {
           break
         case 'grid':
           this.line(`[${describeGrid(node, this.project)}]`)
+          if (node.caption !== undefined) {
+            this.line(`> ${node.caption}`)
+          }
           break
         case 'ask': {
           const asked = this.project.askedNames.find(candidate => candidate.id === node.askedNameId)

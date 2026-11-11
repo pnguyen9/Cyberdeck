@@ -10,6 +10,7 @@ import {
   IMPORT_KINDS,
   type ChoiceNode,
   type ConditionNode,
+  type GridNode,
   type LoopNode,
   type Directive,
   type ImportedChapter,
@@ -263,6 +264,13 @@ class TextImporter {
     if (line === '') {
       return
     }
+    if (line.startsWith('>') && this.gridAwaitingCaption !== null && this.openChoice === null) {
+      // The line right under a grid is what the text box shows while it waits.
+      this.gridAwaitingCaption.caption = line.slice(1).trim()
+      this.gridAwaitingCaption = null
+      return
+    }
+    this.gridAwaitingCaption = null
     if (line.startsWith('>')) {
       this.readOption(line.slice(1).trim(), lineNumber)
       this.isFirstContentLine = false
@@ -513,7 +521,9 @@ class TextImporter {
             return
           }
           this.flushPendingDirectives()
-          this.addNode({ type: 'grid', sourceLine: lineNumber, counter: grid[1]!.trim(), columns, rows, list: grid[4]!.trim(), character: grid[5]?.trim() ?? null })
+          const gridNode: GridNode = { type: 'grid', sourceLine: lineNumber, counter: grid[1]!.trim(), columns, rows, list: grid[4]!.trim(), character: grid[5]?.trim() ?? null }
+          this.addNode(gridNode)
+          this.gridAwaitingCaption = gridNode
           return
         }
         this.flushPendingDirectives()
@@ -736,6 +746,9 @@ class TextImporter {
     }
     this.openBlocks.length = 0
   }
+
+  /** A grid just read, which the line under it, `> …`, may give a caption. */
+  private gridAwaitingCaption: GridNode | null = null
 
   private addNode(node: StoryNode) {
     const innermostBlock = this.openBlocks.at(-1)

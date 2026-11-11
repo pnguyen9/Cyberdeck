@@ -105,6 +105,8 @@ export const MAXIMUM_GRID = { columns: 30, rows: 24 } as const
 export interface StoredGrid {
   type: 'grid'
   id: string
+  /** Shown in the text box while the grid waits, its values filled in as it is shown. Since 3.2. */
+  caption?: string
   counterId: string
   columns: number
   rows: number
@@ -116,18 +118,20 @@ export interface StoredGrid {
 }
 
 /** What the player's clock tells a story: the hour, the day of the week, the minutes since the profile last played. */
-export type ClockValue = 'hour' | 'weekday' | 'timeAway'
+export type ClockValue = 'hour' | 'weekday' | 'timeAway' | 'now'
 
 /**
  * Counters every story has without declaring them, which it tests and shows as any other but never
  * changes: `hour` (0 to 23), `weekday` (1 for Monday to 7 for Sunday), `time away` (minutes since the
- * profile last played the game, 0 the first time). A counter or a decision the story declares under
+ * profile last played the game, 0 the first time), `now` (seconds since 1970, to time the player:
+ * since 3.2). A counter or a decision the story declares under
  * one of these names is its own instead.
  */
 export const CLOCK_COUNTERS: readonly { clock: ClockValue; name: string }[] = [
   { clock: 'hour', name: 'hour' },
   { clock: 'weekday', name: 'weekday' },
   { clock: 'timeAway', name: 'time away' },
+  { clock: 'now', name: 'now' },
 ]
 
 export interface Counter {

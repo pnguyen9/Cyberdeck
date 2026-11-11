@@ -106,6 +106,8 @@ export interface GridNode {
   rows: number | string
   list: string
   character: string | null
+  /** The line under it, `> {Left} cells left`: shown in the text box while the grid waits. */
+  caption?: string
 }
 
 /** `[shuffle: Board]`. */

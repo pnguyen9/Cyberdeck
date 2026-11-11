@@ -276,7 +276,7 @@ function node(value: unknown, path: string, depth: number): StoredNode {
     }
     case 'grid': {
       const grid: Check<StoredGrid> = object({ type: oneOf('grid'), id: string, counterId: string, columns: integer, rows: integer, listId: string, characterId: nullable(string) })
-      return withOptional('rowsFrom', string, withOptional('columnsFrom', string, grid))(value, path)
+      return withOptional('caption', string, withOptional('rowsFrom', string, withOptional('columnsFrom', string, grid)))(value, path)
     }
     case 'take': {
       const into = record(fields.into, `${path}.into`)
@@ -423,7 +423,7 @@ const checkProjectFields: Check<ProjectDocument> = object({
   chapterOrder: array(string),
   sceneOrder: array(string),
   decisions: array(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, multiple: boolean, values: array(object({ id: string, name: string })) })))),
-  counters: array(withOptional('clock', oneOf('hour', 'weekday', 'timeAway'), withDecimals(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, initial: integer })))))),
+  counters: array(withOptional('clock', oneOf('hour', 'weekday', 'timeAway', 'now'), withDecimals(withFlag('lasting', withFlag('implicit', object({ id: string, name: string, initial: integer })))))),
   askedNames: array(object({ id: string, name: string, defaultName: string })),
   endings: array((ending, endingPath) => {
     const checked = object({ id: string, name: string })(ending, endingPath)

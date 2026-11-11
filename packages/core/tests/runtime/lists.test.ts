@@ -145,3 +145,28 @@ describe('the index', () => {
     expect(nameWarnings(index, story.project, storyFlow(story.chapters, [])).map(warning => `${warning.name.name} ${warning.code}`)).toEqual(['Card valueGivenNeverTested'])
   })
 })
+
+describe('a grid with a caption and the clock now', () => {
+  it('shows the line under the grid with its values, written back, needing Datajack 3.2', () => {
+    const story = storyFromText(['[counter: Left = 3]', '[list: Shown = 4 × back]', '[choice: Cell grid 2 × 2 from Shown with tile]', '> {Left} cells left', 'Picked {Cell}.'])
+    const runtime = new StoryRuntime(story)
+    runtime.start()
+    const step = runtime.snapshot.step
+    expect(step.type === 'grid' ? step.grid.caption : null).toBe('3 cells left')
+    expect(exportText(story.project, story.chapters, { declareDecisions: true })).toContain('[choice: Cell grid 2 × 2 from Shown with tile]\n> {Left} cells left')
+    expect(playerFormatVersion(story.project, story.chapters)).toBe('3.2')
+  })
+
+  it('reads now as seconds since 1970, to time the player', () => {
+    const story = storyFromText(['[counter: Start = 0]', '[set: Start = {now}]', 'Started at {Start}.', 'Now {now}.'])
+    const runtime = new StoryRuntime(story)
+    let time = 1_000_000_000_000
+    runtime.useClock({ now: () => new Date(time), minutesAway: 0 })
+    runtime.start()
+    expect(shownText(runtime)).toBe('Started at 1000000000.')
+    time += 95_000
+    runtime.next()
+    expect(shownText(runtime)).toBe('Now 1000000095.')
+    expect(playerFormatVersion(story.project, story.chapters)).toBe('3.2')
+  })
+})

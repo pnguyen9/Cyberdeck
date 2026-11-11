@@ -21,6 +21,12 @@
 [counter: Near = 0]
 [counter: MostMines = 0]
 [counter lasting: Cleared = 0]
+[counter: Left = 0]
+[counter: Start = 0]
+[counter: Took = 0]
+[counter lasting: Best beginner = 0]
+[counter lasting: Best intermediate = 0]
+[counter lasting: Best expert = 0]
 
 [list: Mine]
 [list: Shown]
@@ -30,7 +36,7 @@
 [list: Queue]
 [list: Tiles = hidden | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | mine | boom]
 
-[shown: Mines, Opened, Cleared]
+[shown: Left, Cleared, Best beginner, Best intermediate, Best expert]
 
 # Minesweeper
 [bg: field]
@@ -63,12 +69,15 @@ Open every cell that hides no mine. A number tells how many mines touch that cel
 [play: New board]
 [set: Opened = 0]
 [set: Placed = 0]
+[set: Left = {Safe}]
 [loop]
 [choice: Cell grid {Columns} × {Rows} from Shown with tile]
+> {Left} cells left to open · {Mines} mines
 [if: Shown Cell is hidden]
 [sound: click]
 [if: Placed is 0]
 [play: Place mines]
+[set: Start = {now}]
 [end]
 [if: Mine Cell is mine]
 [play: Explode]
@@ -76,10 +85,15 @@ Open every cell that hides no mine. A number tells how many mines touch that cel
 [end]
 [set: K = {Cell}]
 [play: Open]
+[set: Left = {Safe}]
+[add: Left -{Opened}]
 [if: Opened >= {Safe}]
 [sound: cleared]
 [add: Cleared 1]
-All clear! Every safe cell opened.
+[set: Took = {now}]
+[add: Took -{Start}]
+All clear! Every safe cell opened, in {Took} seconds.
+[play: Best time]
 [break]
 [end]
 [end]
@@ -249,3 +263,21 @@ Boards cleared, in all: {Cleared}.
 [end]
 [set: Shown Cell = boom]
 Boom! That one was a mine. Pick any cell to look at the board, then choose what next.
+
+# Scene: Best time
+[if: Level is Beginner]
+[if: Best beginner is 0 or Took < {Best beginner}]
+[set: Best beginner = {Took}]
+A new best time on a beginner board!
+[end]
+[else if: Level is Intermediate]
+[if: Best intermediate is 0 or Took < {Best intermediate}]
+[set: Best intermediate = {Took}]
+A new best time on an intermediate board!
+[end]
+[else if: Level is Expert]
+[if: Best expert is 0 or Took < {Best expert}]
+[set: Best expert = {Took}]
+A new best time on an expert board!
+[end]
+[end]

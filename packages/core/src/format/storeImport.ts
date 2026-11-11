@@ -91,7 +91,7 @@ export function storeImport(
   // A clock's counter shown in the text, `{hour}`, is made as one tested would be.
   const clockNames = new Set(CLOCK_COUNTERS.map(clock => normalizeName(clock.name)))
   for (const node of importedNodes) {
-    const texts = node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : []
+    const texts = node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : node.type === 'grid' ? [node.caption ?? ''] : []
     texts.flatMap(placeholdersIn).filter(name => clockNames.has(normalizeName(name))).forEach(name => counters.get(name))
   }
   const lists = new ListRegistry(project.lists ?? [], environment)
@@ -273,6 +273,7 @@ export function storeImport(
           rows: typeof node.rows === 'number' ? node.rows : 1,
           ...(typeof node.columns === 'string' ? { columnsFrom: counters.find(node.columns).id } : {}),
           ...(typeof node.rows === 'string' ? { rowsFrom: counters.find(node.rows).id } : {}),
+          ...(node.caption === undefined ? {} : { caption: node.caption }),
           listId: lists.find(node.list).id,
           characterId: node.character === null ? null : registry.character(node.character).id,
         }

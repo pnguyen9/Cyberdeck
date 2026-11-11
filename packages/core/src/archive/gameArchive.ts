@@ -301,8 +301,11 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   // An older Datajack would read a forget as a remember, hide the option waiting takes, and carry nothing over.
   const needsDatajack20 = languagesOf(project).length > 1 || project.decisions.some(decision => decision.lasting === true) || project.counters.some(counter => counter.lasting === true)
     || documents.some(document => flattenStoredNodes(document.nodes).some(node => (node.type === 'remember' && node.forget === true) || (node.type === 'choice' && node.timeLimitMs !== undefined)))
-  // Datajack 3.1 does not know a part played as a game: it would refuse the tag.
-  if (documents.some(document => flattenStoredNodes(document.nodes).some(node => commandsOf(node).some(command => (command.type === 'gameMode' || command.type === 'noGoingBack'))))) {
+  // Datajack 3.1 does not know a part played as a game or forward only, a grid's caption, nor the
+  // clock's `now`: it would refuse them.
+  const needsDatajack32Node = (node: StoredNode) => (node.type === 'grid' && node.caption !== undefined)
+    || commandsOf(node).some(command => command.type === 'gameMode' || command.type === 'noGoingBack')
+  if (project.counters.some(counter => counter.clock === 'now') || documents.some(document => flattenStoredNodes(document.nodes).some(needsDatajack32Node))) {
     return '3.2'
   }
   // Datajack 3.0 does not turn a picture over: it would refuse the tag.

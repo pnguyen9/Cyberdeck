@@ -500,10 +500,12 @@ for hundredths. <code>{Money}</code> shows it as your players' language writes n
 <p>Players can give a number too: <code>[ask number: Bet = 10, from 1 to {Money}]</code> asks them for the bet,
 10 if they type nothing, at least 1 and at most the money they have. They may type a comma or a point;
 the field tells them what it understood, and what it cannot take.</p>
-<p>Three counters come from the player's clock, with nothing to declare: <code>hour</code> (0 to 23),
-<code>weekday</code> (1 for Monday to 7 for Sunday) and <code>time away</code>, the minutes since they last played.
-<code>[if: hour >= 22 or hour &lt; 6]</code> can put a character to sleep at night, and
-<code>[if: time away > 1440]</code> greet players back after a day.</p>
+<p>Some counters come from the player's clock, with nothing to declare: <code>hour</code> (0 to 23),
+<code>weekday</code> (1 for Monday to 7 for Sunday), <code>time away</code>, the minutes since they last played,
+and <code>now</code>, the time in seconds. <code>[if: hour >= 22 or hour &lt; 6]</code> can put a character to
+sleep at night, <code>[if: time away > 1440]</code> greet players back after a day, and
+<code>[set: Start = {now}]</code>, then later <code>[set: Took = {now}]</code> and <code>[add: Took -{Start}]</code>,
+time how long a puzzle took them.</p>
 <p>A decision's value can choose a picture: with <code>[decision: Mood = calm | angry]</code>,
 <code>[marie: {Mood}]</code> shows Marie's <em>calm</em> or <em>angry</em> picture, whichever Mood holds, with no
 <code>[if]</code>. Counters can count with each other too: <code>[add: Money -{Bet}]</code>,
