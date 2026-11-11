@@ -848,11 +848,11 @@ of it is as free as the rest of the repository.
   pet, let it nap, or just watch it live its own little life; lasting hunger, mood and energy, kept
   between 0 and 10. Never dies, only sulks a while; gladder to see players the longer they were
   away (`time away`); its room tinted at night (`hour`).
-- **Blackjack** (`blackjack/`): one deck, where no card comes out twice until the shuffle, or a
-  six-deck shoe; $1,000.00 to start (a lasting counter with decimals), bets chosen or typed, hit,
-  stand, double down, the dealer's hidden card turned over, blackjack paying 3 to 2. Ten places on
-  the table show one shared deck (`[character: p1 = card]`), each card named by the card drawn
-  (`[enter: p1 {Card}]`).
+- **Blackjack** (`blackjack/`): a shoe of 1, 2, 4, 6 or 8 real decks, a list of 52 cards each,
+  shuffled, dealt from the front (`[take]`), shuffled again when a quarter is left; $1,000.00 to
+  start (a lasting counter with decimals), bets chosen or typed, hit, stand, double down, the
+  dealer's hidden card turned over, blackjack paying 3 to 2. Ten places on the table show one shared
+  deck (`[character: p1 = card]`), each card named by the card drawn (`[enter: p1 {Card}]`).
 - **Pairs** (`pairs/`): 16 tiles, 8 animals drawn as shapes, shuffled; a grid of picture buttons
   (`[choice: Cell grid 4 × 4 from Shown with tile]`) over two lists, the deck and what is shown; a
   pair stays face up, two different animals turn back at the next pick; the best number of turns kept.
@@ -872,7 +872,6 @@ browser checks for what it adds, the whole suite run (`npm run typecheck`, `npm 
 `npm run checks`, `npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the
 CHANGELOG brought up to date, every French text read again.
 
-- **Blackjack's real shoe.** A shoe of 2, 4, 6 or 8 real decks, as a list of the cards left.
 - **Upper-body characters**, as most Japanese visual novels draw them: a framing chosen per character
   or for the whole project in Cast & files, *full body* as today or *upper body*. Framed so, the
   picture is scaled to a set height whatever its file's size, may go past the bottom of the stage

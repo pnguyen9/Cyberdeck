@@ -15,13 +15,14 @@
 
 [decision: Card = ace-spades | ace-hearts | ace-diamonds | ace-clubs | two-spades | two-hearts | two-diamonds | two-clubs | three-spades | three-hearts | three-diamonds | three-clubs | four-spades | four-hearts | four-diamonds | four-clubs | five-spades | five-hearts | five-diamonds | five-clubs | six-spades | six-hearts | six-diamonds | six-clubs | seven-spades | seven-hearts | seven-diamonds | seven-clubs | eight-spades | eight-hearts | eight-diamonds | eight-clubs | nine-spades | nine-hearts | nine-diamonds | nine-clubs | ten-spades | ten-hearts | ten-diamonds | ten-clubs | jack-spades | jack-hearts | jack-diamonds | jack-clubs | queen-spades | queen-hearts | queen-diamonds | queen-clubs | king-spades | king-hearts | king-diamonds | king-clubs]
 [decision: Hole = ace-spades | ace-hearts | ace-diamonds | ace-clubs | two-spades | two-hearts | two-diamonds | two-clubs | three-spades | three-hearts | three-diamonds | three-clubs | four-spades | four-hearts | four-diamonds | four-clubs | five-spades | five-hearts | five-diamonds | five-clubs | six-spades | six-hearts | six-diamonds | six-clubs | seven-spades | seven-hearts | seven-diamonds | seven-clubs | eight-spades | eight-hearts | eight-diamonds | eight-clubs | nine-spades | nine-hearts | nine-diamonds | nine-clubs | ten-spades | ten-hearts | ten-diamonds | ten-clubs | jack-spades | jack-hearts | jack-diamonds | jack-clubs | queen-spades | queen-hearts | queen-diamonds | queen-clubs | king-spades | king-hearts | king-diamonds | king-clubs]
-[decision multi: Dealt = ace-spades | ace-hearts | ace-diamonds | ace-clubs | two-spades | two-hearts | two-diamonds | two-clubs | three-spades | three-hearts | three-diamonds | three-clubs | four-spades | four-hearts | four-diamonds | four-clubs | five-spades | five-hearts | five-diamonds | five-clubs | six-spades | six-hearts | six-diamonds | six-clubs | seven-spades | seven-hearts | seven-diamonds | seven-clubs | eight-spades | eight-hearts | eight-diamonds | eight-clubs | nine-spades | nine-hearts | nine-diamonds | nine-clubs | ten-spades | ten-hearts | ten-diamonds | ten-clubs | jack-spades | jack-hearts | jack-diamonds | jack-clubs | queen-spades | queen-hearts | queen-diamonds | queen-clubs | king-spades | king-hearts | king-diamonds | king-clubs]
 [decision: Rules = Read | Skip]
-[decision: Shoe = One | Six]
+[decision: Shoe = One | Two | Four | Six | Eight]
 [decision: BetPick = Ten | Fifty | Hundred | All | Other]
 [decision: Move = Hit | Stand | Double]
 [decision: Again = Yes | No]
 
+[list: Deck = ace-spades | ace-hearts | ace-diamonds | ace-clubs | two-spades | two-hearts | two-diamonds | two-clubs | three-spades | three-hearts | three-diamonds | three-clubs | four-spades | four-hearts | four-diamonds | four-clubs | five-spades | five-hearts | five-diamonds | five-clubs | six-spades | six-hearts | six-diamonds | six-clubs | seven-spades | seven-hearts | seven-diamonds | seven-clubs | eight-spades | eight-hearts | eight-diamonds | eight-clubs | nine-spades | nine-hearts | nine-diamonds | nine-clubs | ten-spades | ten-hearts | ten-diamonds | ten-clubs | jack-spades | jack-hearts | jack-diamonds | jack-clubs | queen-spades | queen-hearts | queen-diamonds | queen-clubs | king-spades | king-hearts | king-diamonds | king-clubs]
+[list: Cards]
 [counter lasting: Money = 1000.00]
 [counter: Bet = 10.00]
 [counter: Points = 0]
@@ -33,7 +34,10 @@
 [counter: DealerAces = 0]
 [counter: DealerCards = 0]
 [counter: DealerShows = 0]
-[counter: Left = 52]
+[counter: Decks = 1]
+[counter: Cut = 13]
+[counter: D = 0]
+[counter: J = 0]
 
 [shown: Money]
 
@@ -54,8 +58,22 @@ You and the dealer get two cards each; one of the dealer's stays face down. Hit 
 The dealer draws until 17 or more. Beat the dealer and your bet is paid back twice over; an ace and a ten-card at once is a blackjack, paid 3 to 2. A tie gives your bet back.
 [end]
 [choice: Shoe]
-> One deck: no card comes out twice until the shuffle = One
-> A casino shoe, six decks = Six
+> One deck = One
+> A shoe of two decks = Two
+> A shoe of four decks = Four
+> A shoe of six decks, as in casinos = Six
+> A shoe of eight decks = Eight
+[if: Shoe is Two]
+[set: Decks = 2]
+[else if: Shoe is Four]
+[set: Decks = 4]
+[else if: Shoe is Six]
+[set: Decks = 6]
+[else if: Shoe is Eight]
+[set: Decks = 8]
+[end]
+[set: Cut = {Decks} * 13]
+[play: Fill the shoe]
 [game mode]
 [loop]
 [if: Money < 1]
@@ -183,18 +201,10 @@ You cash out with {Money} dollars.
 [ending: Cashed out]
 
 # Scene: Draw
-[if: Shoe is One and Left is 0]
-[unset: Dealt]
-[set: Left = 52]
-[sound: shuffle]
+[if: Cards size < {Cut}]
+[play: Fill the shoe]
 [end]
-[if: Shoe is One]
-[set: Card = random not in Dealt]
-[set: Dealt = {Card}]
-[add: Left -1]
-[else]
-[set: Card = random]
-[end]
+[take: Card = first of Cards]
 [set: IsAce = 0]
 [if: Card is ace-spades or Card is ace-hearts or Card is ace-diamonds or Card is ace-clubs]
 [set: Points = 11]
@@ -283,3 +293,23 @@ You cash out with {Money} dollars.
 [sound: flip]
 [d2: {Hole} flip 0.4s wait]
 The dealer turns over the hidden card: {Dealer}.
+
+# Scene: Fill the shoe
+[unset: Cards]
+[set: D = 0]
+[loop]
+[if: D >= {Decks}]
+[break]
+[end]
+[set: J = 1]
+[loop]
+[if: J > 52]
+[break]
+[end]
+[add: Cards = {Deck J}]
+[add: J 1]
+[end]
+[add: D 1]
+[end]
+[shuffle: Cards]
+[sound: shuffle]

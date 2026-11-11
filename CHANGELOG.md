@@ -53,6 +53,8 @@
 ### Samples
 - The mini games are played in game mode, from their first round.
 - Minesweeper flags cells: a right click or F, picking then leaving them closed.
+- Blackjack deals from a real shoe of 1, 2, 4, 6 or 8 decks, a list of the cards left, shuffled again
+  when a quarter is left.
 - Minesweeper tells the cells left to open under the board, the seconds a board cleared took, and
   keeps each level's best time, in the journal.
 
