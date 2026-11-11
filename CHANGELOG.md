@@ -35,6 +35,10 @@
   than as written, `Everything: {Money} dollars`.
 
 ### Cyberdeck, the editor
+- From a `[play]` to its scene and back: the play's panel opens the scene, and a scene's board says
+  where it is played from, each a link to that `[play]`.
+- A choice of many options keeps its card readable in the storyboard grid: the first options and how
+  many more, rather than every line squeezed into the card.
 - Each project can erase the progress of its previews alone, their saves alone, or both.
 - A picture named `cover`, dropped in Cast & files alone or in a zip, becomes the game's cover when
   it has none: the samples' zips set their covers by themselves.

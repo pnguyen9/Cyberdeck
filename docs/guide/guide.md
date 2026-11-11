@@ -375,6 +375,8 @@ The guard lets you pass.
 [ending: Caught]
 ```
 
+In the storyboard, select a `[play]` card and press **Open the scene**; the scene's board says where it is played from, each a link back.
+
 ## 15. Chapters of a route
 
 A chapter that belongs to one route only says so right under its title. Other players pass it by:

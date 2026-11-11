@@ -428,6 +428,9 @@ The guard lets you pass.
 [ending: Caught]
 ```
 
+In the storyboard, a `[play]` card's panel has **Open the scene**, and a scene's board says where it
+is played from, each a link back to that `[play]`.
+
 A route that fills whole chapters, Marie's chapters 3 to 6 and Jules's 7 to 10, is a series of
 chapters each under `[only if: Route is Marie]` or `[only if: Route is Jules]`: those of the other
 route are passed by, and the story goes on with the next chapter played.

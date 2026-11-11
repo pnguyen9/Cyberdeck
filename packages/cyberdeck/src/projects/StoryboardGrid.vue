@@ -62,6 +62,12 @@ const unreachableMark = (element: Extract<LevelElement, { kind: 'block' }>) => e
 /** Inside a loop, its one lane: what it does, said here rather than as the storyboard words it. */
 const stagingCount = (page: StoredPage) => page.commandsBefore.length + page.inlineCommands.length
 const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => element.branches.length
+
+/** A card has room for this many lines of options; past them, the first ones and how many more. */
+const OPTION_LINES = 3
+function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
+  return options.length <= OPTION_LINES ? options : options.slice(0, OPTION_LINES - 1)
+}
 </script>
 
 <template>
@@ -127,11 +133,12 @@ const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => elemen
             <span class="number">{{ element.entry.number }}</span>
             <span class="speaker">{{ text.choiceOf(decisionName(element.entry.node.decisionId)) }}<template v-if="element.entry.node.timeLimitMs !== undefined"> · ⏱</template></span>
             <span
-              v-for="option in element.entry.node.options"
+              v-for="option in shownOptions(element.entry.node.options)"
               :key="option.id"
               class="option"
               :title="option.condition === null ? undefined : text.optionOfferedOnlyIf(conditionText(option.condition))"
             >{{ option.timeout === true ? '⏱' : '›' }} {{ option.text }}<span v-if="option.condition !== null" class="option-condition"> · if {{ conditionText(option.condition) }}</span></span>
+            <span v-if="element.entry.node.options.length > OPTION_LINES" class="option more-options">{{ text.moreOptions(element.entry.node.options.length - shownOptions(element.entry.node.options).length) }}</span>
           </template>
           <template v-else-if="element.kind === 'entry'">
             <span class="marker-kind">{{ MARKER_SYMBOLS[element.entry.node.type] }}</span>
@@ -446,6 +453,16 @@ const routeCount = (element: Extract<LevelElement, { kind: 'block' }>) => elemen
 }
 
 .option-condition {
+  color: #7b8597;
+}
+
+.number,
+.speaker,
+.option {
+  flex-shrink: 0;
+}
+
+.more-options {
   color: #7b8597;
 }
 

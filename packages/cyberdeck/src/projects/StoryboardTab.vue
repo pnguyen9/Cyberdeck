@@ -48,7 +48,7 @@ import UnsavedQuestion from './UnsavedQuestion.vue'
 import { useUnsavedChanges } from './unsavedChanges'
 import StoryTree from './StoryTree.vue'
 
-const { open, project, chapters, scenes, documents, language, act, storyboardChapterId, previewFrom, storyboardRequest, openIndex, startEmptyDocument } = useEditor()
+const { open, project, chapters, scenes, documents, language, act, storyboardChapterId, previewFrom, storyboardRequest, openIndex, startEmptyDocument, openStoryboard } = useEditor()
 const { shortcuts, isPanelOpen } = useShortcuts()
 const settings = useEditorSettings()
 const locale = useLocale()
@@ -72,6 +72,20 @@ interface GridItem extends PlacedElement {
 /** Chapters then scenes: the storyboard shows either. */
 const chapter = computed(() => documents.value.find(candidate => candidate.id === storyboardChapterId.value) ?? chapters.value[0] ?? scenes.value[0] ?? null)
 const isScene = computed(() => chapter.value !== null && project.value.sceneOrder.includes(chapter.value.id))
+/** For a scene, every `[play]` calling it, in whichever chapter or scene: a way back to each. */
+const playedFrom = computed(() => {
+  const scene = chapter.value
+  if (scene === null || !isScene.value) {
+    return []
+  }
+  return documents.value.flatMap(document => flattenStoredNodes(document.nodes)
+    .filter(node => node.type === 'play' && node.sceneId === scene.id)
+    .map(node => ({
+      documentId: document.id,
+      nodeId: node.id,
+      title: project.value.sceneOrder.includes(document.id) ? common.value.sceneLabel(document.title ?? '') : document.title ?? common.value.untitledChapter,
+    })))
+})
 const sceneNames = computed(() => new Map(scenes.value.map(scene => [scene.id, scene.title ?? ''])))
 /** The grid sorts cards like slides; the tree shows each condition's branches side by side, for reading, not moving. */
 const view = ref<'grid' | 'tree' | 'graph' | 'text'>('grid')
@@ -1006,6 +1020,13 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
             </optgroup>
           </select>
         </label>
+        <p v-if="isScene" class="played-from">
+          <template v-if="playedFrom.length > 0">
+            {{ text.playedFrom }}
+            <button v-for="from in playedFrom" :key="from.nodeId" class="link-button" @click="openStoryboard(from.documentId, from.nodeId)">{{ from.title }}</button>
+          </template>
+          <span v-else class="muted">{{ text.playedFromNowhere }}</span>
+        </p>
         <div class="view-switch" role="group" :aria-label="text.view">
           <button class="button small" :class="{ primary: view === 'grid' }" :aria-pressed="view === 'grid'" @click="showView('grid')">{{ text.grid }}</button>
           <button class="button small" :class="{ primary: view === 'tree' }" :aria-pressed="view === 'tree'" @click="showView('tree')">{{ text.tree }}</button>
@@ -1200,6 +1221,10 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
             <p class="muted">{{ text.definitionHelp }}</p>
             <button class="button small" @click="moveToDefinitions(focusedEntry.node.id)">{{ text.moveToDefinitions }}</button>
           </template>
+          <template v-else-if="focusedEntry?.type === 'marker' && focusedEntry.node.type === 'play'">
+            <p class="muted">{{ text.marker(text.markerKinds[markerKindOf(focusedEntry.node)], focusedEntry.text) }}</p>
+            <button class="button small" @click="openStoryboard(focusedEntry.node.sceneId)">{{ text.openScene }}</button>
+          </template>
           <p v-else-if="focusedEntry?.type === 'marker'" class="muted">{{ text.marker(text.markerKinds[markerKindOf(focusedEntry.node)], focusedEntry.text) }}</p>
           <template v-else-if="focusedBlock?.node.type === 'loop'">
             <h3>{{ text.loopHeading(focusedBlock.numbers, pagesWord(focusedBlock.pageCount)) }}</h3>
@@ -1247,6 +1272,15 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
 </template>
 
 <style scoped>
+.played-from {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  margin: 0;
+  font-size: 13px;
+}
+
 .text-view {
   display: flex;
   flex-direction: column;
