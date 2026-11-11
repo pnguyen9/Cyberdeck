@@ -2,18 +2,20 @@
 // A check runs against Cyberdeck's development server unless it exports another `app`: 'datajack', or a
 // desktop build, 'cyberdeck-desktop' or 'datajack-desktop', which runs only when named or with --desktop.
 // Each check gets a fresh Chrome profile, or a fresh home folder for a desktop build; screenshots and
-// results land in checks/output/<check>/.
+// results land in checks/output/<check>/. A check exporting `firefox = true` also runs in a headless
+// Firefox, as `<check> (Firefox)`, its output in checks/output/<check>-firefox/.
 import { spawn } from 'node:child_process'
 import { mkdirSync, openSync, readdirSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { openBrowser, openElectron, pause } from './harness.mjs'
+import { openBrowser, openElectron, openFirefox, pause } from './harness.mjs'
 
 const checksFolder = dirname(fileURLToPath(import.meta.url))
 const rootFolder = join(checksFolder, '..')
 const outputFolder = join(checksFolder, 'output')
 const CHROME_PORT = 9334
 const ELECTRON_PORT = 9335
+const FIREFOX_PORT = 9336
 /** Development servers; ports outside the list browsers refuse to fetch from. */
 const SERVERS = {
   cyberdeck: { port: 4178, folder: join(rootFolder, 'packages/cyberdeck') },
@@ -33,7 +35,10 @@ for (const fileName of readdirSync(checksFolder).filter(candidate => candidate.e
   const app = module.app ?? 'cyberdeck'
   const isDesktop = app in DESKTOP_APPS
   if (asked.length > 0 ? asked.includes(name) : isDesktop === isDesktopRun) {
-    checks.push({ name, app, check: module.default })
+    checks.push({ name, app, check: module.default, browser: 'chrome' })
+    if (module.firefox === true && !isDesktop) {
+      checks.push({ name: `${name} (Firefox)`, folder: `${name}-firefox`, app, check: module.default, browser: 'firefox' })
+    }
   }
 }
 if (checks.length === 0) {
@@ -106,8 +111,8 @@ let failures = 0
 try {
   const assets = await writeAssets()
   const built = new Set()
-  for (const { name, app, check } of checks) {
-    const output = join(outputFolder, name)
+  for (const { name, folder, app, check, browser } of checks) {
+    const output = join(outputFolder, folder ?? name)
     const context = { fixtures: join(checksFolder, 'fixtures'), assets, output, serve }
     let page
     if (app in DESKTOP_APPS) {
@@ -121,7 +126,7 @@ try {
       context.home = home
     } else {
       context.url = await serve(app)
-      page = await openBrowser(output, CHROME_PORT)
+      page = browser === 'firefox' ? await openFirefox(output, FIREFOX_PORT) : await openBrowser(output, CHROME_PORT)
     }
     try {
       await check(page, context)

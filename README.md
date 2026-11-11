@@ -453,9 +453,12 @@ taken for a new character. Images and sounds are then given to these entries by 
 `rooftop.jpg`, `marie-smile.png` (Marie's `smile`), `marie.png` (her `normal`), `calm.mp3`,
 `door.wav`, `opening.webm` and its captions `opening.vtt`, the frames `text-box.png` and
 `name-plate.png`; case, spaces, hyphens and underscores do not matter. An entry without a file shows as
-a placeholder. An animated picture (WebP, GIF or PNG) plays as it is, from its start each time it is
-shown; one that plays once stops on its last frame: `docs/guide/examples/falling/` makes a character
-fall that way, its pictures made by `scripts/examples/falling_assets.py`.
+a placeholder. An animated character picture (WebP, GIF or PNG) is played by the stage itself, frame
+by frame, from its start each time it is shown, in every browser (Firefox, left to it, plays a
+picture once per page); one that plays once stops on its last frame, which players who ask for less
+motion see at once. `docs/guide/examples/falling/` makes a character fall that way, its pictures
+made by `scripts/examples/falling_assets.py`. Browsers without `ImageDecoder` show the file as it is.
+The browser checks run in Chrome; those exporting `firefox = true` run in a headless Firefox too.
 
 A paragraph longer than the textbox is cut into several pages: between sentences first, then
 after `,` `;` `:` or a spaced dash, then between words as a last resort.
@@ -853,40 +856,24 @@ of it is as free as the rest of the repository.
 
 ## Plan
 
-What comes next, in order. Each step ends as every change here does: unit tests and browser checks
-for what it adds, the whole suite run (`npm run typecheck`, `npm test`, `npm run checks`,
-`npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the CHANGELOG brought
-up to date, every French text read again.
+What comes next, in no particular order. Each change ends as every change here does: unit tests and
+browser checks for what it adds, the whole suite run (`npm run typecheck`, `npm test`,
+`npm run checks`, `npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the
+CHANGELOG brought up to date, every French text read again.
 
-### 1. Version 3.0: lists and the grid (done)
-
-Lists, the grid of picture buttons (sized by numbers or counters), and the Pairs and Minesweeper
-samples. Left for later: Blackjack's shoe of 2, 4, 6 or 8 real decks as a list of the cards left;
-Minesweeper's flags, which need a second way to pick a tile (a right click, a key).
-
-### 2. Release 3.0.0 (done)
-
-Everything since 2.0.3 shipped with it. A story is still marked with the oldest format that plays it:
-2.1 for what came before lists, 3.0 with lists, so that an older Datajack refuses only what it
-cannot play.
-
-### 3. Then, in no particular order
-
-- **Fix: animated pictures in Firefox** (found testing 3.1.0's falling example). The first fall plays;
-  later falls, and later previews, show Kai already on the ground until the page is reloaded.
-  Chromium plays every fall (the `animated-picture` check runs there only). Checked in Firefox 159,
-  headless, sampling the screen: Firefox plays an animated picture once per page, whatever its
-  address. Showing it again from the same address, on a new element, from a new object URL, a copy of
-  its bytes, an address with a `#suffix` or a `?query`: always the last frame at once. The file is
-  not to blame: `ImageDecoder` reads it as 9 frames, played once (a repetition count of 0). The fix:
-  the stage plays animated pictures itself, decoding their frames with `ImageDecoder` (in Firefox and
-  Chromium) and drawing each in turn on a canvas, from the start each time the picture is shown,
-  holding the last frame, and showing it at once for players who ask for less motion. The
-  `animated-picture` check should then compare two falls in a new preview, and run in Firefox too.
-  Not reproduced: Kai standing up for an instant before lying down, which was seen once. Sampled
-  every 20 to 50 ms, the first fall goes upright, falling, on the ground, then the lying picture,
-  nothing between; a flash of one screen frame would pass between samples. To look for again once
-  the frames are drawn by the stage.
+- **Mini games played as games.** Going back, the log and loading undo what a game is about: in
+  blackjack, see the next card, go back and stand instead (the draw itself cannot be rolled again:
+  each stop keeps its seed); in Minesweeper, step back from a mine, now knowing where it lies; in
+  Pairs, turn a tile, go back, and pick knowing what it hides; with the virtual pet, less harmful,
+  undo a care that went wrong. And the virtual pet's endless loop
+  makes a new point of the map nearly every round, its values changing each time, for a map that
+  tells the player nothing (a grid's picks make no points: the maps of Minesweeper and Pairs stay
+  small). Two tags for the author, if a game needs them: one turning going back and loading off
+  inside a scene or a chapter, one leaving a scene or a loop out of the map. The first leaves the
+  journal and the log to read, only the log's going back gone; written in the text like any tag, it
+  is added or taken away there, and Cyberdeck's preview could let the author go back anyway.
+- **The mini games' leftovers.** Blackjack's shoe of 2, 4, 6 or 8 real decks, as a list of the cards
+  left; Minesweeper's flags, which need a second way to pick a tile (a right click, a key).
 - **Upper-body characters**, as most Japanese visual novels draw them: a framing chosen per character
   or for the whole project in Cast & files, *full body* as today or *upper body*. Framed so, the
   picture is scaled to a set height whatever its file's size, may go past the bottom of the stage

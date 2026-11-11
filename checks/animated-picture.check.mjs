@@ -1,9 +1,13 @@
 // An animated picture that plays once, the guide's falling example: Kai's fall plays when shown, and
-// again the second time, rather than showing its last frame at once; `[wait]` holds the picture after it.
+// again the second time, and in a new preview, rather than showing its last frame at once; `[wait]` holds
+// the picture after it. In Firefox too, which plays a picture left to it once per page only.
 import { join } from 'node:path'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { createProject, pause } from './harness.mjs'
+
+/** Firefox plays an animated picture once per page: the stage must play it itself there. */
+export const firefox = true
 
 const example = fileURLToPath(new URL('../docs/guide/examples/falling/', import.meta.url))
 
@@ -30,28 +34,40 @@ export default async function check(page, { url }) {
       const box = document.querySelector('.viewport .character .sprite').getBoundingClientRect()
       return { x: box.x + box.width * 0.5 - 3, y: box.y + box.height * 250 / 1500 - 3, width: 6, height: 6 }
     })()`)
-    return { name: await page.evaluate(`document.querySelector('.viewport .character .sprite').alt`), frame: await page.capture(head) }
+    return { name: await page.evaluate(`(() => { const sprite = document.querySelector('.viewport .character .sprite'); return sprite.getAttribute('alt') ?? sprite.getAttribute('aria-label') })()`), frame: await page.capture(head) }
   }
   const standing = await sprite()
 
-  // While the falling picture shows, samples every 100 ms: upright at first, tipped over at some point.
+  // While the falling picture shows, and a moment after, samples as often as screenshots allow: upright at
+  // first, tipped over at some point, and never upright again once tipped, not even for an instant.
   const fall = async () => {
     await page.press(' ')
     await pause(100)
     const start = await sprite()
     let hasTipped = false
-    for (let sample = 0; sample < 20 && (await sprite()).name === 'Kai, falling'; sample++) {
-      hasTipped ||= (await sprite()).frame !== standing.frame
-      await pause(100)
+    let stoodUpAgain = false
+    for (let sample = 0, afterFall = 0; sample < 80 && afterFall < 12; sample++) {
+      const now = await sprite()
+      const isUpright = now.frame === standing.frame
+      stoodUpAgain ||= hasTipped && isUpright
+      hasTipped ||= !isUpright
+      afterFall += now.name === 'Kai, falling' ? 0 : 1
+      await pause(20)
     }
-    return [start.name, start.frame === standing.frame, hasTipped]
+    return [start.name, start.frame === standing.frame, hasTipped, stoodUpAgain]
   }
-  page.check('the fall starts upright, then tips over', await fall(), ['Kai, falling', true, true])
-  await pause(300)
+  page.check('the fall starts upright, then tips over, and stays down', await fall(), ['Kai, falling', true, true, false])
   const after = await sprite()
   page.check('the wait over, Kai lies on the ground', [after.name, after.frame === standing.frame], ['Kai, lying', false])
 
   await page.press(' ')
   await pause(1500)
-  page.check('the second fall plays again from the start', await fall(), ['Kai, falling', true, true])
+  page.check('the second fall plays again from the start', await fall(), ['Kai, falling', true, true, false])
+
+  await page.evaluate(`document.querySelector('.leave-button').click()`)
+  await pause(800)
+  await page.clickButton('Preview ▶', '.button')
+  await page.waitFor('.viewport .character .sprite')
+  await pause(1500)
+  page.check('and the first fall of a new preview too', await fall(), ['Kai, falling', true, true, false])
 }

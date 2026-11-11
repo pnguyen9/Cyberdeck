@@ -518,8 +518,8 @@ shown. Saved to play once, it stops on its last frame, so a character can fall:<
 <p><code>kai-falling.webp</code> plays the fall; <code>[wait]</code> lets it finish before Kai lies still
 and speaks. This example is in <a href="examples/falling/falling.txt">examples/falling</a>, its three
 pictures beside it: import the text, then drop the pictures in Cast &amp; files. Prefer WebP to GIF for
-characters: a GIF's 256 colours and hard-edged transparency show around them. The animation is the
-file's own, so players who ask for less motion still see it.</p>
+characters: a GIF's 256 colours and hard-edged transparency show around them. Players who ask for less
+motion see where the animation ends, at once.</p>
 <p>For games, a <strong>list</strong> keeps values in numbered places: <code>[list: Board = 16 × none]</code>,
 <code>[set: Board 3 = cat]</code>, <code>{Board 3}</code>, <code>[shuffle: Board]</code>. And
 <code>[choice: Cell grid 4 × 4 from Board with tile]</code> shows a grid of picture buttons, one per place;

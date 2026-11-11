@@ -169,6 +169,135 @@ export async function openBrowser(outputDirectory, port) {
   })
 }
 
+/** WebDriver's codes for the keys that are not characters, as BiDi wants them. */
+const BIDI_KEYS = {
+  Enter: '', Escape: '', Tab: '', Backspace: '', Delete: '', Home: '', End: '',
+  ArrowLeft: '', ArrowUp: '', ArrowRight: '', ArrowDown: '', PageUp: '', PageDown: '',
+  F2: '', F11: '',
+}
+const BIDI_MODIFIERS = [[1, ''], [2, ''], [8, '']]
+
+/** A value BiDi sends back from the page, as JavaScript. */
+function fromRemote(remote) {
+  switch (remote?.type) {
+    case 'undefined':
+      return undefined
+    case 'null':
+      return null
+    case 'number':
+      return typeof remote.value === 'string' ? Number(remote.value) : remote.value
+    case 'array':
+    case 'set':
+      return remote.value.map(fromRemote)
+    case 'object':
+    case 'map':
+      return Object.fromEntries(remote.value.map(([key, value]) => [typeof key === 'string' ? key : fromRemote(key), fromRemote(value)]))
+    case 'date':
+      return remote.value
+    default:
+      return 'value' in (remote ?? {}) ? remote.value : undefined
+  }
+}
+
+/**
+ * Opens a page in a new headless Firefox with an empty profile, driven through WebDriver BiDi. Its
+ * `send` takes the Chrome commands the page methods use and does each the Firefox way, so that every
+ * check runs there unchanged, as long as it only uses those.
+ */
+export async function openFirefox(outputDirectory, port) {
+  const profile = `${outputDirectory}/firefox-profile`
+  rmSync(profile, { recursive: true, force: true })
+  mkdirSync(profile, { recursive: true })
+  writeFileSync(`${profile}/user.js`, ['browser.shell.checkDefaultBrowser', 'datareporting.policy.dataSubmissionEnabled', 'toolkit.telemetry.reportingpolicy.firstRun']
+    .map(name => `user_pref("${name}", false);`).join('\n') + '\n')
+  const firefox = spawn(process.env.FIREFOX ?? 'firefox', ['--headless', `--remote-debugging-port=${port}`, '--profile', profile, 'about:blank'], { stdio: 'ignore' })
+  let socket = null
+  for (let attempt = 0; attempt < 50 && socket === null; attempt++) {
+    await pause(200)
+    socket = await new Promise(resolve => {
+      const candidate = new WebSocket(`ws://127.0.0.1:${port}/session`)
+      candidate.addEventListener('open', () => resolve(candidate))
+      candidate.addEventListener('error', () => resolve(null))
+    })
+  }
+  if (socket === null) {
+    firefox.kill()
+    throw new Error(`Firefox did not answer on port ${port}`)
+  }
+  let nextId = 1
+  const pending = new Map()
+  socket.addEventListener('message', event => {
+    const message = JSON.parse(event.data)
+    pending.get(message.id)?.(message)
+  })
+  const bidi = (method, params = {}) => new Promise(resolve => {
+    const id = nextId++
+    pending.set(id, resolve)
+    socket.send(JSON.stringify({ id, method, params }))
+  })
+  await bidi('session.new', { capabilities: {} })
+  const context = (await bidi('browsingContext.getTree', {})).result.contexts[0].context
+  await bidi('browsingContext.setViewport', { context, viewport: { width: 1280, height: 720 } })
+  const evaluate = async expression => {
+    const answer = await bidi('script.evaluate', { expression, target: { context }, awaitPromise: true })
+    return answer.result?.type === 'exception' ? undefined : fromRemote(answer.result?.result)
+  }
+  const keyActions = (key, modifiers, type) => {
+    const value = BIDI_KEYS[key] ?? key
+    const held = BIDI_MODIFIERS.filter(([bit]) => (modifiers & bit) !== 0).map(([, code]) => code)
+    return type === 'keyDown'
+      ? [...held.map(code => ({ type: 'keyDown', value: code })), { type: 'keyDown', value }]
+      : [{ type: 'keyUp', value }, ...held.reverse().map(code => ({ type: 'keyUp', value: code }))]
+  }
+  const send = async (method, params = {}) => {
+    switch (method) {
+      case 'Runtime.evaluate':
+        return { result: { result: { value: await evaluate(params.expression) } } }
+      case 'Page.navigate':
+        return bidi('browsingContext.navigate', { context, url: params.url, wait: 'complete' })
+      case 'Page.reload':
+        return bidi('browsingContext.reload', { context, wait: 'complete' })
+      case 'Input.insertText':
+        await evaluate(`document.execCommand('insertText', false, ${JSON.stringify(params.text)})`)
+        return {}
+      case 'Input.dispatchKeyEvent':
+        return bidi('input.performActions', { context, actions: [{ type: 'key', id: 'keyboard', actions: keyActions(params.key, params.modifiers ?? 0, params.type) }] })
+      case 'Input.dispatchMouseEvent':
+        return bidi('input.performActions', { context, actions: [{ type: 'pointer', id: 'mouse', actions: [
+          { type: 'pointerMove', x: Math.round(params.x), y: Math.round(params.y) },
+          ...(params.type === 'mousePressed' ? [{ type: 'pointerDown', button: 0 }] : params.type === 'mouseReleased' ? [{ type: 'pointerUp', button: 0 }] : []),
+        ] }] })
+      case 'Emulation.setDeviceMetricsOverride':
+        return bidi('browsingContext.setViewport', { context, viewport: { width: params.width, height: params.height }, devicePixelRatio: params.deviceScaleFactor })
+      case 'Emulation.clearDeviceMetricsOverride':
+        return bidi('browsingContext.setViewport', { context, viewport: { width: 1280, height: 720 }, devicePixelRatio: null })
+      case 'DOM.getDocument':
+        return { result: { root: { nodeId: 'document' } } }
+      case 'DOM.querySelector':
+        return { result: { nodeId: params.selector } }
+      case 'DOM.setFileInputFiles': {
+        const found = await bidi('script.evaluate', { expression: `document.querySelector(${JSON.stringify(params.nodeId)})`, target: { context }, awaitPromise: false, resultOwnership: 'root' })
+        return bidi('input.setFiles', { context, element: { sharedId: found.result.result.sharedId }, files: params.files })
+      }
+      case 'Page.captureScreenshot': {
+        const clip = params.clip === undefined ? undefined : { type: 'box', x: params.clip.x, y: params.clip.y, width: params.clip.width, height: params.clip.height }
+        const shot = await bidi('browsingContext.captureScreenshot', { context, ...(clip === undefined ? {} : { clip }) })
+        return { result: { data: shot.result?.data } }
+      }
+      case 'Page.enable':
+      case 'DOM.enable':
+        return {}
+      default:
+        throw new Error(`${method} is not done in Firefox yet: see openFirefox in checks/harness.mjs`)
+    }
+  }
+  return createPage(outputDirectory, { socket, send }, async () => {
+    const exited = new Promise(resolve => firefox.once('exit', resolve))
+    firefox.kill()
+    await exited
+  })
+}
+
 /**
  * Starts a built desktop application headless, with `home` as its home folder, where its settings
  * and documents land. `page.restart()` quits it and starts it again, as its user would.

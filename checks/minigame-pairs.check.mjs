@@ -1,11 +1,13 @@
 // The Pairs sample in docs/sample/minigames: its text imports without a problem and its files each find
 // their entry; played through, as a player would, remembering the animals seen: a grid of 16 tiles, a pair
 // staying face up, two different animals turning back over at the next pick, the game ending once all
-// eight pairs are found, the turns counted.
+// eight pairs are found, the turns counted. Exported as a game, it carries every tile's picture, which no
+// tag names, the grid showing them by the names its list holds.
+import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { createProject, pause, shownStep } from './harness.mjs'
+import { createProject, exportGame, pause, shownStep } from './harness.mjs'
 
 const sample = join(dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'sample', 'minigames', 'pairs')
 /** Each tile as its label says it: what it shows, `back` for one face down. */
@@ -71,4 +73,10 @@ export default async function check(page, { url }) {
   }
   await pause(800)
   page.check('every pair found ends the game, the turns counted', /^Every pair found, in \d+ turns!$/.test(await shownStep(page)), true)
+
+  await page.evaluate(`document.querySelector('.leave-button').click()`)
+  await pause(800)
+  const archive = await exportGame(page, 'pairs.zip')
+  const tilePictures = execFileSync('unzip', ['-Z1', archive], { encoding: 'utf8' }).split('\n').filter(path => /characters\/tile\//i.test(path))
+  page.check('the exported game carries the back and the eight animals', tilePictures.length, 9)
 }

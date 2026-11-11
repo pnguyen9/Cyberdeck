@@ -480,6 +480,10 @@ export function assetsUsedBy(project: ProjectDocument, chapters: readonly Chapte
       node.inlineCommands.forEach(visit)
     } else if (node.type === 'stage') {
       node.commands.forEach(visit)
+    } else if (node.type === 'grid' && node.characterId !== null) {
+      // A grid's tiles may show any of its character's pictures, as its list holds their names.
+      const character = project.characters.find(candidate => candidate.id === node.characterId)
+      character?.expressions.forEach(expression => add(expressionAssetId(project.characters, character, expression)))
     }
   }
   return used

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { effectiveFacing, type ResolvedAnimation, type StageCatalog, type StageState } from '@cyberdeck/core'
+import StagePicture from './StagePicture.vue'
 
 const props = defineProps<{ stage: StageState; catalog: StageCatalog }>()
 
@@ -175,13 +176,12 @@ function onLeave(element: Element, done: () => void) {
         :style="character.style"
       >
         <div class="turn" :class="character.turnClass" :style="character.turnStyle">
-          <img
+          <StagePicture
             v-if="character.imageUrl !== null"
-            class="sprite"
-            :class="{ mirrored: character.isMirrored }"
-            :src="character.imageUrl"
+            :url="character.imageUrl"
             :alt="`${character.name}, ${character.expression}`"
-          >
+            :mirrored="character.isMirrored"
+          />
           <template v-else>
             <div class="silhouette">
               <span class="placeholder-label character-label">{{ character.name }} · {{ character.expression }}</span>

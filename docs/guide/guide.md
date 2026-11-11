@@ -314,7 +314,7 @@ A picture can move by itself, too: an animated WebP, GIF or PNG plays as it is, 
 — Kai: Ow.
 ```
 
-`kai-falling.webp` plays the fall; `[wait]` lets it finish before Kai lies still and speaks. This example is in [examples/falling](examples/falling/falling.txt), its three pictures beside it: import the text, then drop the pictures in Cast & files. Prefer WebP to GIF for characters: a GIF's 256 colours and hard-edged transparency show around them. The animation is the file's own, so players who ask for less motion still see it.
+`kai-falling.webp` plays the fall; `[wait]` lets it finish before Kai lies still and speaks. This example is in [examples/falling](examples/falling/falling.txt), its three pictures beside it: import the text, then drop the pictures in Cast & files. Prefer WebP to GIF for characters: a GIF's 256 colours and hard-edged transparency show around them. Players who ask for less motion see where the animation ends, at once.
 
 For games, a **list** keeps values in numbered places: `[list: Board = 16 × none]`, `[set: Board 3 = cat]`, `{Board 3}`, `[shuffle: Board]`. And `[choice: Cell grid 4 × 4 from Board with tile]` shows a grid of picture buttons, one per place; the one picked gives `Cell` its number. The Pairs and Minesweeper samples are made of these.
 

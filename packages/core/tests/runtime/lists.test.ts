@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkReferences, exportText, importText, indexNames, nameWarnings, playerFormatVersion, stateFromSave, StoryRuntime, storyFlow, toSave } from '../../src/index'
+import { assetsUsedBy, checkReferences, exportText, importText, indexNames, nameWarnings, playerFormatVersion, stateFromSave, StoryRuntime, storyFlow, toSave } from '../../src/index'
 import { monospaceLayout } from '../monospaceLayout'
 import { storyFromText } from './storyFromText'
 
@@ -105,6 +105,15 @@ describe('a grid of picture buttons', () => {
     runtime.next()
     expect(runtime.snapshot.step.type).toBe('end')
     expect(exportText(story.project, story.chapters, { declareDecisions: true })).toContain('[choice: Cell grid 2 × 2 from Shown with tile]')
+  })
+
+  it('has its pictures carried by an exported game, though no tag names them', () => {
+    const story = storyFromText(['[list: Shown = 2 × back]', '[choice: Cell grid 2 × 1 from Shown with tile]', '[set: Shown Cell = open]', 'Opened.'])
+    const tile = story.project.characters.find(character => character.name === 'tile')!
+    const project = { ...story.project, characters: story.project.characters.map(character => character === tile
+      ? { ...character, expressions: character.expressions.map(expression => ({ ...expression, assetId: `file-${expression.name}` })) }
+      : character) }
+    expect([...assetsUsedBy(project, story.chapters)].sort()).toEqual(['file-back', 'file-open'])
   })
 })
 
