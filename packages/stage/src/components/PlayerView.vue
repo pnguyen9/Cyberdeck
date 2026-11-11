@@ -39,6 +39,7 @@ import {
   splitAtFirstWait,
   makesMapPoints,
   stageLockOf,
+  stagesAhead,
   waitMillisecondsOf,
   EFFECT_DEFAULTS,
   MAXIMUM_ASKED_NAME_LENGTH,
@@ -53,6 +54,7 @@ import {
   type RestoreOutcome,
   type SaveData,
   type StageCommand,
+  type StageState,
   type StoredPage,
   type HeldChange,
 } from '@cyberdeck/core'
@@ -72,6 +74,7 @@ import { useFullscreen, useStageScale } from './stageWindow'
 import TextBox from './TextBox.vue'
 import { LESS_MOTION, useSystemLessMotion, wantsLessMotion } from '../settings/lessMotion'
 import FullScreenText from './FullScreenText.vue'
+import { preparePicture } from './animatedPictures'
 import type { StyledPart } from '../textRuns'
 
 const props = defineProps<{
@@ -654,10 +657,41 @@ function act(action: () => void) {
   if (runtime.snapshot.step !== stepBefore) {
     readAloud()
     recordProgress()
+    preparePicturesAhead()
   }
   if (runtime.snapshot.step !== stepBefore && runtime.snapshot.step.type !== 'end') {
     autosave()
   }
+}
+
+let preparingTimer: ReturnType<typeof setTimeout> | undefined
+/**
+ * The pictures of the next stops, readied while this one is read: each is drawn the moment it is
+ * needed, instead of after a blink the first time. Looked for once the stop is on screen.
+ */
+function preparePicturesAhead() {
+  clearTimeout(preparingTimer)
+  if (runtime.snapshot.step.type === 'end') {
+    return
+  }
+  preparingTimer = setTimeout(() => {
+    let stages: StageState[]
+    try {
+      stages = [runtime.snapshot.stage, ...stagesAhead(props.story, runtime.exportState(), { memoryIds: runtime.memoryIds, endingIds: runtime.endingIds })]
+    } catch {
+      return
+    }
+    const urls = new Set(stages.flatMap(stage => [
+      stage.backgroundId === null ? null : catalog.backgroundUrl(stage.backgroundId),
+      stage.illustrationId === null ? null : catalog.illustrationUrl(stage.illustrationId),
+      ...stage.characters.map(onStage => catalog.expressionUrl(onStage.characterId, onStage.expressionId)),
+    ]))
+    urls.forEach(url => {
+      if (url !== null) {
+        void preparePicture(url)
+      }
+    })
+  })
 }
 
 /** Notes the page read, the choice reached or the end, and where the option picked last led. */
@@ -1248,6 +1282,7 @@ onUnmounted(() => {
   textBoxObserver.disconnect()
   clearTimeout(typingTimer)
   clearTimeout(noticeTimer)
+  clearTimeout(preparingTimer)
   clearTimeout(titleCardTimer)
   forgetSaveFile()
   document.adoptedStyleSheets = document.adoptedStyleSheets.filter(sheet => sheet !== authorSheet)

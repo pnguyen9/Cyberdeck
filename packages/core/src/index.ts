@@ -75,6 +75,7 @@ export {
   type RuntimeState,
 } from './runtime/storyRuntime'
 export { valuesReader, type HeldValues } from './runtime/storyValues'
+export { stagesAhead } from './runtime/stagesAhead'
 export { hasJournal, journalOf, type Journal, type JournalEntry } from './runtime/journal'
 export { parseSave, stateFromSave, toSave, withLasting, type SaveData } from './saves/saveData'
 export {

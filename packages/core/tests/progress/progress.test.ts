@@ -21,7 +21,7 @@ import {
   type ProgressData,
 } from '../../src/index'
 import { storyFromText } from '../runtime/storyFromText'
-import { stagedPointKeyOf } from '../../src/progress/progress'
+import { pointKeyOf, stagedPointKeyOf } from '../../src/progress/progress'
 import { findGuidedPath } from '../../src/progress/guidedSearch'
 
 const NOW = '2026-10-26T12:00:00.000Z'
@@ -140,6 +140,30 @@ describe('progress', () => {
       { type: 'end', endingId: empty.id },
       { type: 'end', endingId: null },
     ])
+  })
+
+  it('resumes a choice reached with a decision unset at the same point, and joins points keyed the way they were before', () => {
+    const story = storyFromText([
+      '[choice: Seen]', '> Library = Library', '[unset: Seen]',
+      '[loop]', '[choice: Where]', '> Library = Library [if: Seen is not Library]', '> Home = Home',
+      '[if: Where is Home]', '[break]', '[end]', '[set: Seen = Library]', '[end]', 'Home.',
+    ])
+    const runtime = startedRuntime(story)
+    const first = runtime.snapshot.step
+    runtime.choose(first.type === 'choice' ? first.choice.options[0]!.id : '')
+    const reached = recordChoiceReached(emptyProgress(story), story, runtime.exportState(), null, NOW)
+
+    // Through a save, as when the map is closed or a point played from: the decision unset is no longer there.
+    const resumed = new StoryRuntime(story)
+    resumed.restoreState(stateFromSave(story, toSave(story, runtime.exportState(), NOW)))
+    const again = recordChoiceReached(reached.progress, story, resumed.exportState(), null, NOW)
+    expect([again.progress.points.length, again.pointKey]).toEqual([1, reached.pointKey])
+
+    const point = reached.progress.points[0]!
+    const keyBefore = pointKeyOf(point.choiceId, point.save, decisionsTestedFrom(story, point.choiceId), { keepsUnset: true })
+    expect(keyBefore).not.toBe(point.key)
+    const joined = recordChoiceReached({ ...reached.progress, points: [{ ...point, key: keyBefore }] }, story, runtime.exportState(), null, NOW)
+    expect([joined.progress.points.length, joined.pointKey]).toEqual([1, keyBefore])
   })
 
   it('reads back what it wrote, dropping what is broken', () => {

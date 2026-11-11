@@ -127,10 +127,13 @@ export function recordChoiceReached(
   // game with more money is the same choice, played from with the money held now.
   const lastingNames = new Set([...story.project.decisions, ...story.project.counters].filter(value => value.lasting === true).map(value => value.name))
   const namesThatMatter = new Set([...testedAhead].filter(name => !lastingNames.has(name)))
-  // A point recorded before 3.2.1 was keyed by its lasting values too, and before 3.2 by its stage:
-  // an arrival in the same state joins it.
-  const recordedBefore = [stagedPointKeyOf(state.page.nodeId, save, testedAhead), pointKeyOf(state.page.nodeId, save, testedAhead)]
-    .find(key => progress.points.some(point => point.key === key))
+  // A point recorded before 3.2.1 was keyed by its lasting values too, and before 3.2 by its stage;
+  // before 3.2.2, a decision unset counted apart from one never given: an arrival in the same state joins it.
+  const recordedBefore = [
+    stagedPointKeyOf(state.page.nodeId, save, testedAhead),
+    pointKeyOf(state.page.nodeId, save, testedAhead),
+    ...[testedAhead, namesThatMatter].map(names => pointKeyOf(state.page!.nodeId, save, names, { keepsUnset: true })),
+  ].find(key => progress.points.some(point => point.key === key))
   const pointKey = recordedBefore ?? pointKeyOf(state.page.nodeId, save, namesThatMatter)
   const points = progress.points.some(point => point.key === pointKey)
     ? progress.points
@@ -164,13 +167,27 @@ export function recordEndReached(progress: ProgressData, endingId: string | null
  * part of it: two paths whose stage differs, a scene leaving a character on it, reach the same choice
  * with the same story ahead.
  */
-export function pointKeyOf(choiceId: string, save: Pick<SaveData, 'decisions' | 'counters' | 'page'>, namesThatMatter: ReadonlySet<string>): string {
-  return `${choiceId}:${fingerprint(JSON.stringify({ ...valuesThatMatter(save, namesThatMatter), playedFrom: save.page?.playedFrom ?? [] }))}`
+export function pointKeyOf(
+  choiceId: string,
+  save: Pick<SaveData, 'decisions' | 'counters' | 'page'>,
+  namesThatMatter: ReadonlySet<string>,
+  how: KeyOptions = {},
+): string {
+  return `${choiceId}:${fingerprint(JSON.stringify({ ...valuesThatMatter(save, namesThatMatter, how), playedFrom: save.page?.playedFrom ?? [] }))}`
 }
 
-/** The decisions and counters a point is told apart by, in the order the keys were always written. */
-function valuesThatMatter(save: Pick<SaveData, 'decisions' | 'counters'>, namesThatMatter: ReadonlySet<string>) {
-  const decisions = Object.keys(save.decisions).filter(name => namesThatMatter.has(name)).sort()
+/** `keepsUnset`: a decision holding no value counts apart from one never given, as keys had it before 3.2.2. */
+interface KeyOptions {
+  keepsUnset?: boolean
+}
+
+/**
+ * The decisions and counters a point is told apart by, in the order the keys were always written. A
+ * decision `[unset]` holds no value, as one never given, and a save keeps neither: the two are the same.
+ */
+function valuesThatMatter(save: Pick<SaveData, 'decisions' | 'counters'>, namesThatMatter: ReadonlySet<string>, how: KeyOptions = {}) {
+  const decisions = Object.keys(save.decisions)
+    .filter(name => namesThatMatter.has(name) && (how.keepsUnset === true || (save.decisions[name]?.length ?? 0) > 0)).sort()
     .map(name => [name, [...(save.decisions[name] ?? [])].sort()])
   const counters = Object.keys(save.counters ?? {}).filter(name => namesThatMatter.has(name)).sort()
     .map(name => [name, save.counters?.[name]])
@@ -182,7 +199,7 @@ export function stagedPointKeyOf(choiceId: string, save: SaveData, namesThatMatt
   const characters = [...save.stage.characters].sort((first, second) => first.name.localeCompare(second.name))
   const playedFrom = save.page?.playedFrom ?? []
   const { background, music, cover, tint, text, illustration } = save.stage
-  return `${choiceId}:${fingerprint(JSON.stringify({ ...valuesThatMatter(save, namesThatMatter), background, music, characters, cover, tint, text, illustration, playedFrom }))}`
+  return `${choiceId}:${fingerprint(JSON.stringify({ ...valuesThatMatter(save, namesThatMatter, { keepsUnset: true }), background, music, characters, cover, tint, text, illustration, playedFrom }))}`
 }
 
 const testedDecisionsByStory = new WeakMap<PlayableStory, Map<string, ReadonlySet<string>>>()
