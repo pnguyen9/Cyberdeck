@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, nextTick, onBeforeUnmount, shallowRef, useTemplateRef, watch } from 'vue'
 import { LESS_MOTION, systemAsksLessMotion } from '../settings/lessMotion'
-import { decodedAnimation, decodedStill, releaseAnimation, type DecodedAnimation } from './animatedPictures'
+import { decodedAnimation, decodedStill, readyPicture, releaseAnimation, type DecodedAnimation } from './animatedPictures'
 
 /**
  * A picture of the stage: a character, a background, an illustration, a grid's tile. An animated one
@@ -43,22 +43,33 @@ function play(decoded: DecodedAnimation, round = 0, frameIndex = 0) {
   frameTimer = setTimeout(() => play(decoded, isLastFrame ? round + 1 : round, isLastFrame ? 0 : frameIndex + 1), decoded.frames[frameIndex]!.durationMs)
 }
 
-watch(() => props.url, async url => {
-  const thisShowing = ++showing
+/** The picture's frames once it is decoded, a still picture decoded too. */
+async function whenReady(url: string): Promise<DecodedAnimation | null> {
   const decoded = await decodedAnimation(url)
   if (decoded === null) {
     await decodedStill(url)
   }
-  if (thisShowing !== showing) {
-    releaseAnimation(url)
-    return
-  }
+  return decoded
+}
+
+function show(url: string, decoded: DecodedAnimation | null) {
   clearTimeout(frameTimer)
   const before = shown.value
   shown.value = { url, animation: decoded }
   if (before !== null) {
     releaseAnimation(before.url)
   }
+}
+
+watch(() => props.url, async url => {
+  const thisShowing = ++showing
+  const ready = readyPicture(url)
+  const decoded = ready !== undefined ? ready : await whenReady(url)
+  if (thisShowing !== showing) {
+    releaseAnimation(url)
+    return
+  }
+  show(url, decoded)
   if (decoded === null) {
     return
   }

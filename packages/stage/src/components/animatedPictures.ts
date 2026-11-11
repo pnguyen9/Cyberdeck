@@ -19,7 +19,8 @@ const UNSAID_FRAME_MS = 100
 /** Frames no picture shows any more are let go of after this long. */
 const KEPT_UNSHOWN_MS = 60_000
 
-const decodedByUrl = new Map<string, { decoding: Promise<DecodedAnimation | null>; shownBy: number; releaseTimer?: ReturnType<typeof setTimeout> }>()
+/** `decoded` once the decoding is over: a picture shown then needs no wait at all. */
+const decodedByUrl = new Map<string, { decoding: Promise<DecodedAnimation | null>; decoded?: DecodedAnimation | null; shownBy: number; releaseTimer?: ReturnType<typeof setTimeout> }>()
 
 /**
  * The picture's frames if it moves; null for a still picture, or a browser that cannot decode them.
@@ -33,7 +34,11 @@ export function decodedAnimation(url: string): Promise<DecodedAnimation | null> 
     return known.decoding
   }
   const decoding = decode(url).catch(() => null)
-  decodedByUrl.set(url, { decoding, shownBy: 1 })
+  const entry: { decoding: Promise<DecodedAnimation | null>; decoded?: DecodedAnimation | null; shownBy: number } = { decoding, shownBy: 1 }
+  decodedByUrl.set(url, entry)
+  void decoding.then(decoded => {
+    entry.decoded = decoded
+  })
   return decoding
 }
 
@@ -50,18 +55,36 @@ export function releaseAnimation(url: string) {
 }
 
 /** Still pictures decoded ahead of their showing, held as long as frames are, so that the browser keeps them ready. */
-const stillsReady = new Map<string, { image: HTMLImageElement; releaseTimer: ReturnType<typeof setTimeout> }>()
+const stillsReady = new Map<string, { image: HTMLImageElement; isDecoded: boolean; releaseTimer: ReturnType<typeof setTimeout> }>()
 
 /** A still picture decoded, so that an image showing it draws it at once; a broken file is let through, to show broken as before. */
 export async function decodedStill(url: string): Promise<void> {
   const known = stillsReady.get(url)
-  const image = known?.image ?? new Image()
   clearTimeout(known?.releaseTimer)
+  const entry = known ?? { image: new Image(), isDecoded: false }
   if (known === undefined) {
-    image.src = url
+    entry.image.src = url
   }
-  stillsReady.set(url, { image, releaseTimer: setTimeout(() => stillsReady.delete(url), KEPT_UNSHOWN_MS) })
-  await image.decode().catch(() => undefined)
+  stillsReady.set(url, { ...entry, releaseTimer: setTimeout(() => stillsReady.delete(url), KEPT_UNSHOWN_MS) })
+  await entry.image.decode().catch(() => undefined)
+  const ready = stillsReady.get(url)
+  if (ready !== undefined) {
+    ready.isDecoded = true
+  }
+}
+
+/**
+ * A picture readied already, to show at once: its frames, or null for a still one decoded; undefined
+ * while it is not ready. A picture shown so is matched by `releaseAnimation` as one asked for.
+ */
+export function readyPicture(url: string): DecodedAnimation | null | undefined {
+  const known = decodedByUrl.get(url)
+  if (known === undefined || known.decoded === undefined || (known.decoded === null && stillsReady.get(url)?.isDecoded !== true)) {
+    return undefined
+  }
+  clearTimeout(known.releaseTimer)
+  known.shownBy++
+  return known.decoded
 }
 
 /**
