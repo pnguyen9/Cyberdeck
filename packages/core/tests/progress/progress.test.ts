@@ -130,6 +130,13 @@ describe('progress', () => {
 })
 
 describe('the map', () => {
+  it('shows each option with the values its point held, as the choice did', () => {
+    const story = storyFromText(['[counter: Money = 1000.00]', '[choice: Bet]', '> Ten = Ten', '> Everything: {Money} dollars = All', 'Done.'])
+    const progress = play(story, emptyProgress(story), ['Everything: 1,000.00 dollars'])
+    const point = layOutProgressMap(progress, story).nodes.find(node => node.type === 'point')
+    expect(point?.type === 'point' ? point.options.map(option => option.text) : null).toEqual(['Ten', 'Everything: 1,000.00 dollars'])
+  })
+
   it('lays points out left to right, lanes per option, endings last', () => {
     const story = storyFromText(STORY)
     let progress = play(story, emptyProgress(story), ['Smile', 'Red hat', 'Open'])

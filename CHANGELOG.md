@@ -7,6 +7,8 @@
   once per page and then showed its last frame: the stage now plays it frame by frame itself, for
   characters, backgrounds, illustrations and a grid's tiles, and so does the gallery, enlarged.
   Players who ask for less motion see where it ends at once.
+- The map shows each option with the values of its moment, `Everything: 1,000.00 dollars`, rather
+  than as written, `Everything: {Money} dollars`.
 
 ### Cyberdeck, the editor
 - An exported game carries the pictures of a grid's tiles: Pairs and Minesweeper, exported, showed

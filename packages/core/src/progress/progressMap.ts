@@ -1,5 +1,8 @@
 import type { StoredChoice } from '../format/storyFormat'
 import type { PlayableStory } from '../runtime/playableStory'
+import { withValues } from '../format/textValues'
+import { stateFromSave } from '../saves/saveData'
+import { valuesReader } from '../runtime/storyValues'
 import { choicesOf, type ProgressData, type ProgressPoint, type ProgressTarget } from './progress'
 
 /**
@@ -106,10 +109,13 @@ export function layOutProgressMap(progress: ProgressData, story: PlayableStory):
   untangle(forward, columns, rows, points, choices)
 
   const chapterTitles = new Map(story.chapters.map(chapter => [chapter.id, chapter.title]))
+  // An option shows the values its point held, as the choice did then: `Everything: 1,000.00 dollars`.
+  const readValues = valuesReader(story.project)
   const nodes: MapNode[] = [
     ...points.map((point): MapNode => {
       const choice = choices.get(point.choiceId)
       const decision = story.project.decisions.find(candidate => candidate.id === choice?.decisionId)
+      const valueOf = (choice?.options ?? []).some(option => option.text.includes('{')) ? readValues(stateFromSave(story, point.save)) : null
       return {
         type: 'point',
         key: point.key,
@@ -119,8 +125,9 @@ export function layOutProgressMap(progress: ProgressData, story: PlayableStory):
         chapterTitle: chapterTitles.get(point.chapterId) ?? null,
         decisionName: decision?.name ?? '?',
         options: (choice?.options ?? []).map(option => {
+          const text = valueOf === null ? option.text : withValues(option.text, valueOf)
           const taken = point.taken.find(candidate => candidate.optionId === option.id)
-          return { optionId: option.id, text: option.text, next: taken?.next == null ? null : targetKey(taken.next), isTaken: taken !== undefined }
+          return { optionId: option.id, text, next: taken?.next == null ? null : targetKey(taken.next), isTaken: taken !== undefined }
         }),
       }
     }),
