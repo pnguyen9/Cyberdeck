@@ -1468,7 +1468,7 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-    <button class="leave-button" :aria-label="leaveLabel" @click="emit('leave')">←<span class="leave-label"> {{ leaveLabel }} <kbd>{{ escapeKey }}</kbd></span></button>
+    <button class="leave-button" :aria-label="leaveLabel" @click="emit('leave')">← <span class="leave-label">{{ leaveLabel }} <kbd>{{ escapeKey }}</kbd></span></button>
   </div>
 </template>
 

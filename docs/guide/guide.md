@@ -303,6 +303,14 @@ A counter can count with decimals: write its first number with them, `[counter: 
 
 Players can give a number too: `[ask number: Bet = 10, from 1 to {Money}]` asks them for the bet, 10 if they type nothing, at least 1 and at most the money they have. They may type a comma or a point; the field tells them what it understood, and what it cannot take.
 
+A counter can also show on the stage, as a bar: health in a fight, trust, the air left in a dive.
+
+```text
+[gauge: HP / {MaxHP} bottom right numbers = {Hero}]
+```
+
+The bar shows `HP` out of `MaxHP`, a counter in braces or a plain number, in a corner: `top left` unless you say `top right`, `bottom left` or `bottom right`. `numbers` writes “18 / 30” beside it, and after `=` comes its name, here the hero's; without one, it bears the counter's name. It follows the counter until you take it away with `[gauge: HP none]`, or every bar with `[gauge: none]`, sliding as the counter changes. A new `[gauge]` for the same counter replaces its bar, name and corner included. On its own, it goes from green to gold to red as it empties, as health does; a colour after the corner keeps it one colour: `green`, `blue`, `red`, `gold`, `purple` or `pink`.
+
 Some counters come from the player's clock, with nothing to declare: `hour` (0 to 23), `weekday` (1 for Monday to 7 for Sunday), `time away`, the minutes since they last played, and `now`, the time in seconds. `[if: hour >= 22 or hour < 6]` can put a character to sleep at night, `[if: time away > 1440]` greet players back after a day, and `[set: Start = {now}]`, then later `[set: Took = {now}]` and `[add: Took -{Start}]`, time how long a puzzle took them.
 
 A decision's value can choose a picture: with `[decision: Mood = calm | angry]`, `[marie: {Mood}]` shows Marie's *calm* or *angry* picture, whichever Mood holds, with no `[if]`. Counters can count with each other too: `[add: Money -{Bet}]`, `[if: Money >= {Bet}]`. `[set: Mood = random]` draws one of its values, and `[character: twin = marie]` lets a second character show Marie's pictures, without giving it files of its own. A card can turn over: `[card: {Drawn} flip]` narrows the old picture to its edge and widens the new one from it.
@@ -532,6 +540,8 @@ Any option can be it: with `> Yes. = Accept [timeout]`, waiting means yes.
 > **Tip**
 >
 > Players who need more time can ask choices to wait for them, in their settings: nothing is then taken by itself.
+
+Options usually stand in a column over the middle of the stage. Write `below` after the choice's name, `[choice: Move below]`, and they sit side by side at the bottom, where the text box stands, leaving the pictures in view: a row of up to three, two by two for four, then in three or four columns. It suits short options, the moves of a fight; long sentences read better in the column. With a time, write it either side: `[choice: Move 10s below]`. A decision whose own name ends in *below* keeps its name.
 
 ## 24. Values in the text, and chance
 
