@@ -28,11 +28,22 @@ const { shortcuts, isPanelOpen } = useShortcuts()
 const previewMap = shallowRef<{ story: PlayableStory; progress: ProgressData; everyPath: { progress: ProgressData; isWhole: boolean } | null } | null>(null)
 
 /** Between the paths the previews played and every path, explored from the story once asked for. */
+const isExploring = ref(false)
 function switchPreviewMap() {
   const shown = previewMap.value
-  if (shown !== null) {
-    previewMap.value = { ...shown, everyPath: shown.everyPath === null ? exploreStory(shown.story) : null }
+  if (shown === null || isExploring.value) {
+    return
   }
+  if (shown.everyPath !== null) {
+    previewMap.value = { ...shown, everyPath: null }
+    return
+  }
+  // A large story takes a moment to explore: the button says so before the work begins.
+  isExploring.value = true
+  setTimeout(() => {
+    previewMap.value = { ...shown, everyPath: exploreStory(shown.story) }
+    isExploring.value = false
+  }, 30)
 }
 
 async function showPreviewMap(story: PlayableStory) {
@@ -106,7 +117,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :progress="previewMap.everyPath?.progress ?? previewMap.progress"
       :close-label="text.previewLabel"
       :every-path="previewMap.everyPath === null ? null : { isWhole: previewMap.everyPath.isWhole }"
-      :switch-label="previewMap.everyPath === null ? text.showEveryPath : text.showPlayed"
+      :switch-label="isExploring ? text.exploring : previewMap.everyPath === null ? text.showEveryPath : text.showPlayed"
       ignores-locks
       @switch="switchPreviewMap"
       @play="previewFromPoint"

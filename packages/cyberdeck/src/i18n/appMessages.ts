@@ -4,6 +4,7 @@ const en = {
   previewLabel: 'Preview',
   showEveryPath: 'Every path',
   showPlayed: 'The paths played',
+  exploring: 'Exploring…',
   language: 'Cyberdeck in',
 }
 
@@ -14,6 +15,7 @@ const fr: AppMessages = {
   previewLabel: 'Aperçu',
   showEveryPath: 'Tous les parcours',
   showPlayed: 'Les parcours joués',
+  exploring: 'Exploration…',
   language: 'Cyberdeck en',
 }
 
