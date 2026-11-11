@@ -206,7 +206,7 @@ Conditions can combine: `[if: Answer is Truth and Mood is not Angry]`, or with `
 
 ## 8. Share your game
 
-In **Details**, add a description, credits and a cover picture: players see them in their library. Then, in **Export**, give the release a name and press **Export**. You get one `.zip` file: that is your game.
+In **Details**, add a description, credits and a cover picture: players see them in their library. A picture named `cover`, dropped in Cast & files with the others, becomes the cover by itself if you have none yet. Then, in **Export**, give the release a name and press **Export**. You get one `.zip` file: that is your game.
 
 ![The Export tab: the release “1.0”, both chapters ticked, and the Export button.](images/export.png)
 

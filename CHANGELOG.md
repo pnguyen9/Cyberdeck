@@ -24,6 +24,8 @@
 
 ### Cyberdeck, the editor
 - Each project can erase the progress of its previews alone, their saves alone, or both.
+- A picture named `cover`, dropped in Cast & files alone or in a zip, becomes the game's cover when
+  it has none: the samples' zips set their covers by themselves.
 - An exported game carries the pictures of a grid's tiles: Pairs and Minesweeper, exported, showed
   their tiles without pictures, no tag naming them.
 

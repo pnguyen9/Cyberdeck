@@ -342,6 +342,15 @@ export class OpenProject {
         continue
       }
       const target = matchAssetFile(file.name, mediaType, project)
+      // A picture named `cover` covers a game that has none yet: one the author chose stays.
+      if (target === null && isCoverFileName(file.name) && mediaType.startsWith('image/') && project.details.coverAssetId === null) {
+        const assetId = this.environment.createId()
+        await this.store.writeAsset(project.id, assetId, file.bytes, mediaType)
+        project = { ...project, assets: [...project.assets, { id: assetId, fileName: file.name, mediaType, byteSize: file.bytes.length }] }
+        project = updateDetails(project, { coverAssetId: assetId }, this.now())
+        matches.push({ fileName: file.name, entry: castMessages[locale].coverTarget })
+        continue
+      }
       if (target === null) {
         matches.push({ fileName: file.name, entry: null, unused: 'noEntry' })
         continue
@@ -691,6 +700,12 @@ export class OpenProject {
   private now() {
     return this.environment.now()
   }
+}
+
+/** `cover.png`, `Cover.webp`: a file named to be the game's cover. */
+function isCoverFileName(fileName: string): boolean {
+  const baseName = fileName.split('/').at(-1) ?? fileName
+  return baseName.replace(/\.[^.]+$/, '').trim().toLowerCase() === 'cover'
 }
 
 function describeTarget(project: ProjectDocument, target: AssetTarget, locale: Locale): string {

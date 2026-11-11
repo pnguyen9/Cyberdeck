@@ -23,8 +23,8 @@ export default async function check(page, { url, output }) {
   await page.waitFor('.message[role=status]', 30000)
   await pause(500)
   const report = await page.statusText()
-  // The cover goes in Details, not to an entry of the story.
-  page.check('every file of the zip finds its entry but the cover', report.slice(report.indexOf('Not used')), 'Not used, no entry of that name: cover.png.')
+  // The cover, which no entry of the story takes, becomes the game's cover, as it has none yet.
+  page.check('every file of the zip finds its entry, the cover the game\'s cover', [report.includes('Not used'), report.includes('cover.png → Cover of the game')], [false, true])
   page.check('the sounds and music among them', ['calm.ogg → Music calm', 'door.ogg → Sound door'].every(match => report.includes(match)), true)
   page.check('and no entry is left without a file', await page.evaluate(`document.querySelectorAll('.cast .missing-count').length`), 0)
   await page.screenshot('cast')

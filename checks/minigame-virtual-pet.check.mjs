@@ -30,7 +30,7 @@ export default async function check(page, { url }) {
   await page.waitFor('.message[role=status]', 30000)
   await pause(500)
   const report = await page.statusText()
-  page.check('every file finds its entry but the cover', report.slice(report.indexOf('Not used')), 'Not used, no entry of that name: cover.svg.')
+  page.check('every file finds its entry, the cover the game\'s cover', [report.includes('Not used'), report.includes('cover.svg → Cover of the game')], [false, true])
   page.check('and no entry is left without a file', await page.evaluate(`document.querySelectorAll('.cast .missing-count').length`), 0)
 
   await page.clickButton('Preview ▶', '.button')

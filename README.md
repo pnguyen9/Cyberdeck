@@ -12,8 +12,8 @@ Open [docs/guide/index.html](docs/guide/index.html) in a browser, or read
 page (on GitHub, in an editor). This README is the complete reference.
 
 A sample story to try it with, *Sakura Week*, is in [docs/sample/sakura-week](docs/sample/sakura-week):
-import `sakura-week.txt`, then drop `sakura-week-assets.zip` in Cast & files (and `cover.png`, inside
-it, in Details).
+import `sakura-week.txt`, then drop `sakura-week-assets.zip` in Cast & files: its `cover.png` becomes
+the game's cover.
 
 ## Why this exists
 
@@ -597,7 +597,8 @@ A **project** holds the whole game. Its screens:
   Every game archive carries all the project's fonts; the player loads them from the archive, as
   bytes, never from elsewhere.
 - **Details**: description, credits and cover, shown in players' libraries. The cover is shown at
-  16:9, cut to fill it; Details says when an image is far from that shape.
+  16:9, cut to fill it; Details says when an image is far from that shape. A picture named `cover`
+  dropped in Cast & files, alone or in a zip, becomes the cover of a project that has none.
 - **Export**: the release label, the chapters to include (of those left out, players see their
   titles, only how many there are, or nothing at all, as the author chooses) and, in a story of several languages, the
   languages players get (the first always; another only once it has a text for every chapter
