@@ -148,6 +148,23 @@ describe('the map', () => {
     expect(path).not.toBeNull()
     const { progress, isWhole } = exploreStory(story)
     expect([progress.endingIds.length, isWhole]).toEqual([2, true])
+    // The option only those values open is played from the map from a path where it is offered.
+    const evening = layOutProgressMap(progress, story).nodes.flatMap(node => node.type === 'point' && node.decisionName === 'Evening' ? [node] : [])[0]!
+    const mika = evening.options.find(option => option.text === 'Find Mika')
+    const runtime = new StoryRuntime(story)
+    runtime.restoreState(stateFromSave(story, mika?.offeredIn ?? evening.point.save))
+    const step = runtime.snapshot.step
+    expect(step.type === 'choice' && step.choice.options.map(option => option.text)).toEqual(['Find Mika', 'Go home'])
+  })
+
+  it('draws a choice a loop asks again as a point after the first, every line going forward', () => {
+    // Two stops of an afternoon, each a place and, at the shop, a scene with its own choice.
+    const story = storyFromText(['[set: Slots = 0]', '[loop]', '[choice: Where]', '> The shop = Shop', '> The library = Library', '[if: Where is Shop]', '[play: Shop]', '[end]', '[add: Slots 1]', '[if: Slots >= 2]', '[break]', '[end]', '[end]', '[ending: Home]', '', '# Scene: Shop', '[choice: Dango]', '> Sweet = Sweet', '> Plain = Plain', 'Thanks!'])
+    const map = layOutProgressMap(exploreStory(story).progress, story)
+    const columnOf = new Map(map.nodes.map(node => [node.key, node.column]))
+    const names = map.nodes.flatMap(node => node.type === 'point' ? [node.decisionName] : []).sort()
+    expect(names).toEqual(['Dango', 'Dango', 'Where', 'Where'])
+    expect(map.edges.every(edge => columnOf.get(edge.to)! > columnOf.get(edge.from)!)).toBe(true)
   })
 
   it('explores every path of the story, each choice one point, every option taken, every ending found', () => {

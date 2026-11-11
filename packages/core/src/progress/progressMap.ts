@@ -1,7 +1,7 @@
 import type { StoredChoice } from '../format/storyFormat'
 import type { PlayableStory } from '../runtime/playableStory'
 import { withValues } from '../format/textValues'
-import { stateFromSave } from '../saves/saveData'
+import { stateFromSave, type SaveData } from '../saves/saveData'
 import { valuesReader } from '../runtime/storyValues'
 import { choicesOf, type ProgressData, type ProgressPoint, type ProgressTarget } from './progress'
 
@@ -19,7 +19,11 @@ export type MapNode =
     point: ProgressPoint
     chapterTitle: string | null
     decisionName: string
-    options: { optionId: string; text: string; next: string | null; isTaken: boolean }[]
+    /**
+     * `offeredIn`, on a map explored for the author: the state of a path offering an option the
+     * point's own state does not, to play it from there.
+     */
+    options: { optionId: string; text: string; next: string | null; isTaken: boolean; offeredIn: SaveData | null }[]
   }
   | { type: 'end'; key: string; column: number; row: number; endingName: string | null }
 
@@ -127,7 +131,8 @@ export function layOutProgressMap(progress: ProgressData, story: PlayableStory):
         options: (choice?.options ?? []).map(option => {
           const text = valueOf === null ? option.text : withValues(option.text, valueOf)
           const taken = point.taken.find(candidate => candidate.optionId === option.id)
-          return { optionId: option.id, text, next: taken?.next == null ? null : targetKey(taken.next), isTaken: taken !== undefined }
+          const offeredIn = point.offeredIn?.[option.id]
+          return { optionId: option.id, text, next: taken?.next == null ? null : targetKey(taken.next), isTaken: taken !== undefined, offeredIn: offeredIn === undefined || offeredIn === point.save ? null : offeredIn }
         }),
       }
     }),

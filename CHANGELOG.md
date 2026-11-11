@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Cyberdeck, the editor
+- *Every path*: an option only other values open, as Sakura Week's evening with Sota, Hayashi, the
+  cat or everyone, has its own ▶ that previews from a path where it is offered; *Play from here*
+  offered only what the first path to the point could pick.
+- *Every path*: a choice a loop asks again, the afternoon's second stop, is drawn after the first,
+  with what its scenes ask; lines went back to the first, and an option leading elsewhere on another
+  path left the choices it reached alone, unlinked.
+
 ## 3.2.0 — 2026-11-11
 
 ### Stories

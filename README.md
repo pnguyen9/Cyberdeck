@@ -557,7 +557,10 @@ A **project** holds the whole game. Its screens:
   of the states it is reached in; a choice or an ending still missing, opened only by some values
   (Sakura Week's bonds of 2 or more), is searched for, the paths nearest to those values first, and
   its way drawn. The map says when some are still not on it, past a grid of picture buttons for
-  instance. Each point tells, hovered, all its values, and previews from them.
+  instance. Each point tells, hovered, all its values, and previews from them; an option only other
+  values open has its own ▶, previewing from a path where it is offered. A choice a loop asks again
+  (a second stop of the afternoon) is drawn after the first, and an option leads to every place its
+  paths went, so that every line goes forward and every point is reached by one.
   Ctrl+Enter saves, Esc cancels, Ctrl+Z undoes. The card being edited is marked (✎), the panel's
   title too while changes are not saved (●). Nothing written is thrown away unasked: opening
   another card, Esc, another chapter, another tab or leaving the project first asks to **Save**,

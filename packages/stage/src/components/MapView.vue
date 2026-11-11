@@ -64,7 +64,7 @@ const curves = computed(() => {
     const endX = end.x
     const endY = end.y + (to.type === 'end' ? END_HEIGHT / 2 : HEADER_HEIGHT / 2)
     const bend = Math.max(40, (endX - startX) / 2)
-    return [{ key: `${edge.from}/${edge.optionId}`, path: `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}` }]
+    return [{ key: `${edge.from}/${edge.optionId}/${edge.to}`, path: `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}` }]
   })
 })
 </script>
@@ -100,7 +100,16 @@ const curves = computed(() => {
             </div>
             <ul class="options">
               <li v-for="option in node.options" :key="option.optionId" :class="{ untried: !option.isTaken }">
-                <span>{{ option.isTaken ? '›' : '?' }}</span> {{ option.text }}
+                <button
+                  v-if="option.offeredIn !== null && canPlayFrom(option.offeredIn)"
+                  class="option-play"
+                  :title="text.playOption(option.text)"
+                  :aria-label="text.playOption(option.text)"
+                  @click="emit('play', option.offeredIn)"
+                >
+                  ▶
+                </button>
+                <span v-else>{{ option.isTaken ? '›' : '?' }}</span> {{ option.text }}
               </li>
             </ul>
             <button v-if="canPlayFrom(node.point.save)" class="play-button" @click="emit('play', node.point.save)">{{ text.playFromHere }}</button>
@@ -242,6 +251,21 @@ const curves = computed(() => {
   display: inline-block;
   width: 1em;
   color: #9eeaff;
+}
+
+.option-play {
+  width: 1.2em;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: #9eeaff;
+  cursor: pointer;
+}
+
+.option-play:hover,
+.option-play:focus-visible {
+  color: #fff;
 }
 
 .options li.untried {

@@ -52,6 +52,11 @@ export interface ProgressPoint {
   save: SaveData
   /** Options picked here, with what they led to once known. */
   taken: { optionId: string; next: ProgressTarget | null }[]
+  /**
+   * On a map explored for the author alone: for each option, the state of a path that offered it, so
+   * that an option only some values open can be played from the map.
+   */
+  offeredIn?: Readonly<Record<string, SaveData>>
 }
 
 /** Where an option led: the next choice reached, or an end of the story (`endingId` null for the plain end). */
