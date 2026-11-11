@@ -340,6 +340,17 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
         }
       }
     }
+    if (node.type === 'gauge') {
+      const maximum = node.shown?.maximum
+      for (const name of [node.counter, maximum?.type === 'counter' ? maximum.counter : null]) {
+        if (name !== null && !isCounter(name)) {
+          problems.push({ severity: 'error', code: 'unknownCounter', line: node.sourceLine, subject: name })
+        }
+      }
+      if (node.counter !== null && maximum?.type === 'amount') {
+        checkPrecision(node.counter, decimalsOf(maximum.amount), String(maximum.amount), node.sourceLine)
+      }
+    }
     if (node.type === 'grid') {
       checkList(node.list, node.sourceLine)
       for (const size of [node.columns, node.rows]) {

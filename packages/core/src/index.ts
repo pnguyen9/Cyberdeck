@@ -53,6 +53,7 @@ export {
   waitMillisecondsOf,
   type BackgroundTransition,
   type CharacterOnStage,
+  type GaugeOnStage,
   type ResolvedAnimation,
   type StageContext,
   type StageLock,
@@ -73,6 +74,7 @@ export {
   type PlayerStep,
   type RestoreOutcome,
   type RuntimeState,
+  type ShownGauge,
 } from './runtime/storyRuntime'
 export { valuesReader, type HeldValues } from './runtime/storyValues'
 export { stagesAhead } from './runtime/stagesAhead'

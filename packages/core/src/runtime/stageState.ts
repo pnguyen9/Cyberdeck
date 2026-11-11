@@ -1,4 +1,4 @@
-import type { AnimationKind, AnimationSpec, Depth, Facing, FadeColor, Placement, PositionPreset, StageCommand, StageDefaults, TintName } from '../format/storyFormat'
+import type { AnimationKind, AnimationSpec, Depth, Facing, FadeColor, GaugeLook, Placement, PositionPreset, StageCommand, StageDefaults, StoredGauge, TintName } from '../format/storyFormat'
 
 /** An animation with the project defaults filled in. */
 export interface ResolvedAnimation {
@@ -89,6 +89,30 @@ export interface StageState {
   characters: CharacterOnStage[]
   /** How each character last left, for the interface to animate the exit. */
   departures: Readonly<Record<string, ResolvedAnimation>>
+  /** Counters shown as bars, in the order they came; the runtime says what each shows. Since 3.3. */
+  gauges: readonly GaugeOnStage[]
+}
+
+/** A counter shown as a bar, and how. */
+export interface GaugeOnStage {
+  counterId: string
+  look: GaugeLook
+}
+
+/** A gauge shown, taken away, or every one taken away: a gauge shown again keeps its place among the others. */
+export function withGauge(stage: StageState, gauge: StoredGauge): StageState {
+  if (gauge.counterId === null) {
+    return stage.gauges.length === 0 ? stage : { ...stage, gauges: [] }
+  }
+  const counterId = gauge.counterId
+  const others = stage.gauges.filter(shown => shown.counterId !== counterId)
+  if (gauge.shown === null) {
+    return others.length === stage.gauges.length ? stage : { ...stage, gauges: others }
+  }
+  const look = gauge.shown
+  return stage.gauges.some(shown => shown.counterId === counterId)
+    ? { ...stage, gauges: stage.gauges.map(shown => shown.counterId === counterId ? { counterId, look } : shown) }
+    : { ...stage, gauges: [...stage.gauges, { counterId, look }] }
 }
 
 export const EMPTY_STAGE: StageState = {
@@ -107,6 +131,7 @@ export const EMPTY_STAGE: StageState = {
   musicId: null,
   characters: [],
   departures: {},
+  gauges: [],
 }
 
 /** What applying commands needs from the project. */

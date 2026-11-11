@@ -6,7 +6,7 @@ import { idsReadBy } from './lists'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '3.2'
+export const FORMAT_VERSION = '3.3'
 
 /** True when this version of the code can read a document written in `version`: any version up to its own, every earlier major one included. */
 export function isSupportedFormatVersion(version: string): boolean {
@@ -696,6 +696,32 @@ export interface StoredAskNumber {
   maximum: StoredAskBound | null
 }
 
+/** The corners of the stage a gauge stands in; bars in the same corner stack. */
+export type GaugePlace = 'top left' | 'top right' | 'bottom left' | 'bottom right'
+/** A gauge's own colour; without one, it goes from green to gold to red as it empties, as health does. */
+export const GAUGE_COLORS = ['green', 'blue', 'red', 'gold', 'purple', 'pink'] as const
+export type GaugeColor = typeof GAUGE_COLORS[number]
+
+/** How a gauge shows: out of a number, in the counter's units, or of what another counter holds; `label` null for the counter's name. */
+export interface GaugeLook {
+  maximum: StoredAskBound
+  place: GaugePlace
+  color: GaugeColor | null
+  numbers: boolean
+  label: string | null
+}
+
+/**
+ * `[gauge: HP / {MaxHP} top right = {Name}]`: a counter shown on the stage as a bar, following what
+ * it holds until taken away; `shown` null takes it away, `counterId` null every bar. Since 3.3.
+ */
+export interface StoredGauge {
+  type: 'gauge'
+  id: string
+  counterId: string | null
+  shown: GaugeLook | null
+}
+
 /** The profile remembers this from now on, in every playthrough; or, `forget`, no longer does. Forgetting since 2.0. */
 export interface StoredRemember {
   type: 'remember'
@@ -724,7 +750,7 @@ export interface StoredBreak {
   id: string
 }
 
-export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredCount | StoredDraw | StoredCopy | StoredListChange | StoredTake | StoredGrid | StoredAsk | StoredAskNumber | StoredDefinition | StoredEnding | StoredRemember
+export type StoredNode = StoredPage | StoredStage | StoredChoice | StoredConditionNode | StoredLoop | StoredBreak | StoredPlay | StoredSet | StoredUnset | StoredCount | StoredDraw | StoredCopy | StoredListChange | StoredTake | StoredGrid | StoredAsk | StoredAskNumber | StoredGauge | StoredDefinition | StoredEnding | StoredRemember
 
 /** A list of nodes inside a block: a branch of a condition, or the body of a loop, which bears the loop's identifier. */
 export interface InnerList {

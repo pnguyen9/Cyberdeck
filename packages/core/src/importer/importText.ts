@@ -36,6 +36,7 @@ import {
   readCounterDeclaration,
   readDecisionDeclaration,
   readAskNumber,
+  readGauge,
   readRandom,
   declarationKind,
 } from './readControl'
@@ -552,6 +553,16 @@ class TextImporter {
         }
         this.flushPendingDirectives()
         this.addNode({ type: 'askNumber', sourceLine: lineNumber, counter: asked.counter, defaultAmount: asked.defaultAmount, decimals: asked.decimals, minimum: asked.minimum, maximum: asked.maximum })
+        return
+      }
+      case 'gauge': {
+        const gauge = readGauge(directive.written ?? text)
+        if (gauge === null) {
+          this.addProblem('error', 'invalidGauge', lineNumber, text === '' ? undefined : text)
+          return
+        }
+        this.flushPendingDirectives()
+        this.addNode({ type: 'gauge', sourceLine: lineNumber, ...gauge })
         return
       }
       case 'timeout':

@@ -115,6 +115,8 @@ export function refersOnlyToKnownDefinitions(chapter: ChapterDocument, project: 
         return (project.lists ?? []).some(list => list.id === node.listId)
       case 'draw':
         return valueIds.has(node.decisionId) && (node.notInDecisionId === null || valueIds.has(node.notInDecisionId))
+      case 'gauge':
+        return (node.counterId === null || counterIds.has(node.counterId)) && (node.shown?.maximum.type !== 'counter' || counterIds.has(node.shown.maximum.counterId))
       case 'askNumber':
         return counterIds.has(node.counterId) && [node.minimum, node.maximum].every(bound => bound?.type !== 'counter' || counterIds.has(bound.counterId))
       case 'condition':

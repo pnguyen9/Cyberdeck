@@ -1,6 +1,7 @@
 import {
   ANIMATIONS_BY_DIRECTIVE,
   CONTROL_DIRECTIVE_NAMES,
+  GAUGE_COLORS,
   importText,
   STAGE_KEYWORDS,
   type ChapterDocument,
@@ -219,6 +220,22 @@ export function completionAt(text: string, caret: number, vocabulary: TagVocabul
       return completion(wholeFrom, closing(vocabulary.decisions.map(decision => decision.name), details.decision).filter(item => startsWith(item.label, wholeArgument)))
     case 'add':
       return completion(wholeFrom, words(vocabulary.counters, details.counter).filter(item => startsWith(item.label, wholeArgument)))
+    case 'gauge': {
+      // The counter first; after its maximum, where the bar stands and how it looks; nothing to suggest in the label.
+      if (argumentText.includes('=')) {
+        return null
+      }
+      if (!argumentText.includes('/')) {
+        return completion(wholeFrom, [...words(vocabulary.counters, details.counter), ...closing(['none'], details.gauge)].filter(item => startsWith(item.label, wholeArgument)))
+      }
+      // Once the maximum is written, a space after it.
+      if (!/^\s*\S+\s/.test(argumentText.slice(argumentText.indexOf('/') + 1))) {
+        return null
+      }
+      const said = new Set(previousWords.map(word => word.toLowerCase()))
+      const offered = ['top', 'bottom', 'left', 'right', ...GAUGE_COLORS, 'numbers'].filter(word => !said.has(word))
+      return completion(wordFrom, words(offered, details.gauge).filter(item => startsWith(item.label, lastWord)))
+    }
     case 'shown':
     case 'shown after an ending': {
       // Names listed with commas: what follows the last comma is the name being typed.

@@ -225,6 +225,13 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
             use('decision', node.notInDecisionId, { role: 'tested', documentId, nodeId })
           }
           break
+        case 'gauge':
+          for (const counterId of [node.counterId, node.shown?.maximum.type === 'counter' ? node.shown.maximum.counterId : null]) {
+            if (counterId !== null) {
+              use('counter', counterId, { role: 'shown', documentId, nodeId })
+            }
+          }
+          break
         case 'askNumber':
           use('counter', node.counterId, { role: 'changed', documentId, nodeId })
           for (const bound of [node.minimum, node.maximum]) {

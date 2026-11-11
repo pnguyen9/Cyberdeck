@@ -1,4 +1,4 @@
-import type { ImportProblem, ImportProblemCode } from '@cyberdeck/core'
+import { GAUGE_COLORS, type ImportProblem, type ImportProblemCode } from '@cyberdeck/core'
 import type { Locale } from '@cyberdeck/stage'
 
 /** What each stage directive accepts, for a directive written so that it cannot be read. */
@@ -93,6 +93,7 @@ const en: ProblemMessages = {
       : `${counter} keeps ${kept} ${kept === '1' ? 'decimal' : 'decimals'}, as it is declared: ${value} has more.`
   },
   invalidAskNumber: subject => `${subject === '' ? '[ask number: …]' : `"${subject}"`} should look like: Bet = 10, from 1 to {Money}: a counter, the number proposed, and if wished the lowest and highest numbers allowed, each a number or a counter in braces.`,
+  invalidGauge: subject => `${subject === '' ? '[gauge: …]' : `"${subject}"`} should look like: HP / {MaxHP} top right = {Name}: a counter, a slash and the most it holds (a number or a counter in braces), then if wished a corner, a colour (${GAUGE_COLORS.join(', ')}) and numbers, and after = a label. HP none takes the bar away, none every bar.`,
   clockReadOnly: subject => `${subject} is read from the player's clock: the story may test it and show it, not change it. To count something of your own, declare a counter of another name.`,
   tagValueNotHere: subject => `A value in braces names a picture only in [enter], [bg], [illustration] and a character's own tag: "${subject}" cannot take one.`,
   tagValueNeedsDecision: subject => `${subject} is a counter: a picture is named by a decision's value, whose values are the pictures' names, [decision: ${subject} = …].`,
@@ -220,6 +221,7 @@ const fr: ProblemMessages = {
       : `${counter} garde ${kept} ${kept === '1' ? 'décimale' : 'décimales'}, comme il est déclaré\u00a0: ${value} en a davantage.`
   },
   invalidAskNumber: subject => `${subject === '' ? '[ask number: …]' : quoted(subject)} devrait avoir cette forme\u00a0: Mise = 10, from 1 to {Argent}\u00a0: un compteur, le nombre proposé, et si besoin le plus petit et le plus grand nombre permis, chacun un nombre ou un compteur entre accolades.`,
+  invalidGauge: subject => `${subject === '' ? '[gauge: …]' : quoted(subject)} devrait avoir cette forme\u00a0: PV / {PVMax} top right = {Nom}\u00a0: un compteur, une barre oblique et le plus qu’il peut valoir (un nombre ou un compteur entre accolades), puis si besoin un coin, une couleur (${GAUGE_COLORS.join(', ')}) et numbers, et après = une étiquette. PV none retire la barre, none toutes les barres.`,
   clockReadOnly: subject => `${subject} vient de l’horloge du joueur\u00a0: l’histoire peut la tester et l’afficher, pas la changer. Pour compter quelque chose vous-même, déclarez un compteur d’un autre nom.`,
   tagValueNotHere: subject => `Une valeur entre accolades ne nomme une image que dans [enter], [bg], [illustration] et la balise d’un personnage\u00a0: ${quoted(subject)} ne peut pas en prendre.`,
   tagValueNeedsDecision: subject => `${subject} est un compteur\u00a0: une image se nomme par la valeur d’une décision, dont les valeurs sont les noms des images, [decision: ${subject} = …].`,

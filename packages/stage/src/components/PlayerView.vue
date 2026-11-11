@@ -74,6 +74,7 @@ import { useFullscreen, useStageScale } from './stageWindow'
 import TextBox from './TextBox.vue'
 import { LESS_MOTION, useSystemLessMotion, wantsLessMotion } from '../settings/lessMotion'
 import FullScreenText from './FullScreenText.vue'
+import GaugePanel from './GaugePanel.vue'
 import { preparePicture } from './animatedPictures'
 import type { StyledPart } from '../textRuns'
 
@@ -144,6 +145,8 @@ const isTextHidden = ref(false)
 const playingVideo = ref<{ url: string; captionsUrl: string | null } | null>(null)
 const videoElement = useTemplateRef<HTMLVideoElement>('video')
 /** The text, choices and menu: hidden by the player, and under a panel or the end screen, which have their own buttons. */
+/** Counters shown as bars, as they stand now; the snapshot changes whenever one of them may. */
+const gauges = computed(() => snapshot.value.stage.gauges.length === 0 ? [] : runtime.gaugesShown())
 const isHudShown = computed(() => !isTextHidden.value && openPanel.value === 'none' && snapshot.value.step.type !== 'end' && errorMessage.value === null && titleCard.value === null && playingVideo.value === null)
 const notice = ref<string | null>(null)
 let noticeTimer: ReturnType<typeof setTimeout> | undefined
@@ -1306,6 +1309,7 @@ onUnmounted(() => {
       <div ref="scene" class="scene">
         <StageView :stage="snapshot.stage" :catalog="catalog" />
       </div>
+      <GaugePanel v-if="gauges.length > 0 && isHudShown" :gauges="gauges" :less-motion="lessMotion" />
       <div
         class="cover"
         :style="{

@@ -140,6 +140,14 @@ export function unusedNames(project: ProjectDocument, documents: readonly Chapte
           used.add(node.notInDecisionId)
         }
         break
+      case 'gauge':
+        if (node.counterId !== null) {
+          used.add(node.counterId)
+        }
+        if (node.shown?.maximum.type === 'counter') {
+          used.add(node.shown.maximum.counterId)
+        }
+        break
       case 'askNumber':
         used.add(node.counterId)
         for (const bound of [node.minimum, node.maximum]) {

@@ -298,6 +298,25 @@ export function storeImport(
           : written.type === 'amount' ? { type: 'amount', amount: unitsOf(written.amount, counter) } : { type: 'counter', counterId: counters.find(written.counter).id }
         return { type: 'askNumber', id, counterId: counter.id, defaultAmount: unitsOf(node.defaultAmount, counter), minimum: bound(node.minimum), maximum: bound(node.maximum) }
       }
+      case 'gauge': {
+        if (node.counter === null || node.shown === null) {
+          return { type: 'gauge', id, counterId: node.counter === null ? null : counters.find(node.counter).id, shown: null }
+        }
+        const counter = counters.find(node.counter)
+        const { maximum, place, color, numbers, label } = node.shown
+        return {
+          type: 'gauge',
+          id,
+          counterId: counter.id,
+          shown: {
+            maximum: maximum.type === 'amount' ? { type: 'amount', amount: unitsOf(maximum.amount, counter) } : { type: 'counter', counterId: counters.find(maximum.counter).id },
+            place,
+            color,
+            numbers,
+            label,
+          },
+        }
+      }
       case 'add': {
         const counter = counters.find(node.counter)
         if (node.from !== undefined) {

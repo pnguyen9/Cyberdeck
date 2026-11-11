@@ -8,7 +8,7 @@ import type {
   StoredNode,
   StoredPage,
 } from '../format/storyFormat'
-import { flattenStoredNodes, innerListsOf, MAXIMUM_GRID, type Counter, type ProjectDocument, type ClockValue, type ListPlace, type ListValue, type StoredGrid, type StoredListChange, type StoredTake, type StoredAsk, type StoredAskBound, type StoredAskNumber } from '../format/storyFormat'
+import { flattenStoredNodes, innerListsOf, MAXIMUM_GRID, type Counter, type ProjectDocument, type ClockValue, type ListPlace, type ListValue, type StoredGrid, type StoredListChange, type StoredTake, type StoredAsk, type StoredAskBound, type StoredAskNumber, type GaugeColor, type GaugePlace } from '../format/storyFormat'
 import { givenName, pageWithValues, withValues, type ValueOf } from '../format/textValues'
 import { normalizeName } from '../importer/storyNodes'
 import { drawFrom, newSeed } from './chance'
@@ -17,7 +17,7 @@ import { listsOf } from '../format/lists'
 import { savedAmount, scaleOf, unitsFromText, wholeAmount, writtenAmount } from '../format/counterNumbers'
 import { valuesReader, type HeldValues } from './storyValues'
 import { chaptersInOrder, scenesOf, type PlayableStory } from './playableStory'
-import { applyStageCommand, createStageContext, EMPTY_STAGE, showPage, type StageContext, type StageState } from './stageState'
+import { applyStageCommand, createStageContext, EMPTY_STAGE, showPage, withGauge, type StageContext, type StageState } from './stageState'
 
 export type PlayerStep =
   | { type: 'page'; page: StoredPage }
@@ -35,6 +35,17 @@ export type PlayerStep =
   | { type: 'grid'; grid: StoredGrid; items: readonly string[] }
   /** The end of the story, or of this path when an `[ending: …]` was reached. */
   | { type: 'end'; endingId: string | null }
+
+/** A gauge as the player draws it. */
+export interface ShownGauge {
+  counterId: string
+  label: string
+  /** How full the bar is, from 0 to 1. */
+  share: number
+  numbers: { held: string; maximum: string } | null
+  place: GaugePlace
+  color: GaugeColor | null
+}
 
 /** A value changed by hand, by an author testing the story: what a playthrough holds, or what the profile has. */
 export type HeldChange =
@@ -398,7 +409,28 @@ export class StoryRuntime {
     return outcome
   }
 
-  /** Past stops, oldest first, with the option picked at each choice. */
+  /**
+   * The gauges on the stage as they show now: each counter's share of its maximum, from 0 to 1, its
+   * label with the values in it, and its numbers when it shows them.
+   */
+  gaugesShown(): ShownGauge[] {
+    return this.currentSnapshot.stage.gauges.map(({ counterId, look }) => {
+      const counter = this.counterOf(counterId)
+      const units = this.countOf(counterId)
+      const maximum = look.maximum.type === 'amount' ? look.maximum.amount : this.inUnitsOf(this.countOf(look.maximum.counterId), look.maximum.counterId, counterId)
+      const label = look.label ?? this.project.counters.find(candidate => candidate.id === counterId)?.name ?? ''
+      return {
+        counterId,
+        label: withValues(label, this.valueOf()),
+        share: maximum <= 0 ? 0 : Math.min(1, Math.max(0, units / maximum)),
+        numbers: look.numbers ? { held: writtenAmount(units, counter), maximum: writtenAmount(Math.round(maximum), counter) } : null,
+        place: look.place,
+        color: look.color,
+      }
+    })
+  }
+
+  /** Past stops, oldest first, with the option picked at each choice. */  /** Past stops, oldest first, with the option picked at each choice. */
   backlog(): BacklogEntry[] {
     return this.history.slice(0, -1).flatMap((stop, stopIndex): BacklogEntry[] => {
       const step = stop.snapshot.step
@@ -674,6 +706,13 @@ export class StoryRuntime {
         case 'stage':
           node.commands.forEach(command => this.applyToStage(command))
           break
+        case 'gauge': {
+          const stage = withGauge(this.currentSnapshot.stage, node)
+          if (stage !== this.currentSnapshot.stage) {
+            this.currentSnapshot = { ...this.currentSnapshot, stage }
+          }
+          break
+        }
         case 'set':
           this.decide(node.decisionId, node.valueId)
           break

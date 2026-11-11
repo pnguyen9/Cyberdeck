@@ -1,5 +1,6 @@
 import { MAXIMUM_COUNTER_DECIMALS } from '../importer/readControl'
 import {
+  GAUGE_COLORS,
   isSupportedFormatVersion,
   type AnimationSpec,
   type ChapterDocument,
@@ -292,6 +293,19 @@ function node(value: unknown, path: string, depth: number): StoredNode {
       return object({ type: oneOf('copy'), id: string, decisionId: string, fromDecisionId: string })(value, path)
     case 'draw':
       return object({ type: oneOf('draw'), id: string, decisionId: string, notInDecisionId: nullable(string) })(value, path)
+    case 'gauge':
+      return object({
+        type: oneOf('gauge'),
+        id: string,
+        counterId: nullable(string),
+        shown: nullable(object({
+          maximum: askBound,
+          place: oneOf('top left', 'top right', 'bottom left', 'bottom right'),
+          color: nullable(oneOf(...GAUGE_COLORS)),
+          numbers: boolean,
+          label: nullable(string),
+        })),
+      })(value, path)
     case 'askNumber':
       return object({ type: oneOf('askNumber'), id: string, counterId: string, defaultAmount: integer, minimum: nullable(askBound), maximum: nullable(askBound) })(value, path)
     case 'set':

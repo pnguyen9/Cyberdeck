@@ -1,3 +1,5 @@
+import type { GaugeColor, GaugePlace } from '../format/storyFormat'
+
 /**
  * Result of importing a text (pasted or from a Word document) into chapters.
  *
@@ -143,6 +145,14 @@ export interface AskNumberNode {
   maximum: AskBound | null
 }
 
+/** `[gauge: HP / {MaxHP} top right = {Name}]`: a counter shown as a bar on the stage; `shown` null takes it away, `counter` null every bar. */
+export interface GaugeNode {
+  type: 'gauge'
+  sourceLine: number
+  counter: string | null
+  shown: { maximum: AskBound; place: GaugePlace; color: GaugeColor | null; numbers: boolean; label: string | null } | null
+}
+
 export type Condition =
   | { type: 'is'; decision: string; value: string; negated: boolean }
   /** `remembered X`: the profile remembers it, from this playthrough or an earlier one. */
@@ -252,7 +262,7 @@ export interface PlayNode {
   scene: string
 }
 
-export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | AddNode | ListAddNode | ShuffleNode | TakeNode | GridNode | AskNode | AskNumberNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
+export type StoryNode = PageNode | StageNode | ChoiceNode | ConditionNode | LoopNode | BreakNode | PlayNode | SetNode | AddNode | ListAddNode | ShuffleNode | TakeNode | GridNode | AskNode | AskNumberNode | GaugeNode | UnsetNode | DefinitionNode | EndingNode | RememberNode
 
 /**
  * `[decision: Confession = Accept | Refuse]`, or `[decision multi: …]` when several values can hold at
@@ -335,6 +345,7 @@ export type ImportProblemCode =
   | 'counterNeedsNumber'
   | 'counterTooPrecise'
   | 'invalidAskNumber'
+  | 'invalidGauge'
   | 'clockReadOnly'
   | 'tagValueNotHere'
   | 'invalidSharedPictures'

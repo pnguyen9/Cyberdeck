@@ -1,7 +1,7 @@
 import { writtenAmount } from '../format/counterNumbers'
 import { valueWritten } from '../format/valueTags'
 import { pictureTurnWords } from '../stage/stageDirectives'
-import { counterValueText, describeAskNumber, describeCondition, describeCopy, describeDraw, describeGrid, describeListNode } from '../storyboard/describeNodes'
+import { counterValueText, describeAskNumber, describeGauge, describeCondition, describeCopy, describeDraw, describeGrid, describeListNode } from '../storyboard/describeNodes'
 import { listsOf, listValueText } from '../format/lists'
 import { firstLanguageOf } from '../format/languages'
 import { effectText, lockText } from '../storyboard/describeNodes'
@@ -270,6 +270,9 @@ class TextWriter {
         }
         case 'askNumber':
           this.line(`[${describeAskNumber(node, this.project)}]`)
+          break
+        case 'gauge':
+          this.line(`[${describeGauge(node, this.project)}]`)
           break
         case 'draw':
           this.line(`[set: ${describeDraw(node, this.project)}]`)

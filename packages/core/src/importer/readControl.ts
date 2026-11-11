@@ -1,4 +1,5 @@
-import type { AskBound, Condition, CounterValue, Directive } from './importTypes'
+import type { AskBound, Condition, CounterValue, Directive, GaugeNode } from './importTypes'
+import { GAUGE_COLORS, type GaugeColor, type GaugePlace } from '../format/storyFormat'
 
 /** Directives that shape the story rather than the stage. They must be alone on their line. */
 export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
@@ -11,6 +12,7 @@ export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
   'add',
   'ask',
   'ask number',
+  'gauge',
   'character',
   'list',
   'shuffle',
@@ -169,6 +171,53 @@ export function readAskNumber(text: string): { counter: string; defaultAmount: n
     return null
   }
   return { counter: parts[1]!.trim(), defaultAmount, decimals: decimalsWritten(parts[2]!), minimum, maximum }
+}
+
+/**
+ * `HP / {MaxHP} top right red numbers = {Name}`: a counter shown as a bar, out of a number or of what
+ * another counter holds, in a corner of the stage (top left unless told), in a colour of its own or
+ * in those of health, with its numbers or not, named by the label after `=` or by the counter's own
+ * name. `HP none` takes the counter's bar away, `none` every bar. Null when it reads otherwise.
+ */
+export function readGauge(text: string): Omit<GaugeNode, 'type' | 'sourceLine'> | null {
+  const trimmed = text.trim()
+  if (/^none$/i.test(trimmed)) {
+    return { counter: null, shown: null }
+  }
+  const hidden = /^(.+?)\s+none$/i.exec(trimmed)
+  if (hidden !== null) {
+    return { counter: hidden[1]!.trim(), shown: null }
+  }
+  const equalsIndex = trimmed.indexOf('=')
+  const label = equalsIndex === -1 ? null : trimmed.slice(equalsIndex + 1).trim()
+  const parts = /^(.+?)\s*\/\s*(\{[^{}]+\}|\d+(?:\.\d+)?)\s*(.*)$/.exec(equalsIndex === -1 ? trimmed : trimmed.slice(0, equalsIndex).trim())
+  if (parts === null || label === '') {
+    return null
+  }
+  const written = parts[2]!
+  const maximum: AskBound = written.startsWith('{') ? { type: 'counter', counter: written.slice(1, -1).trim() } : { type: 'amount', amount: Number(written) }
+  if (maximum.type === 'amount' && maximum.amount <= 0) {
+    return null
+  }
+  let vertical: 'top' | 'bottom' | null = null
+  let horizontal: 'left' | 'right' | null = null
+  let color: GaugeColor | null = null
+  let numbers = false
+  for (const word of parts[3]!.toLowerCase().split(/\s+/).filter(candidate => candidate !== '')) {
+    if ((word === 'top' || word === 'bottom') && vertical === null) {
+      vertical = word
+    } else if ((word === 'left' || word === 'right') && horizontal === null) {
+      horizontal = word
+    } else if ((GAUGE_COLORS as readonly string[]).includes(word) && color === null) {
+      color = word as GaugeColor
+    } else if (word === 'numbers' && !numbers) {
+      numbers = true
+    } else {
+      return null
+    }
+  }
+  const place = `${vertical ?? 'top'} ${horizontal ?? 'left'}` as GaugePlace
+  return { counter: parts[1]!.trim(), shown: { maximum, place, color, numbers, label } }
 }
 
 /** `Answer 10s` → the decision and the time to pick, in milliseconds; the decision alone when no time ends the text. */

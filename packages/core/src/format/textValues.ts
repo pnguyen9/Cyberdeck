@@ -33,7 +33,8 @@ export function placeholdersIn(text: string): string[] {
 
 /** The names an imported node shows with `{…}`: in a page and its speaker, an option, a grid's caption. */
 export function placeholdersOfNode(node: StoryNode): string[] {
-  const texts = node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : node.type === 'grid' ? [node.caption ?? ''] : []
+  const texts = node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : node.type === 'grid' ? [node.caption ?? '']
+    : node.type === 'gauge' ? [node.shown?.label ?? ''] : []
   return texts.flatMap(placeholdersIn)
 }
 

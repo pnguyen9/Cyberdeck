@@ -3,11 +3,11 @@ import { listsOf } from '../format/lists'
 import { normalizeName } from '../importer/storyNodes'
 import { givenName, withValues } from '../format/textValues'
 import { valuesReader } from '../runtime/storyValues'
-import { flattenStoredNodes, type Facing, type FadeColor, type TintName } from '../format/storyFormat'
+import { flattenStoredNodes, GAUGE_COLORS, type Facing, type FadeColor, type GaugeColor, type GaugePlace, type StoredAskBound, type TintName } from '../format/storyFormat'
 import type { PlayableStory } from '../runtime/playableStory'
 import { drawsNumbers, newSeed } from '../runtime/chance'
 import { chaptersInOrder } from '../runtime/playableStory'
-import { EMPTY_STAGE, isStageLock, PAGES_PER_SCREENFUL, type CharacterOnStage, type StageLock } from '../runtime/stageState'
+import { EMPTY_STAGE, isStageLock, PAGES_PER_SCREENFUL, type CharacterOnStage, type GaugeOnStage, type StageLock } from '../runtime/stageState'
 import type { CounterState, DecisionState, LastingValues, NameState, RuntimeState } from '../runtime/storyRuntime'
 
 /**
@@ -59,9 +59,31 @@ export interface SaveData {
     /** In full-screen text, the pages already on the screen, the saved one last. */
     screen?: string[]
     illustration?: string
+    /** Counters shown as bars, by name: out of a number, or of the counter named. Since 3.3. */
+    gauges?: SavedGauge[]
   }
   /** Every option picked, in order: the playthrough itself. */
   choices: { choiceId: string; optionId: string; decision: string; option: string }[]
+}
+
+export interface SavedGauge {
+  counter: string
+  of: number | { counter: string }
+  place: GaugePlace
+  color?: GaugeColor
+  numbers?: true
+  label?: string
+}
+
+const GAUGE_PLACES: readonly string[] = ['top left', 'top right', 'bottom left', 'bottom right'] satisfies readonly GaugePlace[]
+
+function isSavedGauge(value: unknown): boolean {
+  return isRecord(value) && isString(value.counter)
+    && ((typeof value.of === 'number' && Number.isFinite(value.of)) || (isRecord(value.of) && isString(value.of.counter)))
+    && typeof value.place === 'string' && GAUGE_PLACES.includes(value.place)
+    && (value.color === undefined || (GAUGE_COLORS as readonly unknown[]).includes(value.color))
+    && (value.numbers === undefined || value.numbers === true)
+    && (value.label === undefined || isString(value.label))
 }
 
 const EXCERPT_LENGTH = 140
@@ -139,6 +161,21 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
       ...(state.stage.noGoingBack === null ? {} : { locked: state.stage.noGoingBack }),
       ...(state.stage.textMode === 'full' ? { text: 'full' as const, screen: [...state.stage.screenfulPageIds] } : {}),
       ...(state.stage.illustrationId === null ? {} : { illustration: project.illustrations.find(illustration => illustration.id === state.stage.illustrationId)?.name ?? '' }),
+      ...(state.stage.gauges.length === 0 ? {} : { gauges: state.stage.gauges.flatMap(({ counterId, look }): SavedGauge[] => {
+        const counter = project.counters.find(candidate => candidate.id === counterId)
+        const maximumCounter = look.maximum.type === 'counter' ? project.counters.find(candidate => candidate.id === (look.maximum as { counterId: string }).counterId) : undefined
+        if (counter === undefined || (look.maximum.type === 'counter' && maximumCounter === undefined)) {
+          return []
+        }
+        return [{
+          counter: counter.name,
+          of: look.maximum.type === 'amount' ? savedAmount(look.maximum.amount, counter) : { counter: maximumCounter!.name },
+          place: look.place,
+          ...(look.color === null ? {} : { color: look.color }),
+          ...(look.numbers ? { numbers: true as const } : {}),
+          ...(look.label === null ? {} : { label: look.label }),
+        }]
+      }) }),
     },
     choices: state.choices.flatMap(record => {
       const choice = choicesById.get(record.choiceId)
@@ -251,6 +288,15 @@ export function stateFromSave(story: PlayableStory, save: SaveData): RuntimeStat
       textMode: save.stage.text ?? 'box',
       screenfulPageIds: save.stage.text === 'full' ? save.stage.screen ?? [] : [],
       illustrationId: save.stage.illustration === undefined ? null : findNamed(project.illustrations, save.stage.illustration)?.id ?? null,
+      gauges: (save.stage.gauges ?? []).flatMap((saved): GaugeOnStage[] => {
+        const counter = findNamed(project.counters, saved.counter)
+        const maximumCounter = typeof saved.of === 'number' ? undefined : findNamed(project.counters, saved.of.counter)
+        if (counter === undefined || (typeof saved.of !== 'number' && maximumCounter === undefined)) {
+          return []
+        }
+        const maximum: StoredAskBound = typeof saved.of === 'number' ? { type: 'amount', amount: unitsFromSaved(saved.of, counter) } : { type: 'counter', counterId: maximumCounter!.id }
+        return [{ counterId: counter.id, look: { maximum, place: saved.place, color: saved.color ?? null, numbers: saved.numbers === true, label: saved.label ?? null } }]
+      }),
     },
     choices: save.choices.map(({ choiceId, optionId }) => ({ choiceId, optionId })),
   }
@@ -290,6 +336,7 @@ export function parseSave(value: unknown): SaveData | null {
     && (stage.text === undefined || stage.text === 'full')
     && (stage.screen === undefined || (Array.isArray(stage.screen) && stage.screen.length <= PAGES_PER_SCREENFUL && stage.screen.every(isString)))
     && (stage.illustration === undefined || isString(stage.illustration))
+    && (stage.gauges === undefined || (Array.isArray(stage.gauges) && stage.gauges.length <= 100 && stage.gauges.every(isSavedGauge)))
     && Array.isArray(stage.characters) && stage.characters.every(character => isRecord(character)
       && isString(character.name) && isString(character.expression) && isPercentage(character.x)
       && (character.facing === null || character.facing === 'left' || character.facing === 'right')

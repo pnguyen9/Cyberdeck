@@ -2,7 +2,7 @@ import { writtenAmount } from '../format/counterNumbers'
 import { valueWritten } from '../format/valueTags'
 import { pictureTurnWords } from '../stage/stageDirectives'
 import { listName, listPlaceText, listValueText } from '../format/lists'
-import type { AnimationSpec, DefinitionKind, Placement, ProjectDocument, StageCommand, StoredAskBound, StoredAskNumber, StoredCondition, StoredCopy, StoredCount, StoredDraw, StoredGrid, StoredListChange, StoredTake } from '../format/storyFormat'
+import type { AnimationSpec, DefinitionKind, Placement, ProjectDocument, StageCommand, StoredAskBound, StoredAskNumber, StoredCondition, StoredCopy, StoredCount, StoredDraw, StoredGauge, StoredGrid, StoredListChange, StoredTake } from '../format/storyFormat'
 import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
 
 /** Short descriptions of what nodes do, in the words of the writing syntax, for the storyboard. */
@@ -195,6 +195,22 @@ export function describeAskNumber(node: StoredAskNumber, project: ProjectDocumen
   const maximum = bound(node.maximum)
   const bounds = [...(minimum === null ? [] : [`from ${minimum}`]), ...(maximum === null ? [] : [`to ${maximum}`])].join(' ')
   return `ask number: ${counter?.name ?? '?'} = ${writtenAmount(node.defaultAmount, counter ?? {})}${bounds === '' ? '' : `, ${bounds}`}`
+}
+
+/** `gauge: HP / {MaxHP} top right numbers = {Name}`, as the tag is written; `gauge: none` takes every bar away. */
+export function describeGauge(node: StoredGauge, project: ProjectDocument): string {
+  const counterName = (counterId: string) => project.counters.find(candidate => candidate.id === counterId)?.name ?? '?'
+  if (node.counterId === null) {
+    return 'gauge: none'
+  }
+  if (node.shown === null) {
+    return `gauge: ${counterName(node.counterId)} none`
+  }
+  const { maximum, place, color, numbers, label } = node.shown
+  const counter = project.counters.find(candidate => candidate.id === node.counterId)
+  const outOf = maximum.type === 'amount' ? writtenAmount(maximum.amount, counter ?? {}) : `{${counterName(maximum.counterId)}}`
+  const words = [place === 'top left' ? '' : place, color ?? '', numbers ? 'numbers' : ''].filter(word => word !== '')
+  return `gauge: ${counterName(node.counterId)} / ${outOf}${words.map(word => ` ${word}`).join('')}${label === null ? '' : ` = ${label}`}`
 }
 
 /** `Confession: Accept | Refuse`, `Clues (several): Letter | Key`, `Trust: starts at 2`, `Whisper: italic, small`. */
