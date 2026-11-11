@@ -891,6 +891,16 @@ of it is as free as the rest of the repository.
   scene choosing the right character, one scene working out any special move from who attacks whom
   (`[set: Attacker = {Mine}]`), hits shaking the screen; battles won and lost kept in the journal.
 
+## Plan
+
+What is left to do, in no particular order:
+
+- **The map says which option each line follows.** Where a point branches, Sakura Week's Monday job
+  for instance, the lines leaving it are alike: nothing tells which one goes on from *Decorations*
+  and which from *The cashier's table*. Each line should carry the option it follows (its text, or
+  its value when the text is long) where it leaves the point, in Datajack's map and in the
+  preview's.
+
 ## License
 
 Released into the public domain under the [Unlicense](LICENSE): anyone may use, change and
