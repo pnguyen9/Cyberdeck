@@ -80,6 +80,8 @@ export interface ChoiceNode {
   options: ChoiceOption[]
   /** `[choice: Answer 10s]`: the time the player has to pick. */
   timeLimitMs?: number
+  /** `[choice: Answer below]`: the options side by side along the bottom of the stage. */
+  below?: true
 }
 
 /** `[ask: Hero = Alex]`: the player gives a name, which `{Hero}` then shows; Alex until they do. */

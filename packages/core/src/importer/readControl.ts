@@ -220,11 +220,31 @@ export function readGauge(text: string): Omit<GaugeNode, 'type' | 'sourceLine'> 
   return { counter: parts[1]!.trim(), shown: { maximum, place, color, numbers, label } }
 }
 
-/** `Answer 10s` → the decision and the time to pick, in milliseconds; the decision alone when no time ends the text. */
-export function readChoiceHeading(text: string): { decision: string; timeLimitMs: number | null } {
-  const timed = /^(.*\S)\s+(\d+(?:\.\d+)?)\s*s$/i.exec(text.trim())
+/**
+ * `Answer 10s below` → the decision, the time to pick, in milliseconds, and whether the options sit
+ * side by side along the bottom of the stage rather than in a column over its middle; the time and
+ * `below` may come in either order, and each may be left out.
+ */
+export function readChoiceHeading(text: string): { decision: string; timeLimitMs: number | null; below: boolean } {
+  let rest = text.trim()
+  const belowAt = (written: string) => /^(.*\S)\s+below$/i.exec(written)
+  let below = false
+  const takeBelow = () => {
+    const found = belowAt(rest)
+    if (found !== null && !below) {
+      below = true
+      rest = found[1]!
+    }
+  }
+  takeBelow()
+  const timed = /^(.*\S)\s+(\d+(?:\.\d+)?)\s*s$/i.exec(rest)
   const seconds = timed === null ? 0 : Number(timed[2])
-  return timed === null || seconds <= 0 || seconds > 600 ? { decision: text.trim(), timeLimitMs: null } : { decision: timed[1]!, timeLimitMs: Math.round(seconds * 1000) }
+  const timeLimitMs = timed === null || seconds <= 0 || seconds > 600 ? null : Math.round(seconds * 1000)
+  if (timeLimitMs !== null) {
+    rest = timed![1]!
+  }
+  takeBelow()
+  return { decision: rest.trim(), timeLimitMs, below }
 }
 
 /** `Clues = Letter` → decision and value; null when either is missing. */

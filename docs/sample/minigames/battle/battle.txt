@@ -177,7 +177,7 @@ Round {Round} of 3. {Trainer} waits on the far side of the arena.
 [set: Pose = normal]
 [play: My pose]
 What will {Mine} do?
-[choice: Action]
+[choice: Action below]
 > Strike = Strike
 > Ember burst ({Specials} left) = Special [if: Mine is Pyrrup and Specials > 0]
 > Bramble lash ({Specials} left) = Special [if: Mine is Fernling and Specials > 0]

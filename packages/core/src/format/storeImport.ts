@@ -209,6 +209,7 @@ export function storeImport(
             ...(option.timeout === true ? { timeout: true as const } : {}),
           })),
           ...(node.timeLimitMs === undefined ? {} : { timeLimitMs: node.timeLimitMs }),
+          ...(node.below === true ? { below: true as const } : {}),
         }
       }
       case 'condition':

@@ -559,6 +559,8 @@ export interface StoredChoice {
   options: StoredChoiceOption[]
   /** The time the player has to pick, after which the option marked `timeout` is taken. Since 1.4; that option offered as the others since 2.0. */
   timeLimitMs?: number
+  /** The options side by side along the bottom of the stage, leaving its middle to the pictures. Since 3.3. */
+  below?: true
 }
 
 export interface StoredChoiceOption {

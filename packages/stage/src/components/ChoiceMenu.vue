@@ -29,6 +29,15 @@ const COMPACT_FROM = 5
 const isCompact = computed(() => props.choice.options.length >= COMPACT_FROM)
 
 /**
+ * `[choice: Action below]`: the options side by side where the text box stands, leaving the middle
+ * of the stage to the pictures; a row of up to three, two by two for four, then three or four columns.
+ */
+const columnsBelow = computed(() => {
+  const count = props.choice.options.length
+  return count <= 3 ? count : count === 4 ? 2 : count <= 6 ? 3 : 4
+})
+
+/**
  * A list still longer than its place scrolls, its edges fading where more options lie beyond; the
  * wheel scrolls it rather than going back or on, until it reaches an end.
  */
@@ -102,7 +111,8 @@ onUnmounted(() => {
   <div
     ref="menu"
     class="choice-menu"
-    :class="{ armed: isArmed, compact: isCompact, 'more-above': moreAbove, 'more-below': moreBelow }"
+    :class="{ armed: isArmed, compact: isCompact, below: choice.below === true, 'more-above': moreAbove, 'more-below': moreBelow }"
+    :style="choice.below === true ? { '--columns-below': columnsBelow } : undefined"
     role="menu"
     @scroll="measureScroll"
     @wheel="onWheel"
@@ -167,6 +177,23 @@ onUnmounted(() => {
 .compact .option {
   padding: 14px 40px;
   font-size: calc(32px * var(--text-scale, 1));
+}
+
+/* Along the bottom, over the place of the text box: as many columns as the options need, each as wide. */
+.choice-menu.below {
+  inset: auto 0 48px;
+  left: 50%;
+  width: 1664px;
+  max-height: 252px;
+  transform: translateX(-50%);
+  grid-template-columns: repeat(var(--columns-below), minmax(0, 1fr));
+  align-content: end;
+  gap: 16px 20px;
+}
+
+.below .option {
+  min-width: 0;
+  padding: 18px 28px;
 }
 
 /* Where more options lie beyond the edge, the list fades out there. */

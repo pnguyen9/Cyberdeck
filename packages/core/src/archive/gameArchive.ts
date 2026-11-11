@@ -301,8 +301,8 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   // An older Datajack would read a forget as a remember, hide the option waiting takes, and carry nothing over.
   const needsDatajack20 = languagesOf(project).length > 1 || project.decisions.some(decision => decision.lasting === true) || project.counters.some(counter => counter.lasting === true)
     || documents.some(document => flattenStoredNodes(document.nodes).some(node => (node.type === 'remember' && node.forget === true) || (node.type === 'choice' && node.timeLimitMs !== undefined)))
-  // Datajack 3.2 does not know a gauge: it would refuse the node.
-  if (documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'gauge'))) {
+  // Datajack 3.2 does not know a gauge, and would leave options meant below in the middle.
+  if (documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'gauge' || (node.type === 'choice' && node.below === true)))) {
     return '3.3'
   }
   // Datajack 3.1 does not know a part played as a game or forward only, a grid's caption, nor the

@@ -26,7 +26,7 @@ const en = {
     clear: 'a new screen of full-screen text',
   },
   controlDirectives: {
-    choice: 'the player picks an option',
+    choice: 'the player picks an option; below after its name lays the options along the bottom of the stage',
     if: 'what follows only if…',
     'else if': 'otherwise, if…',
     'only if': 'under a heading: the chapter plays only if…',
@@ -170,7 +170,7 @@ const fr: TagTextMessages = {
     clear: 'un nouvel écran de texte plein écran',
   },
   controlDirectives: {
-    choice: 'le joueur choisit une option',
+    choice: 'le joueur choisit une option\u00a0; below après son nom range les options en bas de la scène',
     if: 'ce qui suit seulement si…',
     'else if': 'sinon, si…',
     'only if': 'sous un titre : le chapitre n’est joué que si…',

@@ -260,7 +260,7 @@ class TextWriter {
           break
         case 'choice': {
           const decision = this.decision(node.decisionId)
-          this.line(`[choice: ${decision?.name ?? '?'}${node.timeLimitMs === undefined ? '' : ` ${node.timeLimitMs / 1000}s`}]`)
+          this.line(`[choice: ${decision?.name ?? '?'}${node.timeLimitMs === undefined ? '' : ` ${node.timeLimitMs / 1000}s`}${node.below === true ? ' below' : ''}]`)
           for (const option of node.options) {
             const condition = option.condition === null ? '' : ` [if: ${this.condition(option.condition)}]`
             const timeout = option.timeout === true ? ' [timeout]' : ''

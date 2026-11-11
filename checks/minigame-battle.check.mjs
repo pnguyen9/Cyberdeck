@@ -53,6 +53,13 @@ export default async function check(page, { url }) {
   const before = await gauges(page)
   page.check('both gauges show, the foe\'s at the top left, yours with its numbers', before.map(gauge => [gauge.corner, gauge.share, gauge.numbers]), [['top-left', 100, null], ['bottom-right', 100, '34 / 34']])
   page.check('each gauge is named by its creature', before[1]?.label === 'Pyrrup' && /^Rei's (Pyrrup|Fernling|Ripplet)$/.test(before[0]?.label ?? ''), true)
+  // The moves sit along the bottom, two by two, leaving the creatures in view.
+  page.check('the moves are laid out two by two along the bottom of the stage', await page.evaluate(`(() => {
+    const menu = document.querySelector('.viewport .choice-menu.below')
+    const viewport = document.querySelector('.viewport').getBoundingClientRect()
+    const tops = [...new Set([...document.querySelectorAll('.viewport .option')].map(option => Math.round(option.getBoundingClientRect().top)))]
+    return menu !== null && tops.length === 2 && menu.getBoundingClientRect().top > viewport.top + viewport.height * 0.7
+  })()`), true)
   page.check('both creatures are on stage', await page.evaluate(`document.querySelectorAll('.viewport .character').length`), 2)
   await page.screenshot('battle-turn')
 

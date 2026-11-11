@@ -532,7 +532,7 @@ class TextImporter {
         }
         this.flushPendingDirectives()
         const heading = readChoiceHeading(text)
-        this.openChoice = { type: 'choice', sourceLine: lineNumber, decision: heading.decision, options: [], ...(heading.timeLimitMs === null ? {} : { timeLimitMs: heading.timeLimitMs }) }
+        this.openChoice = { type: 'choice', sourceLine: lineNumber, decision: heading.decision, options: [], ...(heading.timeLimitMs === null ? {} : { timeLimitMs: heading.timeLimitMs }), ...(heading.below ? { below: true as const } : {}) }
         return
       }
       case 'ask': {

@@ -255,6 +255,9 @@ function node(value: unknown, path: string, depth: number): StoredNode {
       if (fields.timeLimitMs !== undefined) {
         choice.timeLimitMs = duration(fields.timeLimitMs, `${path}.timeLimitMs`)
       }
+      if (fields.below !== undefined) {
+        choice.below = fields.below === true ? true : fail(`${path}.below`, 'true')
+      }
       return choice
     }
     case 'ask':
