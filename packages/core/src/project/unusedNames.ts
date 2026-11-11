@@ -1,5 +1,5 @@
 import { decisionChoosingPicture, entriesNamedByValue } from '../format/valueTags'
-import { placeholdersIn } from '../format/textValues'
+import { placeholdersOfStoredNode } from '../format/textValues'
 import { normalizeName } from '../importer/storyNodes'
 import { flattenStoredNodes, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredCondition, type StoredNode } from '../format/storyFormat'
 
@@ -205,8 +205,7 @@ export function unusedNames(project: ProjectDocument, documents: readonly Chapte
   // A clock's counter is used where the text shows it, `{hour}`, as well as where a condition tests it.
   const clockCounters = project.counters.filter(candidate => candidate.clock !== undefined)
   if (clockCounters.length > 0) {
-    const shownNames = new Set(documents.flatMap(document => flattenStoredNodes(document.nodes)).flatMap(node =>
-      node.type === 'page' ? placeholdersIn(node.text) : node.type === 'choice' ? node.options.flatMap(option => placeholdersIn(option.text)) : node.type === 'grid' ? placeholdersIn(node.caption ?? '') : []).map(normalizeName))
+    const shownNames = new Set(documents.flatMap(document => flattenStoredNodes(document.nodes)).flatMap(placeholdersOfStoredNode).map(normalizeName))
     clockCounters.filter(counter => shownNames.has(normalizeName(counter.name))).forEach(counter => used.add(counter.id))
   }
   for (const counter of project.counters.filter(candidate => candidate.implicit === true && !used.has(candidate.id))) {

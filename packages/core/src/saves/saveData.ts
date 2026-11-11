@@ -3,7 +3,7 @@ import { listsOf } from '../format/lists'
 import { normalizeName } from '../importer/storyNodes'
 import { givenName, withValues } from '../format/textValues'
 import { valuesReader } from '../runtime/storyValues'
-import { flattenStoredNodes, GAUGE_COLORS, type Facing, type FadeColor, type GaugeColor, type GaugePlace, type StoredAskBound, type TintName } from '../format/storyFormat'
+import { flattenStoredNodes, GAUGE_COLORS, GAUGE_PLACES, type Facing, type FadeColor, type GaugeColor, type GaugePlace, type StoredAskBound, type TintName } from '../format/storyFormat'
 import type { PlayableStory } from '../runtime/playableStory'
 import { drawsNumbers, newSeed } from '../runtime/chance'
 import { chaptersInOrder } from '../runtime/playableStory'
@@ -75,12 +75,13 @@ export interface SavedGauge {
   label?: string
 }
 
-const GAUGE_PLACES: readonly string[] = ['top left', 'top right', 'bottom left', 'bottom right'] satisfies readonly GaugePlace[]
+/** Far more bars than a stage shows: a save holding more is refused. */
+const MAXIMUM_SAVED_GAUGES = 100
 
 function isSavedGauge(value: unknown): boolean {
   return isRecord(value) && isString(value.counter)
     && ((typeof value.of === 'number' && Number.isFinite(value.of)) || (isRecord(value.of) && isString(value.of.counter)))
-    && typeof value.place === 'string' && GAUGE_PLACES.includes(value.place)
+    && (GAUGE_PLACES as readonly unknown[]).includes(value.place)
     && (value.color === undefined || (GAUGE_COLORS as readonly unknown[]).includes(value.color))
     && (value.numbers === undefined || value.numbers === true)
     && (value.label === undefined || isString(value.label))
@@ -118,6 +119,7 @@ export function savedValues(story: PlayableStory, state: Pick<RuntimeState, 'dec
 export function toSave(story: PlayableStory, state: RuntimeState, savedAt: string): SaveData {
   const { project } = story
   const decisionsById = new Map(project.decisions.map(decision => [decision.id, decision]))
+  const countersById = new Map(project.counters.map(counter => [counter.id, counter]))
   const listEntries = Object.entries(state.lists ?? {}).flatMap(([listId, items]) => {
     const list = listsOf(project).find(candidate => candidate.id === listId)
     return list === undefined ? [] : [[list.name, [...items]] as [string, string[]]]
@@ -162,14 +164,17 @@ export function toSave(story: PlayableStory, state: RuntimeState, savedAt: strin
       ...(state.stage.textMode === 'full' ? { text: 'full' as const, screen: [...state.stage.screenfulPageIds] } : {}),
       ...(state.stage.illustrationId === null ? {} : { illustration: project.illustrations.find(illustration => illustration.id === state.stage.illustrationId)?.name ?? '' }),
       ...(state.stage.gauges.length === 0 ? {} : { gauges: state.stage.gauges.flatMap(({ counterId, look }): SavedGauge[] => {
-        const counter = project.counters.find(candidate => candidate.id === counterId)
-        const maximumCounter = look.maximum.type === 'counter' ? project.counters.find(candidate => candidate.id === (look.maximum as { counterId: string }).counterId) : undefined
-        if (counter === undefined || (look.maximum.type === 'counter' && maximumCounter === undefined)) {
+        const counter = countersById.get(counterId)
+        const maximum = look.maximum
+        const of = counter === undefined ? undefined
+          : maximum.type === 'amount' ? savedAmount(maximum.amount, counter)
+            : countersById.has(maximum.counterId) ? { counter: countersById.get(maximum.counterId)!.name } : undefined
+        if (counter === undefined || of === undefined) {
           return []
         }
         return [{
           counter: counter.name,
-          of: look.maximum.type === 'amount' ? savedAmount(look.maximum.amount, counter) : { counter: maximumCounter!.name },
+          of,
           place: look.place,
           ...(look.color === null ? {} : { color: look.color }),
           ...(look.numbers ? { numbers: true as const } : {}),
@@ -336,7 +341,7 @@ export function parseSave(value: unknown): SaveData | null {
     && (stage.text === undefined || stage.text === 'full')
     && (stage.screen === undefined || (Array.isArray(stage.screen) && stage.screen.length <= PAGES_PER_SCREENFUL && stage.screen.every(isString)))
     && (stage.illustration === undefined || isString(stage.illustration))
-    && (stage.gauges === undefined || (Array.isArray(stage.gauges) && stage.gauges.length <= 100 && stage.gauges.every(isSavedGauge)))
+    && (stage.gauges === undefined || (Array.isArray(stage.gauges) && stage.gauges.length <= MAXIMUM_SAVED_GAUGES && stage.gauges.every(isSavedGauge)))
     && Array.isArray(stage.characters) && stage.characters.every(character => isRecord(character)
       && isString(character.name) && isString(character.expression) && isPercentage(character.x)
       && (character.facing === null || character.facing === 'left' || character.facing === 'right')

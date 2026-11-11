@@ -226,14 +226,27 @@ export function completionAt(text: string, caret: number, vocabulary: TagVocabul
         return null
       }
       if (!argumentText.includes('/')) {
-        return completion(wholeFrom, [...words(vocabulary.counters, details.counter), ...closing(['none'], details.gauge)].filter(item => startsWith(item.label, wholeArgument)))
+        // A counter, or once one is named, none to take its bar away.
+        const isCounterNamed = previousWords.length > 0
+        return isCounterNamed
+          ? completion(wordFrom, closing(['none'], details.gauge).filter(item => startsWith(item.label, lastWord)))
+          : completion(wholeFrom, [...words(vocabulary.counters, details.counter), ...closing(['none'], details.gauge)].filter(item => startsWith(item.label, wholeArgument)))
       }
-      // Once the maximum is written, a space after it.
-      if (!/^\s*\S+\s/.test(argumentText.slice(argumentText.indexOf('/') + 1))) {
-        return null
+      // The maximum: a counter in braces.
+      const afterSlash = argumentText.slice(argumentText.indexOf('/') + 1)
+      if (!/^\s*\S+\s/.test(afterSlash)) {
+        const braced = /^\s*\{([^{}]*)$/.exec(afterSlash)
+        return braced === null ? null : completion(caret - braced[1]!.length, vocabulary.counters.map(counter => ({ label: counter, insert: `${counter}} `, detail: details.counter })).filter(item => startsWith(item.label, braced[1]!)))
       }
+      // Then a corner, a colour and numbers, each once, never two words that cannot go together.
       const said = new Set(previousWords.map(word => word.toLowerCase()))
-      const offered = ['top', 'bottom', 'left', 'right', ...GAUGE_COLORS, 'numbers'].filter(word => !said.has(word))
+      const taken = (group: readonly string[]) => group.some(word => said.has(word))
+      const offered = [
+        ...(taken(['top', 'bottom']) ? [] : ['top', 'bottom']),
+        ...(taken(['left', 'right']) ? [] : ['left', 'right']),
+        ...(said.has('numbers') ? [] : ['numbers']),
+        ...(taken(GAUGE_COLORS) ? [] : GAUGE_COLORS),
+      ]
       return completion(wordFrom, words(offered, details.gauge).filter(item => startsWith(item.label, lastWord)))
     }
     case 'shown':

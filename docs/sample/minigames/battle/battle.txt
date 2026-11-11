@@ -5,6 +5,9 @@
 [decision: Mode = Duel | Gauntlet]
 [decision: Mine = Pyrrup | Fernling | Ripplet]
 [decision: Foe = Pyrrup | Fernling | Ripplet]
+[decision: Attacker = Pyrrup | Fernling | Ripplet]
+[decision: Defender = Pyrrup | Fernling | Ripplet]
+[decision: Move = Ember burst | Bramble lash | Tide pulse]
 [decision: Trainer = Rei | Aiko | Bram | Coralie]
 [decision: Action = Strike | Special | Guard | Potion]
 [decision: FoeAction = Strike | Special | Guard | Potion]
@@ -38,7 +41,8 @@
 [bg: arena]
 [music: battle]
 Two creatures, one arena, and a crowd that has paid good money to see somebody fall over.
-Each turn, strike, use your creature's special move, guard, or drink a potion. Fire beats leaf, leaf beats water, water beats fire. Press J for your record.
+Each turn, strike, use your creature's special move, guard against the next hit, or drink a potion.
+Special moves follow the elements: fire beats leaf, leaf beats water, water beats fire. They hit hard what they beat, and barely sting what beats them. Press J for your record.
 [game mode]
 [loop]
 [choice: Mode]
@@ -60,18 +64,11 @@ Pick your partner.
 [enter: ripplet 21% near facing-right slide-from-left]
 [end]
 [set: HP = {MaxHP}]
-[gauge: HP / {MaxHP} bottom right numbers = {Mine}]
+[gauge: HP / {MaxHP} top left numbers = Your {Mine}]
 [if: Mode is Duel]
 [set: Potions = 2]
 [set: Trainer = Rei]
-[set: Roll = random 1 3]
-[if: Roll is 1]
-[set: Foe = Pyrrup]
-[else if: Roll is 2]
-[set: Foe = Fernling]
-[else]
-[set: Foe = Ripplet]
-[end]
+[set: Foe = random]
 Rei, your old rival, steps into the ring with a grin.
 [play: Fight]
 [if: Result is Won]
@@ -109,17 +106,13 @@ Three foes, three wins. The crowd chants your name, and {Mine} pretends not to b
 [set: HP = {MaxHP}]
 [end]
 [add: Potions]
-A short rest between rounds: {Mine} gets some breath back, and the arena hands you a potion. Potions: {Potions}.
+A short rest between rounds: your {Mine} is back to {HP} HP, and the arena hands you a potion. Potions: {Potions}.
 [end]
 [end]
 [gauge: none]
-[if: Mine is Pyrrup]
 [exit: pyrrup fade]
-[else if: Mine is Fernling]
 [exit: fernling fade]
-[else]
 [exit: ripplet fade]
-[end]
 [choice: Again]
 > Another battle = Yes
 > Leave the arena = No
@@ -170,26 +163,25 @@ Round {Round} of 3. {Trainer} waits on the far side of the arena.
 [set: Pose = normal]
 [set: FoePose = normal]
 [play: My pose]
-[gauge: FoeHP / {FoeMax} top left = {Trainer}'s {Foe}]
+[gauge: FoeHP / {FoeMax} top right numbers = {Trainer}'s {Foe}]
 {Trainer} sends out {Foe}!
 [loop]
 [set: Guarding = 0]
 [set: Pose = normal]
 [play: My pose]
-What will {Mine} do?
 [choice: Action below]
 > Strike = Strike
 > Ember burst ({Specials} left) = Special [if: Mine is Pyrrup and Specials > 0]
 > Bramble lash ({Specials} left) = Special [if: Mine is Fernling and Specials > 0]
 > Tide pulse ({Specials} left) = Special [if: Mine is Ripplet and Specials > 0]
 > Guard = Guard
-> Potion ({Potions} left) = Potion [if: Potions > 0]
+> Potion ({Potions} left) = Potion [if: Potions > 0 and HP < {MaxHP}]
 [if: Action is Guard]
 [set: Guarding = 1]
 [set: Pose = guard]
 [play: My pose]
 [sound: guard]
-{Mine} braces itself. The next hit will only do half.
+Your {Mine} braces itself. The next hit will only do half.
 [else if: Action is Potion]
 [add: Potions -1]
 [add: HP 15]
@@ -197,19 +189,20 @@ What will {Mine} do?
 [set: HP = {MaxHP}]
 [end]
 [sound: heal]
-{Mine} drinks a potion and feels much better.
+Your {Mine} drinks a potion, and is back to {HP} HP.
 [else]
 [set: Pose = attack]
 [play: My pose]
+[set: Attacker = {Mine}]
+[set: Defender = {Foe}]
 [if: Action is Strike]
 [set: Damage = random 5 8]
 [set: Edge = Even]
-[sound: strike]
 [else]
 [add: Specials -1]
 [set: Damage = random 7 10]
-[play: My edge]
-[play: My special]
+[play: Special]
+Your {Mine} uses {Move}!
 [end]
 [if: FoeGuarding is 1]
 [set: Damage = {Damage} * 0.5]
@@ -226,6 +219,10 @@ It hits hard! {Trainer}'s {Foe} loses {Damage} HP.
 [else if: Edge is Weak]
 [shake: light 0.2s]
 It barely stings. {Trainer}'s {Foe} loses {Damage} HP.
+[else if: Action is Strike]
+[sound: strike]
+[shake: light 0.3s]
+Your {Mine} strikes. {Trainer}'s {Foe} loses {Damage} HP.
 [else]
 [shake: light 0.3s]
 {Trainer}'s {Foe} loses {Damage} HP.
@@ -265,20 +262,20 @@ It barely stings. {Trainer}'s {Foe} loses {Damage} HP.
 [set: FoeHP = {FoeMax}]
 [end]
 [sound: heal]
-{Trainer} gives {Foe} a potion.
+{Trainer} gives {Foe} a potion: it is back to {FoeHP} HP.
 [else]
 [set: FoePose = attack]
 [play: Foe pose]
+[set: Attacker = {Foe}]
+[set: Defender = {Mine}]
 [if: FoeAction is Strike]
 [set: Damage = random 5 8]
 [set: Edge = Even]
-[sound: strike]
-{Trainer}'s {Foe} strikes!
 [else]
 [add: FoeSpecials -1]
 [set: Damage = random 7 10]
-[play: Foe edge]
-[play: Foe special]
+[play: Special]
+{Trainer}'s {Foe} uses {Move}!
 [end]
 [if: Guarding is 1]
 [set: Damage = {Damage} * 0.5]
@@ -291,32 +288,32 @@ It barely stings. {Trainer}'s {Foe} loses {Damage} HP.
 [play: My pose]
 [if: Edge is Strong]
 [shake: strong 0.4s]
-It hits hard! {Mine} loses {Damage} HP.
+It hits hard! Your {Mine} loses {Damage} HP.
 [else if: Edge is Weak]
 [shake: light 0.2s]
-It barely stings. {Mine} loses {Damage} HP.
+It barely stings. Your {Mine} loses {Damage} HP.
+[else if: FoeAction is Strike]
+[sound: strike]
+[shake: light 0.3s]
+{Trainer}'s {Foe} strikes. Your {Mine} loses {Damage} HP.
 [else]
 [shake: light 0.3s]
-{Mine} loses {Damage} HP.
+Your {Mine} loses {Damage} HP.
 [end]
 [end]
 [if: HP is 0]
 [set: Pose = fainted]
 [play: My pose]
 [sound: faint]
-{Mine} faints!
+Your {Mine} faints!
 [set: Result = Lost]
 [break]
 [end]
 [end]
 [gauge: FoeHP none]
-[if: Foe is Pyrrup]
 [exit: rival pyrrup fade]
-[else if: Foe is Fernling]
 [exit: rival fernling fade]
-[else]
 [exit: rival ripplet fade]
-[end]
 [if: Result is Lost]
 [set: Pose = normal]
 [play: My pose]
@@ -342,58 +339,27 @@ It barely stings. {Mine} loses {Damage} HP.
 [rival ripplet: {FoePose}]
 [end]
 
-# Scene: My edge
+# Scene: Special
 
-[if: Mine is Pyrrup and Foe is Fernling or Mine is Fernling and Foe is Ripplet or Mine is Ripplet and Foe is Pyrrup]
+[if: Attacker is Pyrrup]
+[set: Move = Ember burst]
+[sound: ember]
+[flash: red]
+[else if: Attacker is Fernling]
+[set: Move = Bramble lash]
+[sound: lash]
+[flash: white]
+[else]
+[set: Move = Tide pulse]
+[sound: tide]
+[flash: white]
+[end]
+[if: Attacker is Pyrrup and Defender is Fernling or Attacker is Fernling and Defender is Ripplet or Attacker is Ripplet and Defender is Pyrrup]
 [set: Edge = Strong]
 [set: Damage = {Damage} * 1.5]
-[else if: Mine is Pyrrup and Foe is Ripplet or Mine is Fernling and Foe is Pyrrup or Mine is Ripplet and Foe is Fernling]
+[else if: Attacker is Pyrrup and Defender is Ripplet or Attacker is Fernling and Defender is Pyrrup or Attacker is Ripplet and Defender is Fernling]
 [set: Edge = Weak]
 [set: Damage = {Damage} * 0.5]
 [else]
 [set: Edge = Even]
-[end]
-
-# Scene: Foe edge
-
-[if: Foe is Pyrrup and Mine is Fernling or Foe is Fernling and Mine is Ripplet or Foe is Ripplet and Mine is Pyrrup]
-[set: Edge = Strong]
-[set: Damage = {Damage} * 1.5]
-[else if: Foe is Pyrrup and Mine is Ripplet or Foe is Fernling and Mine is Pyrrup or Foe is Ripplet and Mine is Fernling]
-[set: Edge = Weak]
-[set: Damage = {Damage} * 0.5]
-[else]
-[set: Edge = Even]
-[end]
-
-# Scene: My special
-
-[if: Mine is Pyrrup]
-[sound: ember]
-[flash: red]
-{Mine} uses Ember burst!
-[else if: Mine is Fernling]
-[sound: lash]
-[flash: white]
-{Mine} uses Bramble lash!
-[else]
-[sound: tide]
-[flash: white]
-{Mine} uses Tide pulse!
-[end]
-
-# Scene: Foe special
-
-[if: Foe is Pyrrup]
-[sound: ember]
-[flash: red]
-{Trainer}'s {Foe} uses Ember burst!
-[else if: Foe is Fernling]
-[sound: lash]
-[flash: white]
-{Trainer}'s {Foe} uses Bramble lash!
-[else]
-[sound: tide]
-[flash: white]
-{Trainer}'s {Foe} uses Tide pulse!
 [end]

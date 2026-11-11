@@ -1,6 +1,7 @@
 import { MAXIMUM_COUNTER_DECIMALS } from '../importer/readControl'
 import {
   GAUGE_COLORS,
+  GAUGE_PLACES,
   isSupportedFormatVersion,
   type AnimationSpec,
   type ChapterDocument,
@@ -303,7 +304,7 @@ function node(value: unknown, path: string, depth: number): StoredNode {
         counterId: nullable(string),
         shown: nullable(object({
           maximum: askBound,
-          place: oneOf('top left', 'top right', 'bottom left', 'bottom right'),
+          place: oneOf(...GAUGE_PLACES),
           color: nullable(oneOf(...GAUGE_COLORS)),
           numbers: boolean,
           label: nullable(string),

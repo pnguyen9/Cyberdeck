@@ -19,22 +19,22 @@ FOE_SPACE_BELOW = 960
 POSES = ('normal', 'attack', 'hurt', 'guard', 'fainted')
 
 
-def eyes(x, y, pose, color=INK):
-    """The eyes of a creature looking right, at (x, y), as each pose has them."""
+def eyes(across, down, pose, color=INK):
+    """The eyes of a creature looking right, at (across, down), as each pose has them."""
     if pose == 'hurt':
-        return (f'<path d="M{x - 26} {y - 10} l18 10 l-18 10" stroke="{color}" stroke-width="8" fill="none" stroke-linecap="round"/>'
-                f'<path d="M{x + 30} {y - 10} l-18 10 l18 10" stroke="{color}" stroke-width="8" fill="none" stroke-linecap="round"/>')
+        return (f'<path d="M{across - 26} {down - 10} l18 10 l-18 10" stroke="{color}" stroke-width="8" fill="none" stroke-linecap="round"/>'
+                f'<path d="M{across + 30} {down - 10} l-18 10 l18 10" stroke="{color}" stroke-width="8" fill="none" stroke-linecap="round"/>')
     if pose == 'fainted':
         cross = 'stroke="{0}" stroke-width="8" stroke-linecap="round"'.format(color)
-        return (f'<path d="M{x - 26} {y - 10} l20 20 M{x - 6} {y - 10} l-20 20" {cross}/>'
-                f'<path d="M{x + 12} {y - 10} l20 20 M{x + 32} {y - 10} l-20 20" {cross}/>')
+        return (f'<path d="M{across - 26} {down - 10} l20 20 M{across - 6} {down - 10} l-20 20" {cross}/>'
+                f'<path d="M{across + 12} {down - 10} l20 20 M{across + 32} {down - 10} l-20 20" {cross}/>')
     if pose == 'attack':
-        return (f'<path d="M{x - 30} {y - 18} l26 10" stroke="{color}" stroke-width="7" stroke-linecap="round"/>'
-                f'<path d="M{x + 10} {y - 8} l26 -10" stroke="{color}" stroke-width="7" stroke-linecap="round"/>'
-                f'<circle cx="{x - 14}" cy="{y + 2}" r="11" fill="{color}"/><circle cx="{x + 24}" cy="{y + 2}" r="11" fill="{color}"/>')
+        return (f'<path d="M{across - 30} {down - 18} l26 10" stroke="{color}" stroke-width="7" stroke-linecap="round"/>'
+                f'<path d="M{across + 10} {down - 8} l26 -10" stroke="{color}" stroke-width="7" stroke-linecap="round"/>'
+                f'<circle cx="{across - 14}" cy="{down + 2}" r="11" fill="{color}"/><circle cx="{across + 24}" cy="{down + 2}" r="11" fill="{color}"/>')
     shine = '<circle cx="{0}" cy="{1}" r="4" fill="#fff"/>'
-    return (f'<circle cx="{x - 14}" cy="{y}" r="13" fill="{color}"/><circle cx="{x + 24}" cy="{y}" r="13" fill="{color}"/>'
-            + shine.format(x - 10, y - 5) + shine.format(x + 28, y - 5))
+    return (f'<circle cx="{across - 14}" cy="{down}" r="13" fill="{color}"/><circle cx="{across + 24}" cy="{down}" r="13" fill="{color}"/>'
+            + shine.format(across - 10, down - 5) + shine.format(across + 28, down - 5))
 
 
 def pyrrup(pose):
@@ -125,7 +125,7 @@ def arena():
         '<path d="M0 350 q300 -120 620 -20 q340 -140 700 -10 q300 -80 600 10 v120 h-1920 z" fill="#7fb7a0"/>'
         '<rect y="360" width="1920" height="720" fill="url(#grass)"/>'
         '<path d="M0 400 h1920" stroke="#7cae58" stroke-width="6"/>'
-        + ''.join(f'<rect x="{x}" y="310" width="14" height="70" fill="#8b6a48"/><rect x="{x - 30}" y="320" width="74" height="10" fill="#a07c55"/>' for x in range(80, 1920, 220))
+        + ''.join(f'<rect x="{post}" y="310" width="14" height="70" fill="#8b6a48"/><rect x="{post - 30}" y="320" width="74" height="10" fill="#a07c55"/>' for post in range(80, 1920, 220))
         + '<ellipse cx="1560" cy="588" rx="250" ry="46" fill="#d8c79a" stroke="#b7a170" stroke-width="8"/>'
         '<ellipse cx="400" cy="665" rx="380" ry="80" fill="#d8c79a" stroke="#b7a170" stroke-width="8"/>'
         + '</svg>'
@@ -135,7 +135,7 @@ def arena():
 def cover():
     """The three creatures together, for the game's card in the library."""
     pieces = [(pyrrup, 120, 260), (fernling, 680, 300), (ripplet, 1220, 260)]
-    drawn = ''.join(f'<g transform="translate({x} {y}) scale(0.95)">{posed(draw("normal"), "normal")}</g>' for draw, x, y in pieces)
+    drawn = ''.join(f'<g transform="translate({left} {top}) scale(0.95)">{posed(draw("normal"), "normal")}</g>' for draw, left, top in pieces)
     return (
         '<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">'
         '<defs><linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2a6b"/><stop offset="1" stop-color="#ff9a6b"/></linearGradient></defs>'

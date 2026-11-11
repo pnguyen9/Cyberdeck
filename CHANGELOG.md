@@ -1,5 +1,40 @@
 # Changelog
 
+## 3.3.0 — 2026-11-11
+
+### Stories
+- `[gauge: HP / {MaxHP} bottom right numbers = {Hero}]`: a counter shown as a bar in a corner of the
+  stage, out of a number or of another counter, sliding as the counter changes. Green, gold then red
+  as it empties, or a colour of its own; its numbers if wished; named after `=`, values allowed.
+  `[gauge: HP none]` takes it away, `[gauge: none]` every bar. Saves keep the bars. The bottom
+  corners stay above the row of buttons, however large the text. Stories that use it need
+  Datajack 3.3 (format 3.3).
+- `[choice: Move below]`: the options side by side along the bottom of the stage, where the text box
+  stands, leaving the pictures in view: a row of up to three, two by two for four, then three or four
+  columns; options too many for the place scroll, none out of reach. A decision whose own name ends
+  in *below* keeps it. Needs Datajack 3.3.
+
+### Datajack, the player
+- A picture shown for the first time no longer blinks: the pictures of the next stops are made ready
+  while the current one is read, and a new expression replaces the one before only once it can be
+  drawn, the old one staying until then.
+- The map no longer starts a new point, alone at its left, when a game resumes at a choice reached
+  just after an `[unset]`, as Sakura Week's first stop of each afternoon: closing the map, or playing
+  from one of its points, did so. Points recorded before are joined.
+
+### Samples
+- **Battle**, a sixth mini game: one duel, or three foes in a row; three creatures, fire beating leaf,
+  leaf water, water fire; strike, special move, guard or potion each turn, both creatures' HP as
+  gauges and the moves along the bottom.
+
+### Cyberdeck, the editor
+- `[gauge]` and `below` are suggested while typing, each word of a gauge once and never two corners
+  at odds; `[gauge]` is in Insert tag; a mistake in a gauge is named, a maximum or a word not
+  understood; the Index lists the counters a gauge shows and the names in its label; the storyboard
+  and the text export write them as typed.
+- The preview's way back to the project is an arrow until pointed at, hiding less of the stage's
+  corner.
+
 ## 3.2.1 — 2026-11-11
 
 ### Stories

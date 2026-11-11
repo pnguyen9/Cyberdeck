@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { GaugeColor, GaugePlace, ShownGauge } from '@cyberdeck/core'
+import { GAUGE_PLACES, type GaugeColor, type ShownGauge } from '@cyberdeck/core'
+import { useMessages } from '../i18n/locale'
+import { playerMessages } from '../i18n/playerMessages'
 
 /**
  * Counters shown as bars, `[gauge]`, in the corners of the stage: each bar slides to what its counter
@@ -9,7 +11,6 @@ import type { GaugeColor, GaugePlace, ShownGauge } from '@cyberdeck/core'
  */
 const props = defineProps<{ gauges: readonly ShownGauge[]; lessMotion: boolean }>()
 
-const PLACES: readonly GaugePlace[] = ['top left', 'top right', 'bottom left', 'bottom right']
 const COLORS: Readonly<Record<GaugeColor, string>> = {
   green: '#5fd97a',
   blue: '#6cb8ff',
@@ -26,7 +27,9 @@ function colorOf(gauge: ShownGauge): string {
   return gauge.share > 0.5 ? COLORS.green : gauge.share > 0.2 ? COLORS.gold : COLORS.red
 }
 
-const corners = computed(() => PLACES
+const text = useMessages(playerMessages)
+
+const corners = computed(() => GAUGE_PLACES
   .map(place => ({ place, gauges: props.gauges.filter(gauge => gauge.place === place) }))
   .filter(corner => corner.gauges.length > 0))
 </script>
@@ -43,7 +46,7 @@ const corners = computed(() => PLACES
         aria-valuemin="0"
         aria-valuemax="100"
         :aria-valuenow="Math.round(gauge.share * 100)"
-        :aria-valuetext="gauge.numbers === null ? `${Math.round(gauge.share * 100)}%` : `${gauge.numbers.held} / ${gauge.numbers.maximum}`"
+        :aria-valuetext="gauge.numbers === null ? `${Math.round(gauge.share * 100)}%` : text.gaugeNumbers(gauge.numbers.held, gauge.numbers.maximum)"
       >
         <div class="heading">
           <span class="label">{{ gauge.label }}</span>
@@ -82,14 +85,14 @@ const corners = computed(() => PLACES
   right: 48px;
 }
 
-/* Above the text box and its name plate. */
+/* Above the row of buttons over the text box, which rises with a larger text. */
 .bottom-left {
-  bottom: 360px;
+  bottom: calc(var(--quick-menu-bottom, 310px) + 64px);
   left: 48px;
 }
 
 .bottom-right {
-  bottom: 360px;
+  bottom: calc(var(--quick-menu-bottom, 310px) + 64px);
   right: 48px;
 }
 

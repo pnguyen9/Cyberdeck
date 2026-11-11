@@ -78,6 +78,10 @@ export function storeImport(
     }
   }
   const counters = new CounterRegistry(project.counters, environment, name => decisions.has(name))
+  /** A bound as stored: a number in the units of the counter it bounds, or the counter it reads. */
+  const storedBound = (written: AskBound, counter: Counter): StoredAskBound => written.type === 'amount'
+    ? { type: 'amount', amount: unitsOf(written.amount, counter) }
+    : { type: 'counter', counterId: counters.find(written.counter).id }
   for (const declaration of result.counters) {
     counters.declare(declaration.name, declaration.initial, declaration.lasting, declaration.decimals)
   }
@@ -295,28 +299,13 @@ export function storeImport(
         }
       case 'askNumber': {
         const counter = counters.find(node.counter)
-        const bound = (written: AskBound | null): StoredAskBound | null => written === null ? null
-          : written.type === 'amount' ? { type: 'amount', amount: unitsOf(written.amount, counter) } : { type: 'counter', counterId: counters.find(written.counter).id }
+        const bound = (written: AskBound | null) => written === null ? null : storedBound(written, counter)
         return { type: 'askNumber', id, counterId: counter.id, defaultAmount: unitsOf(node.defaultAmount, counter), minimum: bound(node.minimum), maximum: bound(node.maximum) }
       }
       case 'gauge': {
-        if (node.counter === null || node.shown === null) {
-          return { type: 'gauge', id, counterId: node.counter === null ? null : counters.find(node.counter).id, shown: null }
-        }
-        const counter = counters.find(node.counter)
-        const { maximum, place, color, numbers, label } = node.shown
-        return {
-          type: 'gauge',
-          id,
-          counterId: counter.id,
-          shown: {
-            maximum: maximum.type === 'amount' ? { type: 'amount', amount: unitsOf(maximum.amount, counter) } : { type: 'counter', counterId: counters.find(maximum.counter).id },
-            place,
-            color,
-            numbers,
-            label,
-          },
-        }
+        const counter = node.counter === null ? null : counters.find(node.counter)
+        const shown = node.shown === null || counter === null ? null : { ...node.shown, maximum: storedBound(node.shown.maximum, counter) }
+        return { type: 'gauge', id, counterId: counter?.id ?? null, shown }
       }
       case 'add': {
         const counter = counters.find(node.counter)

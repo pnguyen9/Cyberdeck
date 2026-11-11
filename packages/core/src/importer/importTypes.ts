@@ -348,6 +348,8 @@ export type ImportProblemCode =
   | 'counterTooPrecise'
   | 'invalidAskNumber'
   | 'invalidGauge'
+  | 'gaugeMaximum'
+  | 'gaugeWord'
   | 'clockReadOnly'
   | 'tagValueNotHere'
   | 'invalidSharedPictures'

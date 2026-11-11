@@ -19,8 +19,15 @@ const UNSAID_FRAME_MS = 100
 /** Frames no picture shows any more are let go of after this long. */
 const KEPT_UNSHOWN_MS = 60_000
 
-/** `decoded` once the decoding is over: a picture shown then needs no wait at all. */
-const decodedByUrl = new Map<string, { decoding: Promise<DecodedAnimation | null>; decoded?: DecodedAnimation | null; shownBy: number; releaseTimer?: ReturnType<typeof setTimeout> }>()
+/** A picture being decoded or decoded; `decoded` once that is over, so that a picture shown then needs no wait at all. */
+interface DecodingEntry {
+  decoding: Promise<DecodedAnimation | null>
+  decoded?: DecodedAnimation | null
+  shownBy: number
+  releaseTimer?: ReturnType<typeof setTimeout>
+}
+
+const decodedByUrl = new Map<string, DecodingEntry>()
 
 /**
  * The picture's frames if it moves; null for a still picture, or a browser that cannot decode them.
@@ -34,7 +41,7 @@ export function decodedAnimation(url: string): Promise<DecodedAnimation | null> 
     return known.decoding
   }
   const decoding = decode(url).catch(() => null)
-  const entry: { decoding: Promise<DecodedAnimation | null>; decoded?: DecodedAnimation | null; shownBy: number } = { decoding, shownBy: 1 }
+  const entry: DecodingEntry = { decoding, shownBy: 1 }
   decodedByUrl.set(url, entry)
   void decoding.then(decoded => {
     entry.decoded = decoded
@@ -57,7 +64,7 @@ export function releaseAnimation(url: string) {
 /** Still pictures decoded ahead of their showing, held as long as frames are, so that the browser keeps them ready. */
 const stillsReady = new Map<string, { image: HTMLImageElement; isDecoded: boolean; releaseTimer: ReturnType<typeof setTimeout> }>()
 
-/** A still picture decoded, so that an image showing it draws it at once; a broken file is let through, to show broken as before. */
+/** A still picture decoded, so that an image showing it draws it at once; a broken file is let through, and shows broken. */
 export async function decodedStill(url: string): Promise<void> {
   const known = stillsReady.get(url)
   clearTimeout(known?.releaseTimer)
@@ -92,11 +99,20 @@ export function readyPicture(url: string): DecodedAnimation | null | undefined {
  * it is drawn at once when shown, instead of after a moment empty.
  */
 export async function preparePicture(url: string): Promise<void> {
+  await readiedPicture(url)
+  releaseAnimation(url)
+}
+
+/**
+ * The picture's frames once decoded, or null for a still picture once it is decoded too. Each call
+ * is matched by `releaseAnimation`, as `decodedAnimation` is.
+ */
+export async function readiedPicture(url: string): Promise<DecodedAnimation | null> {
   const decoded = await decodedAnimation(url)
   if (decoded === null) {
     await decodedStill(url)
   }
-  releaseAnimation(url)
+  return decoded
 }
 
 /**

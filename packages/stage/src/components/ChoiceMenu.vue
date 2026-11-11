@@ -179,19 +179,27 @@ onUnmounted(() => {
   font-size: calc(32px * var(--text-scale, 1));
 }
 
-/* Along the bottom, over the place of the text box: as many columns as the options need, each as wide. */
+/*
+ * Along the bottom, over the place of the text box, up to the row of buttons above it: as many
+ * columns as the options need, each as wide, a shorter last row centred. Options too many for the
+ * place scroll from the first, none out of reach.
+ */
 .choice-menu.below {
   inset: auto 0 48px;
   left: 50%;
   width: 1664px;
-  max-height: 252px;
+  max-height: calc(var(--quick-menu-bottom, 310px) - 64px);
   transform: translateX(-50%);
-  grid-template-columns: repeat(var(--columns-below), minmax(0, 1fr));
-  align-content: end;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: safe end;
   gap: 16px 20px;
 }
 
 .below .option {
+  flex: 0 0 calc((100% - (var(--columns-below) - 1) * 20px) / var(--columns-below));
+  box-sizing: border-box;
   min-width: 0;
   padding: 18px 28px;
 }

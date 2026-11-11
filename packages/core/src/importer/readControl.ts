@@ -1,5 +1,5 @@
 import type { AskBound, Condition, CounterValue, Directive, GaugeNode } from './importTypes'
-import { GAUGE_COLORS, type GaugeColor, type GaugePlace } from '../format/storyFormat'
+import { DEFAULT_GAUGE_PLACE, GAUGE_COLORS, type GaugeColor, type GaugePlace } from '../format/storyFormat'
 
 /** Directives that shape the story rather than the stage. They must be alone on their line. */
 export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
@@ -148,22 +148,22 @@ export function readAddition(text: string): { name: string; amount: number; from
  * `Bet = 10, from 1 to {Money}` → the counter, the number proposed with the decimals it is written with, and the bounds, each a number or
  * `{Counter}`; either bound may go, or both. Null for anything else.
  */
+/** A number, or a counter in braces, `{Money}`: what an asked number or a gauge is bounded by. Null when it is neither. */
+function boundWritten(written: string): AskBound | null {
+  if (written.startsWith('{')) {
+    return { type: 'counter', counter: written.slice(1, -1).trim() }
+  }
+  const amount = readAmount(written)
+  return amount === null ? null : { type: 'amount', amount }
+}
+
 export function readAskNumber(text: string): { counter: string; defaultAmount: number; decimals: number; minimum: AskBound | null; maximum: AskBound | null } | null {
   const bound = String.raw`([+-]?\d+(?:\.\d+)?|\{[^{}]+\})`
   const parts = new RegExp(String.raw`^(.+?)\s*=\s*([+-]?\d+(?:\.\d+)?)\s*(?:,\s*(?:from\s+${bound})?\s*(?:to\s+${bound})?)?$`, 'i').exec(text.trim())
   if (parts === null || parts[1]!.trim() === '' || (text.includes(',') && parts[3] === undefined && parts[4] === undefined)) {
     return null
   }
-  const readBound = (written: string | undefined): AskBound | null | undefined => {
-    if (written === undefined) {
-      return null
-    }
-    if (written.startsWith('{')) {
-      return { type: 'counter', counter: written.slice(1, -1).trim() }
-    }
-    const amount = readAmount(written)
-    return amount === null ? undefined : { type: 'amount', amount }
-  }
+  const readBound = (written: string | undefined): AskBound | null | undefined => written === undefined ? null : boundWritten(written) ?? undefined
   const defaultAmount = readAmount(parts[2]!)
   const minimum = readBound(parts[3])
   const maximum = readBound(parts[4])
@@ -173,78 +173,91 @@ export function readAskNumber(text: string): { counter: string; defaultAmount: n
   return { counter: parts[1]!.trim(), defaultAmount, decimals: decimalsWritten(parts[2]!), minimum, maximum }
 }
 
+/** A gauge as written, or what is wrong with it: the maximum, a word not understood, or anything else. */
+export type GaugeReading =
+  | { gauge: Omit<GaugeNode, 'type' | 'sourceLine'> }
+  | { problem: 'gaugeMaximum' | 'gaugeWord' | 'invalidGauge'; subject: string }
+
 /**
  * `HP / {MaxHP} top right red numbers = {Name}`: a counter shown as a bar, out of a number or of what
  * another counter holds, in a corner of the stage (top left unless told), in a colour of its own or
  * in those of health, with its numbers or not, named by the label after `=` or by the counter's own
- * name. `HP none` takes the counter's bar away, `none` every bar. Null when it reads otherwise.
+ * name. `HP none` takes the counter's bar away, `none` every bar.
  */
-export function readGauge(text: string): Omit<GaugeNode, 'type' | 'sourceLine'> | null {
+export function readGauge(text: string): GaugeReading {
   const trimmed = text.trim()
   if (/^none$/i.test(trimmed)) {
-    return { counter: null, shown: null }
+    return { gauge: { counter: null, shown: null } }
   }
-  const hidden = /^(.+?)\s+none$/i.exec(trimmed)
+  const hidden = trimmed.includes('=') || trimmed.includes('/') ? null : /^(.+?)\s+none$/i.exec(trimmed)
   if (hidden !== null) {
-    return { counter: hidden[1]!.trim(), shown: null }
+    return { gauge: { counter: hidden[1]!.trim(), shown: null } }
   }
   const equalsIndex = trimmed.indexOf('=')
   const label = equalsIndex === -1 ? null : trimmed.slice(equalsIndex + 1).trim()
-  const parts = /^(.+?)\s*\/\s*(\{[^{}]+\}|\d+(?:\.\d+)?)\s*(.*)$/.exec(equalsIndex === -1 ? trimmed : trimmed.slice(0, equalsIndex).trim())
-  if (parts === null || label === '') {
-    return null
+  const written = equalsIndex === -1 ? trimmed : trimmed.slice(0, equalsIndex).trim()
+  if (label === '' || written === '') {
+    return { problem: 'invalidGauge', subject: text.trim() }
   }
-  const written = parts[2]!
-  const maximum: AskBound = written.startsWith('{') ? { type: 'counter', counter: written.slice(1, -1).trim() } : { type: 'amount', amount: Number(written) }
-  if (maximum.type === 'amount' && maximum.amount <= 0) {
-    return null
+  const slashIndex = written.indexOf('/')
+  const counter = slashIndex === -1 ? written.split(/\s+/)[0]! : written.slice(0, slashIndex).trim()
+  const parts = /^(\{[^{}]+\}|\d+(?:\.\d+)?)(?:\s+(.*))?$/.exec(slashIndex === -1 ? '' : written.slice(slashIndex + 1).trim())
+  if (counter === '') {
+    return { problem: 'invalidGauge', subject: text.trim() }
+  }
+  const maximum = parts === null ? null : boundWritten(parts[1]!)
+  if (parts === null || maximum === null || (maximum.type === 'amount' && maximum.amount <= 0)) {
+    return { problem: 'gaugeMaximum', subject: counter }
   }
   let vertical: 'top' | 'bottom' | null = null
   let horizontal: 'left' | 'right' | null = null
   let color: GaugeColor | null = null
   let numbers = false
-  for (const word of parts[3]!.toLowerCase().split(/\s+/).filter(candidate => candidate !== '')) {
-    if ((word === 'top' || word === 'bottom') && vertical === null) {
-      vertical = word
-    } else if ((word === 'left' || word === 'right') && horizontal === null) {
-      horizontal = word
-    } else if ((GAUGE_COLORS as readonly string[]).includes(word) && color === null) {
-      color = word as GaugeColor
-    } else if (word === 'numbers' && !numbers) {
+  for (const word of (parts[2] ?? '').split(/\s+/).filter(candidate => candidate !== '')) {
+    const lowerCaseWord = word.toLowerCase()
+    if ((lowerCaseWord === 'top' || lowerCaseWord === 'bottom') && vertical === null) {
+      vertical = lowerCaseWord
+    } else if ((lowerCaseWord === 'left' || lowerCaseWord === 'right') && horizontal === null) {
+      horizontal = lowerCaseWord
+    } else if ((GAUGE_COLORS as readonly string[]).includes(lowerCaseWord) && color === null) {
+      color = lowerCaseWord as GaugeColor
+    } else if (lowerCaseWord === 'numbers' && !numbers) {
       numbers = true
     } else {
-      return null
+      return { problem: 'gaugeWord', subject: word }
     }
   }
-  const place = `${vertical ?? 'top'} ${horizontal ?? 'left'}` as GaugePlace
-  return { counter: parts[1]!.trim(), shown: { maximum, place, color, numbers, label } }
+  const [defaultVertical, defaultHorizontal] = DEFAULT_GAUGE_PLACE.split(' ')
+  const place = `${vertical ?? defaultVertical} ${horizontal ?? defaultHorizontal}` as GaugePlace
+  return { gauge: { counter, shown: { maximum, place, color, numbers, label } } }
 }
 
 /**
  * `Answer 10s below` → the decision, the time to pick, in milliseconds, and whether the options sit
  * side by side along the bottom of the stage rather than in a column over its middle; the time and
- * `below` may come in either order, and each may be left out.
+ * `below` may come in either order, and each may be left out. A decision whose own name ends in
+ * `below`, as `isDecision` knows it, keeps it.
  */
-export function readChoiceHeading(text: string): { decision: string; timeLimitMs: number | null; below: boolean } {
-  let rest = text.trim()
-  const belowAt = (written: string) => /^(.*\S)\s+below$/i.exec(written)
-  let below = false
-  const takeBelow = () => {
-    const found = belowAt(rest)
-    if (found !== null && !below) {
-      below = true
-      rest = found[1]!
-    }
+export function readChoiceHeading(text: string, isDecision: (name: string) => boolean = () => false): { decision: string; timeLimitMs: number | null; below: boolean } {
+  const withoutBelow = (written: string) => /^(.*\S)\s+below$/i.exec(written)?.[1] ?? null
+  const withoutTime = (written: string) => {
+    const timed = /^(.*\S)\s+(\d+(?:\.\d+)?)\s*s$/i.exec(written)
+    const seconds = timed === null ? 0 : Number(timed[2])
+    return timed === null || seconds <= 0 || seconds > 600 ? null : { rest: timed[1]!, timeLimitMs: Math.round(seconds * 1000) }
   }
-  takeBelow()
-  const timed = /^(.*\S)\s+(\d+(?:\.\d+)?)\s*s$/i.exec(rest)
-  const seconds = timed === null ? 0 : Number(timed[2])
-  const timeLimitMs = timed === null || seconds <= 0 || seconds > 600 ? null : Math.round(seconds * 1000)
-  if (timeLimitMs !== null) {
-    rest = timed![1]!
+  const trimmed = text.trim()
+  const belowLast = withoutBelow(trimmed)
+  const timed = withoutTime(belowLast ?? trimmed)
+  const name = timed?.rest ?? belowLast ?? trimmed
+  const belowFirst = belowLast === null && timed !== null ? withoutBelow(name) : null
+  const decision = belowFirst ?? name
+  const below = belowLast !== null || belowFirst !== null
+  // `[choice: Look below]` for a decision named so: a `below` right after the name is the name's, not the layout's.
+  const wholeName = timed === null ? trimmed : belowFirst !== null ? name : null
+  if (below && wholeName !== null && isDecision(wholeName)) {
+    return { decision: wholeName, timeLimitMs: timed?.timeLimitMs ?? null, below: false }
   }
-  takeBelow()
-  return { decision: rest.trim(), timeLimitMs, below }
+  return { decision, timeLimitMs: timed?.timeLimitMs ?? null, below }
 }
 
 /** `Clues = Letter` → decision and value; null when either is missing. */

@@ -1,7 +1,7 @@
 import { writtenAmount } from './counterNumbers'
 import type { MeasureText } from '../pagination/wrapLines'
 import { normalizeName } from '../importer/storyNodes'
-import type { ProjectDocument, StoredPage } from './storyFormat'
+import type { ProjectDocument, StoredNode, StoredPage } from './storyFormat'
 import type { StoryNode } from '../importer/importTypes'
 
 /** Names given by players are cut to this many characters, so that pages written with them still fit. */
@@ -35,6 +35,13 @@ export function placeholdersIn(text: string): string[] {
 export function placeholdersOfNode(node: StoryNode): string[] {
   const texts = node.type === 'page' ? [node.text, node.speaker ?? ''] : node.type === 'choice' ? node.options.map(option => option.text) : node.type === 'grid' ? [node.caption ?? '']
     : node.type === 'gauge' ? [node.shown?.label ?? ''] : []
+  return texts.flatMap(placeholdersIn)
+}
+
+/** The `{…}` of a stored node's texts: a page's, its options', a grid's caption, a gauge's name. */
+export function placeholdersOfStoredNode(node: StoredNode): string[] {
+  const texts = node.type === 'page' ? [node.text] : node.type === 'choice' ? node.options.map(option => option.text)
+    : node.type === 'grid' ? [node.caption ?? ''] : node.type === 'gauge' ? [node.shown?.label ?? ''] : []
   return texts.flatMap(placeholdersIn)
 }
 

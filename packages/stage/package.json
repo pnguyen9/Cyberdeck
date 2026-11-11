@@ -1,6 +1,6 @@
 {
   "name": "@cyberdeck/stage",
-  "version": "3.2.1",
+  "version": "3.3.0",
   "license": "Unlicense",
   "private": true,
   "description": "What shows a story, shared by Datajack and Cyberdeck's preview: stage, textbox, choices, log, saves panel, inputs",

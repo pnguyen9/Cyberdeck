@@ -165,6 +165,8 @@ class TextImporter {
   private readonly speakers = new Set<string>()
   /** Pages are measured with each `{…}` as wide as the widest it may show. */
   private measureText: PageLayout['measureText']
+  /** The decisions and counters the project and the text name, with what each may show. */
+  private valuesKnown: ReadonlyMap<string, readonly string[]> = new Map()
 
   /** The language pages are cut for: the one given, unless the text says its own on its first line. */
   private locale: string
@@ -181,7 +183,8 @@ class TextImporter {
         this.largeStyles.add(normalizeName(declaration[1]!))
       }
     }
-    this.measureText = measuringValues(this.options.layout.measureText, valuesDeclaredIn(input, this.options.possibleValues))
+    this.valuesKnown = valuesDeclaredIn(input, this.options.possibleValues)
+    this.measureText = measuringValues(this.options.layout.measureText, this.valuesKnown)
     input.replace(/\r\n?/g, '\n').split('\n').forEach((rawLine, lineIndex) => {
       this.readLine(rawLine.replace(/\t/g, ' ').trim(), lineIndex + 1)
     })
@@ -531,7 +534,7 @@ class TextImporter {
           return
         }
         this.flushPendingDirectives()
-        const heading = readChoiceHeading(text)
+        const heading = readChoiceHeading(text, name => this.valuesKnown.has(normalizeName(name)))
         this.openChoice = { type: 'choice', sourceLine: lineNumber, decision: heading.decision, options: [], ...(heading.timeLimitMs === null ? {} : { timeLimitMs: heading.timeLimitMs }), ...(heading.below ? { below: true as const } : {}) }
         return
       }
@@ -556,13 +559,13 @@ class TextImporter {
         return
       }
       case 'gauge': {
-        const gauge = readGauge(directive.written ?? text)
-        if (gauge === null) {
-          this.addProblem('error', 'invalidGauge', lineNumber, text === '' ? undefined : text)
+        const reading = readGauge(directive.written ?? text)
+        if ('problem' in reading) {
+          this.addProblem('error', reading.problem, lineNumber, reading.subject === '' ? undefined : reading.subject)
           return
         }
         this.flushPendingDirectives()
-        this.addNode({ type: 'gauge', sourceLine: lineNumber, ...gauge })
+        this.addNode({ type: 'gauge', sourceLine: lineNumber, ...reading.gauge })
         return
       }
       case 'timeout':

@@ -25,6 +25,17 @@ function suggest(textWithCaret: string) {
   return completion === null ? null : { from: completion.from, labels: completion.items.map(item => item.label) }
 }
 
+describe('suggestions in a gauge', () => {
+  it('offer the counter, then none, the counters for the maximum, then each kind of word once', () => {
+    expect(suggest('[gauge: T|')?.labels).toEqual(['Trust'])
+    expect(suggest('[gauge: Trust n|')?.labels).toEqual(['none'])
+    expect(suggest('[gauge: Trust / {|')?.labels).toEqual(['Trust'])
+    expect(suggest('[gauge: Trust / 10 top |')?.labels).toEqual(['left', 'right', 'numbers', 'green', 'blue', 'red', 'gold', 'purple'])
+    expect(suggest('[gauge: Trust / 10 top red numbers |')?.labels).toEqual(['left', 'right'])
+    expect(suggest('[gauge: Trust / 10 = |')).toBeNull()
+  })
+})
+
 describe('tags in the text', () => {
   const text = '[bg: rooftop]\n— Marie: Hi. [marie: smile]There.'
 

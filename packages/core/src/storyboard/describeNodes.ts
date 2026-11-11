@@ -2,7 +2,7 @@ import { writtenAmount } from '../format/counterNumbers'
 import { valueWritten } from '../format/valueTags'
 import { pictureTurnWords } from '../stage/stageDirectives'
 import { listName, listPlaceText, listValueText } from '../format/lists'
-import type { AnimationSpec, DefinitionKind, Placement, ProjectDocument, StageCommand, StoredAskBound, StoredAskNumber, StoredCondition, StoredCopy, StoredCount, StoredDraw, StoredGauge, StoredGrid, StoredListChange, StoredTake } from '../format/storyFormat'
+import { DEFAULT_GAUGE_PLACE, type AnimationSpec, type Counter, type DefinitionKind, type Placement, type ProjectDocument, type StageCommand, type StoredAskBound, type StoredAskNumber, type StoredCondition, type StoredCopy, type StoredCount, type StoredDraw, type StoredGauge, type StoredGrid, type StoredListChange, type StoredTake } from '../format/storyFormat'
 import { ENGLISH_STORY_WORDS, type StoryWords } from './storyWords'
 
 /** Short descriptions of what nodes do, in the words of the writing syntax, for the storyboard. */
@@ -185,12 +185,15 @@ export function describeDraw(node: StoredDraw, project: ProjectDocument): string
   return `${name(node.decisionId)} = random${node.notInDecisionId === null ? '' : ` not in ${name(node.notInDecisionId)}`}`
 }
 
+/** A bound as written: a number with the decimals of the counter it bounds, or a counter in braces. */
+function boundText(bound: StoredAskBound, counter: Counter | undefined, project: ProjectDocument): string {
+  return bound.type === 'amount' ? writtenAmount(bound.amount, counter ?? {}) : `{${project.counters.find(candidate => candidate.id === bound.counterId)?.name ?? '?'}}`
+}
+
 /** `ask number: Bet = 10, from 1 to {Money}`, as the tag is written. */
 export function describeAskNumber(node: StoredAskNumber, project: ProjectDocument): string {
   const counter = project.counters.find(candidate => candidate.id === node.counterId)
-  const bound = (written: StoredAskBound | null) => written === null ? null
-    : written.type === 'amount' ? writtenAmount(written.amount, counter ?? {})
-      : `{${project.counters.find(candidate => candidate.id === written.counterId)?.name ?? '?'}}`
+  const bound = (written: StoredAskBound | null) => written === null ? null : boundText(written, counter, project)
   const minimum = bound(node.minimum)
   const maximum = bound(node.maximum)
   const bounds = [...(minimum === null ? [] : [`from ${minimum}`]), ...(maximum === null ? [] : [`to ${maximum}`])].join(' ')
@@ -199,18 +202,16 @@ export function describeAskNumber(node: StoredAskNumber, project: ProjectDocumen
 
 /** `gauge: HP / {MaxHP} top right numbers = {Name}`, as the tag is written; `gauge: none` takes every bar away. */
 export function describeGauge(node: StoredGauge, project: ProjectDocument): string {
-  const counterName = (counterId: string) => project.counters.find(candidate => candidate.id === counterId)?.name ?? '?'
+  const counter = project.counters.find(candidate => candidate.id === node.counterId)
   if (node.counterId === null) {
     return 'gauge: none'
   }
   if (node.shown === null) {
-    return `gauge: ${counterName(node.counterId)} none`
+    return `gauge: ${counter?.name ?? '?'} none`
   }
   const { maximum, place, color, numbers, label } = node.shown
-  const counter = project.counters.find(candidate => candidate.id === node.counterId)
-  const outOf = maximum.type === 'amount' ? writtenAmount(maximum.amount, counter ?? {}) : `{${counterName(maximum.counterId)}}`
-  const words = [place === 'top left' ? '' : place, color ?? '', numbers ? 'numbers' : ''].filter(word => word !== '')
-  return `gauge: ${counterName(node.counterId)} / ${outOf}${words.map(word => ` ${word}`).join('')}${label === null ? '' : ` = ${label}`}`
+  const words = [place === DEFAULT_GAUGE_PLACE ? '' : place, color ?? '', numbers ? 'numbers' : ''].filter(word => word !== '')
+  return `gauge: ${counter?.name ?? '?'} / ${boundText(maximum, counter, project)}${words.map(word => ` ${word}`).join('')}${label === null ? '' : ` = ${label}`}`
 }
 
 /** `Confession: Accept | Refuse`, `Clues (several): Letter | Key`, `Trust: starts at 2`, `Whisper: italic, small`. */

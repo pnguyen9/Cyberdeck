@@ -190,6 +190,7 @@ export class StoryRuntime {
   private lastingStart: LastingValues = { decisions: {}, counters: {} }
   /** The decimals of each counter that keeps some, by identifier: for bounds read from another counter. */
   private readonly counterDecimals: ReadonlyMap<string, number>
+  private readonly counterNames: ReadonlyMap<string, string>
   /** Counters the clock gives, and the clock, once the player's is given. */
   private readonly clockCounters: readonly { id: string; clock: ClockValue }[]
   private readonly project: ProjectDocument
@@ -201,6 +202,7 @@ export class StoryRuntime {
     this.project = story.project
     this.initialLists = new Map(listsOf(story.project).map(list => [list.id, list.initial]))
     this.clockCounters = story.project.counters.flatMap(counter => counter.clock === undefined ? [] : [{ id: counter.id, clock: counter.clock }])
+    this.counterNames = new Map(story.project.counters.map(counter => [counter.id, counter.name]))
     this.counterDecimals = new Map(story.project.counters.flatMap(counter => counter.decimals === undefined ? [] : [[counter.id, counter.decimals] as const]))
     this.chapters = chaptersInOrder(story)
     this.scenes = scenesOf(story)
@@ -414,14 +416,15 @@ export class StoryRuntime {
    * label with the values in it, and its numbers when it shows them.
    */
   gaugesShown(): ShownGauge[] {
+    const valueOf = this.valueOf()
     return this.currentSnapshot.stage.gauges.map(({ counterId, look }) => {
       const counter = this.counterOf(counterId)
       const units = this.countOf(counterId)
       const maximum = look.maximum.type === 'amount' ? look.maximum.amount : this.inUnitsOf(this.countOf(look.maximum.counterId), look.maximum.counterId, counterId)
-      const label = look.label ?? this.project.counters.find(candidate => candidate.id === counterId)?.name ?? ''
+      const label = look.label ?? this.counterNames.get(counterId) ?? ''
       return {
         counterId,
-        label: withValues(label, this.valueOf()),
+        label: withValues(label, valueOf),
         share: maximum <= 0 ? 0 : Math.min(1, Math.max(0, units / maximum)),
         numbers: look.numbers ? { held: writtenAmount(units, counter), maximum: writtenAmount(Math.round(maximum), counter) } : null,
         place: look.place,
@@ -430,7 +433,7 @@ export class StoryRuntime {
     })
   }
 
-  /** Past stops, oldest first, with the option picked at each choice. */  /** Past stops, oldest first, with the option picked at each choice. */
+  /** Past stops, oldest first, with the option picked at each choice. */
   backlog(): BacklogEntry[] {
     return this.history.slice(0, -1).flatMap((stop, stopIndex): BacklogEntry[] => {
       const step = stop.snapshot.step

@@ -16,9 +16,10 @@ export function stagesAhead(
   memory: { memoryIds: readonly string[]; endingIds: readonly string[] },
   stops = STOPS_AHEAD,
 ): StageState[] {
-  const runtimeAt = (at: RuntimeState) => {
+  // A path remembers what it gained on the way, as the playthrough would: `[if: remembered …]` ahead follows it.
+  const runtimeAt = (at: RuntimeState, gained: readonly string[] = []) => {
     const runtime = new StoryRuntime(story)
-    runtime.useMemory(memory)
+    runtime.useMemory({ memoryIds: [...memory.memoryIds, ...gained], endingIds: memory.endingIds })
     runtime.restoreState(at)
     return runtime
   }
@@ -31,7 +32,7 @@ export function stagesAhead(
     if (step.type === 'choice') {
       const here = runtime.exportState()
       for (const option of step.choice.options) {
-        const branched = runtimeAt(here)
+        const branched = runtimeAt(here, runtime.memoryIds)
         branched.choose(option.id)
         moved.push(branched)
       }

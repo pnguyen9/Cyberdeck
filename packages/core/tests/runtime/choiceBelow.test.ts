@@ -10,6 +10,16 @@ describe('options below', () => {
     expect(readChoiceHeading('Action below 10s')).toEqual({ decision: 'Action', timeLimitMs: 10_000, below: true })
     expect(readChoiceHeading('Action 10s')).toEqual({ decision: 'Action', timeLimitMs: 10_000, below: false })
     expect(readChoiceHeading('Below')).toEqual({ decision: 'Below', timeLimitMs: null, below: false })
+    // A decision named so keeps the word, whatever the time; after the time, it can only be the layout's.
+    const isLookBelow = (name: string) => name === 'Look below'
+    expect(readChoiceHeading('Look below', isLookBelow)).toEqual({ decision: 'Look below', timeLimitMs: null, below: false })
+    expect(readChoiceHeading('Look below 10s', isLookBelow)).toEqual({ decision: 'Look below', timeLimitMs: 10_000, below: false })
+    expect(readChoiceHeading('Look 10s below', name => name === 'Look')).toEqual({ decision: 'Look', timeLimitMs: 10_000, below: true })
+  })
+
+  it('reads a choice of a decision declared with below in its name as that decision', () => {
+    const story = storyFromText(['[decision: Look below = Up | Down]', '[choice: Look below]', '> Up = Up', '> Down = Down', 'Done.'])
+    expect(story.project.decisions.map(decision => decision.name)).toEqual(['Look below'])
   })
 
   it('offers the choice as written, is written back, and needs Datajack 3.3', () => {

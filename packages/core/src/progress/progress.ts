@@ -129,10 +129,12 @@ export function recordChoiceReached(
   const namesThatMatter = new Set([...testedAhead].filter(name => !lastingNames.has(name)))
   // A point recorded before 3.2.1 was keyed by its lasting values too, and before 3.2 by its stage;
   // before 3.2.2, a decision unset counted apart from one never given: an arrival in the same state joins it.
+  const choiceId = state.page.nodeId
+  const namesBefore = namesThatMatter.size === testedAhead.size ? [testedAhead] : [testedAhead, namesThatMatter]
   const recordedBefore = [
-    stagedPointKeyOf(state.page.nodeId, save, testedAhead),
-    pointKeyOf(state.page.nodeId, save, testedAhead),
-    ...[testedAhead, namesThatMatter].map(names => pointKeyOf(state.page!.nodeId, save, names, { keepsUnset: true })),
+    stagedPointKeyOf(choiceId, save, testedAhead),
+    pointKeyOf(choiceId, save, testedAhead),
+    ...namesBefore.map(names => pointKeyOf(choiceId, save, names, { keepsUnset: true })),
   ].find(key => progress.points.some(point => point.key === key))
   const pointKey = recordedBefore ?? pointKeyOf(state.page.nodeId, save, namesThatMatter)
   const points = progress.points.some(point => point.key === pointKey)

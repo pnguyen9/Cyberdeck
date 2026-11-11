@@ -144,9 +144,9 @@ const isTextHidden = ref(false)
 /** The video over the whole screen, and its captions: the text waits until it ends, or the player passes it. */
 const playingVideo = ref<{ url: string; captionsUrl: string | null } | null>(null)
 const videoElement = useTemplateRef<HTMLVideoElement>('video')
-/** The text, choices and menu: hidden by the player, and under a panel or the end screen, which have their own buttons. */
 /** Counters shown as bars, as they stand now; the snapshot changes whenever one of them may. */
 const gauges = computed(() => snapshot.value.stage.gauges.length === 0 ? [] : runtime.gaugesShown())
+/** The text, choices and menu: hidden by the player, and under a panel or the end screen, which have their own buttons. */
 const isHudShown = computed(() => !isTextHidden.value && openPanel.value === 'none' && snapshot.value.step.type !== 'end' && errorMessage.value === null && titleCard.value === null && playingVideo.value === null)
 const notice = ref<string | null>(null)
 let noticeTimer: ReturnType<typeof setTimeout> | undefined
@@ -668,21 +668,28 @@ function act(action: () => void) {
 }
 
 let preparingTimer: ReturnType<typeof setTimeout> | undefined
+/** How far ahead the pictures are readied, in stops; halved whenever looking costs more than a frame, none for a story too heavy to look into. */
+let stopsAhead = 12
+const LOOKING_AHEAD_MS = 16
 /**
  * The pictures of the next stops, readied while this one is read: each is drawn the moment it is
  * needed, instead of after a blink the first time. Looked for once the stop is on screen.
  */
 function preparePicturesAhead() {
   clearTimeout(preparingTimer)
-  if (runtime.snapshot.step.type === 'end') {
+  if (runtime.snapshot.step.type === 'end' || stopsAhead === 0) {
     return
   }
   preparingTimer = setTimeout(() => {
+    const started = performance.now()
     let stages: StageState[]
     try {
-      stages = [runtime.snapshot.stage, ...stagesAhead(props.story, runtime.exportState(), { memoryIds: runtime.memoryIds, endingIds: runtime.endingIds })]
+      stages = [runtime.snapshot.stage, ...stagesAhead(props.story, runtime.exportState(), { memoryIds: runtime.memoryIds, endingIds: runtime.endingIds }, stopsAhead)]
     } catch {
       return
+    }
+    if (performance.now() - started > LOOKING_AHEAD_MS) {
+      stopsAhead = Math.floor(stopsAhead / 2)
     }
     const urls = new Set(stages.flatMap(stage => [
       stage.backgroundId === null ? null : catalog.backgroundUrl(stage.backgroundId),
@@ -1300,7 +1307,7 @@ onUnmounted(() => {
     <div
       class="screen"
       :class="{ 'readable-font': settings.readableFont, 'strong-contrast': settings.strongContrast, 'less-motion': lessMotion }"
-      :style="{ width: `${STAGE_WIDTH}px`, height: `${STAGE_HEIGHT}px`, transform: `translate(-50%, -50%) scale(${scale})`, '--text-scale': settings.textScale }"
+      :style="{ width: `${STAGE_WIDTH}px`, height: `${STAGE_HEIGHT}px`, transform: `translate(-50%, -50%) scale(${scale})`, '--text-scale': settings.textScale, '--quick-menu-bottom': `${quickMenuBottom}px` }"
       @click="onScreenClick"
       @contextmenu="onContextMenu"
       @wheel.passive="onWheel"
@@ -1461,7 +1468,7 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-    <button class="leave-button" @click="emit('leave')">← {{ leaveLabel }} <kbd>{{ escapeKey }}</kbd></button>
+    <button class="leave-button" :aria-label="leaveLabel" @click="emit('leave')">←<span class="leave-label"> {{ leaveLabel }} <kbd>{{ escapeKey }}</kbd></span></button>
   </div>
 </template>
 
@@ -1596,14 +1603,16 @@ onUnmounted(() => {
 .readable-font :deep(.textbox .text span),
 .readable-font :deep(.full-text),
 .readable-font :deep(.full-text .paragraph-text span),
-.readable-font :deep(.option) {
+.readable-font :deep(.option),
+.readable-font :deep(.gauge) {
   font-family: Verdana, 'DejaVu Sans', 'Bitstream Vera Sans', sans-serif !important;
 }
 
 /* Over a game's own looks too: a frame or a busy background gives way to a plain box. */
 .strong-contrast :deep(.textbox),
 .strong-contrast :deep(.speaker),
-.strong-contrast :deep(.option) {
+.strong-contrast :deep(.option),
+.strong-contrast :deep(.gauge) {
   border-image: none !important;
   background: #000 !important;
   border: 2px solid rgb(158 234 255 / 0.9) !important;
@@ -1772,6 +1781,11 @@ onUnmounted(() => {
 .leave-button:hover,
 .leave-button:focus-visible {
   opacity: 1;
+}
+
+/* Only the arrow until pointed at, so that it hides little of the stage's corner, a gauge there. */
+.leave-button:not(:hover, :focus-visible) .leave-label {
+  display: none;
 }
 
 kbd {

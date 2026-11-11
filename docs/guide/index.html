@@ -507,6 +507,15 @@ for hundredths. <code>{Money}</code> shows it as your players' language writes n
 <p>Players can give a number too: <code>[ask number: Bet = 10, from 1 to {Money}]</code> asks them for the bet,
 10 if they type nothing, at least 1 and at most the money they have. They may type a comma or a point;
 the field tells them what it understood, and what it cannot take.</p>
+<p>A counter can also show on the stage, as a bar: health in a fight, trust, the air left in a dive.</p>
+<pre>[gauge: HP / {MaxHP} bottom right numbers = {Hero}]</pre>
+<p>The bar shows <code>HP</code> out of <code>MaxHP</code>, a counter in braces or a plain number, in a corner:
+<code>top left</code> unless you say <code>top right</code>, <code>bottom left</code> or <code>bottom right</code>.
+<code>numbers</code> writes “18 / 30” beside it, and after <code>=</code> comes its name, here the hero's; without
+one, it bears the counter's name. It follows the counter until you take it away with <code>[gauge: HP none]</code>,
+or every bar with <code>[gauge: none]</code>, sliding as the counter changes. A new <code>[gauge]</code> for the same counter replaces its bar, name and corner included. On its own, it goes from green to gold
+to red as it empties, as health does; a colour after the corner keeps it one colour: <code>green</code>,
+<code>blue</code>, <code>red</code>, <code>gold</code>, <code>purple</code> or <code>pink</code>.</p>
 <p>Some counters come from the player's clock, with nothing to declare: <code>hour</code> (0 to 23),
 <code>weekday</code> (1 for Monday to 7 for Sunday), <code>time away</code>, the minutes since they last played,
 and <code>now</code>, the time in seconds. <code>[if: hour >= 22 or hour &lt; 6]</code> can put a character to
@@ -767,6 +776,11 @@ so they know what waiting means, and can pick it without waiting.</p>
 <p>Any option can be it: with <code>> Yes. = Accept [timeout]</code>, waiting means yes.</p>
 <div class="tip"><p>Players who need more time can ask choices to wait for them, in their settings: nothing is
 then taken by itself.</p></div>
+<p>Options usually stand in a column over the middle of the stage. Write <code>below</code> after the choice's name,
+<code>[choice: Move below]</code>, and they sit side by side at the bottom, where the text box stands, leaving the
+pictures in view: a row of up to three, two by two for four, then in three or four columns. It suits short
+options, the moves of a fight; long sentences read better in the column. With a time, write it either side:
+<code>[choice: Move 10s below]</code>. A decision whose own name ends in <em>below</em> keeps its name.</p>
 
 <h2 id="values">24. Values in the text, and chance</h2>
 <p>Braces show a value the story keeps: a counter, a decision, a name the player gave.</p>

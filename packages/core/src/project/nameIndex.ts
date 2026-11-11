@@ -226,6 +226,7 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
           }
           break
         case 'gauge':
+          shown([node.shown?.label ?? ''], documentId, nodeId)
           for (const counterId of [node.counterId, node.shown?.maximum.type === 'counter' ? node.shown.maximum.counterId : null]) {
             if (counterId !== null) {
               use('counter', counterId, { role: 'shown', documentId, nodeId })

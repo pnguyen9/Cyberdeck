@@ -699,7 +699,10 @@ export interface StoredAskNumber {
 }
 
 /** The corners of the stage a gauge stands in; bars in the same corner stack. */
-export type GaugePlace = 'top left' | 'top right' | 'bottom left' | 'bottom right'
+export const GAUGE_PLACES = ['top left', 'top right', 'bottom left', 'bottom right'] as const
+export type GaugePlace = typeof GAUGE_PLACES[number]
+/** Where a gauge stands when its tag names no corner. */
+export const DEFAULT_GAUGE_PLACE: GaugePlace = 'top left'
 /** A gauge's own colour; without one, it goes from green to gold to red as it empties, as health does. */
 export const GAUGE_COLORS = ['green', 'blue', 'red', 'gold', 'purple', 'pink'] as const
 export type GaugeColor = typeof GAUGE_COLORS[number]

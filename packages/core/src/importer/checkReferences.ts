@@ -8,7 +8,7 @@ const PICTURE_TAGS: ReadonlySet<string> = new Set(['enter', 'bg', 'background', 
 import { styleClassName } from '../format/authorCss'
 import { placeholdersOfNode } from '../format/textValues'
 import { readStyleProperty } from '../format/textStyles'
-import type { Condition, ImportedChapter, ImportProblem, ImportResult, StoryNode } from './importTypes'
+import type { AskBound, Condition, ImportedChapter, ImportProblem, ImportResult, StoryNode } from './importTypes'
 import { decimalsOf, decimalsWritten, readAmount, readCounterValue, readDraw, readRandom } from './readControl'
 import { flattenNodes, normalizeName } from './storyNodes'
 
@@ -330,26 +330,24 @@ export function checkReferences(result: ImportResult, knownNames: KnownNames = N
     } else if (node.type === 'add') {
       checkPrecision(node.counter, decimalsOf(node.amount), String(node.amount), node.sourceLine)
     }
-    if (node.type === 'askNumber') {
-      checkPrecision(node.counter, decimalsOf(node.defaultAmount), String(node.defaultAmount), node.sourceLine)
-      for (const bound of [node.minimum, node.maximum]) {
-        if (bound?.type === 'amount') {
-          checkPrecision(node.counter, decimalsOf(bound.amount), String(bound.amount), node.sourceLine)
-        } else if (bound?.type === 'counter' && !isCounter(bound.counter)) {
-          problems.push({ severity: 'error', code: 'unknownCounter', line: node.sourceLine, subject: bound.counter })
-        }
+    /** A number written with no more decimals than the counter it bounds keeps, or a counter that exists. */
+    const checkBound = (counter: string, bound: AskBound | null | undefined) => {
+      if (bound?.type === 'amount') {
+        checkPrecision(counter, decimalsOf(bound.amount), String(bound.amount), node.sourceLine)
+      } else if (bound?.type === 'counter' && !isCounter(bound.counter)) {
+        problems.push({ severity: 'error', code: 'unknownCounter', line: node.sourceLine, subject: bound.counter })
       }
     }
-    if (node.type === 'gauge') {
-      const maximum = node.shown?.maximum
-      for (const name of [node.counter, maximum?.type === 'counter' ? maximum.counter : null]) {
-        if (name !== null && !isCounter(name)) {
-          problems.push({ severity: 'error', code: 'unknownCounter', line: node.sourceLine, subject: name })
-        }
+    if (node.type === 'askNumber') {
+      checkPrecision(node.counter, decimalsOf(node.defaultAmount), String(node.defaultAmount), node.sourceLine)
+      checkBound(node.counter, node.minimum)
+      checkBound(node.counter, node.maximum)
+    }
+    if (node.type === 'gauge' && node.counter !== null) {
+      if (!isCounter(node.counter)) {
+        problems.push({ severity: 'error', code: 'unknownCounter', line: node.sourceLine, subject: node.counter })
       }
-      if (node.counter !== null && maximum?.type === 'amount') {
-        checkPrecision(node.counter, decimalsOf(maximum.amount), String(maximum.amount), node.sourceLine)
-      }
+      checkBound(node.counter, node.shown?.maximum)
     }
     if (node.type === 'grid') {
       checkList(node.list, node.sourceLine)

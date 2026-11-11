@@ -265,6 +265,7 @@ one per language, of the same shape: another language is one more table each.
 | `[decision multi: Clues = Letter \| Key]` | A decision where several values can hold at once. |
 | `[choice: Confession]` then `> Yes = Accept` lines | Offers a choice; the option picked becomes the decision's value. From five options on, they are drawn closer; a list longer than its place above the text box scrolls, its edges fading where more lie beyond, and past eight the import points it out. Without `= Value`, an option's value is its letter: `A`, `B`, `C`… |
 | `> The library = Library [if: Visited is not Library]` | An option offered only while its condition holds. A choice none of whose options holds is skipped; one with no option always offered is reported. |
+| `[choice: Move below]`, `[choice: Move 10s below]` | The options side by side along the bottom of the stage, where the text box stands, rather than in a column over its middle: a row of up to three, two by two for four, then three or four columns; up and down step through them in order. A decision whose own name ends in `below` keeps it. Needs Datajack 3.3. |
 | `[choice: Answer 10s]` with `> Yes. = Accept [timeout]` or `> … = Silent [timeout]` | A timed choice: the option marked `[timeout]` is the one waiting takes, offered as the others, the time running out along it; any option may be it, so waiting may mean yes, and silence is an option written when there should be one. A timed choice has exactly one. Players may ask choices to wait for them (Settings, Accessibility): every outcome is then a button away. Needs Datajack 2.0. |
 | `[ask: Hero = Alex]`, then `{Hero}` | Asks the player for a name, at most 12 characters, which `{Hero}` then shows in the text, in options and as a speaker, `— {Hero}: Hi.`; `Alex` until they give one, and if they give none. Pages are cut as if each name were as long as the longest allowed, so that they always fit. Saves keep it. Needs Datajack 1.3. |
 | `It is {Hour} o'clock.`, `{Clues}`, `{{` | Shows a value the story keeps: a counter's number, a decision's values (separated by commas, nothing until it holds one), a name asked for. Each `{…}` must name something the story knows, or the import reports it; `{{` writes a brace. One name means one thing: a name asked for cannot also be a counter's or a decision's, in any chapter. Pages are cut as if each value were as wide as it may get (a name given, a counter's longest number, a decision's widest value, those the text itself declares included), and a page never breaks inside a `{…}`. Needs Datajack 1.4, except for names asked for. |
@@ -273,6 +274,7 @@ one per language, of the same shape: another language is one more table each.
 | `[set: Clues = Letter]` | Sets a decision without a choice. |
 | `[counter: Trust = 2]`, `[counter: Trust]` | Declares a counter, a whole number the story counts with, and what it starts at (0 when not given). Optional: an `[add]` makes the counter it names. |
 | `[counter: Money = 1000.00]` | A counter with decimals: as many as its first number is written with, here hundredths (at most 4). It counts exactly, `0.1 + 0.2` being `0.30`; `{Money}` shows it as the game's language writes numbers, `1,000.50` or `1 000,50`; a number with more decimals than it keeps is reported. Saves keep it as it reads, `1000.5`. Needs Datajack 2.1. |
+| `[gauge: HP / {MaxHP} bottom right numbers = {Hero}]`, `[gauge: HP none]`, `[gauge: none]` | A counter shown as a bar on the stage, out of a number or of what another counter holds, until taken away: in a corner (`top left` unless `top right`, `bottom left` or `bottom right`), sliding as the counter changes (at once for players who ask for less motion), green, gold then red as it empties unless given `green`, `blue`, `red`, `gold`, `purple` or `pink`; `numbers` writes what it holds out of what; after `=`, its name, values allowed, else the counter's. A new `[gauge]` for the same counter replaces it. Saves keep it. Needs Datajack 3.3. |
 | `[ask number: Bet = 10, from 1 to {Money}]` | Asks the player for a number, for a counter (made by it when not declared, with the decimals of the number proposed). The bounds are numbers or counters in braces, read when the number is asked; either may go. The field takes digits with one comma or point for decimals, whatever the language, spaces ignored, a minus only when the lowest bound is below zero; it says what it understood, and refuses what lies out of bounds or has too many decimals, saying why. Nothing typed takes the number proposed. Needs Datajack 2.1. |
 | `{hour}`, `[if: hour >= 22 or hour < 6]`, `weekday`, `time away`, `now` | Counters every story has, read from the player's clock as the story plays: `hour` (0 to 23), `weekday` (1 for Monday to 7 for Sunday), `time away` (minutes since the profile last played the game, 0 the first time), `now` (seconds since 1970, to time the player: `[set: Start = {now}]`, later `[set: Took = {now}]` and `[add: Took -{Start}]`; Datajack 3.2). Tested and shown as any counter, never changed by the story (reported if it tries), kept out of saves and of the map's points. A decision or a counter the story declares under one of these names is its own. A story using them plays differently depending on when it is played. Needs Datajack 2.1. |
 | `[enter: card1 {Card}]`, `[card1: {Card}]`, `[bg: {Place}]`, `[illustration: {Scene}]` | A picture named by a decision's value: the one named like the value the decision holds as the tag plays, `queen-hearts` for `Card = queen-hearts`, with no branch. The tag makes an entry for each of the decision's values, each waiting for its file in Cast & files, and a game carries them all. Only decisions, in tags showing a picture; a name of one word. Needs Datajack 2.1. |
@@ -853,7 +855,7 @@ the SHA-256 in their name; and only save folders the player picked in the system
 
 `docs/sample/` holds stories to import, each a text and a zip of its files, dropped together in Cast &
 files: **Sakura Week**, a week of school before a festival, in `sakura-week/` (its pictures and
-sounds were made outside this repository: the zip is their only source), and five mini games in
+sounds were made outside this repository: the zip is their only source), and six mini games in
 `minigames/`, showing what conditions, loops, scenes, counters and decisions can do beyond a story.
 Their pictures and sounds are made by code, `scripts/samples/`, so that nothing is downloaded and all
 of it is as free as the rest of the repository.
@@ -881,6 +883,13 @@ of it is as free as the rest of the repository.
   box under the board tells the cells left to open (a grid's caption); a board cleared says how many
   seconds it took (`now`), and the best time of each level is kept, in the journal. A right click or
   F flags a cell (`marking Flag`), which picking then leaves closed.
+- **Battle** (`battle/`): one duel, or three foes in a row with HP carried over and a short rest
+  between them. Three creatures, fire beating leaf, leaf water, water fire; each turn strike, use a
+  special move (three a battle), guard against the next hit or drink a potion, the foe choosing at
+  random, a potion when low; the elements matter to special moves only. Both creatures' HP as bars
+  (`[gauge]`), the moves along the bottom (`[choice: Action below]`), each side's poses through a
+  scene choosing the right character, one scene working out any special move from who attacks whom
+  (`[set: Attacker = {Mine}]`), hits shaking the screen; battles won and lost kept in the journal.
 
 ## License
 

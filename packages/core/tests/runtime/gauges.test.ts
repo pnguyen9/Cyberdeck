@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkReferences, exportText, importText, parseSave, playerFormatVersion, stateFromSave, StoryRuntime, toSave } from '../../src/index'
+import { checkReferences, exportText, importText, indexNames, parseSave, playerFormatVersion, stateFromSave, StoryRuntime, toSave } from '../../src/index'
 import { storyFromText } from './storyFromText'
 
 const monospaceLayout = { lineWidth: 40, maxLines: 2, measureText: (text: string) => [...text].length }
@@ -58,6 +58,13 @@ describe('gauges', () => {
     expect(runtime.gaugesShown()).toEqual([])
   })
 
+  it('counts the names in its label as shown, and its counters as read, in the Index', () => {
+    const story = storyFromText(['[counter: HP = 3]', '[decision: Trainer = Rei | Aiko]', '[gauge: HP / 10 = {Trainer}\'s pet]', 'Text.'])
+    const roles = (name: string) => indexNames(story.project, story.chapters).find(indexed => indexed.name === name)?.uses.map(use => use.role)
+    expect(roles('Trainer')).toContain('shown')
+    expect(roles('HP')).toContain('shown')
+  })
+
   it('is written back as it was typed, needs Datajack 3.3, and is checked like any tag naming counters', () => {
     const story = storyFromText(STORY)
     const exported = exportText(story.project, story.chapters, { declareDecisions: true })
@@ -72,8 +79,11 @@ describe('gauges', () => {
       return [...imported.problems, ...checkReferences(imported)].filter(problem => problem.severity === 'error').map(problem => [problem.code, problem.subject])
     }
     expect(problems(['[counter: HP = 3]', '[gauge: Health / 10]', '[gauge: HP / {Most}]', 'Text.'])).toEqual([['unknownCounter', 'Health'], ['unknownCounter', 'Most']])
-    expect(problems(['[counter: HP = 3]', '[gauge: HP]', '[gauge: HP / 10 middle]', '[gauge: HP / 0]', '[gauge: HP / 10 =]', 'Text.']).map(([code]) => code))
-      .toEqual(['invalidGauge', 'invalidGauge', 'invalidGauge', 'invalidGauge'])
+    // Each mistake is told apart: the maximum, a word not understood, a name left empty.
+    expect(problems(['[counter: HP = 3]', '[gauge: HP]', '[gauge: HP / MaxHP]', '[gauge: HP / 10 middle]', '[gauge: HP / 0]', '[gauge: HP / 10 =]', 'Text.']))
+      .toEqual([['gaugeMaximum', 'HP'], ['gaugeMaximum', 'HP'], ['gaugeWord', 'middle'], ['gaugeMaximum', 'HP'], ['invalidGauge', 'HP / 10 =']])
+    // A gauge named none is a gauge, not one taken away.
+    expect(problems(['[counter: HP = 3]', '[gauge: HP / 10 = none]', 'Text.'])).toEqual([])
     expect(problems(['[counter: HP = 3]', '[gauge: HP / 10 = {Nobody}]', 'Text.'])).toEqual([['unknownValue', 'Nobody']])
   })
 })
