@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  decisionsTestedFrom,
   emptyProgress,
   layOutProgressMap,
   mergeProgress,
@@ -17,6 +18,7 @@ import {
   type ProgressData,
 } from '../../src/index'
 import { storyFromText } from '../runtime/storyFromText'
+import { stagedPointKeyOf } from '../../src/progress/progress'
 
 const NOW = '2026-10-26T12:00:00.000Z'
 
@@ -133,6 +135,29 @@ describe('progress', () => {
 })
 
 describe('the map', () => {
+  it('joins paths that reach a choice with different stages, and keeps points recorded with the stage', () => {
+    const lines = ['[choice: Way]', '> Park = Park', '> Street = Street', '[if: Way is Park]', '[bg: park]', '[enter: marie]', 'Trees.', '[else]', '[bg: street]', 'Cars.', '[end]', '[choice: Then]', '> Home = Home', 'Done.']
+    const story = storyFromText(lines)
+    let progress = play(story, emptyProgress(story), ['Park', 'Home'])
+    progress = play(story, progress, ['Street', 'Home'])
+    expect(progress.points.map(point => point.choiceId === story.chapters[0]!.nodes.at(-2)?.id ? 'Then' : 'Way')).toEqual(['Way', 'Then'])
+
+    // A point keyed the way it was before 3.2, the stage in its key: the same arrival joins it.
+    const runtime = startedRuntime(story)
+    const first = runtime.snapshot.step
+    runtime.choose(first.type === 'choice' ? first.choice.options[0]!.id : '')
+    while (runtime.snapshot.step.type === 'page') {
+      runtime.next()
+    }
+    const fresh = recordChoiceReached(emptyProgress(story), story, runtime.exportState(), null, NOW).progress
+    const point = fresh.points[0]!
+    const legacyKey = stagedPointKeyOf(point.choiceId, point.save, decisionsTestedFrom(story, point.choiceId))
+    expect(legacyKey).not.toBe(point.key)
+    const legacy = { ...fresh, points: [{ ...point, key: legacyKey }] }
+    const joined = recordChoiceReached(legacy, story, runtime.exportState(), null, NOW)
+    expect([joined.progress.points.length, joined.pointKey]).toEqual([1, legacyKey])
+  })
+
   it('marks an option taken when picked, and links it to the next choice after the game was left and resumed', () => {
     const story = storyFromText(STORY)
     const runtime = startedRuntime(story)

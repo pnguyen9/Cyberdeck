@@ -117,7 +117,10 @@ export function recordChoiceReached(
     throw new Error('No choice is shown')
   }
   const save = toSave(story, state, now)
-  const pointKey = pointKeyOf(state.page.nodeId, save, decisionsTestedFrom(story, state.page.nodeId))
+  const namesThatMatter = decisionsTestedFrom(story, state.page.nodeId)
+  // A point recorded before 3.2 was keyed by its stage too: an arrival in the same state joins it.
+  const recordedBefore = stagedPointKeyOf(state.page.nodeId, save, namesThatMatter)
+  const pointKey = progress.points.some(point => point.key === recordedBefore) ? recordedBefore : pointKeyOf(state.page.nodeId, save, namesThatMatter)
   const points = progress.points.some(point => point.key === pointKey)
     ? progress.points
     : [...progress.points, { key: pointKey, chapterId: state.page.chapterId, choiceId: state.page.nodeId, reachedAt: now, save, taken: [] }]
@@ -145,11 +148,22 @@ export function recordEndReached(progress: ProgressData, endingId: string | null
 }
 
 /**
- * The key of a point: its choice, stage and the decisions and counters that matter ahead, whatever
- * the order they were written in, and for a choice in a scene, where the scene was played from.
- * Counters count only when some matter: points of stories without them keep the keys they had.
+ * The key of a point: its choice and the decisions and counters that matter ahead, whatever the order
+ * they were written in, and for a choice in a scene, where the scene was played from. The stage is no
+ * part of it: two paths whose stage differs, a scene leaving a character on it, reach the same choice
+ * with the same story ahead.
  */
 export function pointKeyOf(choiceId: string, save: SaveData, namesThatMatter: ReadonlySet<string>): string {
+  const decisions = Object.keys(save.decisions).filter(name => namesThatMatter.has(name)).sort()
+    .map(name => [name, [...(save.decisions[name] ?? [])].sort()])
+  const counters = Object.keys(save.counters ?? {}).filter(name => namesThatMatter.has(name)).sort()
+    .map(name => [name, save.counters?.[name]])
+  const playedFrom = save.page?.playedFrom ?? []
+  return `${choiceId}:${fingerprint(JSON.stringify({ decisions, ...(counters.length === 0 ? {} : { counters }), playedFrom }))}`
+}
+
+/** The key points had before 3.2, the stage in it: progress recorded then keeps its points. */
+export function stagedPointKeyOf(choiceId: string, save: SaveData, namesThatMatter: ReadonlySet<string>): string {
   const decisions = Object.keys(save.decisions).filter(name => namesThatMatter.has(name)).sort()
     .map(name => [name, [...(save.decisions[name] ?? [])].sort()])
   const counters = Object.keys(save.counters ?? {}).filter(name => namesThatMatter.has(name)).sort()

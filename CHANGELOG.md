@@ -30,6 +30,8 @@
   characters, backgrounds, illustrations and a grid's tiles, and so does the gallery, enlarged.
   Players who ask for less motion see where it ends at once.
 - Hovering a choice on the map tells what the journal showed when it was reached.
+- Paths reaching a choice with different stages, a scene having left a character on it, are one
+  point of the map; points recorded before keep their place.
 - The map records an option as soon as it is picked, and links it to the next choice even when the
   game was left, or the map opened, in between: it kept points with nothing picked, and lines missing.
 - The map shows each option with the values of its moment, `Everything: 1,000.00 dollars`, rather

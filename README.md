@@ -782,9 +782,10 @@ read, and what it remembers. The story reads only the memories and endings, thro
 right: each choice reached, its options (those not tried yet marked `?`), curves to where the tried
 ones led, and the endings. Hovering a choice tells what the journal showed when it was reached, by
 the same rule (nothing the author keeps from players). **Play from here** resumes the choice exactly
-as it was reached, a new path for the autosave to follow. Two paths reaching the same choice merge on the map only when
-they agree on the stage and on the decisions the story still tests from there on; otherwise
-characters could react differently ahead, and they stay apart.
+as it was reached, a new path for the autosave to follow. Two paths reaching the same choice merge
+on the map when they agree on the decisions and counters the story still tests from there on,
+whatever the stage shows (a scene may leave a character on it): otherwise characters could react
+differently ahead, and they stay apart.
 
 **Skip** (`S`) passes pages already read, and stops at new text, a choice or an end. **Auto** (`A`)
 moves on by itself: a page with a voice waits for its line to end, another for a reading time
@@ -880,10 +881,6 @@ CHANGELOG brought up to date, every French text read again.
   shrinking from the feet, which today pushes a tall picture's head off the top. Until then,
   upper-body art up to the stage's height shows correctly without `near` or `far`. The game's CSS
   stays out of the stage, a downloaded game being trusted with the text's looks only.
-- **The map: paths that differ only by the stage.** A point of the map is a choice, with the values
-  still able to change what follows and what the stage shows; two paths whose stage differs (the one
-  a scene leaves) make two points for what may be the same state. Progress recorded before 2.1 keeps
-  its old points.
 - **The author's map in the preview.** Every path drawn as if all were played, each point with the
   values of its path, skipping always allowed, previewing from a point starting with its values; the
   map able to keep only the path played. Previewing from a page today plays the shortest way there,
