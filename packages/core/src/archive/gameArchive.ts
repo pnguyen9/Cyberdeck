@@ -303,7 +303,7 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
     || documents.some(document => flattenStoredNodes(document.nodes).some(node => (node.type === 'remember' && node.forget === true) || (node.type === 'choice' && node.timeLimitMs !== undefined)))
   // Datajack 3.1 does not know a part played as a game or forward only, a grid's caption, nor the
   // clock's `now`: it would refuse them.
-  const needsDatajack32Node = (node: StoredNode) => (node.type === 'grid' && node.caption !== undefined)
+  const needsDatajack32Node = (node: StoredNode) => (node.type === 'grid' && (node.caption !== undefined || node.markCounterId !== undefined))
     || commandsOf(node).some(command => command.type === 'gameMode' || command.type === 'noGoingBack')
   if (project.counters.some(counter => counter.clock === 'now') || documents.some(document => flattenStoredNodes(document.nodes).some(needsDatajack32Node))) {
     return '3.2'

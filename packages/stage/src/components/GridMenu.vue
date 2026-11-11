@@ -10,7 +10,9 @@ import StagePicture from './StagePicture.vue'
  */
 /** `start`: the tile focused first, the one picked last, so that the keyboard goes on from there. */
 const props = defineProps<{ grid: StoredGrid; items: readonly string[]; catalog: StageCatalog; start: number }>()
-const emit = defineEmits<{ pick: [number: number] }>()
+const emit = defineEmits<{ pick: [number: number]; mark: [number: number] }>()
+/** A grid that marks too, `marking Flag`: a right click or F on a tile marks it rather than picks it. */
+const canMark = computed(() => props.grid.markCounterId !== undefined)
 
 /** The area the grid may take on the stage: above the menu, which stands 310 pixels over the bottom. */
 const AREA = { width: 1600, height: 660 }
@@ -37,6 +39,8 @@ function onKeydown(event: KeyboardEvent) {
     focusTile(focused.value + moves[event.key]!)
   } else if (event.key === 'Enter' || event.key === ' ') {
     emit('pick', focused.value)
+  } else if (canMark.value && event.code === 'KeyF') {
+    emit('mark', focused.value)
   } else if (event.key !== 'Escape') {
     return
   }
@@ -53,6 +57,8 @@ function onKeydown(event: KeyboardEvent) {
     role="grid"
     :style="{ gridTemplateColumns: `repeat(${grid.columns}, ${tileSize}px)`, gap: `${GAP}px` }"
     @click.stop
+    @mousedown="canMark && $event.stopPropagation()"
+    @mouseup="canMark && $event.stopPropagation()"
     @keydown="onKeydown"
   >
     <button
@@ -66,6 +72,7 @@ function onKeydown(event: KeyboardEvent) {
       :style="{ width: `${tileSize}px`, height: `${tileSize}px`, fontSize: `${Math.max(10, Math.floor(tileSize / 3))}px` }"
       @focus="focused = tile.number"
       @click="emit('pick', tile.number)"
+      @contextmenu.prevent.stop="canMark && emit('mark', tile.number)"
     >
       <StagePicture v-if="tile.url !== null" class="picture" :url="tile.url" alt="" />
       <span v-else-if="tile.item !== ''" class="value">{{ tile.item }}</span>

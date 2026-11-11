@@ -284,7 +284,7 @@ one per language, of the same shape: another language is one more table each.
 | `[add: Queue = {Cell}]`, `[take: Cell = first of Queue]`, `last of` | A value added at the end; the first or last taken out, into a counter (as a number) or a decision (as the value of that name): a queue, to go through cells one after another without recursion. |
 | `[shuffle: Deck]` | The places mixed, from the game's draws: a save resumed shuffles as the game would have. |
 | `{Board 3}`, `{Board Cell}`, `{Board size}`, `[if: Board Cell is cat]`, `[if: Queue size > 0]`, `[set: Near = {Counts 2}]` | A place shown, tested, or read back into a counter as a number; `size`, how many values the list holds. |
-| `[choice: Cell grid 4 × 4 from Shown with tile]` | A choice shown as rows of picture buttons, numbered from 1, left to right then down, up to 30 × 24: each shows the picture of `tile` named like what its place of `Shown` holds (the value itself without one), and picking one gives `Cell` its number. The arrows move, Enter or Space picks. The tile's entries are made for every value the story's lists may hold. A line under it, `> {Left} cells left to open`, is shown in the text box while the grid waits, its values filled in each time (Datajack 3.2). Needs Datajack 3.0. |
+| `[choice: Cell grid 4 × 4 from Shown with tile]` | A choice shown as rows of picture buttons, numbered from 1, left to right then down, up to 30 × 24: each shows the picture of `tile` named like what its place of `Shown` holds (the value itself without one), and picking one gives `Cell` its number. The arrows move, Enter or Space picks. The tile's entries are made for every value the story's lists may hold. A line under it, `> {Left} cells left to open`, is shown in the text box while the grid waits, its values filled in each time (Datajack 3.2). `, marking Flag` at the end gives a second way to pick a tile, a right click or F, which gives its number to `Flag` and 0 to `Cell` (picking does the reverse): to mark a tile rather than open it (Datajack 3.2). Needs Datajack 3.0. |
 | `[counter lasting: Coins = 0]`, `[decision multi lasting: Bag = Key \| Lamp]` | A counter or a decision the profile keeps from one playthrough to the next: within one it behaves as any other, going back undoing what was added or taken, and a new playthrough starts with what the last one left. What the player carries, apart from what the game knows (`[remember]`). Needs Datajack 2.0. |
 | `[shown: Bag, Coins]`, `[shown after an ending: Trust, endings reached]` | What players see in their **Journal**: decisions while they hold something (a bag its items, until taken away), counters their number, and with `endings reached` the endings reached; always, or once the profile has reached any ending. Nothing unless the author says so. Lines among the definitions, names separated by commas; the Index writes them too. |
 | `[add: Trust]`, `[add: Trust 2]`, `[add: Trust -1]` | Adds to a counter: 1, or the amount after its name. `[set: Trust = 0]` gives it a value. |
@@ -862,8 +862,8 @@ of it is as free as the rest of the repository.
   (`grid {Columns} × {Rows}`); the mines placed after the first pick, so that it is never one; each
   cell's count kept in a list, and an empty area opened through a queue (`[add]`, `[take]`). The text
   box under the board tells the cells left to open (a grid's caption); a board cleared says how many
-  seconds it took (`now`), and the best time of each level is kept, in the journal. No flags yet: a
-  grid picks, it does not mark.
+  seconds it took (`now`), and the best time of each level is kept, in the journal. A right click or
+  F flags a cell (`marking Flag`), which picking then leaves closed.
 
 ## Plan
 
@@ -872,8 +872,7 @@ browser checks for what it adds, the whole suite run (`npm run typecheck`, `npm 
 `npm run checks`, `npm run checks:desktop`), the README, the guide (`npm run guide:images`) and the
 CHANGELOG brought up to date, every French text read again.
 
-- **The mini games' leftovers.** Blackjack's shoe of 2, 4, 6 or 8 real decks, as a list of the cards
-  left; Minesweeper's flags, which need a second way to pick a tile (a right click, a key).
+- **Blackjack's real shoe.** A shoe of 2, 4, 6 or 8 real decks, as a list of the cards left.
 - **Upper-body characters**, as most Japanese visual novels draw them: a framing chosen per character
   or for the whole project in Cast & files, *full body* as today or *upper body*. Framed so, the
   picture is scaled to a set height whatever its file's size, may go past the bottom of the stage

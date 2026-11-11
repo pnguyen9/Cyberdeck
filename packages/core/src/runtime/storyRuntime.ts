@@ -547,13 +547,23 @@ export class StoryRuntime {
   }
 
   /** Picks a place of the grid shown, from 1: its counter takes that number. */
-  pickCell(number: number) {
+  pickCell(number: number, isMark = false) {
     const step = this.currentSnapshot.step
-    if (step.type !== 'grid' || number < 1 || number > step.grid.columns * step.grid.rows) {
+    if (step.type !== 'grid' || number < 1 || number > step.grid.columns * step.grid.rows || (isMark && step.grid.markCounterId === undefined)) {
       return
     }
     this.isReplaying = false
-    this.currentSnapshot = { ...this.currentSnapshot, counters: { ...this.currentSnapshot.counters, [step.grid.counterId]: number * scaleOf(this.counterOf(step.grid.counterId)) } }
+    // Picked, the grid's counter takes the number and the marking one 0; marked, the other way round.
+    const markCounterId = step.grid.markCounterId
+    const units = (counterId: string, wanted: boolean) => (wanted ? number : 0) * scaleOf(this.counterOf(counterId))
+    this.currentSnapshot = {
+      ...this.currentSnapshot,
+      counters: {
+        ...this.currentSnapshot.counters,
+        [step.grid.counterId]: units(step.grid.counterId, !isMark),
+        ...(markCounterId === undefined ? {} : { [markCounterId]: units(markCounterId, isMark) }),
+      },
+    }
     this.playUntilStop()
   }
 

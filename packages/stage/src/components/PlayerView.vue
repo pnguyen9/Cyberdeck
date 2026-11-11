@@ -1017,6 +1017,11 @@ function pickCell(number: number) {
   playForward(() => runtime.pickCell(number))
 }
 
+/** A tile of a grid that marks, right-clicked or F: its marking counter takes its number. */
+function markCell(number: number) {
+  playForward(() => runtime.pickCell(number, true))
+}
+
 function choose(optionId: string) {
   if (runtime.snapshot.stage.gameMode === null) {
     pendingOption = currentPointKey === null ? null : { pointKey: currentPointKey, optionId }
@@ -1300,7 +1305,7 @@ onUnmounted(() => {
         :box-frame="boxFrame"
       />
       <ChoiceMenu v-if="choice !== null && isHudShown" :key="choice.id" :choice="choice" :time="choiceTime" @choose="choose" />
-      <GridMenu v-if="grid !== null && isHudShown" :key="grid.grid.id" :grid="grid.grid" :items="grid.items" :catalog="catalog" :start="snapshot.counters[grid.grid.counterId] ?? 1" @pick="pickCell" />
+      <GridMenu v-if="grid !== null && isHudShown" :key="grid.grid.id" :grid="grid.grid" :items="grid.items" :catalog="catalog" :start="snapshot.counters[grid.grid.counterId] ?? 1" @pick="pickCell" @mark="markCell" />
       <form v-if="asked !== null && isHudShown" class="ask" @click.stop @submit.prevent="answer">
         <label class="ask-label" for="asked-name">{{ asked.name }}</label>
         <input

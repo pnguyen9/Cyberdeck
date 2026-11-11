@@ -170,3 +170,20 @@ describe('a grid with a caption and the clock now', () => {
     expect(playerFormatVersion(story.project, story.chapters)).toBe('3.2')
   })
 })
+
+describe('a grid with a second way to pick', () => {
+  it('gives a tile marked to its own counter, the picking one 0, and the other way round; written back', () => {
+    const story = storyFromText(['[list: Shown = 4 × hidden]', '[loop]', '[choice: Cell grid 2 × 2 from Shown with tile, marking Flag]', '[if: Flag > 0]', '[set: Shown Flag = flag]', '[end]', 'Cell {Cell}, flag {Flag}.', '[end]'])
+    const runtime = new StoryRuntime(story)
+    runtime.start()
+    runtime.pickCell(3, true)
+    expect(shownText(runtime)).toBe('Cell 0, flag 3.')
+    runtime.next()
+    const step = runtime.snapshot.step
+    expect(step.type === 'grid' ? step.items : null).toEqual(['hidden', 'hidden', 'flag', 'hidden'])
+    runtime.pickCell(2)
+    expect(shownText(runtime)).toBe('Cell 2, flag 0.')
+    expect(exportText(story.project, story.chapters, { declareDecisions: true })).toContain('[choice: Cell grid 2 × 2 from Shown with tile, marking Flag]')
+    expect(playerFormatVersion(story.project, story.chapters)).toBe('3.2')
+  })
+})

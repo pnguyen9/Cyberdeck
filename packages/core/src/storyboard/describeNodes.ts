@@ -142,7 +142,8 @@ export function describeGrid(node: StoredGrid, project: ProjectDocument): string
   const counter = project.counters.find(candidate => candidate.id === node.counterId)?.name ?? '?'
   const character = node.characterId === null ? null : project.characters.find(candidate => candidate.id === node.characterId)?.name ?? '?'
   const size = (counterId: string | undefined, written: number) => counterId === undefined ? String(written) : `{${project.counters.find(candidate => candidate.id === counterId)?.name ?? '?'}}`
-  return `choice: ${counter} grid ${size(node.columnsFrom, node.columns)} × ${size(node.rowsFrom, node.rows)} from ${listName(node.listId, project)}${character === null ? '' : ` with ${character}`}`
+  const marking = node.markCounterId === undefined ? '' : `, marking ${project.counters.find(candidate => candidate.id === node.markCounterId)?.name ?? '?'}`
+  return `choice: ${counter} grid ${size(node.columnsFrom, node.columns)} × ${size(node.rowsFrom, node.rows)} from ${listName(node.listId, project)}${character === null ? '' : ` with ${character}`}${marking}`
 }
 
 /** A list's change or a value taken from it, as the tag is written: `set: Board 3 = cat`, `shuffle: Board`. */

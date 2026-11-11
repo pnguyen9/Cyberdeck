@@ -108,6 +108,8 @@ export interface GridNode {
   character: string | null
   /** The line under it, `> {Left} cells left`: shown in the text box while the grid waits. */
   caption?: string
+  /** `, marking Flag`: the counter a tile marked rather than picked gives its number. */
+  marking?: string
 }
 
 /** `[shuffle: Board]`. */

@@ -84,6 +84,9 @@ export function storeImport(
   for (const node of importedNodes) {
     if (node.type === 'add' || node.type === 'grid') {
       counters.use(node.counter)
+      if (node.type === 'grid' && node.marking !== undefined) {
+        counters.use(node.marking)
+      }
     } else if (node.type === 'askNumber') {
       counters.use(node.counter, node.decimals)
     }
@@ -274,6 +277,7 @@ export function storeImport(
           ...(typeof node.columns === 'string' ? { columnsFrom: counters.find(node.columns).id } : {}),
           ...(typeof node.rows === 'string' ? { rowsFrom: counters.find(node.rows).id } : {}),
           ...(node.caption === undefined ? {} : { caption: node.caption }),
+          ...(node.marking === undefined ? {} : { markCounterId: counters.find(node.marking).id }),
           listId: lists.find(node.list).id,
           characterId: node.character === null ? null : registry.character(node.character).id,
         }

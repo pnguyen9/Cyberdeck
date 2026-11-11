@@ -22,6 +22,8 @@
 [counter: MostMines = 0]
 [counter lasting: Cleared = 0]
 [counter: Left = 0]
+[counter: Flag = 0]
+[counter: Flags = 0]
 [counter: Start = 0]
 [counter: Took = 0]
 [counter lasting: Best beginner = 0]
@@ -34,13 +36,13 @@
 [list: ColOf]
 [list: Bag]
 [list: Queue]
-[list: Tiles = hidden | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | mine | boom]
+[list: Tiles = hidden | flag | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | mine | boom]
 
 [shown: Left, Cleared, Best beginner, Best intermediate, Best expert]
 
 # Minesweeper
 [bg: field]
-Open every cell that hides no mine. A number tells how many mines touch that cell; the first cell you open never hides one.
+Open every cell that hides no mine. A number tells how many mines touch that cell; the first cell you open never hides one. Right-click a cell, or press F on it, to flag a mine you have found.
 [game mode]
 [loop]
 [choice: Level]
@@ -70,9 +72,17 @@ Open every cell that hides no mine. A number tells how many mines touch that cel
 [set: Opened = 0]
 [set: Placed = 0]
 [set: Left = {Safe}]
+[set: Flags = 0]
 [loop]
-[choice: Cell grid {Columns} × {Rows} from Shown with tile]
-> {Left} cells left to open · {Mines} mines
+[choice: Cell grid {Columns} × {Rows} from Shown with tile, marking Flag]
+> {Left} cells left to open · {Mines} mines · {Flags} flagged
+[if: Shown Flag is hidden]
+[set: Shown Flag = flag]
+[add: Flags 1]
+[else if: Shown Flag is flag]
+[set: Shown Flag = hidden]
+[add: Flags -1]
+[end]
 [if: Shown Cell is hidden]
 [sound: click]
 [if: Placed is 0]

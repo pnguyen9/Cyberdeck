@@ -509,7 +509,10 @@ class TextImporter {
           return
         }
         // `[choice: Cell grid 4 × 4 from Shown with tile]`: a grid of picture buttons, no options written.
-        const grid = /^(.+?)\s+grid\s+(\d{1,2}|\{[^{}]+\})\s*[×x*]\s*(\d{1,2}|\{[^{}]+\})\s+from\s+(.+?)(?:\s+with\s+(.+))?$/i.exec(text.trim())
+        // `, marking Flag` at the end: a second way to pick a tile, which gives its number to another counter.
+        const marking = /(?:,\s*|\s+)marking\s+(\S.*)$/i.exec(text.trim())
+        const gridText = marking === null ? text.trim() : text.trim().slice(0, marking.index).trim()
+        const grid = /^(.+?)\s+grid\s+(\d{1,2}|\{[^{}]+\})\s*[×x*]\s*(\d{1,2}|\{[^{}]+\})\s+from\s+(.+?)(?:\s+with\s+(.+))?$/i.exec(gridText)
         if (grid !== null || /\sgrid\s/i.test(` ${text} `)) {
           const size = (written: string | undefined, largest: number): number | string | null => written === undefined ? null
             : written.startsWith('{') ? written.slice(1, -1).trim()
@@ -521,7 +524,7 @@ class TextImporter {
             return
           }
           this.flushPendingDirectives()
-          const gridNode: GridNode = { type: 'grid', sourceLine: lineNumber, counter: grid[1]!.trim(), columns, rows, list: grid[4]!.trim(), character: grid[5]?.trim() ?? null }
+          const gridNode: GridNode = { type: 'grid', sourceLine: lineNumber, counter: grid[1]!.trim(), columns, rows, list: grid[4]!.trim(), character: grid[5]?.trim() ?? null, ...(marking === null ? {} : { marking: marking[1]!.trim() }) }
           this.addNode(gridNode)
           this.gridAwaitingCaption = gridNode
           return

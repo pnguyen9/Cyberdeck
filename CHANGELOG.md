@@ -13,6 +13,8 @@
 - `: until an ending`, for either: the lock lifts once the player has reached an ending of the game.
 - A grid's caption: a line under it, `> {Left} cells left to open`, shown in the text box while the
   grid waits, its values filled in each time.
+- A grid that marks too, `, marking Flag`: a right click or F on a tile gives its number to `Flag`
+  rather than to the picking counter.
 - `now`, the player's clock in seconds, beside `hour`, `weekday` and `time away`: a story keeps it
   when something starts and takes it away at the end, to time the player.
 
@@ -50,6 +52,7 @@
 
 ### Samples
 - The mini games are played in game mode, from their first round.
+- Minesweeper flags cells: a right click or F, picking then leaving them closed.
 - Minesweeper tells the cells left to open under the board, the seconds a board cleared took, and
   keeps each level's best time, in the journal.
 

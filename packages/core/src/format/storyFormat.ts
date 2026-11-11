@@ -107,6 +107,11 @@ export interface StoredGrid {
   id: string
   /** Shown in the text box while the grid waits, its values filled in as it is shown. Since 3.2. */
   caption?: string
+  /**
+   * A tile marked rather than picked, a right click or F, gives its number to this counter, the
+   * picking counter 0; a tile picked sets this one to 0. Since 3.2.
+   */
+  markCounterId?: string
   counterId: string
   columns: number
   rows: number

@@ -526,7 +526,8 @@ motion see where the animation ends, at once.</p>
 <p>For games, a <strong>list</strong> keeps values in numbered places: <code>[list: Board = 16 × none]</code>,
 <code>[set: Board 3 = cat]</code>, <code>{Board 3}</code>, <code>[shuffle: Board]</code>. And
 <code>[choice: Cell grid 4 × 4 from Board with tile]</code> shows a grid of picture buttons, one per place;
-the one picked gives <code>Cell</code> its number. The Pairs and Minesweeper samples are made of these.</p>
+the one picked gives <code>Cell</code> its number; with <code>, marking Flag</code>, a right click or F gives
+<code>Flag</code> its number instead, to mark a tile rather than open it. The Pairs and Minesweeper samples are made of these.</p>
 <p>A game played inside the story should not let players undo a bad card or a mine: from
 <code>[game mode]</code> to <code>[game mode: off]</code>, they cannot go back, save or load (they can
 still read the log and the journal), and its choices make no points on the map. A story whose choices are meant to be final writes

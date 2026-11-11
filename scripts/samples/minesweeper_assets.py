@@ -1,6 +1,6 @@
 """Makes the pictures and sounds of the Minesweeper sample, from code alone: python3 minesweeper_assets.py <folder>.
 
-Tiles for the grid, `tile-hidden.svg`, `tile-0.svg` (opened, nothing near) to `tile-8.svg`, `tile-mine.svg` and
+Tiles for the grid, `tile-hidden.svg`, `tile-flag.svg` (a hidden cell flagged), `tile-0.svg` (opened, nothing near) to `tile-8.svg`, `tile-mine.svg` and
 `tile-boom.svg` (the mine opened), numbers drawn as strokes so that they look the same everywhere; a
 background, a cover, and three sounds.
 """
@@ -33,6 +33,13 @@ def svg(content):
 
 def opened(content=''):
     return svg('<rect width="96" height="96" fill="#d6d9de"/><rect x="0.5" y="0.5" width="95" height="95" fill="none" stroke="#9aa1ab" stroke-width="2"/>' + content)
+
+
+def flagged():
+    """A hidden cell with a flag on it: a red pennant on a pole, on a little base."""
+    return hidden().replace('</svg>', '<path d="M40 24 V70" stroke="#212121" stroke-width="5" stroke-linecap="round"/>'
+                            '<path d="M42 24 L68 34 L42 46 Z" fill="#d32f2f"/>'
+                            '<rect x="28" y="68" width="26" height="7" rx="2" fill="#212121"/></svg>')
 
 
 def hidden():
@@ -98,6 +105,7 @@ def main():
     (folder / 'field.svg').write_text(background())
     (folder / 'cover.svg').write_text(cover())
     (folder / 'tile-hidden.svg').write_text(hidden())
+    (folder / 'tile-flag.svg').write_text(flagged())
     (folder / 'tile-0.svg').write_text(opened())
     for value in range(1, 9):
         (folder / f'tile-{value}.svg').write_text(number(value))

@@ -276,7 +276,7 @@ function node(value: unknown, path: string, depth: number): StoredNode {
     }
     case 'grid': {
       const grid: Check<StoredGrid> = object({ type: oneOf('grid'), id: string, counterId: string, columns: integer, rows: integer, listId: string, characterId: nullable(string) })
-      return withOptional('caption', string, withOptional('rowsFrom', string, withOptional('columnsFrom', string, grid)))(value, path)
+      return withOptional('markCounterId', string, withOptional('caption', string, withOptional('rowsFrom', string, withOptional('columnsFrom', string, grid))))(value, path)
     }
     case 'take': {
       const into = record(fields.into, `${path}.into`)

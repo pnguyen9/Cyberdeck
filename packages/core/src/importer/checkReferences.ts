@@ -440,6 +440,9 @@ function checkCounters(result: ImportResult, allNodes: readonly StoryNode[], kno
     if (node.type === 'add' || node.type === 'askNumber' || node.type === 'grid') {
       names.add(normalizeName(node.counter))
     }
+    if (node.type === 'grid' && node.marking !== undefined) {
+      names.add(normalizeName(node.marking))
+    }
   }
   return names
 }

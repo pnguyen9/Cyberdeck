@@ -205,6 +205,9 @@ export function indexNames(project: ProjectDocument, documents: readonly Chapter
           break
         case 'grid':
           use('counter', node.counterId, { role: 'changed', documentId, nodeId })
+          if (node.markCounterId !== undefined) {
+            use('counter', node.markCounterId, { role: 'changed', documentId, nodeId })
+          }
           shown([node.caption ?? ''], documentId, nodeId)
           for (const counterId of [node.columnsFrom, node.rowsFrom]) {
             if (counterId !== undefined) {
