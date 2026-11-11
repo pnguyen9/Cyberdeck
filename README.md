@@ -751,6 +751,7 @@ the desktop, games live in the application's data folder (`library/games/<game>/
 | Settings | O, the Settings button |
 | Full screen | F |
 | Leave a panel, or the game | Esc |
+| Mark a tile of a game board, on a grid that marks (Minesweeper's flags) | F, right click: there only, where they do not go full screen or hide the text |
 
 ### Settings
 
@@ -761,7 +762,9 @@ to hold it), a plainer font, a stronger contrast behind the text, pages and opti
 the voice of the browser or the system (a page with a voice of its own is heard instead), timed
 choices that wait for the player, the captions of videos that have them, and the name over the text
 box: sliding to the character speaking (the default), jumping there, or staying put at the left,
-middle or right, for players whom the moving name distracts. Screen readers (NVDA,
+middle or right, for players whom the moving name distracts, and *Motion*: as the system asks (the
+default), less or all of it; with less, animated pictures stand still, pictures change without
+turning, the stage does not shake and flashes are soft. Screen readers (NVDA,
 JAWS, VoiceOver, Orca) read the game as they read any page: each page is announced whole as it
 appears, never letter by letter as it is typed, and choices, the name asked for and every menu are
 buttons and fields they reach. With one, reading aloud is best left off, or the text is heard

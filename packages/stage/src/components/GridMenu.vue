@@ -2,17 +2,39 @@
 import type { StageCatalog, StoredGrid } from '@cyberdeck/core'
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import StagePicture from './StagePicture.vue'
+import { marksTile, MOUSE_BUTTON, type Bindings } from '../input/bindings'
 
 /**
  * A choice shown as rows of picture buttons: each place shows the picture its list names, or the
  * value itself without one. The arrows move from tile to tile, Enter or Space picks; the story's
  * own keys wait while the grid has the focus.
  */
-/** `start`: the tile focused first, the one picked last, so that the keyboard goes on from there. */
-const props = defineProps<{ grid: StoredGrid; items: readonly string[]; catalog: StageCatalog; start: number }>()
+/**
+ * `start`: the tile focused first, the one picked last, so that the keyboard goes on from there.
+ * `bindings`: the player's, whose *Mark a tile* inputs mark on a grid that marks.
+ */
+const props = defineProps<{ grid: StoredGrid; items: readonly string[]; catalog: StageCatalog; start: number; bindings: Bindings }>()
 const emit = defineEmits<{ pick: [number: number]; mark: [number: number] }>()
-/** A grid that marks too, `marking Flag`: a right click or F on a tile marks it rather than picks it. */
+/**
+ * A grid that marks too, `marking Flag`: the player's *Mark a tile* inputs, F and a right click unless
+ * changed, mark a tile rather than pick it. Elsewhere, and on other grids, they do what they always do.
+ */
 const canMark = computed(() => props.grid.markCounterId !== undefined)
+const marksWithKey = (code: string) => canMark.value && marksTile(props.bindings, { type: 'key', code })
+const marksWithButton = (button: number) => canMark.value && button !== MOUSE_BUTTON.main && marksTile(props.bindings, { type: 'mouseButton', button })
+
+/** A mouse button that marks, on a tile: the player's own use of it waits. */
+function onTileButton(event: MouseEvent, number: number | null) {
+  if (!marksWithButton(event.button)) {
+    return
+  }
+  event.preventDefault()
+  event.stopPropagation()
+  // The right button marks with its menu event, the others as they are let go of.
+  if (number !== null && event.type === (event.button === MOUSE_BUTTON.secondary ? 'contextmenu' : 'mouseup')) {
+    emit('mark', number)
+  }
+}
 
 /** The area the grid may take on the stage: above the menu, which stands 310 pixels over the bottom. */
 const AREA = { width: 1600, height: 660 }
@@ -39,7 +61,7 @@ function onKeydown(event: KeyboardEvent) {
     focusTile(focused.value + moves[event.key]!)
   } else if (event.key === 'Enter' || event.key === ' ') {
     emit('pick', focused.value)
-  } else if (canMark.value && event.code === 'KeyF') {
+  } else if (marksWithKey(event.code)) {
     emit('mark', focused.value)
   } else if (event.key !== 'Escape') {
     return
@@ -57,8 +79,6 @@ function onKeydown(event: KeyboardEvent) {
     role="grid"
     :style="{ gridTemplateColumns: `repeat(${grid.columns}, ${tileSize}px)`, gap: `${GAP}px` }"
     @click.stop
-    @mousedown="canMark && $event.stopPropagation()"
-    @mouseup="canMark && $event.stopPropagation()"
     @keydown="onKeydown"
   >
     <button
@@ -72,7 +92,9 @@ function onKeydown(event: KeyboardEvent) {
       :style="{ width: `${tileSize}px`, height: `${tileSize}px`, fontSize: `${Math.max(10, Math.floor(tileSize / 3))}px` }"
       @focus="focused = tile.number"
       @click="emit('pick', tile.number)"
-      @contextmenu.prevent.stop="canMark && emit('mark', tile.number)"
+      @mousedown="onTileButton($event, null)"
+      @mouseup="onTileButton($event, tile.number)"
+      @contextmenu="onTileButton($event, tile.number)"
     >
       <StagePicture v-if="tile.url !== null" class="picture" :url="tile.url" alt="" />
       <span v-else-if="tile.item !== ''" class="value">{{ tile.item }}</span>

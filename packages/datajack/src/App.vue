@@ -4,14 +4,17 @@ import {
   AUTOSAVE_SLOT,
   createStorageSettingsStore,
   DEFAULT_PLAYER_SETTINGS,
+  LESS_MOTION,
   localeOfChoice,
   MapView,
   PlayerView,
   provideLocale,
   SettingsScreen,
+  useSystemLessMotion,
+  wantsLessMotion,
   type PlayerSettings,
 } from '@cyberdeck/stage'
-import { computed, onMounted, ref, shallowRef, watch, watchEffect } from 'vue'
+import { computed, onMounted, provide, ref, shallowRef, watch, watchEffect } from 'vue'
 import { appMessages } from './i18n/appMessages'
 import { createLanguageChoice } from './i18n/languageChoice'
 import { createDesktopLibraryStorage } from './library/desktopLibraryStorage'
@@ -116,12 +119,17 @@ async function closeMap() {
 /** The player's settings, opened from the library, outside any game. */
 const settingsShown = ref(false)
 
-/** A game's gallery, with what this profile has seen of it. */
-const galleryShown = shallowRef<{ story: PlayableStory; progress: ProgressData } | null>(null)
+/** A game's gallery, with what this profile has seen of it, and its motion as the game plays it. */
+const galleryShown = shallowRef<{ story: PlayableStory; progress: ProgressData; settings: PlayerSettings } | null>(null)
 
 async function showGallery(story: PlayableStory) {
-  galleryShown.value = { story, progress: await saveStore.value?.readProgress(story.project.id) ?? emptyProgress(story) }
+  const ownStore = gameSettingsStore(story.project.id)
+  const gameOwn = ownStore?.has() === true ? ownStore.read() : null
+  galleryShown.value = { story, progress: await saveStore.value?.readProgress(story.project.id) ?? emptyProgress(story), settings: gameOwn ?? settings.value }
 }
+/** Animated pictures outside a game, in its gallery, move as the player chose for it. */
+const systemLessMotion = useSystemLessMotion()
+provide(LESS_MOTION, computed(() => wantsLessMotion((galleryShown.value?.settings ?? settings.value).motion, systemLessMotion.value)))
 
 /** Playing from a point of the map starts a new path from there; the autosave follows it. */
 function playFrom(save: SaveData) {

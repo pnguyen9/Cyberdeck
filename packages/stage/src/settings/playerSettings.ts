@@ -27,6 +27,12 @@ export interface PlayerSettings {
   namePlateMotion: NamePlateMotion
   /** Where the name plate stays when it stays put. */
   namePlatePlace: NamePlatePlace
+  /**
+   * Less motion, as the system asks or chosen here: animated pictures show where they end or start,
+   * pictures change without turning, the name plate jumps, the stage does not shake, a flash is a
+   * soft glow.
+   */
+  motion: MotionChoice
   bindings: Bindings
 }
 
@@ -34,6 +40,9 @@ export const NAME_PLATE_MOTIONS = ['slide', 'jump', 'fixed'] as const
 export type NamePlateMotion = (typeof NAME_PLATE_MOTIONS)[number]
 export const NAME_PLATE_PLACES = ['left', 'middle', 'right'] as const
 export type NamePlatePlace = (typeof NAME_PLATE_PLACES)[number]
+
+export const MOTION_CHOICES = ['system', 'less', 'full'] as const
+export type MotionChoice = (typeof MOTION_CHOICES)[number]
 
 export const TEXT_SPEED_RANGE = { slowest: 10, fastest: 150 } as const
 
@@ -56,6 +65,7 @@ export const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
   captions: false,
   namePlateMotion: 'slide',
   namePlatePlace: 'left',
+  motion: 'system',
   bindings: DEFAULT_BINDINGS,
 }
 
@@ -83,6 +93,7 @@ export function parsePlayerSettings(value: unknown): PlayerSettings {
     captions: fields.captions === true,
     namePlateMotion: (NAME_PLATE_MOTIONS as readonly unknown[]).includes(fields.namePlateMotion) ? fields.namePlateMotion as NamePlateMotion : DEFAULT_PLAYER_SETTINGS.namePlateMotion,
     namePlatePlace: (NAME_PLATE_PLACES as readonly unknown[]).includes(fields.namePlatePlace) ? fields.namePlatePlace as NamePlatePlace : DEFAULT_PLAYER_SETTINGS.namePlatePlace,
+    motion: (MOTION_CHOICES as readonly unknown[]).includes(fields.motion) ? fields.motion as MotionChoice : DEFAULT_PLAYER_SETTINGS.motion,
     bindings: Object.fromEntries(actions.map(action => {
       const saved = savedBindings[action]
       return [action, Array.isArray(saved) ? saved.filter(isInputBinding) : DEFAULT_BINDINGS[action]]

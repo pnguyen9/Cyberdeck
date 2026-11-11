@@ -318,11 +318,10 @@ function onLeave(element: Element, done: () => void) {
   from { transform: scaleX(0); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .turning-out,
-  .turning-in {
-    animation: none;
-  }
+/* Less motion, the player's choice or the system's: a picture changes without turning. */
+:global(.less-motion) .turning-out,
+:global(.less-motion) .turning-in {
+  animation: none;
 }
 
 .silhouette {

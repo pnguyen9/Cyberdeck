@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, shallowRef, useTemplateRef, watch } from 'vue'
+import { computed, onMounted, onUnmounted, provide, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import {
   actionForKey,
   actionForMouseButton,
@@ -69,6 +69,7 @@ import MusicPlayer from './MusicPlayer.vue'
 import StageView from './StageView.vue'
 import { useFullscreen, useStageScale } from './stageWindow'
 import TextBox from './TextBox.vue'
+import { LESS_MOTION, useSystemLessMotion, wantsLessMotion } from '../settings/lessMotion'
 import FullScreenText from './FullScreenText.vue'
 import type { StyledPart } from '../textRuns'
 
@@ -425,6 +426,11 @@ function toggleAuto() {
 }
 const sceneElement = useTemplateRef<HTMLElement>('scene')
 const flashElement = useTemplateRef<HTMLElement>('flash')
+const systemLessMotion = useSystemLessMotion()
+const lessMotion = computed(() => wantsLessMotion(settings.value.motion, systemLessMotion.value))
+provide(LESS_MOTION, lessMotion)
+/** With less motion, a flash is this bright at most, and fades over this long at least. */
+const SOFT_FLASH = { opacity: 0.35, minimumMs: 600 }
 const FLASH_COLORS = { white: '#fff', red: '#e11d48', black: '#000' } as const
 const SHAKE_DISTANCES = { light: 12, strong: 32 } as const
 
@@ -449,6 +455,9 @@ function playCues(cues: readonly Cue[]) {
         playVideo(cue.videoId)
         break
       case 'shake': {
+        if (lessMotion.value) {
+          break
+        }
         const distance = SHAKE_DISTANCES[cue.strength]
         // Ever smaller jolts, side to side and a little up and down.
         const keyframes = Array.from({ length: 9 }, (_, index) => {
@@ -459,12 +468,14 @@ function playCues(cues: readonly Cue[]) {
         sceneElement.value?.animate(keyframes, { duration: cue.durationMs ?? EFFECT_DEFAULTS.shakeMs, easing: 'linear' })
         break
       }
-      case 'flash':
+      case 'flash': {
+        const durationMs = cue.durationMs ?? EFFECT_DEFAULTS.flashMs
         flashElement.value?.animate(
-          [{ opacity: 1, background: FLASH_COLORS[cue.color] }, { opacity: 0, background: FLASH_COLORS[cue.color] }],
-          { duration: cue.durationMs ?? EFFECT_DEFAULTS.flashMs, easing: 'ease-out' },
+          [{ opacity: lessMotion.value ? SOFT_FLASH.opacity : 1, background: FLASH_COLORS[cue.color] }, { opacity: 0, background: FLASH_COLORS[cue.color] }],
+          { duration: lessMotion.value ? Math.max(durationMs, SOFT_FLASH.minimumMs) : durationMs, easing: 'ease-out' },
         )
         break
+      }
     }
   }
 }
@@ -1244,7 +1255,7 @@ onUnmounted(() => {
   <div ref="viewport" class="viewport">
     <div
       class="screen"
-      :class="{ 'readable-font': settings.readableFont, 'strong-contrast': settings.strongContrast }"
+      :class="{ 'readable-font': settings.readableFont, 'strong-contrast': settings.strongContrast, 'less-motion': lessMotion }"
       :style="{ width: `${STAGE_WIDTH}px`, height: `${STAGE_HEIGHT}px`, transform: `translate(-50%, -50%) scale(${scale})`, '--text-scale': settings.textScale }"
       @click="onScreenClick"
       @contextmenu="onContextMenu"
@@ -1305,7 +1316,7 @@ onUnmounted(() => {
         :box-frame="boxFrame"
       />
       <ChoiceMenu v-if="choice !== null && isHudShown" :key="choice.id" :choice="choice" :time="choiceTime" @choose="choose" />
-      <GridMenu v-if="grid !== null && isHudShown" :key="grid.grid.id" :grid="grid.grid" :items="grid.items" :catalog="catalog" :start="snapshot.counters[grid.grid.counterId] ?? 1" @pick="pickCell" @mark="markCell" />
+      <GridMenu v-if="grid !== null && isHudShown" :key="grid.grid.id" :grid="grid.grid" :items="grid.items" :catalog="catalog" :start="snapshot.counters[grid.grid.counterId] ?? 1" :bindings="bindings" @pick="pickCell" @mark="markCell" />
       <form v-if="asked !== null && isHudShown" class="ask" @click.stop @submit.prevent="answer">
         <label class="ask-label" for="asked-name">{{ asked.name }}</label>
         <input

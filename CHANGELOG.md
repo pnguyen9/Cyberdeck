@@ -14,7 +14,8 @@
 - A grid's caption: a line under it, `> {Left} cells left to open`, shown in the text box while the
   grid waits, its values filled in each time.
 - A grid that marks too, `, marking Flag`: a right click or F on a tile gives its number to `Flag`
-  rather than to the picking counter.
+  rather than to the picking counter. Players change those inputs in the settings, *Mark a tile of a
+  game board*; elsewhere, F and the right click still go full screen and hide the text.
 - `now`, the player's clock in seconds, beside `hour`, `weekday` and `time away`: a story keeps it
   when something starts and takes it away at the end, to time the player.
 
@@ -31,6 +32,9 @@
   once per page and then showed its last frame: the stage now plays it frame by frame itself, for
   characters, backgrounds, illustrations and a grid's tiles, and so does the gallery, enlarged.
   Players who ask for less motion see where it ends at once.
+- *Motion*, in the accessibility settings: less motion, as the system asks unless the player
+  chooses, stands animated pictures still, changes pictures without turning, keeps the stage from
+  shaking and softens flashes; a game's gallery follows it too.
 - Hovering a choice on the map tells what the journal showed when it was reached.
 - Paths reaching a choice with different stages, a scene having left a character on it, are one
   point of the map; points recorded before keep their place.

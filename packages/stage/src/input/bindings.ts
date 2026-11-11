@@ -2,7 +2,14 @@ import type { Locale } from '../i18n/locale'
 import { inputMessages } from '../i18n/inputMessages'
 
 /** What the player can do with an input. */
-export type PlayerAction = 'advance' | 'back' | 'log' | 'journal' | 'skip' | 'auto' | 'hideText' | 'settings' | 'fullscreen' | 'leave'
+export type PlayerAction = 'advance' | 'back' | 'log' | 'journal' | 'skip' | 'auto' | 'hideText' | 'settings' | 'fullscreen' | 'leave' | 'markTile'
+
+/**
+ * Actions of a grid that marks, `marking Flag`, done on its tiles alone: their inputs may be the
+ * everyday actions' too, which they keep everywhere else.
+ */
+const GRID_ACTIONS: readonly PlayerAction[] = ['markTile']
+const isGridAction = (action: PlayerAction) => GRID_ACTIONS.includes(action)
 
 /**
  * An input that triggers an action. Keys are identified by physical position (`KeyboardEvent.code`),
@@ -60,11 +67,21 @@ export const DEFAULT_BINDINGS: Bindings = {
   leave: [
     { type: 'key', code: 'Escape' },
   ],
+  markTile: [
+    { type: 'key', code: 'KeyF' },
+    { type: 'mouseButton', button: MOUSE_BUTTON.secondary },
+  ],
 }
 
-function findAction(bindings: Bindings, matches: (binding: InputBinding) => boolean): PlayerAction | null {
-  const actions = Object.keys(bindings) as PlayerAction[]
+/** The everyday action an input does, or with `onGrid`, the grid's action. */
+function findAction(bindings: Bindings, matches: (binding: InputBinding) => boolean, onGrid = false): PlayerAction | null {
+  const actions = (Object.keys(bindings) as PlayerAction[]).filter(action => isGridAction(action) === onGrid)
   return actions.find(action => bindings[action].some(matches)) ?? null
+}
+
+/** Whether an input marks a tile, on a grid that marks. */
+export function marksTile(bindings: Bindings, input: InputBinding): boolean {
+  return bindings.markTile.some(binding => isSameInput(binding, input))
 }
 
 export function actionForKey(bindings: Bindings, code: string): PlayerAction | null {
@@ -88,12 +105,16 @@ function isSameInput(first: InputBinding, second: InputBinding): boolean {
   return JSON.stringify(first) === JSON.stringify(second)
 }
 
-/** Gives `input` to `action`, taking it from whichever action had it. Returns new bindings. */
+/**
+ * Gives `input` to `action`, taking it from whichever action had it: an everyday action from another,
+ * a grid's from another of the grid's. Returns new bindings.
+ */
 export function rebind(bindings: Bindings, action: PlayerAction, input: InputBinding): Bindings {
   const actions = Object.keys(bindings) as PlayerAction[]
-  const withoutInput = Object.fromEntries(
-    actions.map(candidate => [candidate, bindings[candidate].filter(binding => !isSameInput(binding, input))]),
-  ) as Record<PlayerAction, InputBinding[]>
+  const withoutInput = Object.fromEntries(actions.map(candidate => [
+    candidate,
+    isGridAction(candidate) === isGridAction(action) ? bindings[candidate].filter(binding => !isSameInput(binding, input)) : bindings[candidate],
+  ])) as Record<PlayerAction, InputBinding[]>
   return { ...withoutInput, [action]: [...withoutInput[action], input] }
 }
 
@@ -102,9 +123,9 @@ export function unbind(bindings: Bindings, action: PlayerAction, input: InputBin
   return { ...bindings, [action]: bindings[action].filter(binding => !isSameInput(binding, input)) }
 }
 
-/** The action that has the input, if any: the one it is taken from when given to another. */
-export function actionOf(bindings: Bindings, input: InputBinding): PlayerAction | null {
-  return findAction(bindings, binding => isSameInput(binding, input))
+/** The action that has the input among those of its kind, if any: the one it is taken from when given to `action`. */
+export function actionOf(bindings: Bindings, input: InputBinding, action: PlayerAction): PlayerAction | null {
+  return findAction(bindings, binding => isSameInput(binding, input), isGridAction(action))
 }
 
 const MOUSE_BUTTON_NAMES = Object.fromEntries(Object.entries(MOUSE_BUTTON).map(([name, button]) => [button, name])) as Readonly<Record<number, keyof typeof MOUSE_BUTTON>>

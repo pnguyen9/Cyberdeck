@@ -23,6 +23,7 @@ export { default as StagePicture } from './components/StagePicture.vue'
 export { default as SettingsScreen } from './components/SettingsScreen.vue'
 export { default as LanguageSelect } from './components/LanguageSelect.vue'
 export { createStorageSettingsStore, DEFAULT_PLAYER_SETTINGS, parsePlayerSettings, TEXT_SPEED_RANGE, type PlayerSettings } from './settings/playerSettings'
+export { LESS_MOTION, useSystemLessMotion, wantsLessMotion } from './settings/lessMotion'
 export {
   isLocale,
   LOCALES,

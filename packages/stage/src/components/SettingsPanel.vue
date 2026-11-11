@@ -3,7 +3,7 @@ import { onUnmounted, ref } from 'vue'
 import { actionOf, DEFAULT_BINDINGS, describeInput as describeInputIn, rebind, unbind, type InputBinding, type PlayerAction } from '../input/bindings'
 import { useLocale, useMessages, type LanguageChoice } from '../i18n/locale'
 import { settingsMessages } from '../i18n/settingsMessages'
-import { AUTO_SPEED_RANGE, DEFAULT_PLAYER_SETTINGS, NAME_PLATE_MOTIONS, NAME_PLATE_PLACES, TEXT_SCALES, TEXT_SPEED_RANGE, type PlayerSettings } from '../settings/playerSettings'
+import { AUTO_SPEED_RANGE, DEFAULT_PLAYER_SETTINGS, MOTION_CHOICES, NAME_PLATE_MOTIONS, NAME_PLATE_PLACES, TEXT_SCALES, TEXT_SPEED_RANGE, type PlayerSettings } from '../settings/playerSettings'
 import LanguageSelect from './LanguageSelect.vue'
 
 /**
@@ -39,8 +39,8 @@ function resetSpeedAndVolumes() {
 }
 
 function resetAccessibility() {
-  const { textScale, readableFont, strongContrast, readAloud, untimedChoices, captions, namePlateMotion, namePlatePlace } = DEFAULT_PLAYER_SETTINGS
-  update({ textScale, readableFont, strongContrast, readAloud, untimedChoices, captions, namePlateMotion, namePlatePlace })
+  const { textScale, readableFont, strongContrast, readAloud, untimedChoices, captions, namePlateMotion, namePlatePlace, motion } = DEFAULT_PLAYER_SETTINGS
+  update({ textScale, readableFont, strongContrast, readAloud, untimedChoices, captions, namePlateMotion, namePlatePlace, motion })
 }
 
 function update(change: Partial<PlayerSettings>) {
@@ -88,7 +88,7 @@ function give(input: InputBinding) {
   if (action === null) {
     return
   }
-  const previous = actionOf(settings.value.bindings, input)
+  const previous = actionOf(settings.value.bindings, input, action)
   update({ bindings: rebind(settings.value.bindings, action, input) })
   notice.value = previous !== null && previous !== action
     ? text.value.inputMovedFrom(describeInput(input), actionLabel(action), actionLabel(previous))
@@ -247,6 +247,23 @@ onUnmounted(stopListening)
           </button>
         </div>
       </div>
+      <div class="setting">
+        <span class="setting-name">{{ text.motion }}</span>
+        <div class="choices" role="radiogroup" :aria-label="text.motion">
+          <button
+            v-for="choice in MOTION_CHOICES"
+            :key="choice"
+            class="choice-button"
+            role="radio"
+            :class="{ active: settings.motion === choice }"
+            :aria-checked="settings.motion === choice"
+            @click="update({ motion: choice })"
+          >
+            {{ text.motions[choice] }}
+          </button>
+        </div>
+        <span class="setting-value">{{ text.motionHelp }}</span>
+      </div>
       <p class="setting-value">{{ text.accessibilityHelp }}</p>
       <button class="wide-button" @click="resetAccessibility">{{ text.defaultAccessibility }}</button>
     </section>
@@ -263,6 +280,7 @@ onUnmounted(stopListening)
         </span>
         <button class="add" @click="listen(action)">{{ listeningFor === action ? text.pressInput : text.addKey }}</button>
       </div>
+      <p class="setting-value">{{ text.markTileHelp }}</p>
       <button class="wide-button" @click="resetKeys">{{ text.defaultKeys }}</button>
     </section>
     <p class="notice" role="status">{{ notice ?? (category === 'controls' ? text.keyPositions : '') }}</p>

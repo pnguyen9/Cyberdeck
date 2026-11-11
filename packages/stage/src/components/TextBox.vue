@@ -106,10 +106,8 @@ const lineHeight = `${TEXTBOX_FONT_SIZE * TEXTBOX_LINE_HEIGHT}px`
   left: 56px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .speaker {
-    transition: none;
-  }
+:global(.less-motion) .speaker {
+  transition: none;
 }
 
 :where(.speaker) {

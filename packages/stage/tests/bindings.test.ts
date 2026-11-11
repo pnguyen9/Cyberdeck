@@ -3,8 +3,10 @@ import {
   actionForKey,
   actionForMouseButton,
   actionForWheel,
+  actionOf,
   DEFAULT_BINDINGS,
   describeInput,
+  marksTile,
   MOUSE_BUTTON,
   rebind,
 } from '../src/input/bindings'
@@ -32,6 +34,21 @@ describe('bindings', () => {
     expect(actionForKey(rebound, 'Space')).toBe('back')
     expect(rebound.advance).not.toContainEqual({ type: 'key', code: 'Space' })
     expect(actionForKey(DEFAULT_BINDINGS, 'Space')).toBe('advance')
+  })
+
+  it('shares inputs between marking a tile and the everyday actions, which keep them everywhere else', () => {
+    const f = { type: 'key', code: 'KeyF' } as const
+    const rightClick = { type: 'mouseButton', button: MOUSE_BUTTON.secondary } as const
+    expect([actionForKey(DEFAULT_BINDINGS, 'KeyF'), actionForMouseButton(DEFAULT_BINDINGS, MOUSE_BUTTON.secondary)]).toEqual(['fullscreen', 'hideText'])
+    expect([marksTile(DEFAULT_BINDINGS, f), marksTile(DEFAULT_BINDINGS, rightClick)]).toEqual([true, true])
+
+    // Given to marking, an input stays with its everyday action; given to an everyday action, it stays with marking.
+    const markingWithG = rebind(DEFAULT_BINDINGS, 'markTile', { type: 'key', code: 'KeyG' })
+    expect(actionForKey(markingWithG, 'KeyG')).toBeNull()
+    const logWithF = rebind(DEFAULT_BINDINGS, 'log', f)
+    expect([actionForKey(logWithF, 'KeyF'), marksTile(logWithF, f)]).toEqual(['log', true])
+    expect(actionOf(DEFAULT_BINDINGS, f, 'log')).toBe('fullscreen')
+    expect(actionOf(DEFAULT_BINDINGS, f, 'markTile')).toBe('markTile')
   })
 
   it('does not add an input twice to the same action', () => {

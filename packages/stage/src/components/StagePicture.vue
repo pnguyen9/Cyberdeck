@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
+import { inject, nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
+import { LESS_MOTION, systemAsksLessMotion } from '../settings/lessMotion'
 import { decodedAnimation, releaseAnimation, type DecodedAnimation } from './animatedPictures'
 
 /**
@@ -15,6 +16,8 @@ const props = defineProps<{ url: string; alt: string }>()
 /** `pending` while it is found out whether the picture moves: nothing is shown, rather than the browser's own playing. */
 const animation = ref<DecodedAnimation | null | 'pending'>('pending')
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
+/** The player's choice of motion; outside the player, the system's. */
+const lessMotion = inject(LESS_MOTION, null)
 let frameTimer: ReturnType<typeof setTimeout> | undefined
 let showing = 0
 
@@ -57,7 +60,7 @@ watch(() => props.url, async (url, previousUrl) => {
   if (thisShowing !== showing) {
     return
   }
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (lessMotion?.value ?? systemAsksLessMotion()) {
     // Less motion: a picture that plays once shows where it ends, one that loops where it starts.
     draw(Number.isFinite(decoded.repetitions) ? decoded.frames.length - 1 : 0)
   } else {
