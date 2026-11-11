@@ -59,6 +59,10 @@ async function showPreviewMap(story: PlayableStory) {
   const progress = await previewSaves.readProgress(story.project.id) ?? emptyProgress(story)
   previewing.value = null
   previewMap.value = { story, progress, everyPath: null }
+  // Nothing played yet: the map of every path is what there is to see.
+  if (progress.points.length === 0) {
+    switchPreviewMap()
+  }
 }
 
 /** Back to the preview, where it was left to look at the map: its autosave. */

@@ -320,7 +320,8 @@ const endingName = computed(() => {
   return step.type === 'end' && step.endingId !== null ? props.story.project.endings.find(ending => ending.id === step.endingId)?.name ?? null : null
 })
 /** The map, once a choice has been reached: before, it would have nothing to show. */
-const isMapOffered = computed(() => props.canOpenMap === true && progress.value.points.length > 0)
+/** The map, once a choice was reached; for an author testing the story, from the start, every path shown. */
+const isMapOffered = computed(() => props.canOpenMap === true && (progress.value.points.length > 0 || props.canInspect === true))
 /** The title of a chapter just started, over the stage before its text: each time one starts, if the game shows them. */
 const titleCard = ref<{ chapterId: string; title: string } | null>(null)
 let titleCardTimer: ReturnType<typeof setTimeout> | undefined

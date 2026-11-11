@@ -25,6 +25,14 @@ export default async function check(page, { url }) {
   await page.clickButton('Preview ▶', '.button')
   await page.waitFor('.viewport .text')
   await pause(600)
+  // Nothing played yet: the map is offered all the same, on every path.
+  await page.evaluate(`[...document.querySelectorAll('.viewport .quick-button')].find(button => button.textContent.trim() === 'Map').click()`)
+  await page.waitFor('.map-screen .node')
+  await pause(600)
+  page.check('the map from the first page, on every path', await page.evaluate(`document.querySelector('.map-screen .subtitle').textContent`), 'every path, explored from the story')
+  await page.clickButton('← Preview', '.close-button')
+  await page.waitFor('.viewport .text')
+  await pause(600)
   for (let press = 0; press < 4 && (await options(page)).length === 0; press++) {
     await page.press(' ')
     await pause(500)

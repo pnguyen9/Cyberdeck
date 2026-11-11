@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 3.2.1 — 2026-11-11
 
 ### Stories
 - A list's size compared with a counter, `[if: Cards size < {Cut}]`, compares with what the counter
@@ -21,6 +21,8 @@
   card drawn out of sight; the dealer's sixth to ninth cards fan out over the right of the hand.
 
 ### Cyberdeck, the editor
+- The preview offers its map from the first page: before any choice is played, it opens on *Every
+  path*; it waited for a choice to be reached.
 - *Every path*: an option only other values open, as Sakura Week's evening with Sota, Hayashi, the
   cat or everyone, has its own ▶ that previews from a path where it is offered; *Play from here*
   offered only what the first path to the point could pick.
