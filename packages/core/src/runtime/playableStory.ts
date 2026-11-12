@@ -1,11 +1,11 @@
 import type { ChapterDocument, ProjectDocument } from '../format/storyFormat'
 
-/** A project and the chapters it lists in `chapterOrder`, as a chip delivers them. */
+/** A project and the chapters it lists in `chapterOrder`, as a game delivers them, installed or previewed. */
 export interface PlayableStory {
   project: ProjectDocument
   /** The chapters, and the scenes `sceneOrder` lists, which are stored the same way. */
   chapters: ChapterDocument[]
-  /** Where to load each asset from, by asset identifier: object URLs of the chip's files. */
+  /** Where to load each asset from, by asset identifier: object URLs of the game's files. */
   assetUrls: ReadonlyMap<string, string>
   /** Endings only chapters not installed lead to, which the game keeps quiet about: not counted for players. */
   uncountedEndingIds?: ReadonlySet<string>

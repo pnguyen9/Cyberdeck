@@ -44,6 +44,128 @@ what players see.
 Datajack's build only takes from `core` what it uses: the importer, pagination and archive writing
 stay out of it.
 
+## Vocabulary
+
+One word for each thing, and one thing for each word, in the code, this README, the guide, the
+interface and any discussion of the project. Where the code has a type for it, the type is named;
+a new notion gets its word here before it gets code.
+
+**Applications and what they handle**
+
+| Word | Meaning | In the code |
+|---|---|---|
+| Cyberdeck | The engine and editor, where authors make games. | `packages/cyberdeck` |
+| Datajack | The player application, where players install and play games. | `packages/datajack` |
+| Author | Who makes a game, in Cyberdeck. | |
+| Player | Who plays a game: in Datajack, or the author in Cyberdeck's preview. "The player" alone means the person; the application is Datajack. | |
+| Project | Everything an author works on for one game: its chapters, scenes, definitions, entries and their files, details. | `ProjectDocument` (`project.json`) |
+| Game | A project exported, as Datajack installs and plays it. | `GameManifest` (`game.json`), `PlayableStory` |
+| Game archive | The `.zip` a game travels in, whole or with some of its chapters. | `GameArchive` |
+| Release | The label an export carries, shown in libraries. | |
+| Backup | A project folder zipped, which *Restore* reads back. | `ProjectBackup` |
+| Library | The games installed in Datajack, each a card. | |
+| Profile | One player in Datajack: settings, saves, progress, memories and lasting values. | |
+
+**The story as written**
+
+| Word | Meaning | In the code |
+|---|---|---|
+| Story | A project's chapters in order and its scenes, in one or several languages. | |
+| Chapter | Pages played in order, begun by `# Title`; played only when its `[only if]` holds, if it has one. | `ChapterDocument` |
+| Route | Chapters following one another under the same `[only if]`. On the map, the paths a profile explored. | |
+| Scene | Pages of no chapter, `# Scene: Name`, played where `[play]` names it, after which the story goes on. | `PlayNode` |
+| Paragraph | One line of the text imported. | |
+| Page | What the text box shows at once: a paragraph, or part of one too long for the box. | `StoredPage` |
+| Cutting (pagination) | Splitting a paragraph into pages: between sentences, then after punctuation, then between words. | `paginate`, `PageLayout` (the box) |
+| Narration | Text nobody speaks. | |
+| Dialogue | Text a speaker says: a dash, a name, a colon. | |
+| Speaker | The character named by a line of dialogue, shown on the name plate. | |
+| Tag | Anything written in brackets, `[…]`. | |
+| Directive | What a tag tells the story or the stage to do, `[enter: marie left]`; alone on its line, or inline, firing when the text reaches it. | `Directive`, `InlineDirective` |
+| Keyword | A directive's first word (`bg`, `choice`, `add`). Any other first word names a character. | |
+| Definition | A declaration of a decision, counter, list or style, in a chapter or in the Definitions tab. Belongs to the whole story wherever written. | `DefinitionNode` |
+| Made by use | A decision or counter that no declaration made: a choice or an `[add]` did. | |
+| Block | An `[if]` … `[end]` or a `[loop]` … `[end]`, moved and shown as a whole. | `ConditionNode`, `LoopNode` |
+| Branch | One way through a condition block: its `[if]`, each `[else if]`, its `[else]`. | `ConditionBranch` |
+| Condition | A test, `Trust >= 3 and Key is Found`, on a branch, an option or a chapter. | `Condition` |
+| Choice | Where the player picks one of its options, which gives a decision its value. Timed, below or as a grid. | `ChoiceNode`, `StoredChoice` |
+| Option | One line of a choice, `> Text = Value`. | `ChoiceOption` |
+| Ending | Where a path stops, `[ending: Name]`; each profile counts those it reached. | `Ending`, `EndingNode` |
+| Path | One way through the story, set by the options taken and the draws. | |
+| Never reached | Pages no path can reach, reported at import and faded in the storyboard. | `StoryFlow` |
+| Game mode | A part played forward only, its choices kept off the map; `[no going back]` is the same with its choices on it. | `StageLock` |
+
+**What the story keeps**
+
+| Word | Meaning | In the code |
+|---|---|---|
+| Name | Anything the story knows by its name: a decision, counter, list, name asked for, memory or ending. One name, one thing. | `KnownNames` |
+| Decision | A name and the values it may hold, kept for a playthrough. Holds one value at most, or several when `multi`. | `Decision` |
+| Value | One of the values a decision may hold, `Accept`. | `DecisionValue` |
+| Counter | A number the story counts with, whole or with decimals. | `Counter` |
+| Clock counters | `hour`, `weekday`, `time away`, `now`: read from the player's clock, never set by the story. | `ClockValue` |
+| List | Values in numbered places, from 1, under one name. | `StoryList` |
+| Place | One numbered spot of a list, `Board 3`, or `Board Cell` by a counter. | `ListPlace` (how it is named) |
+| Name asked for | What the player typed for `[ask]`, shown by `{Hero}`. | `AskedName` |
+| Draw | A value picked at random; saves keep draws, so going back does not draw again. | |
+| Playthrough | One play from *New game* on. Decisions and counters belong to it. | |
+| Lasting | A decision or counter the profile carries from one playthrough to the next. | `LastingValues` |
+| Memory | What a profile remembers for good, `[remember]`, in every later playthrough. | `Memory` |
+| Shown | What the author lets players see in their journal, `[shown]`. | `ShownDeclaration` |
+
+**The stage**
+
+| Word | Meaning | In the code |
+|---|---|---|
+| Stage | The picture the story plays on: background, characters, illustration, tint, fade, gauges. | `StageState` |
+| Staging | The directives that change the stage, shown as chips between the storyboard's cards. | `StageCommand`, `StoredStage` |
+| Background | The picture behind everything, `[bg]`. | `Background` |
+| Character | Anyone named in the text who is not a keyword: a speaker, or a picture on the stage. | `Character` |
+| Expression | One of a character's pictures, `smile`; `normal` unless told. | `Expression` |
+| Sprite | The picture of a character's expression, as drawn: full body or upper body, facing a way. | `Framing`, `Facing` |
+| Position | Where a character stands: automatic, a preset, or a percentage of the stage width. | `Placement`, `PositionPreset` |
+| Depth | `near`, `middle` or `far`. | `Depth` |
+| Illustration | A full-screen picture of a key moment (a CG), collected in the gallery. | `Illustration` |
+| Text box | Where the text appears; `[text: full]` puts it over the whole screen instead. | |
+| Name plate | The plate over the text box with the speaker's name. | |
+| Title card | A chapter's title over the stage as it starts. | |
+| Gauge | A counter shown as a bar on the stage. | `GaugeOnStage` |
+| Style | How words look, `[style: Whisper]`: properties, or a class of the project's CSS. | `TextStyle`, `StyleDeclaration` |
+| Entry | Something the text names that takes a file: an expression, a background, a track, a sound, an illustration, a video, a frame. Made by being named, gone once nothing names it. | |
+| Asset | The file given to an entry, matched by its file name. | `Asset` |
+
+**Editing, in Cyberdeck**
+
+| Word | Meaning |
+|---|---|
+| Storyboard | The screen where a story is arranged, as cards. |
+| Level | What the storyboard shows: the story's level (chapters and scenes), a chapter or scene, or a block opened. |
+| Card | One chapter, page, choice or block in the storyboard. |
+| Chip | A small element between cards (ending, memory, staging, definition…), and a tag drawn in the text being edited. |
+| Lane | A branch of a block opened, laid out as a row. |
+| Panel | The side of the storyboard showing the focused card in full. |
+| Grid, Tree, Graph, Text | The storyboard's four views: cards in order; branches side by side; the whole story as a map; the level as the text it imports from. |
+| Import | Text turned into chapters, pages at the end of a chapter, or a chapter replaced. |
+| Text export | The story, or a chapter, written back in the syntax it imports from. |
+| Preview | The story played in Cyberdeck from any page, with the **State** panel to change what it holds. |
+
+**Playing, in Datajack**
+
+| Word | Meaning | In the code |
+|---|---|---|
+| Stop | Where the player waits: a page, a choice, a question or an end. Going back, saving and the map go from stop to stop. | `PlayerStep` |
+| Going back | Returning to an earlier stop, undoing what came after (not memories). | |
+| Save | A playthrough at a stop, as readable JSON. | `SaveData` |
+| Slot | One of the six places for a save, beside the autosave. | `SlotSummary` |
+| Autosave | The save made at every stop, which *Continue* resumes. | |
+| Progress | What a profile reached in a game across playthroughs: choices, options taken, endings, pages read, memories, lasting values. | `ProgressData` |
+| Map | The routes a profile explored, each point a choice reached, from which to *Play from here*. | `ProgressMap`, `ProgressPoint` |
+| Log | The pages and choices passed, a click going back to one. | `BacklogEntry` |
+| Journal | What the author shows players of what they hold, and the endings reached. | `Journal` |
+| Gallery | The illustrations a profile has seen. | |
+| Skip, Auto | Passing text already read; moving on by itself. | |
+| Settings | The profile's, or a game's own once chosen for it. | `PlayerSettings` |
+
 ## Development
 
 Node 22 (`nvm use`), then:
