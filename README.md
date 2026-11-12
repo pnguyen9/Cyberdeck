@@ -1022,6 +1022,11 @@ What is left to do, in no particular order:
   and which from *The cashier's table*. Each line should carry the option it follows (its text, or
   its value when the text is long) where it leaves the point, in Datajack's map and in the
   preview's.
+- **The map's lines go around points, not through them.** Points are laid out on one row, so a line
+  that skips some of them crosses them: in Sakura Week's day loop, the option that heads home goes
+  straight on to the next day, and its line runs over the points of the other options, so it is
+  hard to tell where it goes. A line with a point in its way should step down below the row, run
+  under it and come back up (`|_|`), in Datajack's map and in the preview's.
 
 ## License
 
