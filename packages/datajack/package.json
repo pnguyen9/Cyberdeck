@@ -20,12 +20,12 @@
     "package:desktop:windows": "npm run build:desktop && node ../desktop/scripts/packageApp.mjs Datajack datajack win32"
   },
   "dependencies": {
-    "@cyberdeck/core": "3.2.1",
-    "@cyberdeck/stage": "3.2.1",
+    "@cyberdeck/core": "*",
+    "@cyberdeck/stage": "*",
     "vue": "3.5.44"
   },
   "devDependencies": {
-    "@cyberdeck/desktop": "3.2.1",
+    "@cyberdeck/desktop": "*",
     "@types/node": "22.20.5",
     "@vitejs/plugin-vue": "6.0.10",
     "electron": "44.9.3",

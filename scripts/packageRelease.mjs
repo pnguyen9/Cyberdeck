@@ -1,5 +1,7 @@
 // Builds every download of a release into release/v<version>/: both applications for Linux and
-// Windows, both as files for a browser, the documentation, and the SHA-256 of each.
+// Windows, both as files for a browser, the documentation, the samples, and the SHA-256 of each.
+// The application folders of earlier versions, in packages/cyberdeck/release/ and
+// packages/datajack/release/, are deleted first.
 //   npm run release
 // Linux builds need this computer to be Linux (Windows ones are made from any system); zipping
 // uses the `zip` command, which keeps the executable bit the Linux builds need.
@@ -36,6 +38,11 @@ function zipFolder(parent, folderName, zipName) {
 
 rmSync(releaseFolder, { recursive: true, force: true })
 mkdirSync(workFolder, { recursive: true })
+// Each application folder holds a whole Electron runtime (about 370 MB): only this version's are
+// kept, beside its zips, to try them before publishing.
+for (const { workspace } of APPS) {
+  rmSync(join(root, 'packages', workspace, 'release'), { recursive: true, force: true })
+}
 
 for (const { product, workspace } of APPS) {
   const packageFolder = join(root, 'packages', workspace)

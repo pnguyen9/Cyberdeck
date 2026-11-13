@@ -14,7 +14,7 @@
     "typecheck": "vue-tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@cyberdeck/core": "3.2.1",
+    "@cyberdeck/core": "*",
     "vue": "3.5.44"
   },
   "devDependencies": {

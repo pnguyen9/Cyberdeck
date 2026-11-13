@@ -326,17 +326,92 @@ so a Windows folder only takes Electron's Windows runtime, downloaded once into
 to confirm (*More info → Run anyway*), macOS too (right-click → *Open*). From VS Code's terminal,
 start them as `ELECTRON_RUN_AS_NODE= ./cyberdeck` (see Development).
 
+Building a version again replaces its folder; those of other versions stay until deleted, by hand
+or by `npm run release`, about 370 MB each.
+
 ### A release
 
+A release is made on Linux, the only system that builds every download. Once, on that computer:
+
 ```sh
-npm run release   # → release/v<version>/
+sudo apt install zip unzip   # zip keeps the Linux builds' executable bit; unzip opens Electron's runtimes
+nvm install                  # the Node of .nvmrc
+nvm use
+npm install
+node node_modules/electron/install.js
 ```
 
-builds every download in one go: both applications for Windows and, on Linux, for Linux, both as
-files for a browser, `Cyberdeck-<version>-documentation.zip`, with the guide (HTML and Markdown) and
-its images, this README, the changes and the licence, and `Cyberdeck-<version>-sample-sakura-week.zip`,
-the sample story and its files; then `SHA256SUMS`, the checksum of each. It needs the `zip`
-command, which keeps the executable bit the Linux builds need.
+Then, for each release, from `main` with nothing left to commit:
+
+1. **Check** everything passes:
+
+   ```sh
+   nvm use
+   npm test
+   npm run typecheck
+   npm run checks          # browser checks, headless Chrome
+   npm run checks:desktop  # the desktop builds' checks, Electron
+   ```
+
+2. **Set the version** of the workspace and its five packages, and the lock, in one go (here 3.4.0;
+   the packages depend on each other as `*`, so nothing else names it):
+
+   ```sh
+   npm version 3.4.0 --workspaces --include-workspace-root --no-git-tag-version
+   ```
+
+   When stories gain something an older Datajack cannot play, also raise `FORMAT_VERSION` in
+   `packages/core/src/format/storyFormat.ts` to the release's `major.minor` (`'3.4'`), and say in
+   the CHANGELOG which stories need the new Datajack.
+
+3. **Write the changes**: a `## 3.4.0 — <date>` section at the top of `CHANGELOG.md`, and whatever
+   this README and the guide (`docs/guide/index.html`) must now say.
+
+4. **Commit** as `3.4.0: <summary>`.
+
+5. **Take the guide's screenshots again** if the interface changed, and commit them:
+
+   ```sh
+   npm run guide:images
+   git add docs/guide
+   git commit -m "Guide images for 3.4.0"
+   ```
+
+6. **Build the downloads**:
+
+   ```sh
+   npm run release   # → release/v3.4.0/
+   ```
+
+   It first deletes the application folders of earlier versions in `packages/cyberdeck/release/`
+   and `packages/datajack/release/`, then builds into `release/v3.4.0/`:
+
+   | File | Contents |
+   |---|---|
+   | `Cyberdeck-3.4.0-windows-x64.zip`, `Datajack-3.4.0-windows-x64.zip` | The desktop applications for Windows |
+   | `Cyberdeck-3.4.0-linux-x64.zip`, `Datajack-3.4.0-linux-x64.zip` | The desktop applications for Linux |
+   | `Cyberdeck-3.4.0-web.zip`, `Datajack-3.4.0-web.zip` | Both as files to open in a browser |
+   | `Cyberdeck-3.4.0-documentation.zip` | The guide (HTML and Markdown) and its images, this README, the changes and the licence |
+   | `Cyberdeck-3.4.0-sample-sakura-week.zip` | The sample story and the zip of its files |
+   | `Cyberdeck-3.4.0-sample-mini-games.zip` | The mini games, each a text and the zip of its files |
+   | `SHA256SUMS` | The checksum of each zip |
+
+   The unzipped applications stay in `packages/*/release/` until the next release: start one there
+   to try the build before publishing it.
+
+7. **Tag and push**:
+
+   ```sh
+   git tag -a v3.4.0 -m 3.4.0
+   git push origin main v3.4.0
+   ```
+
+8. **Publish** on GitHub: *Releases → Draft a new release*, the tag `v3.4.0`, the title `3.4.0`, the
+   CHANGELOG's section as the description, every file of `release/v3.4.0/` attached, then
+   *Publish release*.
+
+Once published, the folders of earlier versions in `release/` can be deleted: GitHub keeps their
+files.
 
 ## Languages
 
