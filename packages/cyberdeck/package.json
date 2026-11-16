@@ -1,6 +1,6 @@
 {
   "name": "@cyberdeck/cyberdeck",
-  "version": "3.4.1",
+  "version": "3.4.2",
   "license": "Unlicense",
   "private": true,
   "description": "Cyberdeck, the engine: imports stories, previews them with Datajack's stage, exports them as games",

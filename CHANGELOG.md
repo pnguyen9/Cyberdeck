@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 3.4.2 — 2026-11-16
 
 ### Both applications
 - The **Look** setting is now called **Appearance**, the usual word, as in French.

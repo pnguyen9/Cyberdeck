@@ -1,6 +1,6 @@
 {
   "name": "@cyberdeck/datajack",
-  "version": "3.4.1",
+  "version": "3.4.2",
   "license": "Unlicense",
   "private": true,
   "description": "Datajack, the player of Cyberdeck games: profiles, library, desktop shell",
