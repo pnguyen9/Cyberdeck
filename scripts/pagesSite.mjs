@@ -1,5 +1,6 @@
 // Assembles the site GitHub Pages publishes, https://pnguyen9.github.io/Cyberdeck/, into site/: both
-// applications' web builds in cyberdeck/ and datajack/, the guide in guide/, and at the root a page
+// applications' web builds in cyberdeck/ and datajack/, the guide in guide/, the sample stories in
+// sample/ (each a text and the zip of its files, linked from the guide), and at the root a page
 // sending players to Datajack.
 // The applications are built first, unless --no-build says their dist/ folders are ready.
 //   npm run pages
@@ -29,6 +30,7 @@ for (const workspace of ['cyberdeck', 'datajack']) {
   cpSync(join(root, 'packages', workspace, 'dist'), join(site, workspace), { recursive: true })
 }
 cpSync(join(root, 'docs', 'guide'), join(site, 'guide'), { recursive: true })
+cpSync(join(root, 'docs', 'sample'), join(site, 'sample'), { recursive: true })
 writeFileSync(join(site, 'index.html'), rootRedirect())
 console.log(`The site of ${version} is in ${site}`)
 

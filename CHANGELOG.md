@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 3.4.1 — 2026-11-16
 
 ### Both applications
 - Online, the site's root opens Datajack straight away, with no landing page: players needn't know
@@ -13,7 +13,11 @@
 - **Knee-Deep**, a comic dungeon crawl: a tiny dwarf, a town to come back to, five floors of rooms
   drawn at random behind doors that hint at what they hold, fights decided by a twenty-sided die,
   chests picked from a grid, eighteen odd encounters, five endings. Its pictures, music and sounds
-  are made by code (`scripts/samples/knee_deep_assets.py`).
+  are made by code (`scripts/samples/knee_deep_assets.py`). Also a download of its own beside each
+  release.
+- **Sakura Week** redrawn in a late-2000s chibi style, its pictures now made by code too
+  (`scripts/samples/sakura_week_assets.py`).
+- Every sample is online beside the applications, its text and its files linked from the guide.
 
 ## 3.4.0 — 2026-11-16
 

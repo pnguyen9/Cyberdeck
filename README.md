@@ -437,48 +437,49 @@ Then, for each release, from `main` with nothing left to commit:
    npm run checks:desktop  # the desktop builds' checks, Electron
    ```
 
-2. **Set the version** of the workspace and its five packages, and the lock, in one go (here 3.4.0;
+2. **Set the version** of the workspace and its five packages, and the lock, in one go (here 3.4.1;
    the packages depend on each other as `*`, so nothing else names it):
 
    ```sh
-   npm version 3.4.0 --workspaces --include-workspace-root --no-git-tag-version
+   npm version 3.4.1 --workspaces --include-workspace-root --no-git-tag-version
    ```
 
    When stories gain something an older Datajack cannot play, also raise `FORMAT_VERSION` in
    `packages/core/src/format/storyFormat.ts` to the release's `major.minor` (`'3.4'`), and say in
    the CHANGELOG which stories need the new Datajack.
 
-3. **Write the changes**: a `## 3.4.0 — <date>` section at the top of `CHANGELOG.md`, and whatever
+3. **Write the changes**: a `## 3.4.1 — <date>` section at the top of `CHANGELOG.md`, and whatever
    this README and the guide (`docs/guide/index.html`) must now say.
 
-4. **Commit** as `3.4.0: <summary>`.
+4. **Commit** as `3.4.1: <summary>`.
 
 5. **Take the guide's screenshots again** if the interface changed, and commit them:
 
    ```sh
    npm run guide:images
    git add docs/guide
-   git commit -m "Guide images for 3.4.0"
+   git commit -m "Guide images for 3.4.1"
    ```
 
 6. **Build the downloads**:
 
    ```sh
-   npm run release   # → release/v3.4.0/
+   npm run release   # → release/v3.4.1/
    ```
 
    It first deletes the downloads of earlier versions in `release/` and their application folders
    in `packages/cyberdeck/release/` and `packages/datajack/release/`, then builds into
-   `release/v3.4.0/`:
+   `release/v3.4.1/`:
 
    | File | Contents |
    |---|---|
-   | `Cyberdeck-3.4.0-windows-x64.zip`, `Datajack-3.4.0-windows-x64.zip` | The desktop applications for Windows |
-   | `Cyberdeck-3.4.0-linux-x64.zip`, `Datajack-3.4.0-linux-x64.zip` | The desktop applications for Linux |
-   | `Cyberdeck-3.4.0-web.zip`, `Datajack-3.4.0-web.zip` | Both as files to open in a browser |
-   | `Cyberdeck-3.4.0-documentation.zip` | The guide (HTML and Markdown) and its images, this README, the changes and the licence |
-   | `Cyberdeck-3.4.0-sample-sakura-week.zip` | The sample story and the zip of its files |
-   | `Cyberdeck-3.4.0-sample-mini-games.zip` | The mini games, each a text and the zip of its files |
+   | `Cyberdeck-3.4.1-windows-x64.zip`, `Datajack-3.4.1-windows-x64.zip` | The desktop applications for Windows |
+   | `Cyberdeck-3.4.1-linux-x64.zip`, `Datajack-3.4.1-linux-x64.zip` | The desktop applications for Linux |
+   | `Cyberdeck-3.4.1-web.zip`, `Datajack-3.4.1-web.zip` | Both as files to open in a browser |
+   | `Cyberdeck-3.4.1-documentation.zip` | The guide (HTML and Markdown) and its images, this README, the changes and the licence |
+   | `Cyberdeck-3.4.1-sample-sakura-week.zip` | The sample story and the zip of its files |
+   | `Cyberdeck-3.4.1-sample-knee-deep.zip` | Knee-Deep, the dungeon crawl: its text and the zip of its files |
+   | `Cyberdeck-3.4.1-sample-mini-games.zip` | The mini games, each a text and the zip of its files |
    | `SHA256SUMS` | The checksum of each zip |
 
    The unzipped applications stay in `packages/*/release/` until the next release: start one there
@@ -487,15 +488,15 @@ Then, for each release, from `main` with nothing left to commit:
 7. **Tag and push**:
 
    ```sh
-   git tag -a v3.4.0 -m 3.4.0
-   git push origin main v3.4.0
+   git tag -a v3.4.1 -m 3.4.1
+   git push origin main v3.4.1
    ```
 
    Pushing the tag publishes the version online (see [Online, on GitHub Pages](#online-on-github-pages)):
    its workflow's run is in the *Actions* tab.
 
-8. **Publish** on GitHub: *Releases → Draft a new release*, the tag `v3.4.0`, the title `3.4.0`, the
-   CHANGELOG's section as the description, every file of `release/v3.4.0/` attached, then
+8. **Publish** on GitHub: *Releases → Draft a new release*, the tag `v3.4.1`, the title `3.4.1`, the
+   CHANGELOG's section as the description, every file of `release/v3.4.1/` attached, then
    *Publish release*.
 
 Once published, the folders of earlier versions in `release/` can be deleted: GitHub keeps their
@@ -1194,7 +1195,8 @@ sounds were made outside this repository: the zip is their only source), **Knee-
 crawl in `knee-deep/`, and six mini games in `minigames/`, showing what conditions, loops, scenes,
 counters and decisions can do beyond a story. The pictures and sounds of the last two are made by
 code, `scripts/samples/`, so that nothing is downloaded and all of it is as free as the rest of the
-repository.
+repository. Online, each is at `https://pnguyen9.github.io/Cyberdeck/sample/` and the same path
+(`sample/knee-deep/knee-deep.txt`, for instance), linked from the guide.
 
 - **Knee-Deep** (`knee-deep/`): a very small dwarf, named by the player, goes down into the Delve for
   the town's stolen Great Cheese Wheel; a comic dungeon crawl of half an hour or more, with the dice

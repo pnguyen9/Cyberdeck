@@ -78,6 +78,11 @@ cpSync(join(root, 'docs', 'sample', 'sakura-week', 'sakura-week.txt'), join(work
 cpSync(join(root, 'docs', 'sample', 'sakura-week', 'sakura-week-assets.zip'), join(workFolder, sampleName, 'sakura-week-assets.zip'))
 zipFolder(workFolder, sampleName, `${sampleName}.zip`)
 
+// Knee-Deep, the dungeon crawl: its text and the zip of its files.
+const kneeDeepName = `Cyberdeck-${version}-sample-knee-deep`
+cpSync(join(root, 'docs', 'sample', 'knee-deep'), join(workFolder, kneeDeepName), { recursive: true })
+zipFolder(workFolder, kneeDeepName, `${kneeDeepName}.zip`)
+
 // The mini games, each a text and the zip of its files.
 const miniGamesName = `Cyberdeck-${version}-sample-mini-games`
 cpSync(join(root, 'docs', 'sample', 'minigames'), join(workFolder, miniGamesName), { recursive: true })

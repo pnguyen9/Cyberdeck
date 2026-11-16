@@ -38,7 +38,12 @@ export default async function check(page, { url }) {
   page.check('every file of the zip finds its entry, the cover the game\'s cover', [report.includes('Not used'), report.includes('cover.svg → Cover of the game')], [false, true])
   page.check('and no entry is left without a file', await page.evaluate(`document.querySelectorAll('.cast .missing-count').length`), 0)
 
+  // The game's draws all follow from the seed it takes when it starts: one fixed seed makes the wander
+  // below the same each run, rather than a walk that some runs never take down the stairs.
+  await page.evaluate(`window.__random = Math.random; Math.random = () => 0.25`)
   await page.clickButton('Preview ▶', '.button')
+  await pause(300)
+  await page.evaluate(`Math.random = window.__random`)
   for (let press = 0; press < 20 && !await page.evaluate(`!!document.querySelector('.viewport .ask-input')`); press++) {
     await page.press(' ')
     await pause(200)

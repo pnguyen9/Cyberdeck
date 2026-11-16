@@ -67,6 +67,12 @@ A new project opens on the **Import** tab. Paste your text there, or press **Ope
 >
 > No text yet? **Start without a text** opens an empty chapter in the storyboard, where you write it page by page. More chapters and scenes come from **New chapter** and **New scene**, on the story's level of the **Storyboard**.
 
+Whole games to play and take apart, each a text and the zip of its pictures and sounds: paste or open the text in **Import**, then drop the zip in **Cast & files**.
+
+- **Sakura Week**, a week of school before a festival: [text](https://pnguyen9.github.io/Cyberdeck/sample/sakura-week/sakura-week.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/sakura-week/sakura-week-assets.zip).
+- **Knee-Deep**, a very small dwarf, a dragon and a stolen cheese, in a dungeon of random rooms: [text](https://pnguyen9.github.io/Cyberdeck/sample/knee-deep/knee-deep.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/knee-deep/knee-deep-assets.zip).
+- Mini games showing what counters, loops and lists can do: Rock, paper, scissors ([text](https://pnguyen9.github.io/Cyberdeck/sample/minigames/rock-paper-scissors/rock-paper-scissors.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/minigames/rock-paper-scissors/rock-paper-scissors-assets.zip)), Blackjack ([text](https://pnguyen9.github.io/Cyberdeck/sample/minigames/blackjack/blackjack.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/minigames/blackjack/blackjack-assets.zip)), Battle ([text](https://pnguyen9.github.io/Cyberdeck/sample/minigames/battle/battle.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/minigames/battle/battle-assets.zip)), Virtual pet ([text](https://pnguyen9.github.io/Cyberdeck/sample/minigames/virtual-pet/virtual-pet.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/minigames/virtual-pet/virtual-pet-assets.zip)), Pairs ([text](https://pnguyen9.github.io/Cyberdeck/sample/minigames/pairs/pairs.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/minigames/pairs/pairs-assets.zip)), Minesweeper ([text](https://pnguyen9.github.io/Cyberdeck/sample/minigames/minesweeper/minesweeper.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/minigames/minesweeper/minesweeper-assets.zip)).
+
 ![The Import tab with the sample story pasted in; below it, “1 chapter (Chapter 1 — The Letter), 14 pages” and the Import button.](images/import.png)
 
 *As you type, Cyberdeck says what it understood: here one chapter of 14 pages.*
