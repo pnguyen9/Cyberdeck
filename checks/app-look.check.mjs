@@ -13,7 +13,7 @@ export default async function check(page, { url, serve }) {
   await page.screenshot('cyberdeck-default')
 
   // With the keyboard: the button takes the focus, Space opens the setting, which holds the focus.
-  await page.evaluate(`[...document.querySelectorAll('.page-header .button')].find(button => button.textContent.trim() === 'Look').focus()`)
+  await page.evaluate(`[...document.querySelectorAll('.page-header .button')].find(button => button.textContent.trim() === 'Appearance').focus()`)
   await page.press(' ')
   await page.waitFor('dialog.app-look[open]')
   page.check('the setting opens over the screen, the focus in it', await page.evaluate(`document.querySelector('dialog.app-look').contains(document.activeElement)`), true)
@@ -31,7 +31,7 @@ export default async function check(page, { url, serve }) {
   await page.screenshot('cyberdeck-paper')
 
   // In depth: a gradient, white text on it, the box keeping it readable, double borders, a monospaced font.
-  await page.clickButton('Look', '.page-header .button')
+  await page.clickButton('Appearance', '.page-header .button')
   await page.waitFor('dialog.app-look[open]')
   await page.evaluate(`[...document.querySelectorAll('.app-look input[type=radio]')][1].click()`)
   await pause(100)
@@ -79,7 +79,7 @@ export default async function check(page, { url, serve }) {
   page.check('Datajack keeps a look apart from Cyberdeck\'s', await page.evaluate(`document.documentElement.dataset.look`), 'cyberpunk')
   await createProfile(page, datajack, 'Pascal')
   await page.waitFor('.library')
-  await page.clickButton('Look', '.header-tools .button')
+  await page.clickButton('Appearance', '.header-tools .button')
   await page.waitFor('dialog.app-look[open]')
   await page.evaluate(`document.querySelector('.preset[data-preset=dusk]').click()`)
   // The look is written down once it rests (400 ms).

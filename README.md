@@ -196,7 +196,7 @@ a new notion gets its word here before it gets code.
 
 | Word | Meaning | In the code |
 |---|---|---|
-| Look | How Cyberdeck's or Datajack's own screens look: background, borders, font, colours. Never a game's, which its author's CSS sets. | `AppLook` |
+| Appearance | How Cyberdeck's or Datajack's own screens look: background, borders, font, colours. Never a game's, which its author's CSS sets. | `AppLook` |
 | Preset | A look ready to take: Cyberpunk (the default), Graphite, Paper, Dusk, High contrast. | `LookPreset` |
 | Readable box | A plain box under an application's text, dark or light as its background is, so that a busy background never gets in the way. | `readableBox` |
 
@@ -871,7 +871,7 @@ A **project** holds the whole game. Its screens:
   the browser; *Default* and *Reset every shortcut* bring the defaults back. **Alt+PageUp** and
   **Alt+PageDown** go to the previous and next tab; each tab may be given keys of its own there.
   Alt is left out of the defaults for single tabs: browsers keep Alt+digits for their own tabs.
-- **Look** (on the projects screen and in the header): Cyberdeck's own look, kept in the browser.
+- **Appearance** (on the projects screen and in the header): Cyberdeck's own look, kept in the browser.
   A preset (*Cyberpunk*, the default, *Graphite*, *Paper*, *Dusk*, *High contrast*), or each part in
   depth: the background, one colour or a gradient from four corners; the readable box under the text,
   dark on a dark background and light on a bright one; the font, the text's colour and the titles';
@@ -1108,7 +1108,7 @@ key on AZERTY and QWERTY; they are named as on a US keyboard, so on another layo
 differ from the letter printed on the key. Datajack keeps the settings per
 profile; Cyberdeck keeps the author's for its previews.
 
-**Look**, in the library's header and on the profiles screen, sets the look of Datajack's own screens
+**Appearance**, in the library's header and on the profiles screen, sets the look of Datajack's own screens
 (profiles, library, gallery) as in Cyberdeck (see Editing): presets or each part in depth, kept in the
 browser for every profile, since it shows before one is chosen. Games, their settings and their map
 keep their own look.

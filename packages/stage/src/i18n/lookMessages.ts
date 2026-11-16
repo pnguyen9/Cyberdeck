@@ -2,8 +2,8 @@ import type { BorderKind, FontChoice, LookPreset } from '../look/appLook'
 
 /** The setting of the apps' own look. */
 const en = {
-  look: 'Look',
-  lookOfApp: (app: string) => `Look of ${app}`,
+  look: 'Appearance',
+  lookOfApp: (app: string) => `Appearance of ${app}`,
   onlyApp: (app: string) => `How ${app}'s own screens look. A game keeps the look its author gave it.`,
   presets: 'Presets',
   presetNames: {
@@ -14,7 +14,7 @@ const en = {
     contrast: 'High contrast',
   } satisfies Record<LookPreset, string>,
   byDefault: 'default',
-  custom: 'Your own look',
+  custom: 'Your own appearance',
   inDepth: 'In depth',
   background: 'Background',
   oneColour: 'One colour',
@@ -49,7 +49,7 @@ const en = {
   borderContrast: (border: string) => `Borders ${border}:1.`,
   lowContrast: 'Below 4.5:1, text is hard to read for many people: choose other colours, or add the box under the text.',
   lowBorders: 'Borders below 3:1 hide where buttons are: choose another border colour.',
-  backToDefault: 'Back to the default look',
+  backToDefault: 'Back to the default appearance',
   close: 'Close',
 }
 
