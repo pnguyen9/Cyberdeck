@@ -5,6 +5,9 @@
 ### Both applications
 - Online, the site's root opens Datajack straight away, with no landing page: players needn't know
   Cyberdeck. Cyberdeck and the guide keep their addresses, given in the README.
+- How to install the web builds, browser by browser, in the About panel of a web page, the guide and
+  the README: Firefox on a computer installs no web page, and installing from a private window
+  brings none of its data along.
 
 ## 3.4.0 — 2026-11-16
 

@@ -56,7 +56,7 @@ Cyberdeck saves everything as you go: there is no Save button to remember.
 
 > **Tip**
 >
-> Nothing to install: Cyberdeck runs in your browser at [pnguyen9.github.io/Cyberdeck/cyberdeck/](https://pnguyen9.github.io/Cyberdeck/cyberdeck/), always the latest version, and keeps working without a network once opened. Chrome and Edge offer to install it from the address bar (Safari on an iPad: **Share**, then **Add to Home Screen**); it then opens in a window of its own. When a new version is online, the projects screen offers to **Reload**. Your projects stay in that browser, on that computer, and a browser may erase what a site keeps (Safari does after about seven days without a visit, unless Cyberdeck is installed): press **Back up** in each project now and then, and keep the file. The desktop version keeps projects as folders instead.
+> Nothing to install: Cyberdeck runs in your browser at [pnguyen9.github.io/Cyberdeck/cyberdeck/](https://pnguyen9.github.io/Cyberdeck/cyberdeck/), always the latest version, and keeps working without a network once opened. To install it, opening in a window of its own: in Chrome or Edge, the install button at the end of the address bar, or **Install** in the browser's menu (on an iPad, Safari's **Share**, then **Add to Home Screen**). Firefox on a computer installs no web page. Install from an ordinary window: a private window forgets everything once closed. **About**, at the foot of the projects screen, gives the same help. When a new version is online, the projects screen offers to **Reload**. Your projects stay in that browser, on that computer, and a browser may erase what a site keeps (Safari does after about seven days without a visit, unless Cyberdeck is installed): press **Back up** in each project now and then, and keep the file. The desktop version keeps projects as folders instead.
 > The foot of the projects screen gives the version; **About** tells how Cyberdeck runs, its licence, and links to this guide and to the source code.
 
 ## 2. Write or paste your story
@@ -217,7 +217,7 @@ In **Details**, add a description, credits and a cover picture: players see them
 
 ![The Export tab: the release “1.0”, both chapters ticked, and the Export button.](images/export.png)
 
-Players open Datajack, press **Add a game…** (or drop the file on it), and play. Datajack runs in the browser too, at [pnguyen9.github.io/Cyberdeck/datajack/](https://pnguyen9.github.io/Cyberdeck/datajack/), and installs from there like Cyberdeck.
+Players open Datajack, press **Add a game…** (or drop the file on it), and play. Datajack runs in the browser too, at [pnguyen9.github.io/Cyberdeck/datajack/](https://pnguyen9.github.io/Cyberdeck/datajack/), and installs from there like Cyberdeck (on a phone, **Add to home screen** in the browser's menu).
 
 ![Datajack's library: “The Letter 1.0 installed”, its cover, 2 chapters, endings reached 0 of 1, and the Play button.](images/library.png)
 

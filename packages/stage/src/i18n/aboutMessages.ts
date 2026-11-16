@@ -11,6 +11,10 @@ const en = {
     web: 'Runs as a web page: its data stays in this browser, on this device.',
     installed: 'Runs as an application installed from the browser: its data stays in this browser, on this device.',
   } satisfies Record<HowItRuns, string>,
+  install: [
+    'To install it as an application, opening in a window of its own: in Chrome or Edge, the install button at the end of the address bar, or Install in the browser’s menu; on an Android phone, Add to home screen in the browser’s menu; on an iPhone or iPad, Share, then Add to Home Screen.',
+    'Firefox on a computer does not install web pages. Install from an ordinary window: a private window forgets its data once closed, and the application does not bring it along.',
+  ],
   license: 'Released into the public domain under the ',
   unlicense: 'Unlicense',
   licenseAfter: ': anyone may use, change and share it, for any purpose.',
@@ -36,6 +40,10 @@ const fr: AboutMessages = {
     web: 'Fonctionne comme page web\u00a0: ses données restent dans ce navigateur, sur cet appareil.',
     installed: 'Fonctionne comme application installée depuis le navigateur\u00a0: ses données restent dans ce navigateur, sur cet appareil.',
   },
+  install: [
+    'Pour l’installer comme application, dans une fenêtre à elle\u00a0: dans Chrome ou Edge, le bouton d’installation au bout de la barre d’adresse, ou Installer dans le menu du navigateur\u00a0; sur un téléphone Android, Ajouter à l’écran d’accueil dans le menu du navigateur\u00a0; sur un iPhone ou un iPad, Partager, puis Sur l’écran d’accueil.',
+    'Firefox sur ordinateur n’installe pas les pages web. Installez depuis une fenêtre ordinaire\u00a0: une fenêtre privée oublie ses données une fois fermée, et l’application ne les emporte pas.',
+  ],
   license: 'Versé dans le domaine public par l’',
   unlicense: 'Unlicense',
   licenseAfter: '\u00a0: chacun peut l’utiliser, le modifier et le partager, pour tout usage.',

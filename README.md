@@ -372,9 +372,18 @@ databases are `cyberdeck-projects` and `datajack-library`), since every site of
 screen: a browser may erase what a site keeps (Safari does after about seven days without a visit,
 unless the application is installed), and exporting is the safety net.
 
-Each web build is a progressive web app: Chrome and Edge (on Windows too) offer to install it from
-the address bar, Safari on iPhone and iPad from *Share → Add to Home Screen*, and it then opens in a
-window of its own. Its service worker keeps the version's files on the device, so it opens offline.
+Each web build is a progressive web app, installed from the browser, and it then opens in a window
+of its own:
+- Chrome, Edge, Chromium (Windows, macOS, Linux): the install button at the end of the address bar,
+  or *Install* in the browser's menu.
+- Android: *Add to home screen* (or *Install*) in the browser's menu.
+- iPhone and iPad: *Share → Add to Home Screen*.
+- Firefox on a computer installs no web page: use one of the browsers above, or the desktop build.
+
+Install from an ordinary window. A private window forgets what a site keeps once it is closed, and
+an application added from one does not bring that data along. The About panel of a web page gives
+the same help.
+ Its service worker keeps the version's files on the device, so it opens offline.
 When a newer version is online, the service worker downloads it beside the one running, and the
 first screen (projects, library or profiles) offers *Reload*; *Later* keeps the running one until
 the next visit. Each application's service worker and cache are its own (`cyberdeck-<version>-…`,

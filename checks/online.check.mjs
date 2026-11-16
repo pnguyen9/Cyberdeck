@@ -82,6 +82,8 @@ export default async function check(page, { url }) {
     await pause(300)
     page.check('the About panel gives the version and how it runs', await page.evaluate(`[...document.querySelectorAll('.about-panel p')].slice(0, 2).map(paragraph => paragraph.textContent)`),
       [`Version ${version}`, 'Runs as a web page: its data stays in this browser, on this device.'])
+    page.check('a web page tells how to install it, and to do so from an ordinary window', await page.evaluate(`[...document.querySelectorAll('.about-panel .install p')].map(paragraph => paragraph.textContent.split(':')[0].split('.')[0])`),
+      ['To install it as an application, opening in a window of its own', 'Firefox on a computer does not install web pages'])
     page.check('the license and the links, which say they open a new tab', await page.evaluate(`[...document.querySelectorAll('.about-panel a')].map(link => link.textContent + ' ' + link.href)`), [
       'Unlicense(new tab) https://github.com/pnguyen9/Cyberdeck/blob/main/LICENSE',
       'Guide(new tab) https://pnguyen9.github.io/Cyberdeck/guide/',
@@ -175,5 +177,6 @@ export default async function check(page, { url }) {
   await page.clickButton('About', '.about-button')
   await pause(300)
   page.check('it says it runs as files', await page.evaluate(`document.querySelectorAll('.about-panel p')[1]?.textContent`), 'Runs from files opened in the browser: its data stays in this browser, on this computer.')
+  page.check('with no install help', await page.evaluate(`document.querySelector('.about-panel .install') === null`), true)
   await page.screenshot('files-about')
 }

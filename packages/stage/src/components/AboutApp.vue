@@ -50,6 +50,9 @@ function onClose() {
       <h2 id="about-app-title">{{ text.aboutApp(about.name) }}</h2>
       <p class="about-version">{{ text.version(about.version) }}</p>
       <p class="runs">{{ text.runs[about.howItRuns] }}</p>
+      <div v-if="about.howItRuns === 'web'" class="install">
+        <p v-for="line in text.install" :key="line">{{ line }}</p>
+      </div>
       <p>
         {{ text.license }}<a :href="LICENSE_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.unlicense }}<span class="new-tab">{{ text.newTab }}</span></a>{{ text.licenseAfter }}
       </p>
@@ -135,7 +138,8 @@ function onClose() {
   font-weight: 600;
 }
 
-.runs {
+.runs,
+.install {
   color: var(--look-text-soft);
 }
 
