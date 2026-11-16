@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LanguageSelect, useLocale, useMessages, type LanguageChoice } from '@cyberdeck/stage'
+import { AboutApp, LanguageSelect, useLocale, useMessages, type LanguageChoice } from '@cyberdeck/stage'
 import { onMounted, ref, useTemplateRef, watch } from 'vue'
 import { MAXIMUM_PROFILE_NAME_LENGTH, profileNameProblem } from '../../electron/profileNames'
 import { profileMessages } from '../i18n/profileMessages'
@@ -205,6 +205,7 @@ function confirmRemove(profile: Profile) {
 
     <p v-if="errorMessage !== null" class="error" role="alert">{{ errorMessage }}</p>
     <p v-if="message !== null" class="message" role="status">{{ message }}</p>
+    <AboutApp />
   </main>
 </template>
 

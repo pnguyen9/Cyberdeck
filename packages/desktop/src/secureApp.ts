@@ -1,6 +1,7 @@
-import { app, BrowserWindow, dialog, ipcMain, net, protocol, session, type IpcMainInvokeEvent } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, net, protocol, session, shell, type IpcMainInvokeEvent } from 'electron'
 import { isAbsolute, join, relative, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { isProjectLink } from './projectLinks.js'
 
 /**
  * The desktop shell both applications share. The page runs sandboxed, without Node, served from a
@@ -76,7 +77,13 @@ export function startSecureApp(options: SecureAppOptions) {
   app.on('web-contents-created', (_event, contents) => {
     contents.on('will-navigate', event => event.preventDefault())
     contents.on('will-attach-webview', event => event.preventDefault())
-    contents.setWindowOpenHandler(() => ({ action: 'deny' }))
+    contents.setWindowOpenHandler(({ url }) => {
+      // The About panel's links open in the system's browser; no window opens in the application.
+      if (isProjectLink(url)) {
+        void shell.openExternal(url)
+      }
+      return { action: 'deny' }
+    })
     // The page has changes not saved: the window closes only if the user says so.
     contents.on('will-prevent-unload', event => {
       const window = BrowserWindow.fromWebContents(contents)

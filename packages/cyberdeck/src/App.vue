@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { emptyProgress, exploreStory, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
-import { AUTOSAVE_SLOT, createStorageSaveStore, createStorageSettingsStore, localeOfChoice, MapView, PlayerView, provideLocale, type PlayerSettings } from '@cyberdeck/stage'
+import { AUTOSAVE_SLOT, createStorageSaveStore, createStorageSettingsStore, localeOfChoice, MapView, PlayerView, provideAboutApp, provideLocale, type PlayerSettings } from '@cyberdeck/stage'
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch, watchEffect } from 'vue'
 import { appMessages } from './i18n/appMessages'
 import { createDesktopProjectStore } from './projects/desktopProjectStore'
@@ -91,6 +91,14 @@ watchEffect(() => {
   document.documentElement.lang = locale.value
 })
 const text = computed(() => appMessages[locale.value])
+/** The version and how the page runs, for the projects screen; the service worker of the web build. */
+provideAboutApp({
+  name: 'Cyberdeck',
+  version: __APP_VERSION__,
+  hasDesktopBridge: desktop !== undefined,
+  keepSafe: { en: appMessages.en.keepSafe, fr: appMessages.fr.keepSafe },
+  serviceWorker: import.meta.env.DEV ? null : './sw.js',
+})
 
 /** The shortcuts open from anywhere but a field being typed in, and not over the preview, which has its own keys. */
 function onKeydown(event: KeyboardEvent) {

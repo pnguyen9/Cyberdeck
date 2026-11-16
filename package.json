@@ -14,7 +14,8 @@
     "checks:desktop": "node checks/run.mjs --desktop",
     "guide:images": "node checks/run.mjs guide-images && node checks/copy-guide-images.mjs && node scripts/guideMarkdown.mjs",
     "guide:markdown": "node scripts/guideMarkdown.mjs",
-    "release": "node scripts/packageRelease.mjs"
+    "release": "node scripts/packageRelease.mjs",
+    "pages": "node scripts/pagesSite.mjs"
   },
   "engines": {
     "node": ">=22.12.0"

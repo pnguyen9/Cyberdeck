@@ -9,6 +9,14 @@ export default async function check(page, { home, assets }) {
   const projectsFolder = `${home}/Documents/Cyberdeck`
 
   page.check('the projects screen says where projects are', await page.evaluate(`document.querySelector('.folder code')?.textContent`), projectsFolder)
+  page.check('and the version, without the note of a web host', await page.evaluate(`[document.querySelector('.about-app .version')?.textContent.startsWith('Cyberdeck '), document.querySelector('.may-erase') === null]`), [true, true])
+  page.check('the desktop build keeps no service worker', await page.evaluate(`navigator.serviceWorker === undefined ? 0 : navigator.serviceWorker.getRegistrations().then(list => list.length).catch(() => 0)`), 0)
+  await page.clickButton('About', '.about-button')
+  await pause(300)
+  page.check('its About panel says it runs as a desktop application', await page.evaluate(`document.querySelectorAll('.about-panel p')[1]?.textContent`), 'Runs as a desktop application: what it keeps is in folders on the disk.')
+  await page.screenshot('desktop-about')
+  await page.clickButton('Close', '.about-panel button')
+  await pause(200)
   await page.evaluate(`document.querySelector('.new-project .text-input').focus()`)
   await page.typeText('On disk')
   await page.clickButton('Create')
