@@ -15,9 +15,11 @@ A sample story to try it with, *Sakura Week*, is in [docs/sample/sakura-week](do
 import `sakura-week.txt`, then drop `sakura-week-assets.zip` in Cast & files: its `cover.png` becomes
 the game's cover.
 
-**Online**: both applications and the guide are at <https://pnguyen9.github.io/Cyberdeck/>, the
-latest version, nothing to download. Once opened they work offline, and the browser installs them
-as applications (on a phone or a computer). What they keep stays in that browser: back up projects
+**Online**, the latest version, nothing to download: Datajack at
+<https://pnguyen9.github.io/Cyberdeck/> (or `…/datajack/`), Cyberdeck at
+<https://pnguyen9.github.io/Cyberdeck/cyberdeck/> and the guide at
+<https://pnguyen9.github.io/Cyberdeck/guide/>. Once opened they work offline, and the browser
+installs them as applications (on a phone or a computer). What they keep stays in that browser: back up projects
 and keep games and saves as files, since a browser may erase what a site keeps. The desktop builds
 and the builds to open as files are on the [Releases](https://github.com/pnguyen9/Cyberdeck/releases)
 page.
@@ -352,8 +354,9 @@ folder; opened as files, it shows a blank page.
 
 ### Online, on GitHub Pages
 
-<https://pnguyen9.github.io/Cyberdeck/> holds a small landing page, Cyberdeck in `cyberdeck/`,
-Datajack in `datajack/` and the guide in `guide/`. The workflow `.github/workflows/pages.yml`
+<https://pnguyen9.github.io/Cyberdeck/> holds Cyberdeck in `cyberdeck/`, Datajack in `datajack/`
+and the guide in `guide/`. Its root sends players straight to Datajack: Cyberdeck, for authors, is
+reached by its own address, given here. The workflow `.github/workflows/pages.yml`
 publishes them on each release tag (`v*`), or by hand from the *Actions* tab (*Pages → Run
 workflow*): it installs, runs the tests and the type checks, then `npm run pages`, which builds both
 web builds and assembles the site in `site/`, and publishes that folder. Once, in the repository's

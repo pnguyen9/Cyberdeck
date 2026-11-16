@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Both applications
+- Online, the site's root opens Datajack straight away, with no landing page: players needn't know
+  Cyberdeck. Cyberdeck and the guide keep their addresses, given in the README.
+
 ## 3.4.0 — 2026-11-16
 
 ### Both applications

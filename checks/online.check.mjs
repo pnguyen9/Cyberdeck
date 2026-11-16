@@ -56,8 +56,8 @@ export default async function check(page, { url }) {
   const siteUrl = `http://127.0.0.1:${PORT}/Cyberdeck/`
   try {
     await page.navigate(siteUrl)
-    page.check('the landing page links both applications and the guide', await page.evaluate(`[...document.querySelectorAll('a')].map(link => link.getAttribute('href')).filter(href => !href.startsWith('https:'))`), ['cyberdeck/', 'datajack/', 'guide/'])
-    await page.screenshot('landing')
+    await page.waitFor('.about-app')
+    page.check('the site\'s root sends players to Datajack', await page.evaluate(`location.pathname`), '/Cyberdeck/datajack/')
     await page.navigate(`${siteUrl}guide/`)
     page.check('the guide is online', await page.evaluate(`document.title`), 'Cyberdeck Guide')
 
