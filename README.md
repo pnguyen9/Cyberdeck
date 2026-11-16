@@ -455,8 +455,9 @@ Then, for each release, from `main` with nothing left to commit:
    npm run release   # → release/v3.4.0/
    ```
 
-   It first deletes the application folders of earlier versions in `packages/cyberdeck/release/`
-   and `packages/datajack/release/`, then builds into `release/v3.4.0/`:
+   It first deletes the downloads of earlier versions in `release/` and their application folders
+   in `packages/cyberdeck/release/` and `packages/datajack/release/`, then builds into
+   `release/v3.4.0/`:
 
    | File | Contents |
    |---|---|
