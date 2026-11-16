@@ -186,6 +186,8 @@ a new notion gets its word here before it gets code.
 | Gallery | The illustrations a profile has seen. | |
 | Skip, Auto | Passing text already read; moving on by itself. | |
 | Settings | The profile's, or a game's own once chosen for it. | `PlayerSettings` |
+| Tap, long press, swipe | What a finger does on a touch screen: a left click, a right click, going back (to the right) or moving on (to the left). | `TouchGesture` |
+| Landscape request | On a phone or a tablet, the request to turn the device sideways, or the offer of full screen. | `LandscapeAsk` |
 
 ## Development
 
@@ -1023,6 +1025,31 @@ keep as files. A new version online is offered there too (see
 | Leave a panel, or the game | Esc |
 | Mark a tile of a game board, on a grid that marks (Minesweeper's flags) | F, right click: there only, where they do not go full screen or hide the text |
 
+**On a touch screen**, the keyboard and the mouse keep working as above; a finger is added beside
+them, through pointer events of touch alone (`packages/stage/src/input/touchGestures.ts` decides,
+`touchTracker.ts` follows the finger):
+
+| Gesture | Does |
+|---|---|
+| Tap | What a left click does: shows the whole page, then moves on; presses a button, picks an option or a tile |
+| Long press (half a second, the finger still) | What a right click does: hides the text by default; on a grid that marks, marks the tile. iPhones and iPads send no menu event for it, so Datajack tells it itself, on every device, and the tap it ends with does not also move on |
+| Swipe right (60 pixels or more, mostly sideways, within a second) | Goes back one step |
+| Swipe left | Moves on |
+
+A finger may wander 10 pixels and still tap, so that tapping a tile of a game board is never a swipe;
+touches starting on a button, a field or a tile are theirs, never swipes. Over the stage, the
+browser neither scrolls, zooms nor opens its menu; panels still scroll under a finger. On screens
+without a mouse (`hover: none`), what showed only when pointed at is always shown: the leave
+button's label, the map's values of a choice (its **i** button), and in **Controls**, what fingers do.
+
+Datajack asks for landscape on a phone or a tablet (`hover: none` and `pointer: coarse`): held
+upright, the game is covered by a request to turn the device sideways; sideways, a band offers
+**Play in full screen**, after which the orientation is locked sideways where the browser allows it
+(`screen.orientation.lock`, Chrome on Android); elsewhere (an iPhone's Safari has no full screen),
+turning the device is asked. *Not now* holds for that game until Datajack is closed. Computers are
+never asked, and Cyberdeck stays a computer application: its preview shares the stage's code, so
+fingers work there too, while nothing changes for the mouse.
+
 ### Settings
 
 The **Settings** screen has three categories. **General** sets the text speed (or each page shown
@@ -1063,7 +1090,7 @@ read, and what it remembers. The story reads only the memories and endings, thro
 
 **Map** (in the game, on the end screen and on the library card) shows the routes explored left to
 right: each choice reached, its options (those not tried yet marked `?`), curves to where the tried
-ones led, and the endings. Hovering a choice tells what the journal showed when it was reached, by
+ones led, and the endings. Hovering a choice (on a touch screen, its **i** button) tells what the journal showed when it was reached, by
 the same rule (nothing the author keeps from players). **Play from here** resumes the choice exactly
 as it was reached, a new path for the autosave to follow. Two paths reaching the same choice merge
 on the map when they agree on the decisions and counters the story still tests from there on,
