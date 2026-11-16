@@ -4,6 +4,7 @@ import {
   emptyProgress,
   exploreStory,
   layOutProgressMap,
+  optionLabel,
   mergeProgress,
   parseProgress,
   recordChoiceReached,
@@ -350,5 +351,34 @@ describe('points of the map', () => {
     // Whatever was drawn the first time, coming back to the choice is the same point.
     const progress = play(story, emptyProgress(story), ['The shop', 'The shop', 'The shop', 'Home'])
     expect(progress.points).toHaveLength(1)
+  })
+})
+
+describe('lines of the map', () => {
+  const STOPS = ['[choice: Where]', '> The shop = Shop', '> Head straight home = Home', '[if: Where is Shop]', '[choice: Dango]', '> Sweet = Sweet', '> Plain = Plain', '[end]', '[choice: Night]', '> Sleep = Sleep', 'Done.']
+
+  it('say the option they follow where their point branches: its text, or its value when the text is long', () => {
+    const story = storyFromText(STOPS)
+    const map = layOutProgressMap(exploreStory(story).progress, story)
+    const names = new Map(map.nodes.map(node => [node.key, node.type === 'point' ? node.decisionName : 'end']))
+    const lines = map.edges.map(edge => `${names.get(edge.from)} > ${names.get(edge.to)}: ${edge.label ?? '-'}`).sort()
+    expect(lines).toEqual(['Dango > Night: Plain', 'Dango > Night: Sweet', 'Night > end: -', 'Where > Dango: The shop', 'Where > Night: Home'])
+  })
+
+  it('cut a value too long as well', () => {
+    expect([optionLabel('Decorations', 'Decor'), optionLabel('The cashier’s table', 'Cash'), optionLabel('Climb the library stairs', 'ClimbTheLibraryStairs')])
+      .toEqual(['Decorations', 'Cash', 'ClimbTheLibra…'])
+  })
+
+  it('go under a point in their way, below its row, and straight on when none is', () => {
+    const story = storyFromText(STOPS)
+    const map = layOutProgressMap(exploreStory(story).progress, story)
+    const nodeOf = new Map(map.nodes.map(node => [node.key, node]))
+    const home = map.edges.find(edge => edge.label === 'Home')!
+    const dango = map.nodes.find(node => node.type === 'point' && node.decisionName === 'Dango')!
+    // Home skips the column of Dango, which stands on its row.
+    expect([nodeOf.get(home.from)!.row, dango.row, nodeOf.get(home.to)!.row]).toEqual([0, 0, 0])
+    expect(home.under).toBe(0)
+    expect(map.edges.filter(edge => edge !== home).every(edge => edge.under === null)).toBe(true)
   })
 })

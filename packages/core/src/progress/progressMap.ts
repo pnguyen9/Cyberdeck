@@ -27,10 +27,29 @@ export type MapNode =
   }
   | { type: 'end'; key: string; column: number; row: number; endingName: string | null }
 
+/**
+ * A line of the map, from an option taken to where it led. `label`: where its point branches, the
+ * option it follows, as `optionLabel` shortens it. `under`: the row it runs under, a point being in
+ * its way on its own rows (a straight line would cross it); null when nothing is.
+ */
 export interface MapEdge {
   from: string
   optionId: string
   to: string
+  label: string | null
+  under: number | null
+}
+
+/** The longest option text a line carries; longer, it carries the option's value, cut to this length if need be. */
+export const LINE_LABEL_LENGTH = 14
+
+/** What a line says of the option it follows: its text, or its value when the text is long. */
+export function optionLabel(text: string, value: string): string {
+  if ([...text].length <= LINE_LABEL_LENGTH) {
+    return text
+  }
+  const characters = [...value]
+  return characters.length <= LINE_LABEL_LENGTH ? value : `${characters.slice(0, LINE_LABEL_LENGTH - 1).join('')}…`
 }
 
 export interface ProgressMap {
@@ -48,7 +67,7 @@ export function layOutProgressMap(progress: ProgressData, story: PlayableStory):
   const targetKey = (target: ProgressTarget) => target.type === 'point' ? target.key : `end:${target.endingId ?? ''}`
   const knownKeys = new Set(points.map(point => point.key))
   const edges: MapEdge[] = points.flatMap(point => point.taken.flatMap(option =>
-    option.next === null || (option.next.type === 'point' && !knownKeys.has(option.next.key)) ? [] : [{ from: point.key, optionId: option.optionId, to: targetKey(option.next) }]))
+    option.next === null || (option.next.type === 'point' && !knownKeys.has(option.next.key)) ? [] : [{ from: point.key, optionId: option.optionId, to: targetKey(option.next), label: null, under: null }]))
   const endKeys = [...new Set(edges.map(edge => edge.to).filter(key => key.startsWith('end:')))]
 
   // Depth-first from the points nobody leads to, the earliest first; edges back to a point being visited close a loop and are left out of the layering.
@@ -146,12 +165,46 @@ export function layOutProgressMap(progress: ProgressData, story: PlayableStory):
   ]
   return {
     nodes,
-    edges,
+    edges: edges.map(edge => ({ ...edge, label: labelOf(edge, nodes, edges, story, choices), under: rowUnder(edge, nodes) })),
     columnCount: Math.max(0, ...nodes.map(node => node.column + 1)),
     rowCount: Math.max(0, ...nodes.map(node => node.row + 1)),
     endingsReached: progress.endingIds.filter(endingId => story.project.endings.some(ending => ending.id === endingId)).length,
     endingsTotal: story.project.endings.length,
   }
+}
+
+/** The option a line follows, where its point branches: more than one line leaves it. */
+function labelOf(edge: MapEdge, nodes: readonly MapNode[], edges: readonly MapEdge[], story: PlayableStory, choices: ReadonlyMap<string, StoredChoice>): string | null {
+  if (edges.filter(other => other.from === edge.from).length < 2) {
+    return null
+  }
+  const point = nodes.find(node => node.key === edge.from)
+  const option = point?.type === 'point' ? point.options.find(candidate => candidate.optionId === edge.optionId) : undefined
+  if (point?.type !== 'point' || option === undefined) {
+    return null
+  }
+  const choice = choices.get(point.point.choiceId)
+  const choiceOption = choice?.options.find(candidate => candidate.id === option.optionId)
+  const decision = story.project.decisions.find(candidate => candidate.id === choice?.decisionId)
+  const value = decision?.values.find(candidate => candidate.id === choiceOption?.valueId)?.name ?? option.text
+  return optionLabel(option.text, value)
+}
+
+/**
+ * The row a line skipping columns runs under, when a point (or end) of a column it crosses stands on
+ * the rows it spans, from the one it leaves to the one it reaches: the lowest such row, so that the
+ * line steps down below it, runs between the rows, where nothing stands, and comes back up.
+ */
+function rowUnder(edge: MapEdge, nodes: readonly MapNode[]): number | null {
+  const from = nodes.find(node => node.key === edge.from)
+  const to = nodes.find(node => node.key === edge.to)
+  if (from === undefined || to === undefined || to.column <= from.column + 1) {
+    return null
+  }
+  const top = Math.min(from.row, to.row)
+  const bottom = Math.max(from.row, to.row)
+  const inTheWay = nodes.filter(node => node.column > from.column && node.column < to.column && node.row >= top && node.row <= bottom)
+  return inTheWay.length === 0 ? null : Math.max(...inTheWay.map(node => node.row))
 }
 
 /**

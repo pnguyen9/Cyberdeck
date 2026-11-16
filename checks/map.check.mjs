@@ -80,6 +80,7 @@ export default async function check(page, { url, serve }) {
   await pause(300)
   page.check('the map now holds one choice and two endings', await page.evaluate(`document.querySelectorAll('.node').length`), 3)
   page.check('with both options tried', await page.evaluate(`document.querySelectorAll('.options li.untried').length`), 0)
+  page.check('each line leaving the choice says the option it follows', await page.evaluate(`[...document.querySelectorAll('.curves .line-label')].map(label => label.textContent).join(' / ')`), 'Board it / Stay')
   await page.screenshot('map')
   await page.clickButton('← Game', '.close-button')
   await pause(1200)
