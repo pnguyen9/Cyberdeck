@@ -8,20 +8,19 @@ import { spawn } from 'node:child_process'
 import { mkdirSync, openSync, readdirSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { openBrowser, openElectron, openFirefox, pause } from './harness.mjs'
+import { openBrowser, openElectron, openFirefox, pause, portOf } from './harness.mjs'
 
 const checksFolder = dirname(fileURLToPath(import.meta.url))
 const rootFolder = join(checksFolder, '..')
 const outputFolder = join(checksFolder, 'output')
-/** `CHECKS_PORT_OFFSET` shifts every port, so that runs from several copies of the repository can share a machine. */
-const PORT_OFFSET = Number(process.env.CHECKS_PORT_OFFSET ?? 0)
-const CHROME_PORT = 9334 + PORT_OFFSET * 10
-const ELECTRON_PORT = 9335 + PORT_OFFSET * 10
-const FIREFOX_PORT = 9336 + PORT_OFFSET * 10
+/** Ports shifted by `CHECKS_PORT_OFFSET` (`portOf`), so that runs from several copies of the repository can share a machine. */
+const CHROME_PORT = portOf(9334)
+const ELECTRON_PORT = portOf(9335)
+const FIREFOX_PORT = portOf(9336)
 /** Development servers; ports outside the list browsers refuse to fetch from. */
 const SERVERS = {
-  cyberdeck: { port: 4178 + PORT_OFFSET * 10, folder: join(rootFolder, 'packages/cyberdeck') },
-  datajack: { port: 4177 + PORT_OFFSET * 10, folder: join(rootFolder, 'packages/datajack') },
+  cyberdeck: { port: portOf(4178), folder: join(rootFolder, 'packages/cyberdeck') },
+  datajack: { port: portOf(4177), folder: join(rootFolder, 'packages/datajack') },
 }
 const DESKTOP_APPS = {
   'cyberdeck-desktop': join(rootFolder, 'packages/cyberdeck'),
@@ -115,7 +114,7 @@ try {
   const built = new Set()
   for (const { name, folder, app, check, browser } of checks) {
     const output = join(outputFolder, folder ?? name)
-    const context = { fixtures: join(checksFolder, 'fixtures'), assets, output, serve }
+    const context = { fixtures: join(checksFolder, 'fixtures'), assets, output, serve, portOf }
     let page
     if (app in DESKTOP_APPS) {
       if (!built.has(app)) {

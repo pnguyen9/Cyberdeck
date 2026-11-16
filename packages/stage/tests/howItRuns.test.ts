@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { howItRuns, isHosted, keepsOffline } from '../src/app/howItRuns'
+import { howItRuns, isHosted } from '../src/app/howItRuns'
 
 describe('how an application runs', () => {
   it('is the desktop build whenever the desktop shell hands its bridge', () => {
@@ -17,13 +17,7 @@ describe('how an application runs', () => {
     expect(howItRuns({ hasDesktopBridge: false, protocol: 'http:', isStandalone: false })).toBe('web')
   })
 
-  it('is hosted, and keeps offline, as a web page or installed only', () => {
+  it('is hosted, keeping offline, as a web page or installed only', () => {
     expect((['desktop', 'files', 'web', 'installed'] as const).map(isHosted)).toEqual([false, false, true, true])
-    expect((['desktop', 'files', 'web', 'installed'] as const).map(how => keepsOffline(how, true))).toEqual([false, false, true, true])
-  })
-
-  it('never keeps the development server offline', () => {
-    expect(keepsOffline('web', false)).toBe(false)
-    expect(keepsOffline('installed', false)).toBe(false)
   })
 })

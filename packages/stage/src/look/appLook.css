@@ -1,12 +1,17 @@
 /*
  * The apps' own look behind their screens: the background, one colour or four corners blended.
  * The bottom edge's gradient is the page's; the top edge's lies over it, fading out downwards, so
- * that each point mixes the four corners. The stage of a game covers it whole.
+ * that each point mixes the four corners. The stage of a game covers it whole, and keeps its own
+ * dark colour scheme whatever this one is. A look's swatch (`.look-swatch`) is drawn the same way.
  */
-html {
-  min-height: 100%;
+html,
+.look-swatch {
   background-color: var(--look-background, #0b0d12);
   background-image: linear-gradient(to right, var(--look-corner-bottom-left, #0b0d12), var(--look-corner-bottom-right, #0b0d12));
+}
+
+html {
+  min-height: 100%;
   background-attachment: fixed;
   color-scheme: var(--look-scheme, dark);
 }
@@ -17,12 +22,121 @@ body {
   background: transparent;
 }
 
-body::before {
+body::before,
+.look-swatch::before {
   content: '';
-  position: fixed;
   inset: 0;
-  z-index: -1;
   background-image: linear-gradient(to right, var(--look-corner-top-left, #0b0d12), var(--look-corner-top-right, #0b0d12));
   mask-image: linear-gradient(to bottom, #000, transparent);
   pointer-events: none;
+}
+
+body::before {
+  position: fixed;
+  z-index: -1;
+}
+
+.look-swatch {
+  position: relative;
+}
+
+.look-swatch::before {
+  position: absolute;
+}
+
+/* The root of a screen of the application's own (projects, library, profiles, gallery): its font, colours and readable box. */
+.app-screen {
+  box-sizing: border-box;
+  min-height: 100vh;
+  margin: 0 auto;
+  font: 16px/1.5 var(--look-font);
+  color: var(--look-text);
+  /* The readable box, when the look has one. */
+  background: var(--look-box);
+}
+
+/* The buttons of the applications' own screens. Never a game's, which keeps its own controls. */
+.button {
+  padding: 8px 16px;
+  border: var(--look-control-border);
+  border-radius: 6px;
+  background: var(--look-surface);
+  font: inherit;
+  color: var(--look-text);
+  cursor: pointer;
+}
+
+.button.primary {
+  border-color: var(--look-accent);
+  background: var(--look-accent-fill);
+  color: var(--look-accent);
+  font-weight: 600;
+}
+
+.button.danger {
+  border-color: var(--look-error);
+  color: var(--look-error);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.button.small {
+  padding: 4px 10px;
+  font-size: 14px;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--look-focus);
+  outline-offset: 2px;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--look-muted);
+  cursor: pointer;
+}
+
+.link-button:hover,
+.link-button:focus-visible {
+  color: var(--look-accent);
+}
+
+.link-button:focus-visible {
+  outline: 2px solid var(--look-focus);
+  outline-offset: 2px;
+}
+
+.link-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* The tools at the top of a first screen: language, look, and more. */
+.header-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+/* The language menu, the stage's, with its label: in a game it keeps its own look, here the application's. */
+.language-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--look-soft);
+}
+
+.language-field select.language-select {
+  border: var(--look-control-border);
+  background: var(--look-surface);
+  color: var(--look-text);
 }

@@ -1,11 +1,20 @@
 import { classifyTouch, LONG_PRESS_MILLISECONDS, staysInPlace, type TouchGesture } from './touchGestures'
 
 /**
- * Whether the click to come follows a long press or a swipe, rather than a tap: shared by every
- * tracker, since what a long press does may draw the element under the finger anew (a tile marked),
- * whose click then comes to another component than the one that saw the press.
+ * Until when the click to come follows a long press or a swipe, rather than a tap (a time as
+ * `performance.now()` gives it): shared by every tracker, since what a long press does may draw the
+ * element under the finger anew (a tile marked), whose click then comes to another component than
+ * the one that saw the press. A browser sending no click after the gesture leaves nothing behind:
+ * the next click, later, is the player's own.
  */
-let isClickSwallowed = false
+let clickSwallowedUntil = Number.NEGATIVE_INFINITY
+
+/** How long after a long press or a swipe the browser's click may come. */
+const SWALLOW_MILLISECONDS = 600
+
+function swallowNextClick() {
+  clickSwallowedUntil = performance.now() + SWALLOW_MILLISECONDS
+}
 
 /**
  * Follows one finger through pointer events, those of touch alone: the mouse and the pen keep their
@@ -36,9 +45,13 @@ export function createTouchTracker(handlers: {
   return {
     onPointerDown(event: PointerEvent) {
       // A new press, of any pointer: the click to come belongs to it.
-      isClickSwallowed = false
+      clickSwallowedUntil = Number.NEGATIVE_INFINITY
       if (event.pointerType !== 'touch') {
         return
+      }
+      // The first finger down: none can be down still, should a lift have gone unseen (outside the window, say).
+      if (event.isPrimary) {
+        fingersDown = 0
       }
       fingersDown++
       // A second finger is a pinch, nothing of the game's.
@@ -51,7 +64,7 @@ export function createTouchTracker(handlers: {
         const pressed = touch
         forget()
         if (pressed !== null) {
-          isClickSwallowed = true
+          swallowNextClick()
           handlers.onLongPress(pressed.target)
         }
       }, LONG_PRESS_MILLISECONDS)
@@ -68,6 +81,10 @@ export function createTouchTracker(handlers: {
       }
       fingersDown = Math.max(0, fingersDown - 1)
       lastLiftTime = event.timeStamp
+      // A long press told while the finger rested: its click comes once the finger is lifted, however long after.
+      if (clickSwallowedUntil !== Number.NEGATIVE_INFINITY) {
+        swallowNextClick()
+      }
       const lifted = touch
       if (lifted?.pointerId !== event.pointerId) {
         return
@@ -75,7 +92,7 @@ export function createTouchTracker(handlers: {
       forget()
       const gesture = classifyTouch({ dx: event.clientX - lifted.x, dy: event.clientY - lifted.y, durationMs: event.timeStamp - lifted.time })
       if (gesture === 'swipeLeft' || gesture === 'swipeRight') {
-        isClickSwallowed = true
+        swallowNextClick()
         handlers.onSwipe?.(gesture)
       }
     },
@@ -90,8 +107,8 @@ export function createTouchTracker(handlers: {
     },
     /** Whether the click now arriving followed a long press or a swipe, and is not a tap. */
     swallowsClick(): boolean {
-      const isSwallowed = isClickSwallowed
-      isClickSwallowed = false
+      const isSwallowed = performance.now() <= clickSwallowedUntil
+      clickSwallowedUntil = Number.NEGATIVE_INFINITY
       return isSwallowed
     },
     /**

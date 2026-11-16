@@ -4,7 +4,7 @@ import { createProfile, pause } from './harness.mjs'
 
 export default async function check(page, { serve }) {
   await createProfile(page, await serve('datajack'), 'Pascal')
-  await page.clickButton('Settings', '.header-actions .button')
+  await page.clickButton('Settings', '.header-tools .button')
   await page.waitFor('.settings-screen .overlay')
   page.check('the settings open from the library', await page.evaluate(`document.querySelector('.settings-screen h2')?.textContent`), 'Settings')
   page.check('the language is among them, within reach', await page.evaluate(`(() => {

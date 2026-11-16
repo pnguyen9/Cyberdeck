@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
-import { join, relative, sep } from 'node:path'
-import type { Plugin, UserConfig } from 'vite'
+import { join, relative, resolve, sep } from 'node:path'
+import { mergeConfig, type Plugin, type UserConfig } from 'vite'
+import { fileBuild } from './fileBuild'
+import { SERVICE_WORKER, TAKE_OVER } from './packages/stage/src/app/offline'
 
 /** What a web build says of its application: in the manifest, and to the page. */
 export interface WebApp {
@@ -25,14 +27,13 @@ export function versionOf(folder: string): string {
  * What every build of an application's page shares: relative paths, so that the page works from any
  * folder (GitHub Pages serves it under `/Cyberdeck/cyberdeck/`), and the version, as `__APP_VERSION__`.
  * The web build (`vite build`) is also a progressive web app: a manifest, and a service worker
- * keeping the page's files for offline use. The double-click build (`--mode file`) is not.
+ * keeping the page's files for offline use. The double-click build (`--mode file`) is not: it is
+ * `fileBuild`'s.
  */
 export function webApp(app: WebApp, mode: string): UserConfig {
-  return {
-    base: './',
-    define: { __APP_VERSION__: JSON.stringify(versionOf(app.folder)) },
-    plugins: mode === 'file' ? [] : [installableApp(app)],
-  }
+  const version = versionOf(app.folder)
+  const shared: UserConfig = { base: './', define: { __APP_VERSION__: JSON.stringify(version) } }
+  return mode === 'file' ? mergeConfig(shared, fileBuild()) : { ...shared, plugins: [installableApp(app, version)] }
 }
 
 /** The manifest browsers read to install the application; its paths are relative to it. */
@@ -75,17 +76,17 @@ export function cacheNameOf(appName: string, version: string, files: ReadonlyMap
   return `${appName.toLowerCase()}-${version}-${digest.digest('hex').slice(0, 12)}`
 }
 
-/** The service worker of a release: its cache name and files, then the worker's code. */
+/** The service worker of a release: its cache name and files, the message it takes over on, then the worker's code. */
 export function serviceWorkerOf(cacheName: string, appName: string, files: readonly string[], code: string): string {
   return [
     `const CACHE_PREFIX = ${JSON.stringify(`${appName.toLowerCase()}-`)}`,
     `const CACHE_NAME = ${JSON.stringify(cacheName)}`,
     `const FILES = ${JSON.stringify(files)}`,
+    `const TAKE_OVER = ${JSON.stringify(TAKE_OVER)}`,
     code,
   ].join('\n')
 }
 
-export const SERVICE_WORKER = 'sw.js'
 export const MANIFEST = 'manifest.webmanifest'
 
 /** Every file under a folder, by its path relative to it. */
@@ -97,20 +98,20 @@ function filesUnder(folder: string, root = folder): string[] {
 }
 
 /** Adds the manifest and the service worker to the web build, once every other file is written. */
-function installableApp(app: WebApp): Plugin {
+function installableApp(app: WebApp, version: string): Plugin {
   let outDir = ''
   return {
     name: 'installable-app',
     apply: 'build',
     configResolved: config => {
-      outDir = config.build.outDir.startsWith('/') ? config.build.outDir : join(config.root, config.build.outDir)
+      outDir = resolve(config.root, config.build.outDir)
     },
     transformIndexHtml: html => html.replace('</title>', `</title>\n    <link rel="manifest" href="${MANIFEST}" />`),
     writeBundle: () => {
       writeFileSync(join(outDir, MANIFEST), `${JSON.stringify(manifestOf(app), null, 2)}\n`)
       const files = filesToKeep(filesUnder(outDir))
       const contents = new Map(files.map(path => [path, readFileSync(join(outDir, path))]))
-      const cacheName = cacheNameOf(app.name, versionOf(app.folder), contents)
+      const cacheName = cacheNameOf(app.name, version, contents)
       const code = readFileSync(join(import.meta.dirname, 'serviceWorker.js'), 'utf8')
       writeFileSync(join(outDir, SERVICE_WORKER), serviceWorkerOf(cacheName, app.name, ['./', ...files], code))
     },

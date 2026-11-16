@@ -7,7 +7,7 @@ const en = {
   exploring: 'Exploring…',
   language: 'Cyberdeck in',
   /** After the warning that a browser may erase what the web build keeps. */
-  keepSafe: 'Keep a backup of each project (Back up, at the top of the project).',
+  keepSafe: 'Keep a backup of each project (“Back up”, at the top of the project).',
 }
 
 type AppMessages = typeof en
@@ -19,7 +19,7 @@ const fr: AppMessages = {
   showPlayed: 'Les parcours joués',
   exploring: 'Exploration…',
   language: 'Cyberdeck en',
-  keepSafe: 'Gardez une copie de secours de chaque projet (Copie de secours, en haut du projet).',
+  keepSafe: 'Gardez une copie de secours de chaque projet («\u00a0Copie de secours\u00a0», en haut du projet).',
 }
 
 export const appMessages = { en, fr }

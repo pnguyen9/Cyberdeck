@@ -13,9 +13,11 @@ describe('the web build', () => {
     expect(versionOf(folder)).toMatch(/^\d+\.\d+\.\d+/)
   })
 
-  it('is installable, except as files to double-click', () => {
-    expect(webApp({ name: 'Cyberdeck', description: '', folder }, 'production').plugins).toHaveLength(1)
-    expect(webApp({ name: 'Cyberdeck', description: '', folder }, 'file').plugins).toEqual([])
+  it('is installable, except as files to double-click, which are built as such', () => {
+    const plugins = (mode: string) => (webApp({ name: 'Cyberdeck', description: '', folder }, mode).plugins ?? []).map(plugin => (plugin as { name: string }).name)
+    expect(plugins('production')).toEqual(['installable-app'])
+    expect(plugins('file')).toEqual(['classic-script'])
+    expect(webApp({ name: 'Cyberdeck', description: '', folder }, 'file').build?.outDir).toBe('dist-file')
   })
 
   it('has a manifest whose paths stay in the application’s folder', () => {
@@ -45,6 +47,7 @@ describe('the web build', () => {
       'const CACHE_PREFIX = "datajack-"',
       'const CACHE_NAME = "datajack-3.3.0-abc"',
       'const FILES = ["./","index.html"]',
+      'const TAKE_OVER = "take-over"',
       '// the code',
     ])
   })

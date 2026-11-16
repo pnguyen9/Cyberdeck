@@ -35,7 +35,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <section class="gallery">
+  <section class="app-screen gallery">
     <header class="gallery-header">
       <h1>{{ story.project.name }} · {{ text.gallery }}</h1>
       <span class="count">{{ text.seenCount(seenCount, tiles.length) }}</span>
@@ -59,25 +59,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 <style scoped>
 .gallery {
-  box-sizing: border-box;
   max-width: 1100px;
-  min-height: 100vh;
-  margin: 0 auto;
   padding: 32px 24px;
-  font: 16px/1.5 var(--look-font);
-  color: var(--look-text);
-  /* The readable box, when the look has one. */
-  background: var(--look-box);
-}
-
-.button {
-  padding: 8px 16px;
-  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
-  border-radius: 6px;
-  background: var(--look-surface);
-  font: inherit;
-  color: var(--look-text);
-  cursor: pointer;
 }
 
 .gallery-header {

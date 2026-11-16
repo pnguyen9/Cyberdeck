@@ -1,29 +1,30 @@
 <script setup lang="ts">
 import { nextTick, ref, useTemplateRef } from 'vue'
 import { GUIDE_ADDRESS, LICENSE_ADDRESS, REPOSITORY_ADDRESS, useAboutApp } from '../app/aboutApp'
+import { useBackdropClose } from '../app/backdropClose'
 import { isHosted } from '../app/howItRuns'
 import { aboutMessages } from '../i18n/aboutMessages'
 import { useLocale, useMessages } from '../i18n/locale'
 
 /**
- * The foot of an application's first screen: its version and the About panel, what a web host's
- * browser may do to what it keeps, and the offer to reload into a new version once one is online.
+ * The foot of an application's first screen: its version and the About panel, and what a web host's
+ * browser may do to its data. The offer of a new version is `NewVersionBar`'s, at the top.
  */
 const about = useAboutApp()
 const text = useMessages(aboutMessages)
 const locale = useLocale()
 const isOpen = ref(false)
-const isOfferPutOff = ref(false)
-const panel = useTemplateRef<HTMLElement>('panel')
+const dialog = useTemplateRef<HTMLDialogElement>('dialog')
 const opener = useTemplateRef<HTMLButtonElement>('opener')
+const backdrop = useBackdropClose(dialog)
 
 async function open() {
   isOpen.value = true
   await nextTick()
-  panel.value?.focus()
+  dialog.value?.showModal()
 }
 
-function close() {
+function onClose() {
   isOpen.value = false
   opener.value?.focus()
 }
@@ -31,31 +32,33 @@ function close() {
 
 <template>
   <footer v-if="about !== null" class="about-app">
+    <p v-if="isHosted(about.howItRuns)" class="may-erase"><strong>{{ text.mayErase }}</strong> {{ about.keepSafe[locale] }}</p>
     <p class="version-line">
       <span class="version">{{ about.name }} {{ about.version }}</span>
-      · <button ref="opener" class="about-button" type="button" @click="open">{{ text.about }}</button>
+      · <button ref="opener" class="about-button" type="button" aria-haspopup="dialog" @click="open">{{ text.about }}</button>
     </p>
-    <p v-if="isHosted(about.howItRuns)" class="may-erase">{{ text.mayErase }} {{ about.keepSafe[locale] }}</p>
 
-    <div v-if="isOpen" class="overlay" @click.self="close" @keydown.esc.stop="close">
-      <section ref="panel" class="about-panel" role="dialog" aria-modal="true" :aria-label="text.aboutApp(about.name)" tabindex="-1">
-        <h2>{{ text.aboutApp(about.name) }}</h2>
-        <p class="about-version">{{ text.version(about.version) }}</p>
-        <p class="runs">{{ text.runs[about.howItRuns] }}</p>
-        <p>{{ text.license }}<a :href="LICENSE_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.unlicense }}</a>{{ text.licenseAfter }}</p>
-        <ul class="links">
-          <li><a :href="GUIDE_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.guide }}</a></li>
-          <li><a :href="REPOSITORY_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.repository }}</a></li>
-        </ul>
-        <button class="panel-button" type="button" @click="close">{{ text.close }}</button>
-      </section>
-    </div>
-
-    <div v-if="about.newVersion.value !== null && !isOfferPutOff" class="new-version" role="status">
-      <span>{{ text.newVersion(about.name) }}</span>
-      <button class="panel-button primary" type="button" @click="about.newVersion.value?.()">{{ text.reload }}</button>
-      <button class="panel-button" type="button" @click="isOfferPutOff = true">{{ text.later }}</button>
-    </div>
+    <dialog
+      v-if="isOpen"
+      ref="dialog"
+      class="about-panel"
+      aria-labelledby="about-app-title"
+      @close="onClose"
+      @pointerdown="backdrop.onPointerDown"
+      @click="backdrop.onClick"
+    >
+      <h2 id="about-app-title">{{ text.aboutApp(about.name) }}</h2>
+      <p class="about-version">{{ text.version(about.version) }}</p>
+      <p class="runs">{{ text.runs[about.howItRuns] }}</p>
+      <p>
+        {{ text.license }}<a :href="LICENSE_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.unlicense }}<span class="new-tab">{{ text.newTab }}</span></a>{{ text.licenseAfter }}
+      </p>
+      <ul class="links">
+        <li><a :href="GUIDE_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.guide }}<span class="new-tab">{{ text.newTab }}</span></a></li>
+        <li><a :href="REPOSITORY_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.repository }}<span class="new-tab">{{ text.newTab }}</span></a></li>
+      </ul>
+      <button class="button" type="button" @click="dialog?.close()">{{ text.close }}</button>
+    </dialog>
   </footer>
 </template>
 
@@ -87,33 +90,35 @@ function close() {
   color: var(--look-accent);
 }
 
-.may-erase {
+.about-button:focus-visible {
+  outline: 2px solid var(--look-focus);
+  outline-offset: 2px;
+}
+
+/* What the browser may do to the data, and how to keep it safe: a note to read, not small print. */
+.about-app .may-erase {
   max-width: 70ch;
-}
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  display: grid;
-  place-items: center;
-  padding: 16px;
-  background: rgb(0 0 0 / 60%);
-}
-
-.about-panel {
-  box-sizing: border-box;
-  width: min(520px, 100%);
-  padding: 24px;
-  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: var(--look-control-border);
   border-radius: 8px;
-  background: var(--look-surface);
   font-size: 15px;
   color: var(--look-text);
 }
 
-.about-panel:focus {
-  outline: none;
+.about-panel {
+  box-sizing: border-box;
+  width: min(520px, calc(100vw - 32px));
+  padding: 24px;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
+  border-radius: 8px;
+  background: var(--look-ground);
+  font: 15px/1.5 var(--look-font);
+  color: var(--look-text);
+}
+
+.about-panel::backdrop {
+  background: rgb(0 0 0 / 60%);
 }
 
 .about-panel h2 {
@@ -138,45 +143,19 @@ function close() {
   color: var(--look-accent);
 }
 
+.about-panel a:focus-visible {
+  outline: 2px solid var(--look-focus);
+  outline-offset: 2px;
+}
+
+.new-tab {
+  margin-left: 0.3em;
+  font-size: 0.85em;
+  color: var(--look-soft);
+}
+
 .links {
   margin: 0 0 16px;
   padding-left: 20px;
-}
-
-.panel-button {
-  padding: 6px 14px;
-  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
-  border-radius: 6px;
-  background: var(--look-surface);
-  font: inherit;
-  color: var(--look-text);
-  cursor: pointer;
-}
-
-.panel-button.primary {
-  border-color: var(--look-accent);
-  background: var(--look-accent-fill);
-  color: var(--look-accent);
-  font-weight: 600;
-}
-
-.new-version {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  z-index: 10;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  max-width: calc(100% - 32px);
-  padding: 10px 16px;
-  border: 1px solid var(--look-accent);
-  border-radius: 8px;
-  background: var(--look-ground);
-  box-shadow: 0 4px 16px rgb(0 0 0 / 50%);
-  font-size: 15px;
-  color: var(--look-text);
-  transform: translateX(-50%);
 }
 </style>

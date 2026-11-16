@@ -488,27 +488,27 @@ defineExpose({ focus: () => field.value?.focus() })
 }
 
 .chip.stage {
-  background: rgb(94 234 212 / 0.14);
+  background: color-mix(in srgb, var(--look-teal) 14%, transparent);
   color: var(--look-teal);
 }
 
 .chip.character {
-  background: rgb(196 181 253 / 0.16);
+  background: color-mix(in srgb, var(--look-violet) 16%, transparent);
   color: var(--look-violet);
 }
 
 .chip.control {
-  background: rgb(251 191 36 / 0.14);
+  background: color-mix(in srgb, var(--look-amber) 14%, transparent);
   color: var(--look-amber);
 }
 
 .chip.pause {
-  background: rgb(147 197 253 / 0.14);
+  background: color-mix(in srgb, var(--look-blue) 14%, transparent);
   color: var(--look-blue);
 }
 
 .chip.invalid {
-  background: rgb(242 139 130 / 0.2);
+  background: color-mix(in srgb, var(--look-error) 20%, transparent);
   color: var(--look-error);
   text-decoration: underline wavy;
 }

@@ -92,6 +92,21 @@ describe('keeping the application offline', () => {
     expect(reloads()).toBe(1)
   })
 
+  it('offers a plain reload once another tab took the new version over', async () => {
+    const { registration, workers, offers, reloads, started } = setUp({ controlled: true })
+    await started
+    const next = new FakeWorker()
+    registration.found(next)
+    next.becomes('installed')
+    expect(offers).toHaveLength(1)
+    workers.takeOver()
+    expect(reloads()).toBe(0)
+    expect(offers).toHaveLength(2)
+    offers[1]?.()
+    expect(next.messages).toEqual([])
+    expect(reloads()).toBe(1)
+  })
+
   it('offers a version already waiting when the page opens', async () => {
     const registration = new FakeRegistration()
     const waiting = new FakeWorker()

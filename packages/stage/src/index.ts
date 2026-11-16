@@ -2,42 +2,25 @@
 import './textStyles.css'
 
 export { default as PlayerView } from './components/PlayerView.vue'
-export {
-  actionForKey,
-  actionForMouseButton,
-  actionForWheel,
-  actionOf,
-  DEFAULT_BINDINGS,
-  describeInput,
-  MOUSE_BUTTON,
-  rebind,
-  unbind,
-  type Bindings,
-  type InputBinding,
-  type PlayerAction,
-} from './input/bindings'
-export { AUTOSAVE_SLOT, createStorageSaveStore, MANUAL_SLOTS, PROGRESS_SLOT, slotsErased, type ErasedData, type SaveStore } from './saveStore'
-export { createTextboxLayout, STAGE_HEIGHT, STAGE_WIDTH, TEXTBOX_FONT_FAMILY, TEXTBOX_FONT_SIZE } from './textboxLayout'
+export { describeInput } from './input/bindings'
+export { AUTOSAVE_SLOT, createStorageSaveStore, PROGRESS_SLOT, slotsErased, type ErasedData, type SaveStore } from './saveStore'
+export { createTextboxLayout, TEXTBOX_FONT_FAMILY, TEXTBOX_FONT_SIZE } from './textboxLayout'
 export { default as MapView } from './components/MapView.vue'
 export { default as StagePicture } from './components/StagePicture.vue'
 export { default as SettingsScreen } from './components/SettingsScreen.vue'
 export { default as LanguageSelect } from './components/LanguageSelect.vue'
 export { default as AboutApp } from './components/AboutApp.vue'
-export { provideAboutApp, type AboutAppOptions } from './app/aboutApp'
-export { howItRuns, isHosted, keepsOffline, type HowItRuns } from './app/howItRuns'
-export { createStorageSettingsStore, DEFAULT_PLAYER_SETTINGS, parsePlayerSettings, TEXT_SPEED_RANGE, type PlayerSettings } from './settings/playerSettings'
+export { default as NewVersionBar } from './components/NewVersionBar.vue'
+export { provideApp } from './app/aboutApp'
+export { useBackdropClose } from './app/backdropClose'
+export { TOUCH_SCREEN_QUERY, useMediaQuery } from './app/mediaQuery'
+export { createStorageSettingsStore, DEFAULT_PLAYER_SETTINGS, type PlayerSettings } from './settings/playerSettings'
 export { default as AppLookButton } from './look/AppLookButton.vue'
-export { DEFAULT_APP_LOOK, type AppLook } from './look/appLook'
-export { provideAppLook, useAppLook } from './look/appLookState'
 export { LESS_MOTION, useSystemLessMotion, wantsLessMotion } from './settings/lessMotion'
 export {
-  isLocale,
-  LOCALES,
-  localeOf,
   localeOfChoice,
   provideLocale,
   readLanguageChoice,
-  systemLocale,
   useLocale,
   useMessages,
   writeLanguageChoice,

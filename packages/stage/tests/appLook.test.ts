@@ -11,6 +11,7 @@ import {
   presetOf,
   PRESET_LOOKS,
   READABLE_CONTRAST,
+  VISIBLE_CONTRAST,
   readableBoxColour,
   readableOver,
   worstContrast,
@@ -114,15 +115,32 @@ describe('the apps’ own look', () => {
   it('is kept in a storage, the default standing in when it cannot be read', () => {
     const storage = memoryStorage()
     const store = createAppLookStore(() => storage, 'app:look')
-    expect(store.read()).toEqual(DEFAULT_APP_LOOK)
-    expect(store.write(PRESET_LOOKS.graphite)).toBe(true)
-    expect(store.read()).toEqual(PRESET_LOOKS.graphite)
+    expect(store.read()).toEqual({ look: DEFAULT_APP_LOOK, custom: null })
+    expect(store.write({ look: PRESET_LOOKS.graphite, custom: null })).toBe(true)
+    expect(store.read()).toEqual({ look: PRESET_LOOKS.graphite, custom: null })
     storage.setItem('app:look', '{broken')
-    expect(store.read()).toEqual(DEFAULT_APP_LOOK)
+    expect(store.read()).toEqual({ look: DEFAULT_APP_LOOK, custom: null })
     const refusing = createAppLookStore(() => {
       throw new Error('denied')
     }, 'app:look')
-    expect(refusing.read()).toEqual(DEFAULT_APP_LOOK)
-    expect(refusing.write(DEFAULT_APP_LOOK)).toBe(false)
+    expect(refusing.read()).toEqual({ look: DEFAULT_APP_LOOK, custom: null })
+    expect(refusing.write({ look: DEFAULT_APP_LOOK, custom: null })).toBe(false)
+  })
+
+  it('keeps the last custom look beside a preset taken, to come back to', () => {
+    const storage = memoryStorage()
+    const store = createAppLookStore(() => storage, 'app:look')
+    const own: AppLook = { ...PRESET_LOOKS.paper, borderKind: 'dotted' }
+    store.write({ look: PRESET_LOOKS.dusk, custom: own })
+    expect(store.read()).toEqual({ look: PRESET_LOOKS.dusk, custom: own })
+  })
+
+  it('keeps a faint edge on controls when the look has no border, and a visible focus ring', () => {
+    const bare = lookVariables({ ...DEFAULT_APP_LOOK, borderKind: 'none' })
+    const edge = /^1px solid (#[0-9a-f]{6})$/.exec(bare['--look-control-border']!)?.[1]
+    expect(contrastRatio(edge!, bare['--look-ground']!)).toBeGreaterThanOrEqual(VISIBLE_CONTRAST)
+    expect(lookVariables(DEFAULT_APP_LOOK)['--look-control-border']).toBe('1px solid #2c3442')
+    expect(lookVariables(DEFAULT_APP_LOOK)['--look-focus']).toBe('#9eeaff')
+    expect(lookVariables({ ...PRESET_LOOKS.paper, accentColour: '#eeeeee' })['--look-focus']).toBe(PRESET_LOOKS.paper.textColour)
   })
 })

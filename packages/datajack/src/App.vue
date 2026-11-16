@@ -8,8 +8,7 @@ import {
   localeOfChoice,
   MapView,
   PlayerView,
-  provideAboutApp,
-  provideAppLook,
+  provideApp,
   provideLocale,
   SettingsScreen,
   useSystemLessMotion,
@@ -38,16 +37,11 @@ watchEffect(() => {
   document.documentElement.lang = locale.value
 })
 const text = computed(() => appMessages[locale.value])
-/** The version and how the page runs, for the library and the profiles; the service worker of the web build. */
-provideAboutApp({
-  name: 'Datajack',
-  version: __APP_VERSION__,
-  hasDesktopBridge: desktop !== undefined,
-  keepSafe: { en: appMessages.en.keepSafe, fr: appMessages.fr.keepSafe },
-  serviceWorker: import.meta.env.DEV ? null : './sw.js',
-})
-/** Datajack's own look, the same for every profile (it shows before one is chosen), never a game's. */
-provideAppLook(() => window.localStorage, 'datajack:look')
+/**
+ * The version and how the page runs, for the library and the profiles; the service worker of the web
+ * build; Datajack's own look, the same for every profile (it shows before one is chosen), never a game's.
+ */
+provideApp({ name: 'Datajack', hasDesktopBridge: desktop !== undefined, keepSafe: { en: appMessages.en.keepSafe, fr: appMessages.fr.keepSafe } })
 const profileStore: ProfileStore = desktop === undefined
   ? createBrowserProfileStore(() => window.localStorage, () => crypto.randomUUID(), () => new Date().toISOString())
   : createDesktopProfileStore(desktop)

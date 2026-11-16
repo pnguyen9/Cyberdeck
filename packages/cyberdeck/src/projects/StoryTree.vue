@@ -275,7 +275,7 @@ const stateClasses = (entryId: string) => ({
 }
 
 .focused {
-  outline: 2px solid var(--look-accent);
+  outline: 2px solid var(--look-focus);
   outline-offset: 2px;
 }
 

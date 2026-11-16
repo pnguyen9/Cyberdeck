@@ -26,7 +26,7 @@ const fr: MapMessages = {
   playOption: option => `Jouer à partir d’un parcours où «\u00a0${option}\u00a0» est proposé\u00a0: ici, d’autres valeurs le ferment`,
   forwardOnly: 'Ici, l’histoire ne fait qu’avancer',
   theEnd: 'Fin',
-  showValues: 'Ce que le journal montrait ici',
+  showValues: 'Ce qu’indiquait le journal ici',
 }
 
 export const mapMessages = { en, fr }

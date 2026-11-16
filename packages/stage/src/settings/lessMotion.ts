@@ -1,4 +1,5 @@
-import { onUnmounted, ref, type InjectionKey, type Ref } from 'vue'
+import type { InjectionKey, Ref } from 'vue'
+import { useMediaQuery } from '../app/mediaQuery'
 import type { MotionChoice } from './playerSettings'
 
 /** Whether the player asks for less motion, given to every picture of the player. */
@@ -18,10 +19,5 @@ export function wantsLessMotion(choice: MotionChoice, systemAsks: boolean): bool
 
 /** The system's wish for less motion, followed while the component lives. */
 export function useSystemLessMotion(): Readonly<Ref<boolean>> {
-  const asks = ref(systemAsksLessMotion())
-  const query = typeof window === 'undefined' ? undefined : window.matchMedia?.(LESS_MOTION_QUERY)
-  const follow = (event: MediaQueryListEvent) => { asks.value = event.matches }
-  query?.addEventListener('change', follow)
-  onUnmounted(() => query?.removeEventListener('change', follow))
-  return asks
+  return useMediaQuery(LESS_MOTION_QUERY)
 }

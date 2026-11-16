@@ -12,7 +12,7 @@ import { mapMessages } from '../i18n/mapMessages'
 const props = defineProps<{ story: PlayableStory; progress: ProgressData; closeLabel: string; ignoresLocks?: boolean; everyPath?: { isWhole: boolean } | null; switchLabel?: string }>()
 const emit = defineEmits<{ play: [save: SaveData]; close: []; switch: [] }>()
 const text = useMessages(mapMessages)
-/** What the point held of what the journal shows players, as it was then: shown on hovering it. */
+/** What a point held of what the journal shows players, as it was then: shown on hovering its card, or with its button. */
 function valuesAt(save: SaveData): string | undefined {
   if (props.everyPath != null) {
     // The author sees every value of the point, not only what players are shown.
@@ -23,11 +23,10 @@ function valuesAt(save: SaveData): string | undefined {
   return entries.length === 0 ? undefined : entries.map(entry => `${entry.name}: ${entry.items.join(', ')}`).join('\n')
 }
 
-/**
- * A screen without a mouse hovers nothing: there, a point whose values the journal showed has a
- * button that shows them over its card, until tapped again. The key of the point shown, if any.
- */
+/** The key of the point whose values are shown over its card, opened by its button, until it is pressed again. */
 const valuesShownOf = ref<string | null>(null)
+/** The option whose button is pointed at or focused, as `<point key>/<option id>`: its line stands out. */
+const highlighted = ref<string | null>(null)
 
 /** Playing from a point reached where the story goes only forward would take the player back: not while that holds. */
 function canPlayFrom(save: SaveData): boolean {
@@ -36,13 +35,15 @@ function canPlayFrom(save: SaveData): boolean {
 
 const CARD_WIDTH = 260
 const COLUMN_GAP = 160
+/** The gap between rows, at least: it grows when more lines run under a row than it holds. */
 const ROW_GAP = 40
 /** The straight run a line takes from its point before turning, carrying the option it follows. */
 const LABEL_RUN = 100
 /** A line going under a point turns down and back up within this much of the gap between columns. */
 const TURN = 40
-/** Lines running between the same rows, a little apart from one another. */
-const LANE_SPACING = 6
+/** Lines running under the same row, apart from one another, and away from the cards above and below. */
+const LANE_SPACING = 8
+const LANE_MARGIN = 12
 /** From the top of a card to its first option: the curves leave from the middle of each option's row. */
 const HEADER_HEIGHT = 64
 const CARD_PADDING_TOP = 10
@@ -54,48 +55,70 @@ const PADDING = 24
 const map = computed(() => layOutProgressMap(props.progress, props.story))
 
 const heightOf = (node: MapNode) => node.type === 'end' ? END_HEIGHT : HEADER_HEIGHT + node.options.length * OPTION_HEIGHT + FOOTER_HEIGHT
-const rowHeight = computed(() => Math.max(END_HEIGHT, ...map.value.nodes.map(heightOf)) + ROW_GAP)
-const positionOf = (node: MapNode) => ({ x: PADDING + node.column * (CARD_WIDTH + COLUMN_GAP), y: PADDING + node.row * rowHeight.value })
-const width = computed(() => PADDING * 2 + map.value.columnCount * (CARD_WIDTH + COLUMN_GAP) - COLUMN_GAP)
-/** The gap below the last row included, for the lines that run under it. */
-const height = computed(() => PADDING * 2 + map.value.rowCount * rowHeight.value)
+const xOf = (column: number) => PADDING + column * (CARD_WIDTH + COLUMN_GAP)
+
+/** Each point's values, worked out once for the map rather than at each drawing. */
+const values = computed(() => new Map(map.value.nodes.flatMap(node => node.type === 'point' ? [[node.key, valuesAt(node.point.save)] as const] : [])))
 
 /**
- * Lines from each option taken to where it led: where the point branches, a straight run first, with
- * the option it follows written over it; a line with a point in its way steps down between the rows,
- * runs under it and comes back up.
+ * The map laid out: where each card stands, and the lines from each option taken to where it led.
+ * Where the point branches, a line takes a straight run first, with the option it follows written
+ * over it; a line with a point in its way steps down between the rows, runs under it in a lane of
+ * its own, and comes back up. The gap between rows grows to hold all the lanes under a row.
  */
-const curves = computed(() => {
+const layout = computed(() => {
   const nodes = new Map(map.value.nodes.map(node => [node.key, node]))
-  const lanesTaken = new Map<number, number>()
-  return map.value.edges.flatMap(edge => {
+  const lanesUnder = new Map<number, number>()
+  const lines = map.value.edges.flatMap(edge => {
     const from = nodes.get(edge.from)
     const to = nodes.get(edge.to)
     if (from?.type !== 'point' || to === undefined) {
       return []
     }
-    const start = positionOf(from)
-    const end = positionOf(to)
-    const optionIndex = from.options.findIndex(option => option.optionId === edge.optionId)
-    const startX = start.x + CARD_WIDTH
-    const startY = start.y + HEADER_HEIGHT + optionIndex * OPTION_HEIGHT + OPTION_HEIGHT / 2
-    const endX = end.x
-    const endY = end.y + (to.type === 'end' ? END_HEIGHT / 2 : HEADER_HEIGHT / 2)
+    const startX = xOf(from.column) + CARD_WIDTH
     const runX = startX + (edge.label === null ? 0 : LABEL_RUN)
-    let path: string
+    const endX = xOf(to.column)
     const under = endX > runX + 2 * TURN ? edge.under : null
+    const lane = under === null ? 0 : lanesUnder.get(under) ?? 0
     if (under !== null) {
-      const lane = lanesTaken.get(under) ?? 0
-      lanesTaken.set(under, lane + 1)
-      const laneY = PADDING + (under + 1) * rowHeight.value - ROW_GAP / 2 + ((lane % 5) - 2) * LANE_SPACING
+      lanesUnder.set(under, lane + 1)
+    }
+    return [{ edge, from, to, startX, runX, endX, under, lane }]
+  })
+  const rowGap = Math.max(ROW_GAP, Math.max(0, ...lanesUnder.values()) * LANE_SPACING + 2 * LANE_MARGIN)
+  const rowHeight = Math.max(END_HEIGHT, ...map.value.nodes.map(heightOf)) + rowGap
+  const yOf = (row: number) => PADDING + row * rowHeight
+  const curves = lines.map(({ edge, from, to, startX, runX, endX, under, lane }) => {
+    const optionIndex = from.options.findIndex(option => option.optionId === edge.optionId)
+    const startY = yOf(from.row) + HEADER_HEIGHT + optionIndex * OPTION_HEIGHT + OPTION_HEIGHT / 2
+    const endY = yOf(to.row) + (to.type === 'end' ? END_HEIGHT / 2 : HEADER_HEIGHT / 2)
+    let path: string
+    if (under !== null) {
+      // The lanes under a row, centred in the gap below it.
+      const laneY = yOf(under + 1) - rowGap / 2 + (lane - ((lanesUnder.get(under) ?? 1) - 1) / 2) * LANE_SPACING
       path = `M ${startX} ${startY} H ${runX} C ${runX + TURN / 2} ${startY}, ${runX + TURN / 2} ${laneY}, ${runX + TURN} ${laneY} H ${endX - TURN} C ${endX - TURN / 2} ${laneY}, ${endX - TURN / 2} ${endY}, ${endX} ${endY}`
     } else {
       const bend = Math.max(40, (endX - runX) / 2)
       path = `M ${startX} ${startY} H ${runX} C ${runX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`
     }
-    return [{ key: `${edge.from}/${edge.optionId}/${edge.to}`, path, isUnder: under !== null, label: edge.label === null ? null : { text: edge.label, x: startX + 6, y: startY - 4 } }]
+    return {
+      key: `${edge.from}/${edge.optionId}/${edge.to}`,
+      option: `${edge.from}/${edge.optionId}`,
+      path,
+      isUnder: under !== null,
+      label: edge.label === null ? null : { text: edge.label, x: startX + 6, y: startY - 5 },
+    }
   })
+  return {
+    positions: new Map(map.value.nodes.map(node => [node.key, { x: xOf(node.column), y: yOf(node.row) }])),
+    curves,
+    width: PADDING * 2 + map.value.columnCount * (CARD_WIDTH + COLUMN_GAP) - COLUMN_GAP,
+    // The gap below the last row included, for the lines that run under it.
+    height: PADDING * 2 + map.value.rowCount * rowHeight,
+  }
 })
+/** The line of the option pointed at, drawn again over the others. */
+const highlightedCurves = computed(() => layout.value.curves.filter(curve => curve.option === highlighted.value))
 </script>
 
 <template>
@@ -110,11 +133,12 @@ const curves = computed(() => {
 
     <p v-if="map.nodes.length === 0" class="empty">{{ text.nothingExplored }}</p>
     <div v-else class="map-scroll">
-      <div class="map" :style="{ width: `${width}px`, height: `${height}px` }">
-        <svg class="curves" :width="width" :height="height" aria-hidden="true">
-          <path v-for="curve in curves" :key="curve.key" :d="curve.path" :data-under="curve.isUnder ? '' : undefined" />
-          <template v-for="curve in curves" :key="`${curve.key}/label`">
-            <text v-if="curve.label !== null" class="line-label" :x="curve.label.x" :y="curve.label.y">{{ curve.label.text }}</text>
+      <div class="map" :style="{ width: `${layout.width}px`, height: `${layout.height}px` }">
+        <svg class="curves" :width="layout.width" :height="layout.height" aria-hidden="true">
+          <path v-for="curve in layout.curves" :key="curve.key" :d="curve.path" :data-under="curve.isUnder ? '' : undefined" />
+          <path v-for="curve in highlightedCurves" :key="`${curve.key}/highlighted`" class="highlighted" :d="curve.path" />
+          <template v-for="curve in layout.curves" :key="`${curve.key}/label`">
+            <text v-if="curve.label !== null" class="line-label" :class="{ highlighted: curve.option === highlighted }" :x="curve.label.x" :y="curve.label.y">{{ curve.label.text }}</text>
           </template>
         </svg>
         <section
@@ -122,31 +146,40 @@ const curves = computed(() => {
           :key="node.key"
           class="node"
           :class="node.type"
-          :title="node.type === 'point' ? valuesAt(node.point.save) : undefined"
-          :style="{ left: `${positionOf(node).x}px`, top: `${positionOf(node).y}px`, width: `${CARD_WIDTH}px`, height: `${heightOf(node)}px` }"
+          :title="values.get(node.key)"
+          :style="{ left: `${layout.positions.get(node.key)?.x}px`, top: `${layout.positions.get(node.key)?.y}px`, width: `${CARD_WIDTH}px`, height: `${heightOf(node)}px` }"
         >
           <template v-if="node.type === 'point'">
             <div class="point-header" :style="{ height: `${HEADER_HEIGHT - CARD_PADDING_TOP}px` }">
               <p class="chapter">{{ node.chapterTitle ?? text.untitledChapter }}</p>
               <h2>{{ node.decisionName }}</h2>
               <button
-                v-if="valuesAt(node.point.save) !== undefined"
+                v-if="values.get(node.key) !== undefined"
                 class="values-button"
                 :aria-label="text.showValues"
                 :aria-expanded="valuesShownOf === node.key"
+                :aria-controls="`map-values-${node.key}`"
                 @click="valuesShownOf = valuesShownOf === node.key ? null : node.key"
               >
                 i
               </button>
             </div>
-            <p v-if="valuesShownOf === node.key" class="values" :style="{ top: `${HEADER_HEIGHT}px` }" @click="valuesShownOf = null">{{ valuesAt(node.point.save) }}</p>
+            <p v-if="valuesShownOf === node.key" :id="`map-values-${node.key}`" class="values" :style="{ top: `${HEADER_HEIGHT}px` }" @click="valuesShownOf = null">{{ values.get(node.key) }}</p>
             <ul class="options">
-              <li v-for="option in node.options" :key="option.optionId" :class="{ untried: !option.isTaken }">
+              <li
+                v-for="option in node.options"
+                :key="option.optionId"
+                :class="{ untried: !option.isTaken }"
+                @mouseenter="highlighted = `${node.key}/${option.optionId}`"
+                @mouseleave="highlighted = null"
+              >
                 <button
                   v-if="option.offeredIn !== null && canPlayFrom(option.offeredIn)"
                   class="option-play"
                   :title="text.playOption(option.text)"
                   :aria-label="text.playOption(option.text)"
+                  @focus="highlighted = `${node.key}/${option.optionId}`"
+                  @blur="highlighted = null"
                   @click="emit('play', option.offeredIn)"
                 >
                   ▶
@@ -173,6 +206,8 @@ const curves = computed(() => {
   background: #0b0d12;
   font: 16px/1.4 system-ui, sans-serif;
   color: #e6e9ef;
+  /* The map keeps the player's colours, whatever the application's look: its scrollbars stay dark. */
+  color-scheme: dark;
 }
 
 .map-header {
@@ -242,12 +277,22 @@ const curves = computed(() => {
   stroke-width: 2;
 }
 
+.curves path.highlighted {
+  stroke: #9eeaff;
+  stroke-width: 3.5;
+}
+
 .curves .line-label {
-  font-size: 11px;
+  font-size: 13px;
   fill: #8cc4d4;
   stroke: #0b0d12;
   stroke-width: 3px;
   paint-order: stroke;
+}
+
+.curves .line-label.highlighted {
+  font-weight: 600;
+  fill: #9eeaff;
 }
 
 .node {
@@ -346,7 +391,6 @@ const curves = computed(() => {
 }
 
 .values-button {
-  display: none;
   position: absolute;
   top: 8px;
   right: 8px;
@@ -361,15 +405,14 @@ const curves = computed(() => {
   cursor: pointer;
 }
 
-/* Only where nothing hovers: a mouse sees the values by pointing at the card. */
-@media (hover: none) {
-  .values-button {
-    display: block;
-  }
+.values-button:hover,
+.values-button:focus-visible,
+.values-button[aria-expanded='true'] {
+  border-color: #9eeaff;
+}
 
-  .point-header {
-    padding-right: 30px;
-  }
+.point-header {
+  padding-right: 30px;
 }
 
 .values {

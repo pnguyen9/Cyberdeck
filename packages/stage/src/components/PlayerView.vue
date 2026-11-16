@@ -1188,14 +1188,17 @@ function onKeydown(event: KeyboardEvent) {
  * swipe to the right goes back and one to the left moves on. Touches starting on a button, a field
  * or a grid's tile are theirs, and an open panel takes its own.
  */
+/** What a mouse button is bound to, done unless a panel is open: the left (a tap), the right (a long press), a side one. */
+function performMouseButton(button: number) {
+  const action = actionForMouseButton(bindings.value, button)
+  if (openPanel.value === 'none' && action !== null) {
+    perform(action)
+  }
+}
+
 const touch = createTouchTracker({
   accepts: event => openPanel.value === 'none' && !(event.target instanceof Element && event.target.closest('button, input, select, textarea, a, label, [role="grid"]') !== null),
-  onLongPress: () => {
-    const action = actionForMouseButton(bindings.value, MOUSE_BUTTON.secondary)
-    if (openPanel.value === 'none' && action !== null) {
-      perform(action)
-    }
-  },
+  onLongPress: () => performMouseButton(MOUSE_BUTTON.secondary),
   onSwipe: gesture => {
     const action = actionForSwipe(gesture)
     if (openPanel.value === 'none' && action !== null) {
@@ -1210,9 +1213,8 @@ function onScreenClick(event: MouseEvent) {
   }
   const isBounce = event.timeStamp - lastClickTime < MINIMUM_CLICK_INTERVAL_MILLISECONDS
   lastClickTime = event.timeStamp
-  const action = actionForMouseButton(bindings.value, event.button)
-  if (!isBounce && action !== null) {
-    perform(action)
+  if (!isBounce) {
+    performMouseButton(event.button)
   }
 }
 
@@ -1235,25 +1237,15 @@ function onMouseUp(event: MouseEvent) {
     return
   }
   event.preventDefault()
-  if (openPanel.value !== 'none') {
-    return
-  }
-  const action = actionForMouseButton(bindings.value, event.button)
-  if (action !== null) {
-    perform(action)
-  }
+  performMouseButton(event.button)
 }
 
 /** The right button opens no browser menu over the game: it does what it is bound to. */
 function onContextMenu(event: MouseEvent) {
   event.preventDefault()
   // A finger's long press is told by the touch tracker, the same on every device.
-  if (openPanel.value !== 'none' || touch.isFromTouch(event)) {
-    return
-  }
-  const action = actionForMouseButton(bindings.value, MOUSE_BUTTON.secondary)
-  if (action !== null) {
-    perform(action)
+  if (!touch.isFromTouch(event)) {
+    performMouseButton(MOUSE_BUTTON.secondary)
   }
 }
 
@@ -1507,6 +1499,8 @@ onUnmounted(() => {
   inset: 0;
   overflow: hidden;
   background: #000;
+  /* The game's own colours, whatever the look of the application around it: its controls stay dark. */
+  color-scheme: dark;
 }
 
 /* Under full-screen text, the menu goes to the bottom edge. */

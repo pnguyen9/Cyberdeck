@@ -1,15 +1,8 @@
 /* Controls shared by the editor's screens. */
 
 .editor-page {
-  box-sizing: border-box;
   max-width: 1120px;
-  min-height: 100vh;
-  margin: 0 auto;
   padding: 24px 16px 48px;
-  font: 16px/1.5 var(--look-font);
-  color: var(--look-text);
-  /* The readable box, when the look has one. */
-  background: var(--look-box);
 }
 
 .editor-page h1 {
@@ -27,63 +20,11 @@
   color: var(--look-muted);
 }
 
-.button {
-  padding: 8px 16px;
-  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
-  border-radius: 6px;
-  background: var(--look-surface);
-  font: inherit;
-  color: var(--look-text);
-  cursor: pointer;
-}
-
-.button.primary {
-  border-color: var(--look-accent);
-  background: var(--look-accent-fill);
-  color: var(--look-accent);
-  font-weight: 600;
-}
-
-.button.danger {
-  border-color: var(--look-error);
-  color: var(--look-error);
-}
-
-.button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.button.small {
-  padding: 4px 10px;
-  font-size: 14px;
-}
-
-.link-button {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: 14px;
-  color: var(--look-muted);
-  cursor: pointer;
-}
-
-.link-button:hover,
-.link-button:focus-visible {
-  color: var(--look-accent);
-}
-
-.link-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
 .text-input {
   box-sizing: border-box;
   width: 100%;
   padding: 8px 10px;
-  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
+  border: var(--look-control-border);
   border-radius: 6px;
   background: var(--look-surface);
   font: inherit;
@@ -118,7 +59,7 @@ textarea.text-input {
 }
 
 .file-button:focus-within {
-  outline: 2px solid var(--look-accent);
+  outline: 2px solid var(--look-focus);
   outline-offset: 2px;
   border-radius: 6px;
 }

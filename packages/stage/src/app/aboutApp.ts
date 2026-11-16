@@ -1,22 +1,18 @@
+/// <reference path="../appVersion.d.ts" />
 import { inject, provide, ref, type InjectionKey, type Ref } from 'vue'
 import type { Locale } from '../i18n/locale'
-import { howThisPageRuns, keepsOffline, type HowItRuns } from './howItRuns'
-import { keepOffline } from './offline'
+import { provideAppLook } from '../look/appLookState'
+import { howThisPageRuns, isHosted, type HowItRuns } from './howItRuns'
+import { keepOffline, SERVICE_WORKER } from './offline'
 
-/** Where the project lives, and its guide, online: the About panel links to them. */
-export const REPOSITORY_ADDRESS = 'https://github.com/pnguyen9/Cyberdeck'
-export const LICENSE_ADDRESS = `${REPOSITORY_ADDRESS}/blob/main/LICENSE`
-export const GUIDE_ADDRESS = 'https://pnguyen9.github.io/Cyberdeck/guide/'
+export { GUIDE_ADDRESS, LICENSE_ADDRESS, REPOSITORY_ADDRESS } from './projectAddresses'
 
-export interface AboutAppOptions {
+export interface AppOptions {
   /** `Cyberdeck` or `Datajack`. */
   name: string
-  version: string
   hasDesktopBridge: boolean
   /** What keeps the work safe should the browser erase it, in each language: exporting it. */
   keepSafe: Readonly<Record<Locale, string>>
-  /** The service worker's address in a built page; null on the development server, which has none. */
-  serviceWorker: string | null
 }
 
 /** What the first screen says of the application: its version, how it runs, and a new version once online. */
@@ -27,21 +23,25 @@ export interface AboutApp {
   keepSafe: Readonly<Record<Locale, string>>
   /** Reloads into the new version waiting; null while there is none. */
   newVersion: Readonly<Ref<(() => void) | null>>
+  /** *Later* was said to the new version: it is offered again on the next visit. */
+  isNewVersionPutOff: Ref<boolean>
 }
 
 const ABOUT_APP: InjectionKey<AboutApp> = Symbol('about-app')
 
 /**
- * Given once at the application's root: says how the page runs, and on a web host registers the
- * service worker that keeps the application offline and tells of new versions.
+ * Given once at the application's root: its version (`__APP_VERSION__`) and how the page runs, for
+ * its first screen and the setting of its look; its own look, kept under `<name>:look`; and on a
+ * web host, the service worker that keeps the application offline and tells of new versions (never
+ * on the development server, whose files change as they are edited).
  */
-export function provideAboutApp(options: AboutAppOptions): AboutApp {
+export function provideApp(options: AppOptions): AboutApp {
   const how = howThisPageRuns(options.hasDesktopBridge)
   const newVersion = ref<(() => void) | null>(null)
-  if (options.serviceWorker !== null && keepsOffline(how, true) && 'serviceWorker' in navigator) {
+  if (!import.meta.env.DEV && isHosted(how) && 'serviceWorker' in navigator) {
     keepOffline(
       navigator.serviceWorker,
-      options.serviceWorker,
+      `./${SERVICE_WORKER}`,
       takeOver => {
         newVersion.value = takeOver
       },
@@ -55,8 +55,9 @@ export function provideAboutApp(options: AboutAppOptions): AboutApp {
       // A browser refusing service workers (private windows, some settings) still runs the page, online.
     })
   }
-  const about: AboutApp = { name: options.name, version: options.version, howItRuns: how, keepSafe: options.keepSafe, newVersion }
+  const about: AboutApp = { name: options.name, version: __APP_VERSION__, howItRuns: how, keepSafe: options.keepSafe, newVersion, isNewVersionPutOff: ref(false) }
   provide(ABOUT_APP, about)
+  provideAppLook(() => window.localStorage, `${options.name.toLowerCase()}:look`)
   return about
 }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { languageName, languagesOf, type ProjectDocument } from '@cyberdeck/core'
-import { AboutApp, AppLookButton, useLocale, useMessages, type ErasedData, type SaveStore } from '@cyberdeck/stage'
+import { AboutApp, AppLookButton, NewVersionBar, useLocale, useMessages, type ErasedData, type SaveStore } from '@cyberdeck/stage'
 import { onMounted, ref, shallowRef } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { errorText } from '../i18n/errorMessages'
@@ -113,12 +113,13 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
 </script>
 
 <template>
-  <main class="editor-page">
+  <main class="app-screen editor-page">
+    <NewVersionBar />
     <header class="page-header">
       <h1>Cyberdeck</h1>
       <div class="header-tools">
         <LanguageSelect />
-        <AppLookButton class="button" app="Cyberdeck" />
+        <AppLookButton class="button" />
       </div>
     </header>
 
@@ -203,13 +204,6 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
 
 .erase {
   margin-top: 40px;
-}
-
-.header-tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
 }
 
 .page-header {

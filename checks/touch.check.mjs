@@ -3,10 +3,10 @@
 // shown without a mouse to point at it; held upright, the device is asked to turn, and sideways, offered
 // full screen. In Cyberdeck's preview of the Minesweeper sample, tapping a tile opens it and a long
 // press flags one, neither taken for a swipe.
-import { readdirSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { createProfile, createProject, createProjectWithSample, exportGame, installGame, pause, shownStep } from './harness.mjs'
+import { createProfile, createProject, exportSampleGame, installGame, middleOf, middleOfElement, pause, shownStep } from './harness.mjs'
 
 export const app = 'datajack'
 
@@ -45,32 +45,33 @@ const longPress = (page, x, y) => touch(page, [{ x, y }], 800)
 /** Across the screen, in a few steps: `dx` positive to the right. */
 const swipe = (page, x, y, dx) => touch(page, Array.from({ length: 6 }, (_, step) => ({ x: x + dx * step / 5, y: y + step })))
 
-const middleOf = (page, selector) => page.evaluate(`(() => { const rect = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 } })()`)
-
-export default async function check(page, { url, assets, serve }) {
-  await createProjectWithSample(page, await serve('cyberdeck'), 'The Letter')
-  await page.clickButton('Cast & files', '.tab')
-  await page.waitFor('.drop-zone .file-input')
-  await page.setFiles('.drop-zone .file-input', readdirSync(assets).map(fileName => `${assets}/${fileName}`))
-  await pause(1000)
-  const archive = await exportGame(page, 'The Letter 1.0.zip')
+export default async function check(page, { url, assets, output, serve }) {
+  const archive = await exportSampleGame(`${output}/cyberdeck`, await serve('cyberdeck'), assets)
   await createProfile(page, url, 'Pascal')
   await installGame(page, archive)
 
   await emulatePhone(page, 'portrait')
-  page.check('the phone is a screen without a mouse', await page.evaluate(`matchMedia('(hover: none) and (pointer: coarse)').matches`), true)
+  page.check('the phone is a screen without a mouse', await page.evaluate(`matchMedia('(hover: none)').matches`), true)
   await page.clickButton('Play', '.button')
   await page.waitFor('.viewport .text')
   await pause(400)
   const offer = () => page.evaluate(`document.querySelector('.landscape-offer')?.innerText.replace(/\\s+/g, ' ').trim() ?? null`)
+  const focused = () => page.evaluate(`document.activeElement?.textContent.trim()`)
   page.check('held upright, the device is asked to turn', await offer(), 'Turn your device sideways: the game is played in landscape. Play in full screen Not now')
+  page.check('in a dialog over the game, full screen focused', [await page.evaluate(`document.querySelector('.landscape-offer').getAttribute('role')`), await focused()], ['dialog', 'Play in full screen'])
   await page.screenshot('upright')
   await emulatePhone(page, 'landscape')
   page.check('sideways, full screen is offered', await offer(), 'The game is best played in full screen. Play in full screen Not now')
+  page.check('in a region beside the game, full screen focused', [await page.evaluate(`document.querySelector('.landscape-offer').getAttribute('role')`), await focused()], ['region', 'Play in full screen'])
+  page.check('clear of the Leave button', await page.evaluate(`(() => {
+    const offer = document.querySelector('.landscape-offer').getBoundingClientRect()
+    const leave = document.querySelector('.leave-button').getBoundingClientRect()
+    return offer.left >= leave.right || offer.top >= leave.bottom
+  })()`), true)
   await page.screenshot('sideways-offer')
-  await page.clickButton('Not now', '.landscape-offer .button')
+  await page.press('Escape')
   await pause(200)
-  page.check('not now leaves the game alone', await offer(), null)
+  page.check('Escape says not now, leaving the game alone', [await offer(), await page.evaluate(`!!document.querySelector('.viewport .text')`)], [null, true])
   await emulatePhone(page, 'portrait')
   page.check('and holds for this game', await offer(), null)
   await emulatePhone(page, 'landscape')
@@ -93,7 +94,7 @@ export default async function check(page, { url, assets, serve }) {
   page.check('a tap shows the text again, the long press having moved nothing on', [await page.evaluate(`document.querySelector('.viewport .textbox') !== null`), await startsWith('Somewhere')], [true, true])
 
   // The buttons are fingers' too: a tap on Settings opens them, and a drag scrolls them, not the stage.
-  const settingsButton = await page.evaluate(`(() => { const rect = [...document.querySelectorAll('.quick-button')].find(button => button.textContent.trim() === 'Settings').getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 } })()`)
+  const settingsButton = await middleOfElement(page, `[...document.querySelectorAll('.quick-button')].find(button => button.textContent.trim() === 'Settings')`)
   await tap(page, settingsButton.x, settingsButton.y)
   page.check('a tap on a button presses it', await page.evaluate(`!!document.querySelector('.viewport .overlay[role=dialog]')`), true)
   await page.evaluate(`[...document.querySelectorAll('.viewport button')].find(button => button.textContent.trim() === 'Controls')?.click()`)
@@ -127,7 +128,7 @@ export default async function check(page, { url, assets, serve }) {
     await tap(page, screen.x, screen.y)
   }
   await pause(600)
-  const beginner = await page.evaluate(`(() => { const rect = [...document.querySelectorAll('.viewport .option')].find(option => option.textContent.trim().startsWith('Beginner')).getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 } })()`)
+  const beginner = await middleOfElement(page, `[...document.querySelectorAll('.viewport .option')].find(option => option.textContent.trim().startsWith('Beginner'))`)
   await tap(page, beginner.x, beginner.y)
   await pause(1200)
   const tiles = () => page.evaluate(`[...document.querySelectorAll('.viewport .grid-menu .tile')].map(tile => tile.getAttribute('aria-label').split(': ')[1] ?? '')`)

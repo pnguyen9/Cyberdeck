@@ -247,7 +247,7 @@ provide(EDITOR, { open: props.open, project, chapters, scenes, documents, langua
 </script>
 
 <template>
-  <main class="editor-page">
+  <main class="app-screen editor-page">
     <header class="header">
       <button class="link-button" @click="whenFree(() => emit('close'))">{{ projectsText.backToProjects }}</button>
       <div class="title-row">
@@ -260,9 +260,9 @@ provide(EDITOR, { open: props.open, project, chapters, scenes, documents, langua
           {{ project.name }}
           <button class="link-button" @click="renaming = project.name">{{ common.rename }}</button>
         </h1>
-        <div class="header-actions">
+        <div class="header-tools">
           <LanguageSelect />
-          <AppLookButton class="button" app="Cyberdeck" />
+          <AppLookButton class="button" />
           <button class="button" :title="text.keyboardShortcuts" @click="isPanelOpen = true">{{ text.shortcuts }}</button>
           <button class="button" @click="backUp">{{ text.backUp }}</button>
           <button class="button primary" :disabled="chapters.length === 0" @click="preview(null)">{{ text.preview }}</button>
@@ -359,13 +359,6 @@ h1 .link-button {
 .rename .text-input {
   width: auto;
   min-width: 240px;
-}
-
-.header-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
 }
 
 .story-language {

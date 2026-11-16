@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef } from 'vue'
+import { useAboutApp } from '../app/aboutApp'
+import { useBackdropClose } from '../app/backdropClose'
 import { useLocale, useMessages } from '../i18n/locale'
 import { lookMessages } from '../i18n/lookMessages'
 import {
@@ -8,32 +10,55 @@ import {
   FONT_CHOICES,
   FONT_STACKS,
   LOOK_PRESETS,
+  lookVariables,
   PRESET_LOOKS,
   presetOf,
   READABLE_CONTRAST,
+  VISIBLE_CONTRAST,
   worstContrast,
   type AppLook,
   type Corners,
+  type LookPreset,
 } from './appLook'
 import { useAppLook } from './appLookState'
 import ColourField from './ColourField.vue'
 
 defineOptions({ inheritAttrs: false })
 /** The button opening the setting of the application's own look, and the setting, over the screen. */
-const props = defineProps<{ app: string }>()
-const look = useAppLook()
+const { look, custom } = useAppLook()
+const appName = useAboutApp()?.name ?? ''
 const locale = useLocale()
 const text = useMessages(lookMessages)
 const dialog = useTemplateRef<HTMLDialogElement>('dialog')
+const backdrop = useBackdropClose(dialog)
 const isOpen = ref(false)
+
+/** Each preset's button wears it, as the page behind the screens would. */
+const PRESET_SWATCHES = Object.fromEntries(LOOK_PRESETS.map(name => [name, lookVariables(PRESET_LOOKS[name])])) as Record<LookPreset, Record<string, string>>
+const customSwatch = computed(() => custom.value === null ? null : lookVariables(custom.value))
 
 const preset = computed(() => presetOf(look.value))
 const number = computed(() => new Intl.NumberFormat(locale.value, { maximumFractionDigits: 1 }))
-const textContrast = computed(() => worstContrast(look.value.textColour, look.value))
-const accentContrast = computed(() => worstContrast(look.value.accentColour, look.value))
-const isLow = computed(() => Math.min(textContrast.value, accentContrast.value) < READABLE_CONTRAST)
+
+/** The contrasts, read again once a colour is chosen rather than at each key typed or step of the picker dragged. */
+const contrasts = ref(contrastsOf(look.value))
+function contrastsOf(shown: AppLook) {
+  return {
+    text: worstContrast(shown.textColour, shown),
+    accent: worstContrast(shown.accentColour, shown),
+    // Without borders, controls keep a faint edge that always stands out enough.
+    border: shown.borderKind === 'none' ? null : worstContrast(shown.borderColour, shown),
+  }
+}
+function refreshContrasts() {
+  contrasts.value = contrastsOf(look.value)
+}
+const isTextLow = computed(() => Math.min(contrasts.value.text, contrasts.value.accent) < READABLE_CONTRAST)
+/** The presets' borders are drawn soft on purpose (their buttons are told by their fill too): only a look of one's own is warned. */
+const isBorderLow = computed(() => preset.value === null && contrasts.value.border !== null && contrasts.value.border < VISIBLE_CONTRAST)
 
 async function open() {
+  refreshContrasts()
   isOpen.value = true
   await nextTick()
   dialog.value?.showModal()
@@ -49,25 +74,9 @@ function changeCorner(index: number, colour: string) {
   change({ corners: corners as unknown as Corners })
 }
 
-/** How a preset looks, on its button. */
-function swatchOf(preset: (typeof LOOK_PRESETS)[number]) {
-  const shown = PRESET_LOOKS[preset]
-  const [topLeft, topRight, bottomLeft, bottomRight] = shown.corners
-  const flat = shown.backgroundKind === 'colour'
-  return {
-    background: flat ? shown.backgroundColour : `linear-gradient(to right, ${bottomLeft}, ${bottomRight})`,
-    '--swatch-top': flat ? 'none' : `linear-gradient(to right, ${topLeft}, ${topRight})`,
-    color: shown.textColour,
-    fontFamily: FONT_STACKS[shown.font],
-    border: `${shown.borderKind === 'double' ? 3 : 1}px ${shown.borderKind === 'none' ? 'solid transparent' : `${shown.borderKind} ${shown.borderColour}`}`,
-  }
-}
-
-/** A click on the shade around the setting closes it, as Escape does. */
 function onDialogClick(event: MouseEvent) {
-  if (event.target === dialog.value) {
-    dialog.value?.close()
-  }
+  backdrop.onClick(event)
+  refreshContrasts()
 }
 </script>
 
@@ -79,17 +88,19 @@ function onDialogClick(event: MouseEvent) {
     class="app-look"
     aria-labelledby="app-look-title"
     @close="isOpen = false"
+    @pointerdown="backdrop.onPointerDown"
     @click="onDialogClick"
+    @change="refreshContrasts"
     @keydown.stop
   >
     <header class="look-header">
-      <h2 id="app-look-title">{{ text.lookOfApp(props.app) }}</h2>
-      <button type="button" class="look-button" @click="dialog?.close()">{{ text.close }}</button>
+      <h2 id="app-look-title">{{ text.lookOfApp(appName) }}</h2>
+      <button type="button" class="button" @click="dialog?.close()">{{ text.close }}</button>
     </header>
-    <p class="look-muted">{{ text.onlyApp(props.app) }}</p>
+    <p class="look-muted">{{ text.onlyApp(appName) }}</p>
 
-    <h3>{{ text.presets }}</h3>
-    <div class="presets" role="group" :aria-label="text.presets">
+    <h3 id="app-look-presets">{{ text.presets }}</h3>
+    <div class="presets" role="group" aria-labelledby="app-look-presets">
       <button
         v-for="name in LOOK_PRESETS"
         :key="name"
@@ -99,11 +110,21 @@ function onDialogClick(event: MouseEvent) {
         :data-preset="name"
         @click="look = PRESET_LOOKS[name]"
       >
-        <span class="swatch" :style="swatchOf(name)" aria-hidden="true"><span>Aa</span></span>
+        <span class="swatch look-swatch" :style="PRESET_SWATCHES[name]" aria-hidden="true"><span>Aa</span></span>
         <span>{{ text.presetNames[name] }}<template v-if="name === 'cyberpunk'"> ({{ text.byDefault }})</template></span>
       </button>
+      <button
+        v-if="custom !== null && customSwatch !== null"
+        type="button"
+        class="preset"
+        :aria-pressed="preset === null"
+        data-preset="custom"
+        @click="look = custom"
+      >
+        <span class="swatch look-swatch" :style="customSwatch" aria-hidden="true"><span>Aa</span></span>
+        <span>{{ text.custom }}</span>
+      </button>
     </div>
-    <p v-if="preset === null" class="look-muted">{{ text.custom }}</p>
 
     <h3>{{ text.inDepth }}</h3>
     <fieldset>
@@ -133,10 +154,6 @@ function onDialogClick(event: MouseEvent) {
       </label>
       <ColourField :model-value="look.textColour" :label="text.textColour" @update:model-value="colour => change({ textColour: colour })" />
       <ColourField :model-value="look.accentColour" :label="text.accentColour" @update:model-value="colour => change({ accentColour: colour })" />
-      <p class="contrast" :class="{ low: isLow }" role="status">
-        {{ text.contrast(number.format(textContrast), number.format(accentContrast)) }}
-        <template v-if="isLow"><br>{{ text.lowContrast }}</template>
-      </p>
     </fieldset>
 
     <fieldset>
@@ -150,9 +167,16 @@ function onDialogClick(event: MouseEvent) {
       </label>
     </fieldset>
 
+    <p class="contrast" :class="{ low: isTextLow || isBorderLow }" role="status">
+      {{ text.contrast(number.format(contrasts.text), number.format(contrasts.accent)) }}
+      <template v-if="contrasts.border !== null">{{ text.borderContrast(number.format(contrasts.border)) }}</template>
+      <template v-if="isTextLow"><br>{{ text.lowContrast }}</template>
+      <template v-if="isBorderLow"><br>{{ text.lowBorders }}</template>
+    </p>
+
     <footer class="look-footer">
-      <button type="button" class="look-button" :disabled="preset === 'cyberpunk'" @click="look = DEFAULT_APP_LOOK">{{ text.backToDefault }}</button>
-      <button type="button" class="look-button primary" @click="dialog?.close()">{{ text.close }}</button>
+      <button type="button" class="button" :disabled="preset === 'cyberpunk'" @click="look = DEFAULT_APP_LOOK">{{ text.backToDefault }}</button>
+      <button type="button" class="button primary" @click="dialog?.close()">{{ text.close }}</button>
     </footer>
   </dialog>
 </template>
@@ -163,11 +187,11 @@ function onDialogClick(event: MouseEvent) {
   width: min(640px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
   padding: 20px 24px;
-  border: var(--look-border-width, 1px) var(--look-border-style, solid) var(--look-border-colour, #2c3442);
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 10px;
-  background: var(--look-ground, #0b0d12);
-  font: 15px/1.5 var(--look-font, system-ui, sans-serif);
-  color: var(--look-text, #e6e9ef);
+  background: var(--look-ground);
+  font: 15px/1.5 var(--look-font);
+  color: var(--look-text);
 }
 
 .app-look::backdrop {
@@ -184,7 +208,7 @@ function onDialogClick(event: MouseEvent) {
 h2 {
   margin: 0;
   font-size: 22px;
-  color: var(--look-accent, #9eeaff);
+  color: var(--look-accent);
 }
 
 h3 {
@@ -193,12 +217,12 @@ h3 {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--look-muted, #7b8597);
+  color: var(--look-muted);
 }
 
 .look-muted {
   margin: 4px 0;
-  color: var(--look-muted, #7b8597);
+  color: var(--look-muted);
 }
 
 .help {
@@ -217,41 +241,38 @@ h3 {
   align-items: center;
   gap: 8px;
   padding: 6px 12px 6px 6px;
-  border: var(--look-border-width, 1px) var(--look-border-style, solid) var(--look-border-colour, #2c3442);
+  border: var(--look-control-border);
   border-radius: 6px;
-  background: var(--look-surface, #11151d);
+  background: var(--look-surface);
   font: inherit;
-  color: var(--look-text, #e6e9ef);
+  color: var(--look-text);
   cursor: pointer;
 }
 
 .preset[aria-pressed='true'] {
-  border-color: var(--look-accent, #9eeaff);
-  outline: 2px solid var(--look-accent, #9eeaff);
+  border-color: var(--look-focus);
+  outline: 2px solid var(--look-focus);
   outline-offset: -1px;
   font-weight: 600;
 }
 
+/* The ground, as behind the screens (appLook.css), in the preset's own variables. */
 .swatch {
   display: inline-grid;
   place-items: center;
   box-sizing: border-box;
   width: 36px;
   height: 28px;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 4px;
-  position: relative;
+  font-family: var(--look-font);
   font-size: 14px;
   font-weight: 600;
+  color: var(--look-text);
 }
 
-/* The top edge's gradient over the bottom's, fading out downwards, as behind the screens. */
 .swatch::before {
-  content: '';
-  position: absolute;
-  inset: 0;
   border-radius: 3px;
-  background-image: var(--swatch-top);
-  mask-image: linear-gradient(to bottom, #000, transparent);
 }
 
 .swatch > span {
@@ -264,7 +285,7 @@ fieldset {
   gap: 8px;
   margin: 0 0 12px;
   padding: 8px 12px 12px;
-  border: var(--look-border-width, 1px) var(--look-border-style, solid) var(--look-border-colour, #2c3442);
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
 }
 
@@ -300,21 +321,21 @@ legend {
 
 select {
   padding: 4px 6px;
-  border: var(--look-border-width, 1px) var(--look-border-style, solid) var(--look-border-colour, #2c3442);
+  border: var(--look-control-border);
   border-radius: 4px;
-  background: var(--look-surface, #11151d);
+  background: var(--look-surface);
   font: inherit;
-  color: var(--look-text, #e6e9ef);
+  color: var(--look-text);
 }
 
 .contrast {
-  margin: 0;
+  margin: 0 0 12px;
   font-size: 14px;
-  color: var(--look-soft, #a3acbb);
+  color: var(--look-soft);
 }
 
 .contrast.low {
-  color: var(--look-warning, #f6c177);
+  color: var(--look-warning);
 }
 
 .look-footer {
@@ -325,30 +346,8 @@ select {
   margin-top: 8px;
 }
 
-.look-button {
-  padding: 6px 14px;
-  border: var(--look-border-width, 1px) var(--look-border-style, solid) var(--look-border-colour, #2c3442);
-  border-radius: 6px;
-  background: var(--look-surface, #11151d);
-  font: inherit;
-  color: var(--look-text, #e6e9ef);
-  cursor: pointer;
-}
-
-.look-button.primary {
-  border-color: var(--look-accent, #9eeaff);
-  background: var(--look-accent-fill, #0e2a36);
-  color: var(--look-accent, #9eeaff);
-  font-weight: 600;
-}
-
-.look-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
 .app-look :focus-visible {
-  outline: 2px solid var(--look-accent, #9eeaff);
+  outline: 2px solid var(--look-focus);
   outline-offset: 2px;
 }
 </style>

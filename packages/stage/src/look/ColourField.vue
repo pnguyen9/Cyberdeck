@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, useId, watch } from 'vue'
 import { useMessages } from '../i18n/locale'
 import { lookMessages } from '../i18n/lookMessages'
 import { isHexColour } from './appLook'
@@ -8,16 +8,23 @@ import { isHexColour } from './appLook'
 const colour = defineModel<string>({ required: true })
 defineProps<{ label: string }>()
 const text = useMessages(lookMessages)
+const helpId = useId()
 
 const typed = ref(colour.value)
 watch(colour, value => {
   typed.value = value
 })
+/** What is typed, with its `#` added when left out. */
+const candidate = computed(() => {
+  const trimmed = typed.value.trim()
+  return trimmed.startsWith('#') ? trimmed : `#${trimmed}`
+})
+const isValid = computed(() => isHexColour(candidate.value))
+
 function onTyped(value: string) {
   typed.value = value
-  const candidate = value.trim().startsWith('#') ? value.trim() : `#${value.trim()}`
-  if (isHexColour(candidate)) {
-    colour.value = candidate.toLowerCase()
+  if (isValid.value) {
+    colour.value = candidate.value.toLowerCase()
   }
 }
 </script>
@@ -28,17 +35,22 @@ function onTyped(value: string) {
       <input type="color" :value="colour" @input="colour = ($event.target as HTMLInputElement).value">
       <span>{{ label }}</span>
     </label>
-    <input
-      class="hex"
-      :value="typed"
-      :aria-label="text.hexadecimal(label)"
-      :aria-invalid="!isHexColour(typed.trim().startsWith('#') ? typed.trim() : `#${typed.trim()}`)"
-      maxlength="7"
-      spellcheck="false"
-      autocomplete="off"
-      @input="onTyped(($event.target as HTMLInputElement).value)"
-      @blur="typed = colour"
-    >
+    <label class="typed">
+      <span class="format">{{ text.asHex }}</span>
+      <input
+        class="hex"
+        :value="typed"
+        :aria-label="text.hexadecimal(label)"
+        :aria-invalid="!isValid"
+        :aria-describedby="isValid ? undefined : helpId"
+        maxlength="7"
+        spellcheck="false"
+        autocomplete="off"
+        @input="onTyped(($event.target as HTMLInputElement).value)"
+        @blur="typed = colour"
+      >
+    </label>
+    <span v-if="!isValid" :id="helpId" class="invalid">{{ text.notHex }}</span>
   </div>
 </template>
 
@@ -47,20 +59,26 @@ function onTyped(value: string) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 8px;
+  gap: 4px 12px;
 }
 
-.picker {
+.picker,
+.typed {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.format {
+  font-size: 14px;
+  color: var(--look-soft);
 }
 
 input[type='color'] {
   width: 36px;
   height: 28px;
   padding: 0;
-  border: var(--look-border-width, 1px) var(--look-border-style, solid) var(--look-border-colour, #2c3442);
+  border: var(--look-control-border);
   border-radius: 4px;
   background: none;
   cursor: pointer;
@@ -69,14 +87,20 @@ input[type='color'] {
 .hex {
   width: 6.5em;
   padding: 3px 6px;
-  border: var(--look-border-width, 1px) var(--look-border-style, solid) var(--look-border-colour, #2c3442);
+  border: var(--look-control-border);
   border-radius: 4px;
-  background: var(--look-surface, #11151d);
+  background: var(--look-surface);
   font: 14px ui-monospace, monospace;
-  color: var(--look-text, #e6e9ef);
+  color: var(--look-text);
 }
 
 .hex[aria-invalid='true'] {
-  outline: 2px solid var(--look-error, #f28b82);
+  outline: 2px solid var(--look-error);
+}
+
+.invalid {
+  flex-basis: 100%;
+  font-size: 14px;
+  color: var(--look-error);
 }
 </style>

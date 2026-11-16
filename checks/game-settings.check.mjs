@@ -35,7 +35,7 @@ export default async function check(page, { url, serve }) {
   await page.press('Escape')
   await pause(300)
 
-  await page.clickButton('Settings', '.header-actions .button')
+  await page.clickButton('Settings', '.header-tools .button')
   await page.waitFor('.settings-screen .overlay')
   await accessibility(page)
   await pause(100)

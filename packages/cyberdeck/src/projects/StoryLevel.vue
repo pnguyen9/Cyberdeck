@@ -417,7 +417,7 @@ function onKeydown(event: KeyboardEvent) {
   padding: 8px 10px 10px;
   border: 1px solid color-mix(in srgb, var(--look-violet) 40%, transparent);
   border-radius: 10px;
-  background: rgb(196 181 253 / 0.05);
+  background: color-mix(in srgb, var(--look-violet) 5%, transparent);
 }
 
 .route-heading {

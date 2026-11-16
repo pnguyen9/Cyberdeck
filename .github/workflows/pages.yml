@@ -1,7 +1,9 @@
 # Publishes both applications and the guide on GitHub Pages, https://pnguyen9.github.io/Cyberdeck/,
 # on each release tag (v3.4.0…), or by hand from the Actions tab. Only the latest version is online;
 # the address never changes, so what people keep in their browser stays from one version to the next.
-# The repository's Settings → Pages → Source must be "GitHub Actions".
+# Once, in the repository's settings: Pages → Source must be "GitHub Actions", and Environments →
+# github-pages → Deployment branches and tags must allow the tags `v*` (add a tag rule): by default
+# the environment accepts the default branch alone, and refuses a run started by a tag.
 name: Pages
 
 on:

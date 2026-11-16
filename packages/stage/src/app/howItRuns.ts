@@ -28,14 +28,6 @@ export function isHosted(how: HowItRuns): boolean {
   return how === 'web' || how === 'installed'
 }
 
-/**
- * Whether the page keeps its files on the device with its service worker: the web build only, never
- * the development server (whose files change as they are edited), the desktop or the double-click build.
- */
-export function keepsOffline(how: HowItRuns, isBuilt: boolean): boolean {
-  return isBuilt && isHosted(how)
-}
-
 /** How this page runs, from the browser. */
 export function howThisPageRuns(hasDesktopBridge: boolean): HowItRuns {
   const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches === true

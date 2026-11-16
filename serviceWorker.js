@@ -1,8 +1,9 @@
-// The service worker of the web build, written by hand: webBuild.ts puts CACHE_PREFIX, CACHE_NAME and
-// FILES before this code. It keeps every file of the release on the device, so that the application
-// opens offline, and answers from them first. A new release waits beside the running one until the
-// page, asked by the player or author, tells it to take over; then the older release's files go.
-/* global CACHE_PREFIX, CACHE_NAME, FILES */
+// The service worker of the web build, written by hand: webBuild.ts puts CACHE_PREFIX, CACHE_NAME,
+// FILES and TAKE_OVER (the page's message, from the stage's offline.ts) before this code. It keeps
+// every file of the release on the device, so that the application opens offline, and answers from
+// them first. A new release waits beside the running one until the page, asked by the player or
+// author, tells it to take over; then the older release's files go.
+/* global CACHE_PREFIX, CACHE_NAME, FILES, TAKE_OVER */
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(FILES.map(path => new Request(path, { cache: 'reload' })))))
@@ -16,7 +17,7 @@ self.addEventListener('activate', event => {
 })
 
 self.addEventListener('message', event => {
-  if (event.data === 'take-over') {
+  if (event.data === TAKE_OVER) {
     self.skipWaiting()
   }
 })

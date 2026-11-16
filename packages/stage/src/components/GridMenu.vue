@@ -29,7 +29,7 @@ const marksWithButton = (button: number) => canMark.value && button !== MOUSE_BU
  * tap does not then pick. Anywhere else, a tile is a button as it was.
  */
 const touch = createTouchTracker({
-  accepts: event => canMark.value && marksWithButton(MOUSE_BUTTON.secondary) && event.target instanceof Element && event.target.closest('.tile') !== null,
+  accepts: event => marksWithButton(MOUSE_BUTTON.secondary) && event.target instanceof Element && event.target.closest('.tile') !== null,
   onLongPress: target => {
     const tile = target instanceof Element ? target.closest<HTMLElement>('.tile') : null
     const number = Number(tile?.dataset.number)

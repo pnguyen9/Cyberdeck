@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { emptyProgressOf, languageName, mergeProgress, parseProgress, parseSave, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
-import { AboutApp, AppLookButton, AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type ErasedData, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
+import { AboutApp, AppLookButton, NewVersionBar, AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type ErasedData, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { describeError } from '../i18n/errorMessages'
 import { describeInstall, libraryMessages } from '../i18n/libraryMessages'
@@ -265,21 +265,22 @@ function onDrop(event: DragEvent) {
 
 <template>
   <main
-    class="library"
+    class="app-screen library"
     :class="{ dragging: isDraggingOver }"
     @dragover.prevent="isDraggingOver = true"
     @dragleave.self="isDraggingOver = false"
     @drop.prevent="onDrop"
   >
+    <NewVersionBar />
     <header class="header">
       <h1>Datajack</h1>
-      <div class="header-actions">
-        <label class="language">
+      <div class="header-tools">
+        <label class="language-field">
           <span>{{ text.language }}</span>
           <LanguageSelect v-model="languageChoice" />
         </label>
         <button class="button" @click="emit('settings')">{{ text.settings }}</button>
-        <AppLookButton class="button" app="Datajack" />
+        <AppLookButton class="button" />
         <button class="profile-button" @click="emit('switchProfile')">{{ profileName }} <span class="switch">· {{ text.switchProfile }}</span></button>
       </div>
     </header>
@@ -384,15 +385,8 @@ function onDrop(event: DragEvent) {
 
 <style scoped>
 .library {
-  box-sizing: border-box;
   max-width: 880px;
-  min-height: 100vh;
-  margin: 0 auto;
   padding: 32px 16px;
-  font: 16px/1.5 var(--look-font);
-  color: var(--look-text);
-  /* The readable box, when the look has one. */
-  background: var(--look-box);
 }
 
 .library.dragging {
@@ -412,28 +406,6 @@ h1 {
   margin: 0;
   font-size: 28px;
   color: var(--look-accent);
-}
-
-.header-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 24px;
-}
-
-.language {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 14px;
-  color: var(--look-muted);
-}
-
-/* The menu is the stage's, which keeps its own look in a game: here it wears the application's. */
-.language :deep(.language-select) {
-  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
-  background: var(--look-surface);
-  color: var(--look-text);
 }
 
 .profile-button {
@@ -467,7 +439,7 @@ h1 {
 .load-button {
   position: relative;
   padding: 8px 20px;
-  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
+  border: var(--look-control-border);
   border-radius: 6px;
   background: var(--look-surface);
   color: var(--look-text);
@@ -475,7 +447,7 @@ h1 {
 }
 
 .load-button:focus-within {
-  outline: 2px solid var(--look-accent);
+  outline: 2px solid var(--look-focus);
   outline-offset: 2px;
 }
 
@@ -496,7 +468,7 @@ h1 {
 }
 
 .add-button:focus-within {
-  outline: 2px solid var(--look-accent);
+  outline: 2px solid var(--look-focus);
   outline-offset: 2px;
 }
 
@@ -597,45 +569,6 @@ h1 {
 
 .erase {
   margin-top: 40px;
-}
-
-/* The look's button, the stage's component, is drawn as these. */
-.button,
-:deep(.button) {
-  padding: 8px 16px;
-  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
-  border-radius: 6px;
-  background: var(--look-surface);
-  font: inherit;
-  color: var(--look-text);
-  cursor: pointer;
-}
-
-.button.primary {
-  border-color: var(--look-accent);
-  background: var(--look-accent-fill);
-  color: var(--look-accent);
-  font-weight: 600;
-}
-
-.button.danger {
-  border-color: var(--look-error);
-  color: var(--look-error);
-}
-
-.link-button {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: 14px;
-  color: var(--look-muted);
-  cursor: pointer;
-}
-
-.link-button:hover,
-.link-button:focus-visible {
-  color: var(--look-accent);
 }
 
 .credits {

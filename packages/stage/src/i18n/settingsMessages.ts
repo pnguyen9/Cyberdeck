@@ -143,7 +143,7 @@ const fr: SettingsMessages = {
   pressInput: 'Appuyez…',
   addKey: 'Ajouter une touche',
   defaultKeys: 'Touches par défaut',
-  touchHelp: 'Sur un écran tactile, toucher vaut un clic gauche et appuyer longuement un clic droit\u00a0; glisser vers la droite revient en arrière, glisser vers la gauche avance.',
+  touchHelp: 'Sur un écran tactile, un appui bref vaut un clic gauche et un appui long un clic droit\u00a0; balayer vers la droite revient en arrière, vers la gauche fait avancer.',
   keyPositions: 'Les touches sont reconnues par leur place sur le clavier et nommées comme sur un clavier américain (QWERTY) : sur un clavier AZERTY ou une autre disposition, le nom peut différer de la lettre inscrite sur la touche.',
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useLocale, useMessages } from '@cyberdeck/stage'
+import { useBackdropClose, useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
 import { shortcutMessages } from '../i18n/shortcutMessages'
 import { useShortcuts } from './shortcutStore'
@@ -16,7 +16,8 @@ const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'AltGraph', 'C
 /** The action waiting for its new keys, then, when they belong to others, waiting for confirmation. */
 const capturing = ref<ShortcutId | null>(null)
 const pending = ref<{ actionId: ShortcutId; chord: KeyChord; conflicts: ShortcutId[] } | null>(null)
-const dialog = useTemplateRef<HTMLElement>('dialog')
+const dialog = useTemplateRef<HTMLDialogElement>('dialog')
+const backdrop = useBackdropClose(dialog)
 
 const groups = computed(() => SCREENS.map(screen => ({
   screen,
@@ -62,60 +63,63 @@ function confirm() {
 
 onMounted(() => {
   window.addEventListener('keydown', onKeydown, true)
+  dialog.value?.showModal()
   dialog.value?.focus()
 })
 onUnmounted(() => window.removeEventListener('keydown', onKeydown, true))
 </script>
 
 <template>
-  <div class="backdrop" @click.self="isPanelOpen = false">
-    <section ref="dialog" class="dialog" role="dialog" :aria-label="text.keyboardShortcuts" tabindex="-1">
-      <header class="dialog-header">
-        <h2>{{ text.keyboardShortcuts }}</h2>
-        <button class="button small" @click="isPanelOpen = false">{{ text.close }} <kbd>{{ text.keyNames.Escape }}</kbd></button>
-      </header>
-      <p class="muted">{{ text.changeHelp }}</p>
+  <!-- Escape is the panel's own (it also gives up keys being captured): the browser's cancel is left out; closing unmounts it. -->
+  <dialog
+    ref="dialog"
+    class="dialog"
+    aria-labelledby="shortcuts-title"
+    tabindex="-1"
+    @cancel.prevent
+    @close="isPanelOpen = false"
+    @pointerdown="backdrop.onPointerDown"
+    @click="backdrop.onClick"
+  >
+    <header class="dialog-header">
+      <h2 id="shortcuts-title">{{ text.keyboardShortcuts }}</h2>
+      <button class="button small" @click="isPanelOpen = false">{{ text.close }} <kbd>{{ text.keyNames.Escape }}</kbd></button>
+    </header>
+    <p class="muted">{{ text.changeHelp }}</p>
 
-      <p v-if="pending !== null" class="pending" role="alert">
-        {{ text.alreadyUsed(describeChord(pending.chord), pending.conflicts.map(labelOf)) }}
-        <button class="button small primary" @click="confirm">{{ text.useFor(labelOf(pending.actionId)) }}</button>
-        <button class="button small" @click="pending = null">{{ text.keepAsItWas }}</button>
-      </p>
+    <p v-if="pending !== null" class="pending" role="alert">
+      {{ text.alreadyUsed(describeChord(pending.chord), pending.conflicts.map(labelOf)) }}
+      <button class="button small primary" @click="confirm">{{ text.useFor(labelOf(pending.actionId)) }}</button>
+      <button class="button small" @click="pending = null">{{ text.keepAsItWas }}</button>
+    </p>
 
-      <section v-for="group in groups" :key="group.screen" class="group">
-        <h3 class="section-title">{{ text.screens[group.screen] }}</h3>
-        <div v-for="action in group.actions" :key="action.id" class="row">
-          <span>{{ labelOf(action.id) }}</span>
-          <span class="keys">
-            <button class="keys-button" :class="{ capturing: capturing === action.id }" @click="capturing = action.id">
-              <template v-if="capturing === action.id">{{ text.pressNewKeys }}</template>
-              <template v-else-if="action.keys.length === 0">{{ text.noKeys }}</template>
-              <kbd v-for="key in action.keys" v-else :key="key">{{ key }}</kbd>
-            </button>
-            <button class="link-button" @click="reset(action.id)">{{ text.default }}</button>
-          </span>
-        </div>
-        <p v-for="fixed in group.fixed" :key="fixed" class="fixed muted">{{ fixed }}</p>
-      </section>
-      <button class="link-button" @click="resetAll">{{ text.resetAll }}</button>
+    <section v-for="group in groups" :key="group.screen" class="group">
+      <h3 class="section-title">{{ text.screens[group.screen] }}</h3>
+      <div v-for="action in group.actions" :key="action.id" class="row">
+        <span>{{ labelOf(action.id) }}</span>
+        <span class="keys">
+          <button class="keys-button" :class="{ capturing: capturing === action.id }" @click="capturing = action.id">
+            <template v-if="capturing === action.id">{{ text.pressNewKeys }}</template>
+            <template v-else-if="action.keys.length === 0">{{ text.noKeys }}</template>
+            <kbd v-for="key in action.keys" v-else :key="key">{{ key }}</kbd>
+          </button>
+          <button class="link-button" @click="reset(action.id)">{{ text.default }}</button>
+        </span>
+      </div>
+      <p v-for="fixed in group.fixed" :key="fixed" class="fixed muted">{{ fixed }}</p>
     </section>
-  </div>
+    <button class="link-button" @click="resetAll">{{ text.resetAll }}</button>
+  </dialog>
 </template>
 
 <style scoped>
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  display: grid;
-  place-items: center;
-  padding: 16px;
+.dialog::backdrop {
   background: rgb(0 0 0 / 0.6);
 }
 
 .dialog {
   box-sizing: border-box;
-  width: min(640px, 100%);
+  width: min(640px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
   overflow: auto;
   padding: 20px 24px;
@@ -144,7 +148,7 @@ h2 {
   align-items: center;
   gap: 16px;
   padding: 4px 0;
-  border-bottom: 1px solid var(--look-surface);
+  border-bottom: 1px solid var(--look-faint);
 }
 
 .keys {

@@ -1,5 +1,7 @@
+import { REPOSITORY_ADDRESS, SITE_ADDRESS } from '../../stage/src/app/projectAddresses.js'
+
 /** The project's own pages: the only addresses the desktop page may open, in the system's browser. */
-const PROJECT_PAGES = ['https://github.com/pnguyen9/Cyberdeck', 'https://pnguyen9.github.io/Cyberdeck/']
+const PROJECT_PAGES = [REPOSITORY_ADDRESS, SITE_ADDRESS]
 
 /** Whether an address is one of the project's pages, or under one, over HTTPS, without a user name. */
 export function isProjectLink(address: string): boolean {

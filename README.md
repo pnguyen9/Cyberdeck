@@ -357,7 +357,9 @@ Datajack in `datajack/` and the guide in `guide/`. The workflow `.github/workflo
 publishes them on each release tag (`v*`), or by hand from the *Actions* tab (*Pages → Run
 workflow*): it installs, runs the tests and the type checks, then `npm run pages`, which builds both
 web builds and assembles the site in `site/`, and publishes that folder. Once, in the repository's
-*Settings → Pages*, *Source* must be *GitHub Actions*.
+settings: in *Pages*, *Source* must be *GitHub Actions*; in *Environments → github-pages →
+Deployment branches and tags*, a tag rule `v*` must be added, since the environment otherwise
+accepts the default branch alone and refuses the runs started by a release tag.
 
 Only the latest version is online; older ones stay on the Releases page. The address never changes,
 so what people keep in their browser stays from one version to the next: a version must always open

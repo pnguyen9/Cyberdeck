@@ -295,7 +295,7 @@ const pathOf = (points: readonly { x: number; y: number }[]) => points.map((poin
 }
 
 .box.loop rect {
-  fill: rgb(251 191 36 / 0.04);
+  fill: color-mix(in srgb, var(--look-amber) 4%, transparent);
   stroke: color-mix(in srgb, var(--look-amber) 40%, transparent);
 }
 
@@ -318,7 +318,7 @@ const pathOf = (points: readonly { x: number; y: number }[]) => points.map((poin
 }
 
 .graph-viewport:focus-visible {
-  outline: 2px solid var(--look-accent);
+  outline: 2px solid var(--look-focus);
 }
 
 .box.selected rect {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AboutApp, AppLookButton, LanguageSelect, useLocale, useMessages, type LanguageChoice } from '@cyberdeck/stage'
+import { AboutApp, AppLookButton, NewVersionBar, LanguageSelect, useLocale, useMessages, type LanguageChoice } from '@cyberdeck/stage'
 import { onMounted, ref, useTemplateRef, watch } from 'vue'
 import { MAXIMUM_PROFILE_NAME_LENGTH, profileNameProblem } from '../../electron/profileNames'
 import { profileMessages } from '../i18n/profileMessages'
@@ -136,15 +136,16 @@ function confirmRemove(profile: Profile) {
 </script>
 
 <template>
-  <main v-if="isLoaded" class="profiles">
+  <main v-if="isLoaded" class="app-screen profiles">
+    <NewVersionBar />
     <header class="profiles-header">
       <h1>Datajack</h1>
       <div class="header-tools">
-        <label class="language">
+        <label class="language-field">
           <span>{{ text.language }}</span>
           <LanguageSelect v-model="languageChoice" />
         </label>
-        <AppLookButton class="button" app="Datajack" />
+        <AppLookButton class="button" />
       </div>
     </header>
 
@@ -214,22 +215,8 @@ function confirmRemove(profile: Profile) {
 
 <style scoped>
 .profiles {
-  box-sizing: border-box;
   max-width: 640px;
-  min-height: 100vh;
-  margin: 0 auto;
   padding: 48px 16px;
-  font: 16px/1.5 var(--look-font);
-  color: var(--look-text);
-  /* The readable box, when the look has one. */
-  background: var(--look-box);
-}
-
-.header-tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 16px;
 }
 
 .profiles-header {
@@ -245,21 +232,6 @@ h1 {
   margin: 0;
   font-size: 28px;
   color: var(--look-accent);
-}
-
-.language {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 14px;
-  color: var(--look-muted);
-}
-
-/* The menu is the stage's, which keeps its own look in a game: here it wears the application's. */
-.language :deep(.language-select) {
-  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
-  background: var(--look-surface);
-  color: var(--look-text);
 }
 
 h2 {
@@ -371,7 +343,7 @@ h2 {
   width: 100%;
   max-width: 360px;
   padding: 8px 10px;
-  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
+  border: var(--look-control-border);
   border-radius: 6px;
   background: var(--look-ground);
   font: inherit;
@@ -380,50 +352,6 @@ h2 {
 
 .inline-form .text-input {
   flex: 1 1 200px;
-}
-
-/* The look's button, the stage's component, is drawn as these. */
-.button,
-:deep(.button) {
-  padding: 8px 16px;
-  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
-  border-radius: 6px;
-  background: var(--look-surface);
-  font: inherit;
-  color: var(--look-text);
-  cursor: pointer;
-}
-
-.button.primary {
-  border-color: var(--look-accent);
-  background: var(--look-accent-fill);
-  color: var(--look-accent);
-  font-weight: 600;
-}
-
-.button.danger {
-  border-color: var(--look-error);
-  color: var(--look-error);
-}
-
-.button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.link-button {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  font-size: 14px;
-  color: var(--look-muted);
-  cursor: pointer;
-}
-
-.link-button:hover,
-.link-button:focus-visible {
-  color: var(--look-accent);
 }
 
 .error {

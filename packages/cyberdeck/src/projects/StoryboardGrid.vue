@@ -280,7 +280,7 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
 /* A block as one card: a stack, so that it never passes for a page. */
 .element.block.collapsed {
   border-color: var(--look-amber);
-  box-shadow: 4px 4px 0 -1px var(--look-surface), 4px 4px 0 0 var(--look-amber), 8px 8px 0 -1px var(--look-surface), 8px 8px 0 0 rgb(251 191 36 / 0.5);
+  box-shadow: 4px 4px 0 -1px var(--look-surface), 4px 4px 0 0 var(--look-amber), 8px 8px 0 -1px var(--look-surface), 8px 8px 0 0 color-mix(in srgb, var(--look-amber) 50%, transparent);
   margin-right: 8px;
 }
 
@@ -370,7 +370,7 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   opacity: 0.55;
   border-style: dashed;
   border-color: var(--look-error);
-  background-image: repeating-linear-gradient(135deg, transparent 0 8px, rgb(242 139 130 / 0.08) 8px 16px);
+  background-image: repeating-linear-gradient(135deg, transparent 0 8px, color-mix(in srgb, var(--look-error) 8%, transparent) 8px 16px);
 }
 
 .empty-lane {
@@ -381,7 +381,7 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
 }
 
 .element.focused {
-  outline: 2px solid var(--look-accent);
+  outline: 2px solid var(--look-focus);
   outline-offset: 2px;
 }
 
@@ -398,7 +398,7 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   border-radius: 50%;
   background: var(--look-gold);
   font-size: 12px;
-  color: var(--look-surface);
+  color: var(--look-ground);
 }
 
 .element.editing {

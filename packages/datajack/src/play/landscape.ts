@@ -24,6 +24,3 @@ export function landscapeAsk(state: ScreenState): LandscapeAsk {
   }
   return state.canFullscreen && !state.isFullscreen ? 'offerFullscreen' : 'none'
 }
-
-/** The media query of a screen without a mouse. */
-export const TOUCH_SCREEN_QUERY = '(hover: none) and (pointer: coarse)'

@@ -150,6 +150,9 @@ export function contrastRatio(a: string, b: string): number {
 /** What WCAG asks of ordinary text (AA). */
 export const READABLE_CONTRAST = 4.5
 
+/** What WCAG asks of what shows a control or the focus: its edge, its outline (AA, 1.4.11). */
+export const VISIBLE_CONTRAST = 3
+
 /**
  * Whether a colour is bright: above this luminance, black text stands out more than white does
  * (both contrasts are equal there).
@@ -224,8 +227,24 @@ const CYBERPUNK_SHADES: Readonly<Record<string, string>> = {
   '--look-amber-fill': '#2a2010',
 }
 
-/** The CSS custom properties the apps' styles are written with, for a look. */
-export function lookVariables(look: AppLook): Record<string, string> {
+/**
+ * The edge of a control (a button, a field): the border, or, when the look has none, a faint line
+ * still telling where the control is, as WCAG asks.
+ */
+function controlBorderOf(look: AppLook, ground: string): string {
+  if (look.borderKind !== 'none') {
+    return `${look.borderKind === 'double' ? '3px' : '1px'} ${look.borderKind} ${look.borderColour}`
+  }
+  return `1px solid ${readableOver(mixColours(look.textColour, ground, 0.6), ground, VISIBLE_CONTRAST)}`
+}
+
+/** The focus ring: the accent, or the text's colour when the accent stands out too little. */
+export function focusColourOf(look: AppLook): string {
+  return worstContrast(look.accentColour, look) >= VISIBLE_CONTRAST ? look.accentColour : look.textColour
+}
+
+/** The CSS custom properties the apps' styles are written with, for a look; `preset`, when it is known already. */
+export function lookVariables(look: AppLook, preset: LookPreset | null = presetOf(look)): Record<string, string> {
   const background = backgroundOf(look)
   const ground = groundOf(look)
   const text = look.textColour
@@ -255,34 +274,63 @@ export function lookVariables(look: AppLook): Record<string, string> {
     '--look-border-style': look.borderKind,
     // A double line needs three pixels to show as two.
     '--look-border-width': look.borderKind === 'double' ? '3px' : '1px',
+    '--look-control-border': controlBorderOf(look, ground),
+    '--look-focus': focusColourOf(look),
   }
   for (const [name, colour] of Object.entries(SIGNAL_COLOURS)) {
     variables[`--look-${name}`] = readableOver(colour, ground)
   }
-  return presetOf(look) === 'cyberpunk' ? { ...variables, ...CYBERPUNK_SHADES } : variables
+  return preset === 'cyberpunk' ? { ...variables, ...CYBERPUNK_SHADES } : variables
 }
 
-/** Gives an element, the page's root, the look's custom properties. */
-export function applyAppLook(look: AppLook, element: Pick<HTMLElement, 'style' | 'dataset'>) {
-  for (const [name, value] of Object.entries(lookVariables(look))) {
+/**
+ * Gives an element, the page's root, the look's custom properties, and its document's `theme-color`
+ * the background's colour, for the browser's bar and the installed application's window. Returns
+ * the preset the look is, if any.
+ */
+export function applyAppLook(look: AppLook, element: Pick<HTMLElement, 'style' | 'dataset'> & { ownerDocument?: Document | null }): LookPreset | null {
+  const preset = presetOf(look)
+  for (const [name, value] of Object.entries(lookVariables(look, preset))) {
     element.style.setProperty(name, value)
   }
-  element.dataset.look = presetOf(look) ?? 'custom'
+  element.dataset.look = preset ?? 'custom'
+  const document = element.ownerDocument
+  if (document != null) {
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+    if (meta === null) {
+      meta = document.createElement('meta')
+      meta.name = 'theme-color'
+      document.head.append(meta)
+    }
+    meta.content = backgroundOf(look)
+  }
+  return preset
 }
 
-/** A look kept in a `Storage` (`localStorage`) under one key; unreadable or unwritable storage keeps the default. */
+/** The look chosen, and the last look the person made their own, to come back to after trying a preset. */
+export interface KeptLook {
+  look: AppLook
+  custom: AppLook | null
+}
+
+/**
+ * A look kept in a `Storage` (`localStorage`) under one key, the last custom look with it;
+ * unreadable or unwritable storage keeps the default.
+ */
 export function createAppLookStore(storage: () => Storage, key: string) {
   return {
-    read(): AppLook {
+    read(): KeptLook {
       try {
-        return parseAppLook(JSON.parse(storage().getItem(key) ?? 'null'))
+        const stored: unknown = JSON.parse(storage().getItem(key) ?? 'null')
+        const custom = typeof stored === 'object' && stored !== null && 'custom' in stored && typeof stored.custom === 'object' && stored.custom !== null ? parseAppLook(stored.custom) : null
+        return { look: parseAppLook(stored), custom }
       } catch {
-        return DEFAULT_APP_LOOK
+        return { look: DEFAULT_APP_LOOK, custom: null }
       }
     },
-    write(look: AppLook): boolean {
+    write({ look, custom }: KeptLook): boolean {
       try {
-        storage().setItem(key, JSON.stringify(look))
+        storage().setItem(key, JSON.stringify(custom === null ? look : { ...look, custom }))
         return true
       } catch {
         return false

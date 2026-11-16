@@ -4,6 +4,24 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 
 export const pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds))
 
+/** `CHECKS_PORT_OFFSET` shifts every port, so that runs from several copies of the repository can share a machine. */
+const PORT_OFFSET = Number(process.env.CHECKS_PORT_OFFSET ?? 0)
+
+/** A port of the checks, shifted by the offset: each copy of the repository has ten, from `base`'s. */
+export function portOf(base) {
+  return base + PORT_OFFSET * 10
+}
+
+/** The middle of the element an expression gives, in the page's pixels. */
+export function middleOfElement(page, expression) {
+  return page.evaluate(`(() => { const rect = (${expression}).getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 } })()`)
+}
+
+/** The middle of the first element matching a selector. */
+export function middleOf(page, selector) {
+  return middleOfElement(page, `document.querySelector(${JSON.stringify(selector)})`)
+}
+
 const KEY_CODES = { Backspace: 8, Tab: 9, Enter: 13, Escape: 27, ' ': 32, End: 35, Home: 36, ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40, Delete: 46, '?': 191 }
 /** `KeyboardEvent.code` of the keys that are neither letters nor named keys: the player reads codes. */
 const PHYSICAL_CODES = { ' ': 'Space', '?': 'Slash' }
@@ -61,12 +79,19 @@ function createPage(outputDirectory, connection, stop) {
       await pause(1500)
     },
     /** Waits until an element matches, for pages still loading or reloading. */
-    waitFor: async (selector, timeoutMilliseconds = 15000) => {
+    /** Whether an expression (a promise's value too) comes true within the time. */
+    waitUntil: async (expression, timeoutMilliseconds = 15000) => {
       for (let waited = 0; waited < timeoutMilliseconds; waited += 100) {
-        if (await page.evaluate(`!!document.querySelector(${JSON.stringify(selector)})`)) {
+        if (await page.evaluate(expression)) {
           return true
         }
         await pause(100)
+      }
+      return false
+    },
+    waitFor: async (selector, timeoutMilliseconds = 15000) => {
+      if (await page.waitUntil(`!!document.querySelector(${JSON.stringify(selector)})`, timeoutMilliseconds)) {
+        return true
       }
       throw new Error(`Nothing matches ${selector}`)
     },
@@ -89,7 +114,7 @@ function createPage(outputDirectory, connection, stop) {
     resetViewport: () => send('Emulation.clearDeviceMetricsOverride'),
     /** Clicks the middle of an element with the mouse, as a real click: pointer capture and all. */
     clickAt: async selector => {
-      const point = await page.evaluate(`(() => { const rect = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 } })()`)
+      const point = await middleOf(page, selector)
       for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) {
         await send('Input.dispatchMouseEvent', { type, x: point.x, y: point.y, button: type === 'mouseMoved' ? 'none' : 'left', clickCount: type === 'mouseMoved' ? 0 : 1 })
       }
@@ -444,7 +469,7 @@ export async function advanceUntil(page, condition, limit = 20) {
  * Makes "The Letter" in Cyberdeck, in a Chrome of its own: the sample story with the test assets and
  * Rooftop.svg as its cover, exported as a game. Returns the path of the archive.
  */
-export async function exportSampleGame(outputDirectory, cyberdeckUrl, assets, port = 9336) {
+export async function exportSampleGame(outputDirectory, cyberdeckUrl, assets, port = portOf(9338)) {
   const browser = await openBrowser(outputDirectory, port)
   try {
     await createProjectWithSample(browser, cyberdeckUrl, 'The Letter')

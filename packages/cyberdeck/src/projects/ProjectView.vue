@@ -28,7 +28,7 @@ onMounted(async () => {
 
 <template>
   <ProjectEditor v-if="open !== null" :open="open" @close="emit('close')" @preview="(story, resumeFrom) => emit('preview', story, resumeFrom)" />
-  <main v-else-if="errorMessage !== null" class="editor-page">
+  <main v-else-if="errorMessage !== null" class="app-screen editor-page">
     <button class="link-button" @click="emit('close')">{{ text.backToProjects }}</button>
     <p class="error" role="alert">{{ errorMessage }}</p>
   </main>

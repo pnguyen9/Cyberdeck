@@ -50,6 +50,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
   inset: 0;
   overflow: hidden;
   background: #05070c;
+  color-scheme: dark;
 }
 
 .stage {
