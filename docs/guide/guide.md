@@ -54,6 +54,11 @@ Cyberdeck saves everything as you go: there is no Save button to remember.
 >
 > Cyberdeck speaks English and French. It follows your computer's language; the **Cyberdeck in** menu, on this screen or at the top of a project, changes it. Your players choose theirs in Datajack.
 
+> **Tip**
+>
+> Nothing to install: Cyberdeck runs in your browser at [pnguyen9.github.io/Cyberdeck/cyberdeck/](https://pnguyen9.github.io/Cyberdeck/cyberdeck/), always the latest version, and keeps working without a network once opened. Chrome and Edge offer to install it from the address bar (Safari on an iPad: **Share**, then **Add to Home Screen**); it then opens in a window of its own. When a new version is online, the projects screen offers to **Reload**. Your projects stay in that browser, on that computer, and a browser may erase what a site keeps (Safari does after about seven days without a visit, unless Cyberdeck is installed): press **Back up** in each project now and then, and keep the file. The desktop version keeps projects as folders instead.
+> The foot of the projects screen gives the version; **About** tells how Cyberdeck runs, its licence, and links to this guide and to the source code.
+
 ## 2. Write or paste your story
 
 A new project opens on the **Import** tab. Paste your text there, or press **Open a document…** to read a Word (`.docx`) or text file. To see how it works first, press **Use the sample story**.
@@ -212,7 +217,7 @@ In **Details**, add a description, credits and a cover picture: players see them
 
 ![The Export tab: the release “1.0”, both chapters ticked, and the Export button.](images/export.png)
 
-Players open Datajack, press **Add a game…** (or drop the file on it), and play.
+Players open Datajack, press **Add a game…** (or drop the file on it), and play. Datajack runs in the browser too, at [pnguyen9.github.io/Cyberdeck/datajack/](https://pnguyen9.github.io/Cyberdeck/datajack/), and installs from there like Cyberdeck.
 
 ![Datajack's library: “The Letter 1.0 installed”, its cover, 2 chapters, endings reached 0 of 1, and the Play button.](images/library.png)
 
@@ -494,11 +499,13 @@ From the keyboard, <kbd>Tab</kbd> goes from box to box, bringing each into view,
 
 **Shortcuts** (or <kbd>?</kbd>) lists every key by screen; click one to change it.
 
+**Look**, on the projects screen and beside **Shortcuts**, changes how Cyberdeck itself looks, if its dark cyberpunk style is not to your taste. Pick a preset (*Cyberpunk*, the default, *Graphite*, *Paper*, *Dusk* or *High contrast*), or set each part in depth: the background, one colour or a gradient from four corners; a box under the text that keeps it readable over any background, dark on a dark one, light on a bright one; the font, the colour of the text and that of titles; the colour and kind of borders (solid, dashed, dotted, double or none). Each colour is picked, or typed as `#rrggbb`. The contrast of the text is shown as you go, with a warning under 4.5:1, where many people find text hard to read. Only Cyberdeck changes: your game, in the preview too, keeps the look you gave it.
+
 **Back up** downloads your whole project as one file. **Restore a backup…**, on the projects screen, brings it back, on this computer or another. Do it now and then. Lost your project, but still have your game? Give the game's file to the same button: the project comes back from it, with all the chapters the game carried.
 
 ## 22. What your players see
 
-Players have their own **Settings**, in three categories. **General**: text speed, volumes (music and videos, sounds, voices), the speed of auto mode, full screen. **Accessibility**: larger text, a plainer font, a stronger contrast, pages read aloud, choices that wait for them, captions on videos, and a name over the text box that slides to who speaks, jumps there, or stays put. Players with a screen reader hear each page whole as it appears. **Controls**: their own keys. They open them in a game, or from their library, before playing; a game can have its own, from its card, a slower text for one, a louder music for another. You have nothing to do for any of it: it works in every game.
+Players have their own **Settings**, in three categories. **General**: text speed, volumes (music and videos, sounds, voices), the speed of auto mode, full screen. **Accessibility**: larger text, a plainer font, a stronger contrast, pages read aloud, choices that wait for them, captions on videos, and a name over the text box that slides to who speaks, jumps there, or stays put. Players with a screen reader hear each page whole as it appears. **Controls**: their own keys. They open them in a game, or from their library, before playing; a game can have its own, from its card, a slower text for one, a louder music for another. You have nothing to do for any of it: it works in every game. Datajack's own screens, the profiles, the library and the gallery, wear the look the player chooses with **Look**, as in Cyberdeck; your game keeps yours.
 
 ![The Settings screen, General: text speed, the volumes of music, sounds and voices, full screen.](images/settings.png)
 
@@ -508,7 +515,9 @@ The **Log** shows what they read and picked. Clicking a line goes back to it. Th
 
 ![The log: past lines with who said them, and the option picked, “Tell her the truth.”, in gold.](images/log.png)
 
-The game saves at every page. Save and Load add six slots, and **Save to a file** keeps a save as a file, to put aside or to carry to another computer. There, **Load a save or progress…** in the library opens it, if the game is installed. Their progress (endings, map, gallery) goes with them the same way: **Progress to a file**, on the game's card. Each save shows a small picture of the stage as it was. The **Map** shows each choice they have reached and where each option led, so that they can try another from there; hovering a choice tells what their journal showed then.
+The game saves at every page. Save and Load add six slots, and **Save to a file** keeps a save as a file, to put aside or to carry to another computer. There, **Load a save or progress…** in the library opens it, if the game is installed. Their progress (endings, map, gallery) goes with them the same way: **Progress to a file**, on the game's card. Each save shows a small picture of the stage as it was. The **Map** shows each choice they have reached and where each option led, so that they can try another from there; hovering a choice tells what their journal showed then (on a touch screen, its **i** button). Where a choice branches, each line says at its start the option it follows (its value, when the text is long), and a line with another choice in its way goes under it rather than through it.
+
+Datajack plays on phones and tablets too, the keyboard and the mouse working as before wherever they are. A tap goes on, as a click does; a long press hides the text, as a right click does (on a game board that marks, it marks the tile); swiping right goes back a page and swiping left goes on. Held upright, the device is asked to turn sideways, and sideways, the game offers full screen, where the browser then keeps it sideways if it can. You have nothing to do for this either.
 
 **Auto ▶** moves on by itself: a page with a voice waits for its line, another for the time it takes to read it. Any key or click takes over again.
 

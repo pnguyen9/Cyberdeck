@@ -1,13 +1,13 @@
 # Changelog
 
-## 3.4.0 — unreleased
+## 3.4.0 — 2026-11-16
 
 ### Both applications
 - A **Look** setting for Cyberdeck's and Datajack's own screens: a preset (Cyberpunk, the default,
   Graphite, Paper, Dusk, High contrast), or each part in depth: the background as one colour or a
   gradient from four corners, the font and its colour, the borders' colour and kind. A box under the
   text keeps it readable over any background, dark or light as the background is, and the setting
-  shows the text's contrast, warning below 4.5:1. The look is the application's alone: games, the
+  shows the text's contrast, warning below 4.5:1, and the borders', warning below 3:1. The look is the application's alone: games, the
   preview, their settings and map keep the look their author gave them.
 - The version at the foot of each first screen, with an **About** panel: version, how the
   application runs (desktop, files, web page or installed), licence, links to the guide and the
@@ -23,8 +23,8 @@
 - Touch screens: a tap moves on, a long press hides the text (or marks a tile on a game board that
   marks), swiping right goes back and swiping left moves on. Keyboard and mouse play is unchanged.
 - On phones and tablets, Datajack asks to turn the device sideways and offers full screen, locking
-  the orientation where the browser allows it. Labels shown only on hover are always shown on
-  screens without a mouse: the leave button's, and a map point's journal, behind an **i** button.
+  the orientation where the browser allows it. The leave button's label, shown on hover with a
+  mouse, is always shown on screens without one; a map point's journal is behind an **i** button.
 - The map says which option each line follows: where a choice branches, each line carries the
   option's text (or its value, when the text is long) as it leaves the point, here and in
   Cyberdeck's preview. Lines no longer run through points: one with a choice in its way steps down
