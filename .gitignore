@@ -3,5 +3,6 @@ dist/
 dist-electron/
 dist-file/
 release/
+site/
 coverage/
 checks/output/

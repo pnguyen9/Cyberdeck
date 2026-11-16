@@ -15,6 +15,7 @@
     "tests",
     "vite.config.ts",
     "../../fileBuild.ts",
+    "../../webBuild.ts",
     "vite.electron.config.ts"
   ],
   "exclude": [

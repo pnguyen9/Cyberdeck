@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { languageName, languagesOf, type ProjectDocument } from '@cyberdeck/core'
-import { useLocale, useMessages, type ErasedData, type SaveStore } from '@cyberdeck/stage'
+import { AboutApp, useLocale, useMessages, type ErasedData, type SaveStore } from '@cyberdeck/stage'
 import { onMounted, ref, shallowRef } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { errorText } from '../i18n/errorMessages'
@@ -189,6 +189,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
 
     <p v-if="message !== null" class="message" role="status">{{ message }}</p>
     <p v-if="errorMessage !== null" class="error" role="alert">{{ errorMessage }}</p>
+    <AboutApp />
   </main>
 </template>
 

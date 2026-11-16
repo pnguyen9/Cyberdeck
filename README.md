@@ -15,6 +15,13 @@ A sample story to try it with, *Sakura Week*, is in [docs/sample/sakura-week](do
 import `sakura-week.txt`, then drop `sakura-week-assets.zip` in Cast & files: its `cover.png` becomes
 the game's cover.
 
+**Online**: both applications and the guide are at <https://pnguyen9.github.io/Cyberdeck/>, the
+latest version, nothing to download. Once opened they work offline, and the browser installs them
+as applications (on a phone or a computer). What they keep stays in that browser: back up projects
+and keep games and saves as files, since a browser may erase what a site keeps. The desktop builds
+and the builds to open as files are on the [Releases](https://github.com/pnguyen9/Cyberdeck/releases)
+page.
+
 ## Why this exists
 
 I wanted a simple tool for making visual novels that needs no programming knowledge at all: one
@@ -36,7 +43,7 @@ what players see.
 | Package | Contents | Used by |
 |---|---|---|
 | `packages/core` (`@cyberdeck/core`) | The model and the interpreter: story format and its checks, text import and pagination, game archives, story runtime, stage state, save data. No interface. | both |
-| `packages/stage` (`@cyberdeck/stage`) | What shows a story: the player view (stage, textbox and full-screen text, choices, music and sounds, log, map, save and load panels, settings), input bindings and player settings, the save store interface. Vue components. | both |
+| `packages/stage` (`@cyberdeck/stage`) | What shows a story: the player view (stage, textbox and full-screen text, choices, music and sounds, log, map, save and load panels, settings), input bindings and player settings, the save store interface. Also the foot of each application's first screen: its version, the About panel, the offer of a new version. Vue components. | both |
 | `packages/cyberdeck` (`@cyberdeck/cyberdeck`) | The engine: projects, import of text into them, cast and files, details, preview with the shared stage, export as a game, backups. | authors |
 | `packages/datajack` (`@cyberdeck/datajack`) | The player: profiles, library of installed games, gallery of illustrations seen, desktop shell (Electron). | players |
 | `packages/desktop` (`@cyberdeck/desktop`) | What both desktop builds share: the hardened Electron window, checked channels, safe file writing, the bundling settings and the packaging script. | both |
@@ -65,6 +72,20 @@ a new notion gets its word here before it gets code.
 | Backup | A project folder zipped, which *Restore* reads back. | `ProjectBackup` |
 | Library | The games installed in Datajack, each a card. | |
 | Profile | One player in Datajack: settings, saves, progress, memories and lasting values. | |
+
+**How the applications run**
+
+| Word | Meaning | In the code |
+|---|---|---|
+| Version | Which version of Cyberdeck or Datajack runs, from `package.json`, shown at the foot of the first screen. Not a game's *release*. | `__APP_VERSION__` |
+| Desktop build | An application in its own window (Electron), keeping what it holds in folders. | `HowItRuns` `'desktop'` |
+| Double-click build | An application as files, its `index.html` opened in a browser, without a server. | `'files'`, `fileBuild.ts` |
+| Web build | An application served by a web host, as a web page, or installed. | `'web'`, `webBuild.ts` |
+| Online | The web builds of the latest version, with the guide, at `pnguyen9.github.io/Cyberdeck/`. | `scripts/pagesSite.mjs` |
+| Installed | A web build installed from the browser (a progressive web app), in a window of its own. | `'installed'`, `manifest.webmanifest` |
+| Kept offline | A web build's files kept on the device by its service worker, so that it opens without a network. | `serviceWorker.js`, `keepOffline` |
+| New version | A version online newer than the one kept offline: the first screen offers to reload into it. | `AboutApp` |
+| About panel | The application's version, licence, links and how it runs, opened from the foot of the first screen. | `AboutApp` |
 
 **The story as written**
 
@@ -196,13 +217,24 @@ command with `ELECTRON_RUN_AS_NODE=` there.
 TypeScript is held at 6: version 7 no longer offers the programming interface `vue-tsc` needs to
 check `.vue` files.
 
+Every build of a page goes through `webBuild.ts`: relative paths (`base: './'`), so that a build
+works from any folder, and the version of the package's `package.json` as `__APP_VERSION__`. The web
+build (`npm run build`) also writes `manifest.webmanifest` and `sw.js`, the service worker: the code
+of `serviceWorker.js`, written by hand, after the list of the build's files and a cache name made of
+the application, the version and a digest of the files. The page registers it only when served by
+a web host: never on the development server, in the desktop build or in the double-click build, and
+the double-click build has neither file. Each application's icon is `public/icon.svg`;
+`node scripts/appIcons.mjs` draws it again as `icon-192.png` and `icon-512.png` with Chrome, to commit.
+
 **Browser checks** drive the real editor in headless Chrome, through the DevTools Protocol, with
 no dependency: `npm run checks` (or `npm run checks -- storyboard-grid` for one) starts the
 development server, runs each `checks/<name>.check.mjs` in a fresh profile and writes screenshots
 and results to `checks/output/<name>/`. Chrome is `google-chrome` unless `CHROME` names another.
 A check exporting `app = 'datajack'` opens Datajack's server instead; those of the desktop builds
 (`cyberdeck-desktop`, `datajack-desktop`) build and start Electron with a home folder of their own,
-and run only by name or with `npm run checks:desktop`.
+and run only by name or with `npm run checks:desktop`. The `online` check builds the site of
+`npm run pages` and serves it under `/Cyberdeck/` as GitHub Pages does (port 4179): both
+applications from their folders, their service workers, offline, and a new version offered.
 `checks/fixtures/story.docx` and `plain.docx` are `story.html` and `plain.html` saved by LibreOffice,
 documents as a word processor writes them; `node checks/make-test-assets.mjs <folder>` writes backgrounds, sprites and a tone to
 try the Cast & files screen with.
@@ -261,7 +293,9 @@ game and save of the copies concerned: back up the projects to keep first (*Back
 and save to a file the games worth keeping.
 
 **Put on a web host** (GitHub Pages, for instance), the applications are a site like any other: the
-browser's own "clear site data" for that address erases them.
+browser's own "clear site data" for that address erases them, the files kept offline with them.
+Online, that address is `pnguyen9.github.io`, which both applications share: clearing it erases
+both.
 
 **Opened as files**, they are not listed among the sites of the browser's settings, and each browser
 keeps them its own way:
@@ -302,8 +336,33 @@ keeps them its own way:
 The desktop builds keep their projects and saves as folders on the disk (see
 [Editing](#editing-cyberdeck) and [Profiles](#profiles)), deleted like any other folder.
 
-The usual `npm run build` (in `dist/`) is for putting the applications on a web host, GitHub
-Pages for instance; opened as files, it shows a blank page.
+The usual `npm run build` (in `dist/`) is for putting the applications on a web host, in any
+folder; opened as files, it shows a blank page.
+
+### Online, on GitHub Pages
+
+<https://pnguyen9.github.io/Cyberdeck/> holds a small landing page, Cyberdeck in `cyberdeck/`,
+Datajack in `datajack/` and the guide in `guide/`. The workflow `.github/workflows/pages.yml`
+publishes them on each release tag (`v*`), or by hand from the *Actions* tab (*Pages → Run
+workflow*): it installs, runs the tests and the type checks, then `npm run pages`, which builds both
+web builds and assembles the site in `site/`, and publishes that folder. Once, in the repository's
+*Settings → Pages*, *Source* must be *GitHub Actions*.
+
+Only the latest version is online; older ones stay on the Releases page. The address never changes,
+so what people keep in their browser stays from one version to the next: a version must always open
+what older ones kept, and storage names keep their `cyberdeck:` and `datajack:` prefixes (the
+databases are `cyberdeck-projects` and `datajack-library`), since every site of
+`pnguyen9.github.io` shares one storage. The online applications say so at the foot of their first
+screen: a browser may erase what a site keeps (Safari does after about seven days without a visit,
+unless the application is installed), and exporting is the safety net.
+
+Each web build is a progressive web app: Chrome and Edge (on Windows too) offer to install it from
+the address bar, Safari on iPhone and iPad from *Share → Add to Home Screen*, and it then opens in a
+window of its own. Its service worker keeps the version's files on the device, so it opens offline.
+When a newer version is online, the service worker downloads it beside the one running, and the
+first screen (projects, library or profiles) offers *Reload*; *Later* keeps the running one until
+the next visit. Each application's service worker and cache are its own (`cyberdeck-<version>-…`,
+`datajack-<version>-…`), and a new version deletes only its own application's older cache.
 
 ### As desktop applications
 
@@ -405,6 +464,9 @@ Then, for each release, from `main` with nothing left to commit:
    git tag -a v3.4.0 -m 3.4.0
    git push origin main v3.4.0
    ```
+
+   Pushing the tag publishes the version online (see [Online, on GitHub Pages](#online-on-github-pages)):
+   its workflow's run is in the *Actions* tab.
 
 8. **Publish** on GitHub: *Releases → Draft a new release*, the tag `v3.4.0`, the title `3.4.0`, the
    CHANGELOG's section as the description, every file of `release/v3.4.0/` attached, then
@@ -939,6 +1001,12 @@ the game's own Load panel resumes at the start of its chapter, with its decision
 the desktop, games live in the application's data folder (`library/games/<game>/…`, assets in
 `library/assets/<sha-256>.<extension>`, shared by every game); in the browser, in IndexedDB.
 
+At the foot of the library and of the profiles screen, as of Cyberdeck's projects screen: the
+application's version and **About** (the version again, how it runs, the licence, links to the guide
+and the repository), and online, the note that a browser may erase what a site keeps, with what to
+keep as files. A new version online is offered there too (see
+[Online, on GitHub Pages](#online-on-github-pages)).
+
 ### Controls
 
 | Action | Default inputs |
@@ -1043,7 +1111,9 @@ header on the desktop and a meta tag on the web). A game's CSS is checked before
 only the story's text, its text box and name plate (see Styles and CSS).
 
 On the desktop it runs sandboxed, without Node, served from a private `datajack://` scheme;
-navigation, new windows, web views and permission requests are refused. It reaches the disk only
+navigation, new windows, web views and permission requests are refused (the About panel's links
+to the project's own pages, on `github.com/pnguyen9/Cyberdeck` and `pnguyen9.github.io/Cyberdeck/`,
+open in the system's browser instead; any other address is ignored). It reaches the disk only
 through a short list of channels whose arguments the main process checks again: strings, bytes and
 lists of strings only; identifiers that cannot leave their folder; asset files whose content matches
 the SHA-256 in their name; and only save folders the player picked in the system dialog.

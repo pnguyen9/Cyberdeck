@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { emptyProgressOf, languageName, mergeProgress, parseProgress, parseSave, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
-import { AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type ErasedData, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
+import { AboutApp, AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type ErasedData, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { describeError } from '../i18n/errorMessages'
 import { describeInstall, libraryMessages } from '../i18n/libraryMessages'
@@ -377,6 +377,7 @@ function onDrop(event: DragEvent) {
         </div>
       </div>
     </section>
+    <AboutApp />
   </main>
 </template>
 
