@@ -160,7 +160,7 @@ export {
   type ProgressPoint,
   type ProgressTarget,
 } from './progress/progress'
-export { layOutProgressMap, type MapEdge, type MapNode, type ProgressMap } from './progress/progressMap'
+export { layOutProgressMap, LINE_LABEL_LENGTH, optionLabel, type MapEdge, type MapNode, type ProgressMap } from './progress/progressMap'
 export { definitionLine, exportText, globalDefinitionLines, nodesText, type TextExportOptions } from './export/exportText'
 export { applyNodeEdit, previewNodeEdit, type NodeEditTarget } from './project/nodeEdits'
 export { exploreStory } from './progress/explore'

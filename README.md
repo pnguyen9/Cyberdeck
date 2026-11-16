@@ -160,6 +160,7 @@ a new notion gets its word here before it gets code.
 | Autosave | The save made at every stop, which *Continue* resumes. | |
 | Progress | What a profile reached in a game across playthroughs: choices, options taken, endings, pages read, memories, lasting values. | `ProgressData` |
 | Map | The routes a profile explored, each point a choice reached, from which to *Play from here*. | `ProgressMap`, `ProgressPoint` |
+| Line (map) | On the map, the way from an option taken to where it led, carrying that option where its point branches; it goes under a point in its way. | `MapEdge` |
 | Log | The pages and choices passed, a click going back to one. | `BacklogEntry` |
 | Journal | What the author shows players of what they hold, and the endings reached. | `Journal` |
 | Gallery | The illustrations a profile has seen. | |
@@ -994,8 +995,10 @@ read, and what it remembers. The story reads only the memories and endings, thro
 `seen ending` conditions; decisions stay per playthrough.
 
 **Map** (in the game, on the end screen and on the library card) shows the routes explored left to
-right: each choice reached, its options (those not tried yet marked `?`), curves to where the tried
-ones led, and the endings. Hovering a choice tells what the journal showed when it was reached, by
+right: each choice reached, its options (those not tried yet marked `?`), lines to where the tried
+ones led, and the endings. Where a point branches, each line carries at its start the option it
+follows: its text, or its value when the text is longer than 14 characters. A line skipping columns
+with a point in its way steps down between the rows, runs under it and comes back up. Hovering a choice tells what the journal showed when it was reached, by
 the same rule (nothing the author keeps from players). **Play from here** resumes the choice exactly
 as it was reached, a new path for the autosave to follow. Two paths reaching the same choice merge
 on the map when they agree on the decisions and counters the story still tests from there on,
@@ -1091,17 +1094,6 @@ of it is as free as the rest of the repository.
 ## Plan
 
 What is left to do, in no particular order:
-
-- **The map says which option each line follows.** Where a point branches, Sakura Week's Monday job
-  for instance, the lines leaving it are alike: nothing tells which one goes on from *Decorations*
-  and which from *The cashier's table*. Each line should carry the option it follows (its text, or
-  its value when the text is long) where it leaves the point, in Datajack's map and in the
-  preview's.
-- **The map's lines go around points, not through them.** Points are laid out on one row, so a line
-  that skips some of them crosses them: in Sakura Week's day loop, the option that heads home goes
-  straight on to the next day, and its line runs over the points of the other options, so it is
-  hard to tell where it goes. A line with a point in its way should step down below the row, run
-  under it and come back up (`|_|`), in Datajack's map and in the preview's.
 
 ## License
 
