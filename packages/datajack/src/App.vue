@@ -8,6 +8,7 @@ import {
   localeOfChoice,
   MapView,
   PlayerView,
+  provideAppLook,
   provideLocale,
   SettingsScreen,
   useSystemLessMotion,
@@ -35,6 +36,8 @@ watchEffect(() => {
   document.documentElement.lang = locale.value
 })
 const text = computed(() => appMessages[locale.value])
+/** Datajack's own look, the same for every profile (it shows before one is chosen), never a game's. */
+provideAppLook(() => window.localStorage, 'datajack:look')
 const profileStore: ProfileStore = desktop === undefined
   ? createBrowserProfileStore(() => window.localStorage, () => crypto.randomUUID(), () => new Date().toISOString())
   : createDesktopProfileStore(desktop)

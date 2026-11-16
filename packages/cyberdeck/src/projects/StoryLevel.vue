@@ -392,7 +392,7 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 .story-board:focus-visible {
-  box-shadow: 0 0 0 2px rgb(158 234 255 / 0.4);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--look-accent) 40%, transparent);
 }
 
 .keys {
@@ -415,7 +415,7 @@ function onKeydown(event: KeyboardEvent) {
 
 .route.conditional {
   padding: 8px 10px 10px;
-  border: 1px solid #c4b5fd66;
+  border: 1px solid color-mix(in srgb, var(--look-violet) 40%, transparent);
   border-radius: 10px;
   background: rgb(196 181 253 / 0.05);
 }
@@ -423,7 +423,7 @@ function onKeydown(event: KeyboardEvent) {
 .route-heading {
   margin: 0;
   font-size: 13px;
-  color: #c4b5fd;
+  color: var(--look-violet);
 }
 
 .cards {
@@ -439,9 +439,9 @@ function onKeydown(event: KeyboardEvent) {
   width: 180px;
   min-height: 90px;
   padding: 10px 12px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
   font: inherit;
   color: inherit;
   text-align: left;
@@ -449,8 +449,8 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 .card.focused {
-  border-color: #9eeaff;
-  box-shadow: 0 0 0 1px #9eeaff;
+  border-color: var(--look-accent);
+  box-shadow: 0 0 0 1px var(--look-accent);
 }
 
 /* A chapter not written in the language shown: there, but hollow. */
@@ -461,7 +461,7 @@ function onKeydown(event: KeyboardEvent) {
 
 .card.hollow .title {
   font-style: italic;
-  color: #a3acbb;
+  color: var(--look-soft);
 }
 
 .card.cut {
@@ -471,7 +471,7 @@ function onKeydown(event: KeyboardEvent) {
 
 .card .number {
   font-size: 12px;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .card .title {
@@ -495,7 +495,7 @@ function onKeydown(event: KeyboardEvent) {
   gap: 10px;
   padding: 12px 16px;
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
 }
 
 .inspector h3 {
@@ -511,7 +511,7 @@ function onKeydown(event: KeyboardEvent) {
   flex-direction: column;
   gap: 8px;
   padding-top: 10px;
-  border-top: 1px solid #2c3442;
+  border-top: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
 }
 
 .problems {

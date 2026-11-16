@@ -394,9 +394,9 @@ defineExpose({ focus: () => field.value?.focus() })
   flex-direction: column;
   min-width: 190px;
   padding: 6px 0;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
-  background: #0b0d12;
+  background: var(--look-ground);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
 }
 
@@ -405,7 +405,7 @@ defineExpose({ focus: () => field.value?.focus() })
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .menu-item {
@@ -414,15 +414,15 @@ defineExpose({ focus: () => field.value?.focus() })
   background: none;
   font: inherit;
   font-size: 14px;
-  color: #e6e9ef;
+  color: var(--look-text);
   text-align: left;
   cursor: pointer;
 }
 
 .menu-item:hover,
 .menu-item:focus-visible {
-  background: #0e2a36;
-  color: #9eeaff;
+  background: var(--look-accent-fill);
+  color: var(--look-accent);
 }
 
 .hint {
@@ -452,7 +452,7 @@ defineExpose({ focus: () => field.value?.focus() })
   position: absolute;
   inset: 0;
   overflow: hidden;
-  color: #e6e9ef;
+  color: var(--look-text);
   pointer-events: none;
 }
 
@@ -460,25 +460,25 @@ defineExpose({ focus: () => field.value?.focus() })
   position: relative;
   display: block;
   min-height: 160px;
-  border-color: #2c3442;
+  border-color: var(--look-border-colour);
   border-radius: 6px;
   background: transparent;
   color: transparent;
-  caret-color: #e6e9ef;
+  caret-color: var(--look-text);
   resize: vertical;
 }
 
 .field::placeholder {
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .field:focus {
   outline: none;
-  border-color: #9eeaff;
+  border-color: var(--look-accent);
 }
 
 .field::selection {
-  background: rgb(158 234 255 / 0.3);
+  background: color-mix(in srgb, var(--look-accent) 30%, transparent);
 }
 
 /* Chips are drawn without changing the width of a single character. */
@@ -489,27 +489,27 @@ defineExpose({ focus: () => field.value?.focus() })
 
 .chip.stage {
   background: rgb(94 234 212 / 0.14);
-  color: #5eead4;
+  color: var(--look-teal);
 }
 
 .chip.character {
   background: rgb(196 181 253 / 0.16);
-  color: #c4b5fd;
+  color: var(--look-violet);
 }
 
 .chip.control {
   background: rgb(251 191 36 / 0.14);
-  color: #fbbf24;
+  color: var(--look-amber);
 }
 
 .chip.pause {
   background: rgb(147 197 253 / 0.14);
-  color: #93c5fd;
+  color: var(--look-blue);
 }
 
 .chip.invalid {
   background: rgb(242 139 130 / 0.2);
-  color: #f28b82;
+  color: var(--look-error);
   text-decoration: underline wavy;
 }
 
@@ -526,9 +526,9 @@ defineExpose({ focus: () => field.value?.focus() })
   max-width: 320px;
   margin: 0;
   padding: 4px 0;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
-  background: #0b0d12;
+  background: var(--look-ground);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
   list-style: none;
 }
@@ -543,19 +543,19 @@ defineExpose({ focus: () => field.value?.focus() })
 }
 
 .completion li.chosen {
-  background: #0e2a36;
-  color: #9eeaff;
+  background: var(--look-accent-fill);
+  color: var(--look-accent);
 }
 
 .item-detail {
-  color: #7b8597;
+  color: var(--look-muted);
   font-size: 12px;
 }
 
 .chip-problem {
   margin: 0;
   font-size: 13px;
-  color: #f28b82;
+  color: var(--look-error);
 }
 
 kbd {

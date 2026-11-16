@@ -307,7 +307,7 @@ useUnsavedChanges(() => hasChanges.value, ask)
   margin: 0;
   padding: 12px 16px;
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
   list-style: none;
 }
 
@@ -351,7 +351,7 @@ code {
   gap: 4px 16px;
   padding: 8px 12px;
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
 }
 
 .definition {

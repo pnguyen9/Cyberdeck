@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { languageName, languagesOf, type ProjectDocument } from '@cyberdeck/core'
-import { useLocale, useMessages, type ErasedData, type SaveStore } from '@cyberdeck/stage'
+import { AppLookButton, useLocale, useMessages, type ErasedData, type SaveStore } from '@cyberdeck/stage'
 import { onMounted, ref, shallowRef } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { errorText } from '../i18n/errorMessages'
@@ -116,7 +116,10 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
   <main class="editor-page">
     <header class="page-header">
       <h1>Cyberdeck</h1>
-      <LanguageSelect />
+      <div class="header-tools">
+        <LanguageSelect />
+        <AppLookButton class="button" app="Cyberdeck" />
+      </div>
     </header>
 
     <h2 class="section-title">{{ text.projects }}</h2>
@@ -201,6 +204,13 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
   margin-top: 40px;
 }
 
+.header-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
 .page-header {
   display: flex;
   flex-wrap: wrap;
@@ -224,9 +234,9 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
   align-items: center;
   gap: 16px;
   padding: 12px 16px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
 }
 
 .open-project {
@@ -250,7 +260,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
 
 .open-project:hover .project-name,
 .open-project:focus-visible .project-name {
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .folder {

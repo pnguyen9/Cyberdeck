@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { languageName, languagesOf, type ChapterDocument, type ChapterView, type NameKind, type PlayableStory, type ProjectDocument, type SaveData } from '@cyberdeck/core'
-import { useLocale, useMessages } from '@cyberdeck/stage'
+import { AppLookButton, useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef } from 'vue'
 import { commonMessages } from '../i18n/commonMessages'
 import { editorMessages } from '../i18n/editorMessages'
@@ -262,6 +262,7 @@ provide(EDITOR, { open: props.open, project, chapters, scenes, documents, langua
         </h1>
         <div class="header-actions">
           <LanguageSelect />
+          <AppLookButton class="button" app="Cyberdeck" />
           <button class="button" :title="text.keyboardShortcuts" @click="isPanelOpen = true">{{ text.shortcuts }}</button>
           <button class="button" @click="backUp">{{ text.backUp }}</button>
           <button class="button primary" :disabled="chapters.length === 0" @click="preview(null)">{{ text.preview }}</button>
@@ -396,7 +397,7 @@ h1 .link-button {
   flex-wrap: wrap;
   gap: 4px;
   margin: 24px 0 16px;
-  border-bottom: 1px solid #2c3442;
+  border-bottom: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
 }
 
 .tab {
@@ -405,17 +406,17 @@ h1 .link-button {
   border-bottom: 2px solid transparent;
   background: none;
   font: inherit;
-  color: #a3acbb;
+  color: var(--look-soft);
   cursor: pointer;
 }
 
 .tab.current {
-  border-bottom-color: #9eeaff;
-  color: #9eeaff;
+  border-bottom-color: var(--look-accent);
+  color: var(--look-accent);
 }
 
 .tab:hover,
 .tab:focus-visible {
-  color: #e6e9ef;
+  color: var(--look-text);
 }
 </style>

@@ -27,7 +27,7 @@ const text = useMessages(editorMessages)
 .pending {
   margin-bottom: 12px;
   padding: 10px 12px;
-  border: 1px solid #f5c451;
+  border: 1px solid var(--look-gold);
   border-radius: 8px;
   background: rgb(245 196 81 / 0.08);
 }

@@ -1,0 +1,28 @@
+/*
+ * The apps' own look behind their screens: the background, one colour or four corners blended.
+ * The bottom edge's gradient is the page's; the top edge's lies over it, fading out downwards, so
+ * that each point mixes the four corners. The stage of a game covers it whole.
+ */
+html {
+  min-height: 100%;
+  background-color: var(--look-background, #0b0d12);
+  background-image: linear-gradient(to right, var(--look-corner-bottom-left, #0b0d12), var(--look-corner-bottom-right, #0b0d12));
+  background-attachment: fixed;
+  color-scheme: var(--look-scheme, dark);
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: transparent;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: linear-gradient(to right, var(--look-corner-top-left, #0b0d12), var(--look-corner-top-right, #0b0d12));
+  mask-image: linear-gradient(to bottom, #000, transparent);
+  pointer-events: none;
+}

@@ -267,14 +267,14 @@ function setDrawnFacing(characterId: string, value: string) {
   flex-direction: column;
   gap: 6px;
   padding: 20px;
-  border: 2px dashed #2c3442;
+  border: 2px dashed var(--look-border-colour);
   border-radius: 8px;
   cursor: pointer;
 }
 
 .drop-zone.dragging,
 .drop-zone:focus-within {
-  border-color: #9eeaff;
+  border-color: var(--look-accent);
 }
 
 .file-input {
@@ -307,11 +307,11 @@ function setDrawnFacing(characterId: string, value: string) {
 .framing select {
   margin-left: 4px;
   padding: 2px 4px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 4px;
-  background: #11151d;
+  background: var(--look-surface);
   font: inherit;
-  color: #e6e9ef;
+  color: var(--look-text);
 }
 
 .entry {
@@ -330,7 +330,7 @@ function setDrawnFacing(characterId: string, value: string) {
   width: 32px;
   height: 48px;
   border-radius: 4px;
-  background: #0b0d12;
+  background: var(--look-ground);
   object-fit: contain;
 }
 
@@ -342,16 +342,16 @@ function setDrawnFacing(characterId: string, value: string) {
 
 .thumbnail.empty {
   display: inline-block;
-  border: 1px dashed #2c3442;
+  border: 1px dashed var(--look-border-colour);
 }
 
 .present {
-  color: #a3e4b0;
+  color: var(--look-success);
   overflow-wrap: anywhere;
 }
 
 .missing {
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 p {
