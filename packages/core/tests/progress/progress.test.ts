@@ -119,6 +119,26 @@ describe('progress', () => {
     expect(progress.points).toHaveLength(2)
   })
 
+  it('links an option to every point it led to, the next one told apart by a value drawn after it', () => {
+    const story = storyFromText([
+      '[counter: Coin = 0]',
+      '[choice: Wake]', '> Get up = Up', '> Sleep in = In',
+      '[set: Coin = random 1 2]',
+      '[choice: Walk]', '> Walk = Walk',
+      '[if: Coin is 1]', 'Heads.', '[else]', 'Tails.', '[end]',
+    ])
+    let progress = emptyProgress(story)
+    // Played with one seed after another until both heads and tails were drawn.
+    for (let seed = 0; seed < 50 && progress.points.length < 3; seed++) {
+      const runtime = new StoryRuntime(story)
+      runtime.start(seed)
+      progress = play(story, progress, ['Get up', 'Walk'], runtime)
+    }
+    const walks = progress.points.filter(point => point.choiceId !== progress.points[0]!.choiceId)
+    expect(walks).toHaveLength(2)
+    expect(progress.points[0]!.taken).toEqual(walks.map(walk => ({ optionId: progress.points[0]!.taken[0]!.optionId, next: { type: 'point', key: walk.key } })))
+  })
+
   it('records the pages read once', () => {
     const story = storyFromText(STORY)
     const progress = play(story, emptyProgress(story), ['Smile', 'Red hat', 'Open'])

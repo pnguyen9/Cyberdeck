@@ -5,7 +5,7 @@ import type { RuntimeState, StoryRuntime } from '../runtime/storyRuntime'
 import { toSave } from '../saves/saveData'
 import { findGuidedPath } from './guidedSearch'
 import { branchFrom, EXPLORED_AT, playToNextStop, startedRuntime, stateKeyOf, type ExploringMemory, type StopBudget } from './playing'
-import { emptyProgress, type PendingOption, type ProgressData, type ProgressPoint, type ProgressTarget } from './progress'
+import { emptyProgress, isSameTarget, type PendingOption, type ProgressData, type ProgressPoint, type ProgressTarget } from './progress'
 
 /** States explored at most, all choices together: past them, the broad exploration stops. */
 const MAXIMUM_STATES = 5000
@@ -91,8 +91,7 @@ export function exploreStory(story: PlayableStory, memory: ExploringMemory = { m
    */
   const link = (arrivedBy: PendingOption | null, target: ProgressTarget) => {
     const point = arrivedBy === null ? undefined : points.get(arrivedBy.pointKey)
-    const leadsThere = (next: ProgressTarget | null) => next !== null && (next.type === 'point' ? target.type === 'point' && next.key === target.key : target.type === 'end' && next.endingId === target.endingId)
-    if (point !== undefined && !point.taken.some(option => option.optionId === arrivedBy!.optionId && leadsThere(option.next))) {
+    if (point !== undefined && !point.taken.some(option => option.optionId === arrivedBy!.optionId && isSameTarget(option.next, target))) {
       point.taken = [...point.taken, { optionId: arrivedBy!.optionId, next: target }]
     }
   }

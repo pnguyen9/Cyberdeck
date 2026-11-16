@@ -50,7 +50,7 @@ export interface ProgressPoint {
   reachedAt: string
   /** The state when the choice was reached, as a save holds it: playing from the point loads it. */
   save: SaveData
-  /** Options picked here, with what they led to once known. */
+  /** Options picked here, with what they led to once known: one entry for each place an option led to. */
   taken: { optionId: string; next: ProgressTarget | null }[]
   /**
    * On a map explored for the author alone: for each option, the state of a path that offered it, so
@@ -385,14 +385,11 @@ export function mergeProgress(own: ProgressData, brought: ProgressData): Progres
       points.set(point.key, point)
       continue
     }
-    const taken = new Map(known.taken.map(option => [option.optionId, option]))
-    for (const option of point.taken) {
-      // An option whose outcome one of them learned keeps it.
-      if (taken.get(option.optionId)?.next == null) {
-        taken.set(option.optionId, option)
-      }
-    }
-    points.set(point.key, { ...known, taken: [...taken.values()] })
+    // Each place an option led to, by either; an option whose outcome one of them learned keeps it.
+    const taken = point.taken.reduce((joined, option) => option.next === null
+      ? (joined.some(known => known.optionId === option.optionId) ? joined : [...joined, option])
+      : withTarget(joined, option.optionId, option.next), known.taken)
+    points.set(point.key, { ...known, taken })
   }
   return {
     ...own,
@@ -467,11 +464,27 @@ function linkOption(progress: ProgressData, arrivedBy: PendingOption | null, tar
   }
   return {
     ...progress,
-    points: progress.points.map(point => point.key !== arrivedBy.pointKey ? point : {
-      ...point,
-      taken: [...point.taken.filter(option => option.optionId !== arrivedBy.optionId), { optionId: arrivedBy.optionId, next: target }],
-    }),
+    points: progress.points.map(point => point.key !== arrivedBy.pointKey ? point : { ...point, taken: withTarget(point.taken, arrivedBy.optionId, target) }),
   }
+}
+
+/** Whether two places an option led to are the same. */
+export function isSameTarget(first: ProgressTarget | null, second: ProgressTarget | null): boolean {
+  return first !== null && second !== null && (first.type === 'point'
+    ? second.type === 'point' && first.key === second.key
+    : second.type === 'end' && first.endingId === second.endingId)
+}
+
+/**
+ * An option's places with one more: the same option may lead to several, by values drawn at random
+ * or gathered before it (a day that rains or not after the same pick). Its outcome waiting to be
+ * learned gives way to it.
+ */
+function withTarget(taken: ProgressPoint['taken'], optionId: string, target: ProgressTarget): ProgressPoint['taken'] {
+  if (taken.some(option => option.optionId === optionId && isSameTarget(option.next, target))) {
+    return taken
+  }
+  return [...taken.filter(option => option.optionId !== optionId || option.next !== null), { optionId, next: target }]
 }
 
 /** FNV-1a, twice with different seeds: 64 bits, so that distinct states never share a key in practice. */

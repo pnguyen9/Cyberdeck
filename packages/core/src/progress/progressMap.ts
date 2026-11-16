@@ -155,7 +155,7 @@ export function layOutProgressMap(progress: ProgressData, story: PlayableStory):
           if ((outgoing.get(point.key)?.length ?? 0) >= 2) {
             labels.set(`${point.key} ${option.id}`, optionLabel(text, decision?.values.find(value => value.id === option.valueId)?.name ?? text))
           }
-          const taken = point.taken.find(candidate => candidate.optionId === option.id)
+          const taken = point.taken.find(candidate => candidate.optionId === option.id && candidate.next !== null) ?? point.taken.find(candidate => candidate.optionId === option.id)
           const offeredIn = point.offeredIn?.[option.id]
           return { optionId: option.id, text, next: taken?.next == null ? null : targetKey(taken.next), isTaken: taken !== undefined, offeredIn: offeredIn === undefined || offeredIn === point.save ? null : offeredIn }
         }),

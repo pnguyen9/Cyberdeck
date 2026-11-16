@@ -4,6 +4,9 @@
 
 ### Both applications
 - The **Look** setting is now called **Appearance**, the usual word, as in French.
+- The map of what was played keeps every place an option led to: the same option leading to
+  different points on different playthroughs (Sakura Week's Tuesday, rainy or not after the same
+  afternoon) no longer leaves the earlier one with nothing leading to it.
 
 ## 3.4.1 — 2026-11-16
 
