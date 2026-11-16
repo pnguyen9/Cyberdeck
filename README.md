@@ -1102,6 +1102,37 @@ What is left to do, in no particular order:
   straight on to the next day, and its line runs over the points of the other options, so it is
   hard to tell where it goes. A line with a point in its way should step down below the row, run
   under it and come back up (`|_|`), in Datajack's map and in the preview's.
+- **A setting for the apps' own look.** Cyberdeck and Datajack wear a serious cyberpunk look that
+  not everyone wants. A setting should let a person change it, simply or in depth: the border's
+  colour and kind (solid, dashed, double, none…), the background as one colour or as a gradient
+  from four colours (one per corner), the font and its colour, and a box that keeps the text
+  readable whatever the background (its colour picked from the background's brightness). This is
+  the apps' own look, not a game's: a game's look stays with its author's CSS.
+- **The apps say which version they are.** Cyberdeck and Datajack show their version discreetly on
+  their first screen (the project list, the library), and an *About* panel gives it again with the
+  license, links to the repository and the guide, and how the app runs (desktop, web page or
+  installed). The version comes from `package.json` at build time.
+- **Both apps always online, on GitHub Pages.** `https://pnguyen9.github.io/Cyberdeck/` holds a
+  small landing page, `cyberdeck/` and `datajack/`, published by a GitHub workflow on each release
+  tag (tests, both web builds, publish). The web build uses relative paths (`base: './'`) so it works
+  under that folder. The address never changes, so people's projects and saves stay from one release
+  to the next. That means a release always opens data from older ones, only the latest version is
+  hosted (older ones stay on the Releases page), and storage names keep their `cyberdeck:` and
+  `datajack:` prefixes, since everything on `pnguyen9.github.io` shares the same storage. The
+  hosted apps say, discreetly, that a browser may erase a site's data (Safari does after about seven
+  days without a visit, unless the app is installed) and that exporting is the safety net.
+- **Both apps installable (progressive web app).** A manifest (name, icons, colour) and a service
+  worker that keeps the app's files on the device let people install either app from the browser,
+  on a phone or a computer (Edge and Chrome on Windows too), and use it offline. When a new release
+  is online, the app offers to reload. The service worker stays off in the desktop build and the
+  double-click build.
+- **Datajack on touch screens, with the computer first.** Keyboard and mouse play stays as it is, for
+  people who rely on it; touch is added beside it. Mouse handlers become pointer events. A long
+  press acts as a right-click (hide the text by default); iPhones and iPads never send one, so
+  Datajack detects it itself. Swiping right goes back a page, swiping left advances, a tap still
+  advances. Labels shown only on hover are always shown on screens without a mouse. Datajack asks
+  for landscape: it offers fullscreen, locks the orientation where the browser allows, and otherwise
+  asks to turn the device. Cyberdeck stays a computer app.
 
 ## License
 
