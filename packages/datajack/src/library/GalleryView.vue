@@ -59,20 +59,24 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
 <style scoped>
 .gallery {
+  box-sizing: border-box;
   max-width: 1100px;
+  min-height: 100vh;
   margin: 0 auto;
   padding: 32px 24px;
-  font: 16px/1.5 system-ui, sans-serif;
-  color: #e6e9ef;
+  font: 16px/1.5 var(--look-font);
+  color: var(--look-text);
+  /* The readable box, when the look has one. */
+  background: var(--look-box);
 }
 
 .button {
   padding: 8px 16px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
-  background: #11151d;
+  background: var(--look-surface);
   font: inherit;
-  color: #e6e9ef;
+  color: var(--look-text);
   cursor: pointer;
 }
 
@@ -91,7 +95,7 @@ h1 {
 
 .count {
   flex: 1;
-  color: #a3acbb;
+  color: var(--look-soft);
 }
 
 kbd {
@@ -116,11 +120,11 @@ kbd {
   aspect-ratio: 16 / 9;
   overflow: hidden;
   padding: 0;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
   font: inherit;
-  color: #e6e9ef;
+  color: var(--look-text);
   cursor: pointer;
 }
 
@@ -132,7 +136,7 @@ kbd {
 
 .tile.locked {
   font-size: 40px;
-  color: #3a4252;
+  color: var(--look-faint);
   cursor: default;
 }
 

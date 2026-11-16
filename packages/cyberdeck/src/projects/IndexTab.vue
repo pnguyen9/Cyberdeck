@@ -229,7 +229,7 @@ onMounted(() => {
   margin: 0;
   padding: 12px 16px;
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
   list-style: none;
 }
 
@@ -241,11 +241,11 @@ onMounted(() => {
 }
 
 .warnings .warning {
-  color: #f6c177;
+  color: var(--look-warning);
 }
 
 .warnings .notice {
-  color: #a3acbb;
+  color: var(--look-soft);
 }
 
 .kind {
@@ -253,12 +253,12 @@ onMounted(() => {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .name {
   font-weight: 600;
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .intro {
@@ -287,7 +287,7 @@ onMounted(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .names {
@@ -298,7 +298,7 @@ onMounted(() => {
 
 .name-entry {
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
 }
 
 .name-header {
@@ -320,7 +320,7 @@ onMounted(() => {
 .name-header:hover,
 .name-header:focus-visible {
   outline: none;
-  background: #18202c;
+  background: color-mix(in srgb, var(--look-text) 7%, var(--look-ground));
 }
 
 .name-title {
@@ -329,7 +329,7 @@ onMounted(() => {
 
 .matched {
   font-weight: 400;
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .summary {
@@ -364,7 +364,7 @@ onMounted(() => {
 
 .value {
   padding: 1px 10px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 999px;
   font-size: 13px;
 }

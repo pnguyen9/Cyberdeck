@@ -64,7 +64,7 @@ function close() {
   margin-top: 40px;
   font-size: 13px;
   line-height: 1.5;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .about-app p {
@@ -84,7 +84,7 @@ function close() {
 
 .about-button:hover,
 .about-button:focus-visible {
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .may-erase {
@@ -105,11 +105,11 @@ function close() {
   box-sizing: border-box;
   width: min(520px, 100%);
   padding: 24px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
   font-size: 15px;
-  color: #e6e9ef;
+  color: var(--look-text);
 }
 
 .about-panel:focus {
@@ -126,16 +126,16 @@ function close() {
 }
 
 .about-version {
-  color: #9eeaff;
+  color: var(--look-accent);
   font-weight: 600;
 }
 
 .runs {
-  color: #c7cdd8;
+  color: var(--look-text-soft);
 }
 
 .about-panel a {
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .links {
@@ -145,18 +145,18 @@ function close() {
 
 .panel-button {
   padding: 6px 14px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
-  background: #11151d;
+  background: var(--look-surface);
   font: inherit;
-  color: #e6e9ef;
+  color: var(--look-text);
   cursor: pointer;
 }
 
 .panel-button.primary {
-  border-color: #9eeaff;
-  background: #0e2a36;
-  color: #9eeaff;
+  border-color: var(--look-accent);
+  background: var(--look-accent-fill);
+  color: var(--look-accent);
   font-weight: 600;
 }
 
@@ -171,12 +171,12 @@ function close() {
   gap: 8px 12px;
   max-width: calc(100% - 32px);
   padding: 10px 16px;
-  border: 1px solid #9eeaff;
+  border: 1px solid var(--look-accent);
   border-radius: 8px;
-  background: #0b0d12;
+  background: var(--look-ground);
   box-shadow: 0 4px 16px rgb(0 0 0 / 50%);
   font-size: 15px;
-  color: #e6e9ef;
+  color: var(--look-text);
   transform: translateX(-50%);
 }
 </style>

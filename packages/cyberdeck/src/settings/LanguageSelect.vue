@@ -21,7 +21,14 @@ const text = useMessages(appMessages)
   align-items: center;
   gap: 6px;
   font-size: 14px;
-  color: #a3acbb;
+  color: var(--look-soft);
+}
+
+/* The menu is the stage's, which keeps its own look in a game: here it wears the application's. */
+.language :deep(.language-select) {
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
+  background: var(--look-surface);
+  color: var(--look-text);
 }
 
 </style>

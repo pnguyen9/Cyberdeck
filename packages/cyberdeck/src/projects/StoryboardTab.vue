@@ -60,7 +60,8 @@ const indexText = useMessages(indexMessages)
 /** The first keys of an action, as shown on buttons; empty when the author removed them all. */
 const keysOf = (actionId: ShortcutId) => firstKeysOf(shortcuts.value, actionId, locale.value)
 
-const BRANCH_COLORS = ['#5eead4', '#fbbf24', '#c4b5fd', '#fda4af', '#bef264', '#93c5fd']
+// The look's colours, readable on its background.
+const BRANCH_COLORS = ['var(--look-teal)', 'var(--look-amber)', 'var(--look-violet)', 'var(--look-rose)', 'var(--look-lime)', 'var(--look-blue)']
 
 type EditableEntry = Extract<StoryboardEntry, { type: 'card' | 'marker' }>
 type BlockElement = Extract<LevelElement, { kind: 'block' }>
@@ -1344,20 +1345,20 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
 .board {
   min-height: 200px;
   padding: 12px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 8px;
   outline: none;
 }
 
 .board:focus-visible {
-  border-color: #9eeaff;
+  border-color: var(--look-accent);
 }
 
 .inspector {
   align-self: start;
   padding: 12px 16px;
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
   overflow-wrap: anywhere;
 }
 
@@ -1388,7 +1389,7 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
     box-sizing: border-box;
     width: min(380px, calc(100vw - 48px));
     overflow-y: auto;
-    border-left: 1px solid #2c3442;
+    border-left: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
     border-radius: 0;
     box-shadow: -8px 0 24px rgb(0 0 0 / 0.45);
     transform: translateX(100%);
@@ -1412,12 +1413,12 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
     align-items: center;
     gap: 4px;
     padding: 12px 6px;
-    border: 1px solid #2c3442;
+    border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
     border-right: 0;
     border-radius: 8px 0 0 8px;
-    background: #11151d;
+    background: var(--look-surface);
     font: inherit;
-    color: #9eeaff;
+    color: var(--look-accent);
     cursor: pointer;
     transform: translateY(-50%);
     transition: right 0.2s ease;
@@ -1431,13 +1432,13 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
 .in-view {
   margin-top: 16px;
   padding-top: 10px;
-  border-top: 1px solid #2c3442;
+  border-top: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   font-size: 14px;
 }
 
 .in-view summary {
   font-weight: 600;
-  color: #a3acbb;
+  color: var(--look-soft);
   cursor: pointer;
 }
 
@@ -1453,7 +1454,7 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
 
 .name-link {
   font-size: 14px;
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .uses-text {
@@ -1461,11 +1462,11 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
 }
 
 .handle-mark {
-  color: #f5c451;
+  color: var(--look-gold);
 }
 
 .changed {
-  color: #f5c451;
+  color: var(--look-gold);
 }
 
 .inspector h3 {
@@ -1476,7 +1477,7 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
 .inspector h4 {
   margin: 12px 0 4px;
   font-size: 13px;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .inspector ul {
@@ -1486,16 +1487,16 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
 }
 
 .hint {
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .warning {
-  color: #f6c177;
+  color: var(--look-warning);
 }
 
 .only-if {
   margin: 0 0 12px;
-  color: #fbbf24;
+  color: var(--look-amber);
 }
 
 .full-text {
@@ -1525,7 +1526,7 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
 
 kbd {
   margin-left: 4px;
-  font: 11px/1 system-ui, sans-serif;
-  color: #7b8597;
+  font: 11px/1 var(--look-font);
+  color: var(--look-muted);
 }
 </style>

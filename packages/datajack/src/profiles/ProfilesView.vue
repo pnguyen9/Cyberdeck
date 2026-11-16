@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AboutApp, LanguageSelect, useLocale, useMessages, type LanguageChoice } from '@cyberdeck/stage'
+import { AboutApp, AppLookButton, LanguageSelect, useLocale, useMessages, type LanguageChoice } from '@cyberdeck/stage'
 import { onMounted, ref, useTemplateRef, watch } from 'vue'
 import { MAXIMUM_PROFILE_NAME_LENGTH, profileNameProblem } from '../../electron/profileNames'
 import { profileMessages } from '../i18n/profileMessages'
@@ -139,10 +139,13 @@ function confirmRemove(profile: Profile) {
   <main v-if="isLoaded" class="profiles">
     <header class="profiles-header">
       <h1>Datajack</h1>
-      <label class="language">
-        <span>{{ text.language }}</span>
-        <LanguageSelect v-model="languageChoice" />
-      </label>
+      <div class="header-tools">
+        <label class="language">
+          <span>{{ text.language }}</span>
+          <LanguageSelect v-model="languageChoice" />
+        </label>
+        <AppLookButton class="button" app="Datajack" />
+      </div>
     </header>
 
     <template v-if="list.profiles.length > 0">
@@ -216,8 +219,17 @@ function confirmRemove(profile: Profile) {
   min-height: 100vh;
   margin: 0 auto;
   padding: 48px 16px;
-  font: 16px/1.5 system-ui, sans-serif;
-  color: #e6e9ef;
+  font: 16px/1.5 var(--look-font);
+  color: var(--look-text);
+  /* The readable box, when the look has one. */
+  background: var(--look-box);
+}
+
+.header-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
 }
 
 .profiles-header {
@@ -232,7 +244,7 @@ function confirmRemove(profile: Profile) {
 h1 {
   margin: 0;
   font-size: 28px;
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .language {
@@ -240,7 +252,14 @@ h1 {
   align-items: baseline;
   gap: 6px;
   font-size: 14px;
-  color: #7b8597;
+  color: var(--look-muted);
+}
+
+/* The menu is the stage's, which keeps its own look in a game: here it wears the application's. */
+.language :deep(.language-select) {
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
+  background: var(--look-surface);
+  color: var(--look-text);
 }
 
 h2 {
@@ -259,13 +278,13 @@ h2 {
 
 .profile {
   padding: 12px 16px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
 }
 
 .profile.last-used {
-  border-color: #9eeaff;
+  border-color: var(--look-accent);
 }
 
 .play-profile {
@@ -289,13 +308,13 @@ h2 {
 
 .play-profile:hover .profile-name,
 .play-profile:focus-visible .profile-name {
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .folder,
 .folder-path {
   font: 13px/1.4 ui-monospace, monospace;
-  color: #7b8597;
+  color: var(--look-muted);
   overflow-wrap: anywhere;
 }
 
@@ -319,7 +338,7 @@ h2 {
 
 .hint {
   margin: -4px 0 0;
-  color: #a3acbb;
+  color: var(--look-soft);
 }
 
 .field {
@@ -331,7 +350,7 @@ h2 {
 
 .field > span {
   font-size: 14px;
-  color: #a3acbb;
+  color: var(--look-soft);
 }
 
 .folder-choice {
@@ -352,9 +371,9 @@ h2 {
   width: 100%;
   max-width: 360px;
   padding: 8px 10px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
-  background: #0b0d12;
+  background: var(--look-ground);
   font: inherit;
   color: inherit;
 }
@@ -363,26 +382,28 @@ h2 {
   flex: 1 1 200px;
 }
 
-.button {
+/* The look's button, the stage's component, is drawn as these. */
+.button,
+:deep(.button) {
   padding: 8px 16px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
-  background: #11151d;
+  background: var(--look-surface);
   font: inherit;
-  color: #e6e9ef;
+  color: var(--look-text);
   cursor: pointer;
 }
 
 .button.primary {
-  border-color: #9eeaff;
-  background: #0e2a36;
-  color: #9eeaff;
+  border-color: var(--look-accent);
+  background: var(--look-accent-fill);
+  color: var(--look-accent);
   font-weight: 600;
 }
 
 .button.danger {
-  border-color: #f28b82;
-  color: #f28b82;
+  border-color: var(--look-error);
+  color: var(--look-error);
 }
 
 .button:disabled {
@@ -396,20 +417,20 @@ h2 {
   background: none;
   font: inherit;
   font-size: 14px;
-  color: #7b8597;
+  color: var(--look-muted);
   cursor: pointer;
 }
 
 .link-button:hover,
 .link-button:focus-visible {
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .error {
-  color: #f28b82;
+  color: var(--look-error);
 }
 
 .message {
-  color: #a3e4b0;
+  color: var(--look-success);
 }
 </style>

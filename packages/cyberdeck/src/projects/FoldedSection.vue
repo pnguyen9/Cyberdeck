@@ -17,6 +17,6 @@ summary.section-title {
 }
 
 .missing-count {
-  color: #f6c177;
+  color: var(--look-warning);
 }
 </style>

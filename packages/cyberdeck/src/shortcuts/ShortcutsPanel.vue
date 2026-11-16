@@ -119,11 +119,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown, true))
   max-height: calc(100vh - 32px);
   overflow: auto;
   padding: 20px 24px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 10px;
-  background: #0b0d12;
-  font: 15px/1.5 system-ui, sans-serif;
-  color: #e6e9ef;
+  background: var(--look-ground);
+  font: 15px/1.5 var(--look-font);
+  color: var(--look-text);
   outline: none;
 }
 
@@ -144,7 +144,7 @@ h2 {
   align-items: center;
   gap: 16px;
   padding: 4px 0;
-  border-bottom: 1px solid #161b24;
+  border-bottom: 1px solid var(--look-surface);
 }
 
 .keys {
@@ -164,24 +164,24 @@ h2 {
   background: none;
   font: inherit;
   font-size: 13px;
-  color: #a3acbb;
+  color: var(--look-soft);
   cursor: pointer;
 }
 
 .keys-button:hover,
 .keys-button:focus-visible,
 .keys-button.capturing {
-  border-color: #9eeaff;
-  color: #9eeaff;
+  border-color: var(--look-accent);
+  color: var(--look-accent);
 }
 
 kbd {
   padding: 1px 6px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 4px;
-  background: #11151d;
+  background: var(--look-surface);
   font: 13px/1.4 ui-monospace, monospace;
-  color: #e6e9ef;
+  color: var(--look-text);
 }
 
 .fixed {
@@ -196,7 +196,7 @@ kbd {
   gap: 8px;
   padding: 8px 12px;
   border-radius: 6px;
-  background: #2a1d0b;
-  color: #fbbf24;
+  background: var(--look-amber-fill);
+  color: var(--look-amber);
 }
 </style>

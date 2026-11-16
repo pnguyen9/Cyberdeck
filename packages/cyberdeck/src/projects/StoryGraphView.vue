@@ -153,7 +153,7 @@ const pathOf = (points: readonly { x: number; y: number }[]) => points.map((poin
       <svg class="graph" :aria-label="text.graph">
         <defs>
           <marker id="graph-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#5d6b80" />
+            <path d="M 0 0 L 10 5 L 0 10 z" style="fill: var(--look-line)" />
           </marker>
         </defs>
         <g :transform="`translate(${pan.x} ${pan.y}) scale(${zoom})`">
@@ -214,9 +214,9 @@ const pathOf = (points: readonly { x: number; y: number }[]) => points.map((poin
   position: relative;
   height: 70vh;
   overflow: hidden;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 8px;
-  background: #0b0e14;
+  background: var(--look-ground);
   cursor: grab;
   touch-action: none;
 }
@@ -238,30 +238,30 @@ const pathOf = (points: readonly { x: number; y: number }[]) => points.map((poin
   margin: 0;
   padding: 2px 8px;
   border-radius: 4px;
-  background: rgb(11 14 20 / 0.9);
+  background: color-mix(in srgb, var(--look-ground) 90%, transparent);
   font-size: 12px;
   pointer-events: none;
 }
 
 .edge {
   fill: none;
-  stroke: #5d6b80;
+  stroke: var(--look-line);
   stroke-width: 1.5;
 }
 
 .edge.back {
-  stroke: #fbbf24;
+  stroke: var(--look-amber);
   stroke-dasharray: 4 4;
 }
 
 .edge.play {
-  stroke: #c4b5fd;
+  stroke: var(--look-violet);
   stroke-dasharray: 6 5;
 }
 
 .box rect {
-  fill: #11151d;
-  stroke: #2c3442;
+  fill: var(--look-surface);
+  stroke: var(--look-border-colour);
 }
 
 .box {
@@ -269,43 +269,43 @@ const pathOf = (points: readonly { x: number; y: number }[]) => points.map((poin
 }
 
 .box .label {
-  font: 600 14px system-ui, sans-serif;
-  fill: #e6e9ef;
+  font: 600 14px var(--look-font);
+  fill: var(--look-text);
 }
 
 .box .line {
-  font: 13px system-ui, sans-serif;
-  fill: #a3acbb;
+  font: 13px var(--look-font);
+  fill: var(--look-soft);
 }
 
 .box.chapter rect,
 .box.scene rect {
-  fill: #0e2a36;
-  stroke: #9eeaff;
+  fill: var(--look-accent-fill);
+  stroke: var(--look-accent);
 }
 
 .box.scene rect {
-  stroke: #c4b5fd;
+  stroke: var(--look-violet);
 }
 
 .box.fork rect,
 .box.branch rect {
-  fill: #1a1630;
-  stroke: #c4b5fd88;
+  fill: color-mix(in srgb, var(--look-violet) 10%, var(--look-ground));
+  stroke: color-mix(in srgb, var(--look-violet) 53%, transparent);
 }
 
 .box.loop rect {
   fill: rgb(251 191 36 / 0.04);
-  stroke: #fbbf2466;
+  stroke: color-mix(in srgb, var(--look-amber) 40%, transparent);
 }
 
 .box.ending rect {
-  fill: #2a2010;
-  stroke: #fbbf24;
+  fill: var(--look-amber-fill);
+  stroke: var(--look-amber);
 }
 
 .box.choice rect {
-  stroke: #5eead4;
+  stroke: var(--look-teal);
 }
 
 .box:focus-visible {
@@ -313,16 +313,16 @@ const pathOf = (points: readonly { x: number; y: number }[]) => points.map((poin
 }
 
 .box:focus-visible rect {
-  stroke: #fff;
+  stroke: var(--look-text);
   stroke-width: 2;
 }
 
 .graph-viewport:focus-visible {
-  outline: 2px solid #9eeaff;
+  outline: 2px solid var(--look-accent);
 }
 
 .box.selected rect {
-  stroke: #9eeaff;
+  stroke: var(--look-accent);
   stroke-width: 3;
 }
 
@@ -333,7 +333,7 @@ const pathOf = (points: readonly { x: number; y: number }[]) => points.map((poin
   width: 280px;
   padding: 12px 16px;
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
 }
 
 .graph-panel h3,

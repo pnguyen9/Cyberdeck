@@ -26,6 +26,9 @@ export { default as AboutApp } from './components/AboutApp.vue'
 export { provideAboutApp, type AboutAppOptions } from './app/aboutApp'
 export { howItRuns, isHosted, keepsOffline, type HowItRuns } from './app/howItRuns'
 export { createStorageSettingsStore, DEFAULT_PLAYER_SETTINGS, parsePlayerSettings, TEXT_SPEED_RANGE, type PlayerSettings } from './settings/playerSettings'
+export { default as AppLookButton } from './look/AppLookButton.vue'
+export { DEFAULT_APP_LOOK, type AppLook } from './look/appLook'
+export { provideAppLook, useAppLook } from './look/appLookState'
 export { LESS_MOTION, useSystemLessMotion, wantsLessMotion } from './settings/lessMotion'
 export {
   isLocale,

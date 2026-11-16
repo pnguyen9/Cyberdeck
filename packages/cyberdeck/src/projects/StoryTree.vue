@@ -179,7 +179,7 @@ const stateClasses = (entryId: string) => ({
   flex-direction: column;
   gap: 6px;
   padding-left: 10px;
-  border-left: 3px solid var(--branch-color, #7b8597);
+  border-left: 3px solid var(--branch-color, var(--look-muted));
 }
 
 /*
@@ -196,7 +196,7 @@ const stateClasses = (entryId: string) => ({
 .join {
   align-self: flex-start;
   padding: 3px 10px;
-  border: 1px solid var(--branch-color, #7b8597);
+  border: 1px solid var(--branch-color, var(--look-muted));
   /* Half a line's height: round at the ends on one line, yet holding its text when it runs to several. */
   border-radius: 12px;
   font-size: 13px;
@@ -204,8 +204,8 @@ const stateClasses = (entryId: string) => ({
 }
 
 .join {
-  border-color: #7b8597;
-  color: #a3acbb;
+  border-color: var(--look-muted);
+  color: var(--look-soft);
 }
 
 .item {
@@ -216,10 +216,10 @@ const stateClasses = (entryId: string) => ({
   box-sizing: border-box;
   max-width: 420px;
   padding: 6px 10px;
-  border: 1px solid #2c3442;
-  border-left: 3px solid var(--branch-color, #2c3442);
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
+  border-left: 3px solid var(--branch-color, var(--look-border-colour));
   border-radius: 6px;
-  background: #11151d;
+  background: var(--look-surface);
   cursor: pointer;
 }
 
@@ -229,14 +229,14 @@ const stateClasses = (entryId: string) => ({
   border-radius: 12px;
   border-left-width: 1px;
   font-size: 13px;
-  color: #a3acbb;
+  color: var(--look-soft);
 }
 
 .number {
   min-width: 2.5em;
   font-size: 12px;
   font-weight: 700;
-  color: var(--branch-color, #7b8597);
+  color: var(--branch-color, var(--look-muted));
 }
 
 .line {
@@ -250,7 +250,7 @@ const stateClasses = (entryId: string) => ({
 /* Names as on the grid's cards, apart from the text they speak. */
 .speaker {
   margin-right: 0.5em;
-  font: 600 13px/1.4 system-ui, sans-serif;
+  font: 600 13px/1.4 var(--look-font);
 }
 
 .marker .line {
@@ -259,39 +259,39 @@ const stateClasses = (entryId: string) => ({
 
 .staging {
   font-size: 12px;
-  color: #7b8597;
+  color: var(--look-muted);
   white-space: nowrap;
 }
 
 .symbol {
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .nothing {
   margin: 0;
   font-size: 13px;
   font-style: italic;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .focused {
-  outline: 2px solid #9eeaff;
+  outline: 2px solid var(--look-accent);
   outline-offset: 2px;
 }
 
 .item.editing {
-  border-color: #f5c451;
-  box-shadow: inset 3px 0 0 #f5c451;
+  border-color: var(--look-gold);
+  box-shadow: inset 3px 0 0 var(--look-gold);
 }
 
 .item.selected {
-  background: #0e2a36;
-  border-color: #9eeaff;
+  background: var(--look-accent-fill);
+  border-color: var(--look-accent);
 }
 
 .unreachable {
   opacity: 0.55;
   border-style: dashed;
-  border-color: #f28b82;
+  border-color: var(--look-error);
 }
 </style>

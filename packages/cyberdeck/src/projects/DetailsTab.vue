@@ -97,11 +97,11 @@ function measureCover(event: Event) {
   aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 6px;
-  background: #11151d;
+  background: var(--look-surface);
 }
 
 .cover.empty {
-  border: 1px dashed #2c3442;
+  border: 1px dashed var(--look-border-colour);
 }
 
 .cover img {

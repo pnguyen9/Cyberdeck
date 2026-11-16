@@ -6,14 +6,16 @@
   min-height: 100vh;
   margin: 0 auto;
   padding: 24px 16px 48px;
-  font: 16px/1.5 system-ui, sans-serif;
-  color: #e6e9ef;
+  font: 16px/1.5 var(--look-font);
+  color: var(--look-text);
+  /* The readable box, when the look has one. */
+  background: var(--look-box);
 }
 
 .editor-page h1 {
   margin: 0;
   font-size: 28px;
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .section-title {
@@ -22,29 +24,29 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .button {
   padding: 8px 16px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
-  background: #11151d;
+  background: var(--look-surface);
   font: inherit;
-  color: #e6e9ef;
+  color: var(--look-text);
   cursor: pointer;
 }
 
 .button.primary {
-  border-color: #9eeaff;
-  background: #0e2a36;
-  color: #9eeaff;
+  border-color: var(--look-accent);
+  background: var(--look-accent-fill);
+  color: var(--look-accent);
   font-weight: 600;
 }
 
 .button.danger {
-  border-color: #f28b82;
-  color: #f28b82;
+  border-color: var(--look-error);
+  color: var(--look-error);
 }
 
 .button:disabled {
@@ -63,13 +65,13 @@
   background: none;
   font: inherit;
   font-size: 14px;
-  color: #7b8597;
+  color: var(--look-muted);
   cursor: pointer;
 }
 
 .link-button:hover,
 .link-button:focus-visible {
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .link-button:disabled {
@@ -81,11 +83,11 @@
   box-sizing: border-box;
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
-  background: #11151d;
+  background: var(--look-surface);
   font: inherit;
-  color: #e6e9ef;
+  color: var(--look-text);
 }
 
 textarea.text-input {
@@ -100,7 +102,7 @@ textarea.text-input {
 
 .field > span {
   font-size: 14px;
-  color: #a3acbb;
+  color: var(--look-soft);
 }
 
 .file-button {
@@ -116,33 +118,33 @@ textarea.text-input {
 }
 
 .file-button:focus-within {
-  outline: 2px solid #9eeaff;
+  outline: 2px solid var(--look-accent);
   outline-offset: 2px;
   border-radius: 6px;
 }
 
 .muted {
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .message {
-  color: #a3e4b0;
+  color: var(--look-success);
 }
 
 .error {
-  color: #f28b82;
+  color: var(--look-error);
 }
 
 /* Problems of a text, an edit or the CSS, wherever they are listed. */
 .problems .error {
-  color: #f28b82;
+  color: var(--look-error);
 }
 
 .problems .warning {
-  color: #f6c177;
+  color: var(--look-warning);
 }
 
 .download {
-  color: #a3e4b0;
+  color: var(--look-success);
   overflow-wrap: anywhere;
 }

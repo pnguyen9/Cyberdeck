@@ -205,33 +205,33 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   border-radius: 6px;
   background: none;
   font: inherit;
-  color: #9eeaff;
+  color: var(--look-accent);
   cursor: pointer;
 }
 
 .path-entry.current {
-  color: #e6e9ef;
+  color: var(--look-text);
   cursor: default;
 }
 
 .path-entry:hover:not(.current) {
-  border-color: #9eeaff;
+  border-color: var(--look-accent);
 }
 
 .separator {
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .lane.titled {
   padding-left: 10px;
-  border-left: 3px solid var(--branch-color, #7b8597);
+  border-left: 3px solid var(--branch-color, var(--look-muted));
 }
 
 .lane-title {
   margin: 0 0 8px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--branch-color, #a3acbb);
+  color: var(--branch-color, var(--look-soft));
 }
 
 .elements {
@@ -244,9 +244,9 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
 .element {
   position: relative;
   box-sizing: border-box;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
-  background: #11151d;
+  background: var(--look-surface);
   cursor: pointer;
   user-select: none;
 }
@@ -260,7 +260,7 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   height: 112px;
   padding: 8px 10px 8px 12px;
   overflow: hidden;
-  border-left: 4px solid var(--branch-color, #2c3442);
+  border-left: 4px solid var(--branch-color, var(--look-border-colour));
 }
 
 .element.marker {
@@ -273,14 +273,14 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   /* Half a line's height: round at the ends on one line, yet holding its text when it runs to several. */
   border-radius: 12px;
   font-size: 13px;
-  color: #a3acbb;
+  color: var(--look-soft);
   overflow-wrap: anywhere;
 }
 
 /* A block as one card: a stack, so that it never passes for a page. */
 .element.block.collapsed {
-  border-color: #fbbf24;
-  box-shadow: 4px 4px 0 -1px #11151d, 4px 4px 0 0 #fbbf24, 8px 8px 0 -1px #11151d, 8px 8px 0 0 rgb(251 191 36 / 0.5);
+  border-color: var(--look-amber);
+  box-shadow: 4px 4px 0 -1px var(--look-surface), 4px 4px 0 0 var(--look-amber), 8px 8px 0 -1px var(--look-surface), 8px 8px 0 0 rgb(251 191 36 / 0.5);
   margin-right: 8px;
 }
 
@@ -290,18 +290,18 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   gap: 6px;
   max-width: 520px;
   padding: 8px 10px;
-  border: 1px dashed #fbbf24;
+  border: 1px dashed var(--look-amber);
 }
 
 .block-title {
   font-size: 13px;
   font-weight: 600;
-  color: #fbbf24;
+  color: var(--look-amber);
 }
 
 .block-numbers {
   font-weight: 400;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .route {
@@ -310,12 +310,12 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   align-items: baseline;
   gap: 4px 6px;
   padding-left: 8px;
-  border-left: 3px solid var(--branch-color, #7b8597);
+  border-left: 3px solid var(--branch-color, var(--look-muted));
 }
 
 .route-name {
   font-size: 12px;
-  color: var(--branch-color, #a3acbb);
+  color: var(--branch-color, var(--look-soft));
 }
 
 .mini {
@@ -323,7 +323,7 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   padding: 1px 6px;
   overflow: hidden;
   border-radius: 4px;
-  background: #0b0d12;
+  background: var(--look-ground);
   font: 12px/1.4 Georgia, serif;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -332,8 +332,8 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
 .mini.marker,
 .mini.nested,
 .mini.empty {
-  font-family: system-ui, sans-serif;
-  color: #7b8597;
+  font-family: var(--look-font);
+  color: var(--look-muted);
 }
 
 .summary {
@@ -341,13 +341,13 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   flex-direction: column;
   margin-top: auto;
   font-size: 12px;
-  color: #fbbf24;
+  color: var(--look-amber);
 }
 
 .ending-mark,
 .unreachable-mark {
   font-weight: 400;
-  color: #f9a8d4;
+  color: var(--look-pink);
 }
 
 .block-title .ending-mark,
@@ -356,20 +356,20 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
 }
 
 .unreachable-mark {
-  color: #f28b82;
+  color: var(--look-error);
 }
 
 .mini.unreachable {
   opacity: 0.55;
   text-decoration: line-through;
-  text-decoration-color: #f28b82;
+  text-decoration-color: var(--look-error);
 }
 
 /* Never reached: faded and hatched, so that it reads as a mistake to fix rather than a choice. */
 .element.unreachable {
   opacity: 0.55;
   border-style: dashed;
-  border-color: #f28b82;
+  border-color: var(--look-error);
   background-image: repeating-linear-gradient(135deg, transparent 0 8px, rgb(242 139 130 / 0.08) 8px 16px);
 }
 
@@ -377,11 +377,11 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   padding: 10px 14px;
   border-style: dashed;
   font-size: 13px;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .element.focused {
-  outline: 2px solid #9eeaff;
+  outline: 2px solid var(--look-accent);
   outline-offset: 2px;
 }
 
@@ -396,18 +396,18 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #f5c451;
+  background: var(--look-gold);
   font-size: 12px;
-  color: #11151d;
+  color: var(--look-surface);
 }
 
 .element.editing {
-  border-color: #f5c451;
+  border-color: var(--look-gold);
 }
 
 .element.selected {
-  background: #0e2a36;
-  border-color: #9eeaff;
+  background: var(--look-accent-fill);
+  border-color: var(--look-accent);
 }
 
 .element.cut {
@@ -422,7 +422,7 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   bottom: -4px;
   width: 3px;
   border-radius: 2px;
-  background: #9eeaff;
+  background: var(--look-accent);
 }
 
 .element.drop-before::before {
@@ -436,7 +436,7 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
 .number {
   font-size: 12px;
   font-weight: 700;
-  color: var(--branch-color, #7b8597);
+  color: var(--branch-color, var(--look-muted));
 }
 
 .speaker {
@@ -453,7 +453,7 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
 }
 
 .option-condition {
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .number,
@@ -463,12 +463,12 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
 }
 
 .more-options {
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .option {
   font-size: 12px;
-  color: #c7cdd8;
+  color: var(--look-text-soft);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -479,10 +479,10 @@ function shownOptions<Option>(options: readonly Option[]): readonly Option[] {
   right: 8px;
   top: 6px;
   font-size: 12px;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .marker-kind {
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 </style>

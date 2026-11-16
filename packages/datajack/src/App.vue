@@ -9,6 +9,7 @@ import {
   MapView,
   PlayerView,
   provideAboutApp,
+  provideAppLook,
   provideLocale,
   SettingsScreen,
   useSystemLessMotion,
@@ -45,6 +46,8 @@ provideAboutApp({
   keepSafe: { en: appMessages.en.keepSafe, fr: appMessages.fr.keepSafe },
   serviceWorker: import.meta.env.DEV ? null : './sw.js',
 })
+/** Datajack's own look, the same for every profile (it shows before one is chosen), never a game's. */
+provideAppLook(() => window.localStorage, 'datajack:look')
 const profileStore: ProfileStore = desktop === undefined
   ? createBrowserProfileStore(() => window.localStorage, () => crypto.randomUUID(), () => new Date().toISOString())
   : createDesktopProfileStore(desktop)

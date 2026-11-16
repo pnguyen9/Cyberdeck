@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { emptyProgressOf, languageName, mergeProgress, parseProgress, parseSave, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
-import { AboutApp, AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type ErasedData, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
+import { AboutApp, AppLookButton, AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type ErasedData, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { describeError } from '../i18n/errorMessages'
 import { describeInstall, libraryMessages } from '../i18n/libraryMessages'
@@ -279,6 +279,7 @@ function onDrop(event: DragEvent) {
           <LanguageSelect v-model="languageChoice" />
         </label>
         <button class="button" @click="emit('settings')">{{ text.settings }}</button>
+        <AppLookButton class="button" app="Datajack" />
         <button class="profile-button" @click="emit('switchProfile')">{{ profileName }} <span class="switch">· {{ text.switchProfile }}</span></button>
       </div>
     </header>
@@ -388,12 +389,14 @@ function onDrop(event: DragEvent) {
   min-height: 100vh;
   margin: 0 auto;
   padding: 32px 16px;
-  font: 16px/1.5 system-ui, sans-serif;
-  color: #e6e9ef;
+  font: 16px/1.5 var(--look-font);
+  color: var(--look-text);
+  /* The readable box, when the look has one. */
+  background: var(--look-box);
 }
 
 .library.dragging {
-  outline: 2px dashed #9eeaff;
+  outline: 2px dashed var(--look-accent);
   outline-offset: -8px;
 }
 
@@ -408,7 +411,7 @@ function onDrop(event: DragEvent) {
 h1 {
   margin: 0;
   font-size: 28px;
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .header-actions {
@@ -423,7 +426,14 @@ h1 {
   align-items: baseline;
   gap: 6px;
   font-size: 14px;
-  color: #7b8597;
+  color: var(--look-muted);
+}
+
+/* The menu is the stage's, which keeps its own look in a game: here it wears the application's. */
+.language :deep(.language-select) {
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
+  background: var(--look-surface);
+  color: var(--look-text);
 }
 
 .profile-button {
@@ -432,18 +442,18 @@ h1 {
   background: none;
   font: inherit;
   font-weight: 600;
-  color: #e6e9ef;
+  color: var(--look-text);
   cursor: pointer;
 }
 
 .profile-button .switch {
   font-weight: 400;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .profile-button:hover .switch,
 .profile-button:focus-visible .switch {
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .toolbar {
@@ -457,26 +467,26 @@ h1 {
 .load-button {
   position: relative;
   padding: 8px 20px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
-  background: #11151d;
-  color: #e6e9ef;
+  background: var(--look-surface);
+  color: var(--look-text);
   cursor: pointer;
 }
 
 .load-button:focus-within {
-  outline: 2px solid #9eeaff;
+  outline: 2px solid var(--look-accent);
   outline-offset: 2px;
 }
 
 .add-button {
   position: relative;
   padding: 8px 20px;
-  border: 1px solid #9eeaff;
+  border: 1px solid var(--look-accent);
   border-radius: 6px;
-  background: #0e2a36;
+  background: var(--look-accent-fill);
   font-weight: 600;
-  color: #9eeaff;
+  color: var(--look-accent);
   cursor: pointer;
 }
 
@@ -486,7 +496,7 @@ h1 {
 }
 
 .add-button:focus-within {
-  outline: 2px solid #9eeaff;
+  outline: 2px solid var(--look-accent);
   outline-offset: 2px;
 }
 
@@ -499,7 +509,7 @@ h1 {
 
 .hint,
 .empty {
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .games {
@@ -516,9 +526,9 @@ h1 {
   grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   padding: 16px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 8px;
-  background: #11151d;
+  background: var(--look-surface);
 }
 
 @media (min-width: 640px) {
@@ -531,7 +541,7 @@ h1 {
   aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 6px;
-  background: #0b0d12;
+  background: var(--look-ground);
 }
 
 .cover img {
@@ -558,19 +568,19 @@ h1 {
 .release {
   font-size: 15px;
   font-weight: 400;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .description {
   margin: 4px 0 0;
   white-space: pre-line;
-  color: #c7cdd8;
+  color: var(--look-text-soft);
 }
 
 .chapters {
   margin: 4px 0 0;
   font-size: 14px;
-  color: #7b8597;
+  color: var(--look-muted);
 }
 
 .actions {
@@ -589,26 +599,28 @@ h1 {
   margin-top: 40px;
 }
 
-.button {
+/* The look's button, the stage's component, is drawn as these. */
+.button,
+:deep(.button) {
   padding: 8px 16px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 6px;
-  background: #11151d;
+  background: var(--look-surface);
   font: inherit;
-  color: #e6e9ef;
+  color: var(--look-text);
   cursor: pointer;
 }
 
 .button.primary {
-  border-color: #9eeaff;
-  background: #0e2a36;
-  color: #9eeaff;
+  border-color: var(--look-accent);
+  background: var(--look-accent-fill);
+  color: var(--look-accent);
   font-weight: 600;
 }
 
 .button.danger {
-  border-color: #f28b82;
-  color: #f28b82;
+  border-color: var(--look-error);
+  color: var(--look-error);
 }
 
 .link-button {
@@ -617,30 +629,30 @@ h1 {
   background: none;
   font: inherit;
   font-size: 14px;
-  color: #7b8597;
+  color: var(--look-muted);
   cursor: pointer;
 }
 
 .link-button:hover,
 .link-button:focus-visible {
-  color: #9eeaff;
+  color: var(--look-accent);
 }
 
 .credits {
   margin: 12px 0 0;
   padding: 12px;
   border-radius: 6px;
-  background: #0b0d12;
+  background: var(--look-ground);
   font-size: 14px;
   white-space: pre-line;
-  color: #c7cdd8;
+  color: var(--look-text-soft);
 }
 
 .message {
-  color: #a3e4b0;
+  color: var(--look-success);
 }
 
 .error {
-  color: #f28b82;
+  color: var(--look-error);
 }
 </style>

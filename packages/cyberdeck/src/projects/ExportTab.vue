@@ -152,7 +152,7 @@ function exportGame() {
 .paragraphs {
   margin: 0;
   padding: 8px 16px 12px;
-  border: 1px solid #2c3442;
+  border: var(--look-border-width) var(--look-border-style) var(--look-border-colour);
   border-radius: 8px;
 }
 
@@ -165,7 +165,7 @@ function exportGame() {
 legend {
   padding: 0 4px;
   font-size: 14px;
-  color: #a3acbb;
+  color: var(--look-soft);
 }
 
 .chapter {

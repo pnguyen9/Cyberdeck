@@ -43,7 +43,7 @@ what players see.
 | Package | Contents | Used by |
 |---|---|---|
 | `packages/core` (`@cyberdeck/core`) | The model and the interpreter: story format and its checks, text import and pagination, game archives, story runtime, stage state, save data. No interface. | both |
-| `packages/stage` (`@cyberdeck/stage`) | What shows a story: the player view (stage, textbox and full-screen text, choices, music and sounds, log, map, save and load panels, settings), input bindings and player settings, the save store interface. Also the foot of each application's first screen: its version, the About panel, the offer of a new version. Vue components. | both |
+| `packages/stage` (`@cyberdeck/stage`) | What shows a story: the player view (stage, textbox and full-screen text, choices, music and sounds, log, map, save and load panels, settings), input bindings and player settings, the save store interface; the look both applications share for their own screens. Also the foot of each application's first screen: its version, the About panel, the offer of a new version. Vue components. | both |
 | `packages/cyberdeck` (`@cyberdeck/cyberdeck`) | The engine: projects, import of text into them, cast and files, details, preview with the shared stage, export as a game, backups. | authors |
 | `packages/datajack` (`@cyberdeck/datajack`) | The player: profiles, library of installed games, gallery of illustrations seen, desktop shell (Electron). | players |
 | `packages/desktop` (`@cyberdeck/desktop`) | What both desktop builds share: the hardened Electron window, checked channels, safe file writing, the bundling settings and the packaging script. | both |
@@ -188,6 +188,14 @@ a new notion gets its word here before it gets code.
 | Settings | The profile's, or a game's own once chosen for it. | `PlayerSettings` |
 | Tap, long press, swipe | What a finger does on a touch screen: a left click, a right click, going back (to the right) or moving on (to the left). | `TouchGesture` |
 | Landscape request | On a phone or a tablet, the request to turn the device sideways, or the offer of full screen. | `LandscapeAsk` |
+
+**Both applications**
+
+| Word | Meaning | In the code |
+|---|---|---|
+| Look | How Cyberdeck's or Datajack's own screens look: background, borders, font, colours. Never a game's, which its author's CSS sets. | `AppLook` |
+| Preset | A look ready to take: Cyberpunk (the default), Graphite, Paper, Dusk, High contrast. | `LookPreset` |
+| Readable box | A plain box under an application's text, dark or light as its background is, so that a busy background never gets in the way. | `readableBox` |
 
 ## Development
 
@@ -846,6 +854,16 @@ A **project** holds the whole game. Its screens:
   the browser; *Default* and *Reset every shortcut* bring the defaults back. **Alt+PageUp** and
   **Alt+PageDown** go to the previous and next tab; each tab may be given keys of its own there.
   Alt is left out of the defaults for single tabs: browsers keep Alt+digits for their own tabs.
+- **Look** (on the projects screen and in the header): Cyberdeck's own look, kept in the browser.
+  A preset (*Cyberpunk*, the default, *Graphite*, *Paper*, *Dusk*, *High contrast*), or each part in
+  depth: the background, one colour or a gradient from four corners; the readable box under the text,
+  dark on a dark background and light on a bright one; the font, the text's colour and the titles';
+  the borders' colour and kind (solid, dashed, dotted, double, none). Colours are picked or typed as
+  `#rrggbb`; the contrast of the text and titles is shown, with a warning under 4.5:1 (WCAG AA). The
+  colours the screens give meaning to (errors, warnings, the storyboard's kinds) are darkened or
+  lightened until they read on the background. The preview's stage is not touched: a game wears its
+  author's look. The look is CSS custom properties (`--look-…`) set on the page's root
+  (`packages/stage/src/look/`), which only the applications' own styles use.
 - **Import**: paste text, or open a `.txt` or Word (`.docx`) document. Problems are listed as you type, against what the
   project already has: its characters, positions, decisions, endings, memories, scenes, styles and
   the classes of its CSS are known names, and where each decision and style is declared.
@@ -1072,6 +1090,11 @@ Keys are bound by their place on the keyboard (`KeyboardEvent.code`), so a bindi
 key on AZERTY and QWERTY; they are named as on a US keyboard, so on another layout a name may
 differ from the letter printed on the key. Datajack keeps the settings per
 profile; Cyberdeck keeps the author's for its previews.
+
+**Look**, in the library's header and on the profiles screen, sets the look of Datajack's own screens
+(profiles, library, gallery) as in Cyberdeck (see Editing): presets or each part in depth, kept in the
+browser for every profile, since it shows before one is chosen. Games, their settings and their map
+keep their own look.
 
 ### Inputs
 
