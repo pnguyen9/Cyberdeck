@@ -13,13 +13,15 @@ import { openBrowser, openElectron, openFirefox, pause } from './harness.mjs'
 const checksFolder = dirname(fileURLToPath(import.meta.url))
 const rootFolder = join(checksFolder, '..')
 const outputFolder = join(checksFolder, 'output')
-const CHROME_PORT = 9334
-const ELECTRON_PORT = 9335
-const FIREFOX_PORT = 9336
+/** `CHECKS_PORT_OFFSET` shifts every port, so that runs from several copies of the repository can share a machine. */
+const PORT_OFFSET = Number(process.env.CHECKS_PORT_OFFSET ?? 0)
+const CHROME_PORT = 9334 + PORT_OFFSET * 10
+const ELECTRON_PORT = 9335 + PORT_OFFSET * 10
+const FIREFOX_PORT = 9336 + PORT_OFFSET * 10
 /** Development servers; ports outside the list browsers refuse to fetch from. */
 const SERVERS = {
-  cyberdeck: { port: 4178, folder: join(rootFolder, 'packages/cyberdeck') },
-  datajack: { port: 4177, folder: join(rootFolder, 'packages/datajack') },
+  cyberdeck: { port: 4178 + PORT_OFFSET * 10, folder: join(rootFolder, 'packages/cyberdeck') },
+  datajack: { port: 4177 + PORT_OFFSET * 10, folder: join(rootFolder, 'packages/datajack') },
 }
 const DESKTOP_APPS = {
   'cyberdeck-desktop': join(rootFolder, 'packages/cyberdeck'),
