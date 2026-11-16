@@ -10,6 +10,7 @@ const en = {
   playOption: (option: string) => `Play from a path where “${option}” is offered: here, other values close it`,
   forwardOnly: 'The story only goes forward here',
   theEnd: 'The end',
+  showValues: 'What the journal showed here',
 }
 
 type MapMessages = typeof en
@@ -25,6 +26,7 @@ const fr: MapMessages = {
   playOption: option => `Jouer à partir d’un parcours où «\u00a0${option}\u00a0» est proposé\u00a0: ici, d’autres valeurs le ferment`,
   forwardOnly: 'Ici, l’histoire ne fait qu’avancer',
   theEnd: 'Fin',
+  showValues: 'Ce que le journal montrait ici',
 }
 
 export const mapMessages = { en, fr }

@@ -8,6 +8,8 @@ import {
   MOUSE_BUTTON,
   type PlayerAction,
 } from '../input/bindings'
+import { actionForSwipe } from '../input/touchGestures'
+import { createTouchTracker } from '../input/touchTracker'
 import { useLocale, useMessages, type LanguageChoice } from '../i18n/locale'
 import { playerMessages } from '../i18n/playerMessages'
 import { storyLocale, storyMessages } from '../i18n/storyMessages'
@@ -1181,8 +1183,29 @@ function onKeydown(event: KeyboardEvent) {
   perform(action)
 }
 
+/**
+ * A finger on the stage: a tap is the browser's click, a long press the right button's action, a
+ * swipe to the right goes back and one to the left moves on. Touches starting on a button, a field
+ * or a grid's tile are theirs, and an open panel takes its own.
+ */
+const touch = createTouchTracker({
+  accepts: event => openPanel.value === 'none' && !(event.target instanceof Element && event.target.closest('button, input, select, textarea, a, label, [role="grid"]') !== null),
+  onLongPress: () => {
+    const action = actionForMouseButton(bindings.value, MOUSE_BUTTON.secondary)
+    if (openPanel.value === 'none' && action !== null) {
+      perform(action)
+    }
+  },
+  onSwipe: gesture => {
+    const action = actionForSwipe(gesture)
+    if (openPanel.value === 'none' && action !== null) {
+      perform(action)
+    }
+  },
+})
+
 function onScreenClick(event: MouseEvent) {
-  if (openPanel.value !== 'none') {
+  if (touch.swallowsClick() || openPanel.value !== 'none') {
     return
   }
   const isBounce = event.timeStamp - lastClickTime < MINIMUM_CLICK_INTERVAL_MILLISECONDS
@@ -1224,7 +1247,8 @@ function onMouseUp(event: MouseEvent) {
 /** The right button opens no browser menu over the game: it does what it is bound to. */
 function onContextMenu(event: MouseEvent) {
   event.preventDefault()
-  if (openPanel.value !== 'none') {
+  // A finger's long press is told by the touch tracker, the same on every device.
+  if (openPanel.value !== 'none' || touch.isFromTouch(event)) {
     return
   }
   const action = actionForMouseButton(bindings.value, MOUSE_BUTTON.secondary)
@@ -1299,6 +1323,7 @@ onUnmounted(() => {
   isLeaving = true
   loadedFonts.forEach(face => document.fonts.delete(face))
   clearTimeout(skipTimer)
+  touch.dispose()
 })
 </script>
 
@@ -1311,6 +1336,10 @@ onUnmounted(() => {
       @click="onScreenClick"
       @contextmenu="onContextMenu"
       @wheel.passive="onWheel"
+      @pointerdown="touch.onPointerDown"
+      @pointermove="touch.onPointerMove"
+      @pointerup="touch.onPointerUp"
+      @pointercancel="touch.onPointerCancel"
     >
       <p class="announcement" aria-live="polite" aria-atomic="true">{{ announcement }}</p>
       <div ref="scene" class="scene">
@@ -1513,7 +1542,16 @@ onUnmounted(() => {
   left: 50%;
   overflow: hidden;
   user-select: none;
+  -webkit-user-select: none;
   cursor: pointer;
+  /* A finger's swipes and presses are the game's: no browser scrolling, zooming or menu over the stage. */
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+
+.screen input {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 /* Above the box and the speaker's name plate, wherever it stands. */
@@ -1786,6 +1824,17 @@ onUnmounted(() => {
 /* Only the arrow until pointed at, so that it hides little of the stage's corner, a gauge there. */
 .leave-button:not(:hover, :focus-visible) .leave-label {
   display: none;
+}
+
+/* A screen without a mouse points at nothing: its labels are always shown, its key never. */
+@media (hover: none) {
+  .leave-button:not(:hover, :focus-visible) .leave-label {
+    display: inline;
+  }
+
+  .leave-button kbd {
+    display: none;
+  }
 }
 
 kbd {

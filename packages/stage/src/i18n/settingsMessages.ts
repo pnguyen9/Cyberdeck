@@ -69,6 +69,7 @@ const en = {
   pressInput: 'Press…',
   addKey: 'Add a key',
   defaultKeys: 'Default keys',
+  touchHelp: 'On a touch screen, a tap is a left click and a long press a right click; swiping right goes back, swiping left moves on.',
   keyPositions: 'Keys are recognised by their place on the keyboard, and named as on a US keyboard: on another layout, the name may differ from the letter printed on the key.',
 }
 
@@ -142,6 +143,7 @@ const fr: SettingsMessages = {
   pressInput: 'Appuyez…',
   addKey: 'Ajouter une touche',
   defaultKeys: 'Touches par défaut',
+  touchHelp: 'Sur un écran tactile, toucher vaut un clic gauche et appuyer longuement un clic droit\u00a0; glisser vers la droite revient en arrière, glisser vers la gauche avance.',
   keyPositions: 'Les touches sont reconnues par leur place sur le clavier et nommées comme sur un clavier américain (QWERTY) : sur un clavier AZERTY ou une autre disposition, le nom peut différer de la lettre inscrite sur la touche.',
 }
 

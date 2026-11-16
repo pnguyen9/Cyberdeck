@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { StageCatalog, StoredGrid } from '@cyberdeck/core'
-import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
 import StagePicture from './StagePicture.vue'
 import { marksTile, MOUSE_BUTTON, type Bindings } from '../input/bindings'
+import { createTouchTracker } from '../input/touchTracker'
 
 /**
  * A choice shown as rows of picture buttons: each place shows the picture its list names, or the
@@ -23,8 +24,36 @@ const canMark = computed(() => props.grid.markCounterId !== undefined)
 const marksWithKey = (code: string) => canMark.value && marksTile(props.bindings, { type: 'key', code })
 const marksWithButton = (button: number) => canMark.value && button !== MOUSE_BUTTON.main && marksTile(props.bindings, { type: 'mouseButton', button })
 
+/**
+ * A finger's long press is a right click: on a grid that marks with it, it marks the tile, which its
+ * tap does not then pick. Anywhere else, a tile is a button as it was.
+ */
+const touch = createTouchTracker({
+  accepts: event => canMark.value && marksWithButton(MOUSE_BUTTON.secondary) && event.target instanceof Element && event.target.closest('.tile') !== null,
+  onLongPress: target => {
+    const tile = target instanceof Element ? target.closest<HTMLElement>('.tile') : null
+    const number = Number(tile?.dataset.number)
+    if (Number.isInteger(number)) {
+      emit('mark', number)
+    }
+  },
+})
+onUnmounted(touch.dispose)
+
+function onTileClick(number: number) {
+  if (!touch.swallowsClick()) {
+    emit('pick', number)
+  }
+}
+
 /** A mouse button that marks, on a tile: the player's own use of it waits. */
 function onTileButton(event: MouseEvent, number: number | null) {
+  // Android's menu event after a long press: the touch tracker marked already, on every device alike.
+  if (event.type === 'contextmenu' && touch.isFromTouch(event)) {
+    event.preventDefault()
+    event.stopPropagation()
+    return
+  }
   if (!marksWithButton(event.button)) {
     return
   }
@@ -80,6 +109,10 @@ function onKeydown(event: KeyboardEvent) {
     :style="{ gridTemplateColumns: `repeat(${grid.columns}, ${tileSize}px)`, gap: `${GAP}px` }"
     @click.stop
     @keydown="onKeydown"
+    @pointerdown="touch.onPointerDown"
+    @pointermove="touch.onPointerMove"
+    @pointerup="touch.onPointerUp"
+    @pointercancel="touch.onPointerCancel"
   >
     <button
       v-for="tile in tiles"
@@ -91,7 +124,8 @@ function onKeydown(event: KeyboardEvent) {
       :aria-label="tile.item === '' ? String(tile.number) : `${tile.number}: ${tile.item}`"
       :style="{ width: `${tileSize}px`, height: `${tileSize}px`, fontSize: `${Math.max(10, Math.floor(tileSize / 3))}px` }"
       @focus="focused = tile.number"
-      @click="emit('pick', tile.number)"
+      :data-number="tile.number"
+      @click="onTileClick(tile.number)"
       @mousedown="onTileButton($event, null)"
       @mouseup="onTileButton($event, tile.number)"
       @contextmenu="onTileButton($event, tile.number)"

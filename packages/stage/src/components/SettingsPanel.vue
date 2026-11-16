@@ -281,6 +281,7 @@ onUnmounted(stopListening)
         <button class="add" @click="listen(action)">{{ listeningFor === action ? text.pressInput : text.addKey }}</button>
       </div>
       <p class="setting-value">{{ text.markTileHelp }}</p>
+      <p class="setting-value touch-help">{{ text.touchHelp }}</p>
       <button class="wide-button" @click="resetKeys">{{ text.defaultKeys }}</button>
     </section>
     <p class="notice" role="status">{{ notice ?? (category === 'controls' ? text.keyPositions : '') }}</p>
@@ -436,6 +437,17 @@ input[type='range'] {
 
 .wide-button {
   align-self: flex-start;
+}
+
+/* Fingers are told only on screens without a mouse. */
+.touch-help {
+  display: none;
+}
+
+@media (hover: none) {
+  .touch-help {
+    display: block;
+  }
 }
 
 .language {

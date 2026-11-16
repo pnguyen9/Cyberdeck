@@ -25,6 +25,7 @@ import LibraryView from './library/LibraryView.vue'
 import { createDesktopProfileStore } from './profiles/desktopProfileStore'
 import { createBrowserProfileStore, type Profile, type ProfileStore } from './profiles/profileStore'
 import ProfilesView from './profiles/ProfilesView.vue'
+import LandscapeOffer from './play/LandscapeOffer.vue'
 
 const desktop = window.datajackDesktop
 /** Every screen below speaks the player's language, the game's settings included. */
@@ -140,6 +141,15 @@ function playFrom(save: SaveData) {
   }
 }
 
+/** Whether the game is the screen shown, rather than its map, its settings or a gallery over it. */
+const isGameShown = computed(() => profile.value !== null && playing.value !== null && mapShown.value === null && !settingsShown.value && !gameSettingsShown.value && galleryShown.value === null)
+
+/** The games whose player said *Not now* to turning the device, until Datajack is closed. */
+const landscapeDismissedFor = ref(new Set<string>())
+function dismissLandscape(gameId: string) {
+  landscapeDismissedFor.value = new Set([...landscapeDismissedFor.value, gameId])
+}
+
 /** The profile played last opens directly: the player is asked only the first time, or when switching. */
 onMounted(async () => {
   try {
@@ -202,5 +212,7 @@ onMounted(async () => {
       @game-settings="showGameSettings"
       @switch-profile="profile = null"
     />
+    <!-- On a phone or a tablet, asked over the game itself, until the player says *Not now* for that game. -->
+    <LandscapeOffer v-if="isGameShown && playing !== null" :is-dismissed="landscapeDismissedFor.has(playing.story.project.id)" @dismiss="dismissLandscape(playing.story.project.id)" />
   </template>
 </template>

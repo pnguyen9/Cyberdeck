@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { isStageLocked, journalOf, layOutProgressMap, stateFromSave, type MapNode, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useMessages } from '../i18n/locale'
 import { mapMessages } from '../i18n/mapMessages'
 
@@ -22,6 +22,12 @@ function valuesAt(save: SaveData): string | undefined {
   const entries = journalOf(props.story.project, stateFromSave(props.story, save), props.progress.endingIds).entries
   return entries.length === 0 ? undefined : entries.map(entry => `${entry.name}: ${entry.items.join(', ')}`).join('\n')
 }
+
+/**
+ * A screen without a mouse hovers nothing: there, a point whose values the journal showed has a
+ * button that shows them over its card, until tapped again. The key of the point shown, if any.
+ */
+const valuesShownOf = ref<string | null>(null)
 
 /** Playing from a point reached where the story goes only forward would take the player back: not while that holds. */
 function canPlayFrom(save: SaveData): boolean {
@@ -97,7 +103,17 @@ const curves = computed(() => {
             <div class="point-header" :style="{ height: `${HEADER_HEIGHT - CARD_PADDING_TOP}px` }">
               <p class="chapter">{{ node.chapterTitle ?? text.untitledChapter }}</p>
               <h2>{{ node.decisionName }}</h2>
+              <button
+                v-if="valuesAt(node.point.save) !== undefined"
+                class="values-button"
+                :aria-label="text.showValues"
+                :aria-expanded="valuesShownOf === node.key"
+                @click="valuesShownOf = valuesShownOf === node.key ? null : node.key"
+              >
+                i
+              </button>
             </div>
+            <p v-if="valuesShownOf === node.key" class="values" :style="{ top: `${HEADER_HEIGHT}px` }" @click="valuesShownOf = null">{{ valuesAt(node.point.save) }}</p>
             <ul class="options">
               <li v-for="option in node.options" :key="option.optionId" :class="{ untried: !option.isTaken }">
                 <button
@@ -293,6 +309,48 @@ const curves = computed(() => {
   font-size: 14px;
   color: #9eeaff;
   cursor: pointer;
+}
+
+.values-button {
+  display: none;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #3e6f80;
+  border-radius: 50%;
+  background: #0e2a36;
+  font: italic 600 15px/1 Georgia, serif;
+  color: #9eeaff;
+  cursor: pointer;
+}
+
+/* Only where nothing hovers: a mouse sees the values by pointing at the card. */
+@media (hover: none) {
+  .values-button {
+    display: block;
+  }
+
+  .point-header {
+    padding-right: 30px;
+  }
+}
+
+.values {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 8px 14px;
+  overflow: auto;
+  border-radius: 0 0 8px 8px;
+  background: #0e2a36;
+  font-size: 14px;
+  white-space: pre-line;
 }
 
 .ending {
