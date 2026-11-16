@@ -9,6 +9,12 @@
   the README: Firefox on a computer installs no web page, and installing from a private window
   brings none of its data along.
 
+### Samples
+- **Knee-Deep**, a comic dungeon crawl: a tiny dwarf, a town to come back to, five floors of rooms
+  drawn at random behind doors that hint at what they hold, fights decided by a twenty-sided die,
+  chests picked from a grid, eighteen odd encounters, five endings. Its pictures, music and sounds
+  are made by code (`scripts/samples/knee_deep_assets.py`).
+
 ## 3.4.0 — 2026-11-16
 
 ### Both applications

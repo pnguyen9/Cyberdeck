@@ -1190,10 +1190,26 @@ the SHA-256 in their name; and only save folders the player picked in the system
 
 `docs/sample/` holds stories to import, each a text and a zip of its files, dropped together in Cast &
 files: **Sakura Week**, a week of school before a festival, in `sakura-week/` (its pictures and
-sounds were made outside this repository: the zip is their only source), and six mini games in
-`minigames/`, showing what conditions, loops, scenes, counters and decisions can do beyond a story.
-Their pictures and sounds are made by code, `scripts/samples/`, so that nothing is downloaded and all
-of it is as free as the rest of the repository.
+sounds were made outside this repository: the zip is their only source), **Knee-Deep**, a dungeon
+crawl in `knee-deep/`, and six mini games in `minigames/`, showing what conditions, loops, scenes,
+counters and decisions can do beyond a story. The pictures and sounds of the last two are made by
+code, `scripts/samples/`, so that nothing is downloaded and all of it is as free as the rest of the
+repository.
+
+- **Knee-Deep** (`knee-deep/`): a very small dwarf, named by the player, goes down into the Delve for
+  the town's stolen Great Cheese Wheel; a comic dungeon crawl of half an hour or more, with the dice
+  of tabletop games. A town to come back to (a shop of weapons, armour, potions, bombs and ropes; a
+  tavern to rest and hear rumours), five floors of five rooms drawn at random, each room offering
+  three doors that hint at what lies behind them: a fight, nine chests of which one may be opened (a
+  grid over a shuffled list), or one of eighteen odd encounters, none met twice before all are. Fights
+  roll a twenty-sided die against armour (a natural 20 doubles the damage, a natural 1 fumbles):
+  swing, heave, hide behind the beard, drink, throw a bomb, talk the monster round or run; fifteen
+  monsters, each with its own lines, levels gained from experience. Fallen, the hero is carried back
+  to town for half their gold, three times; the fourth is an ending. Five endings in all, four of
+  them with the dragon at the bottom. Every number a counter, every monster's stats set by one scene
+  (`[set: FoeName = The Gloop]`), the doors' hints decisions copied from one another
+  (`[set: LeftHint = {Hint}]`), the pictures in a glossy cartoon style by
+  `scripts/samples/knee_deep_assets.py`.
 
 - **Rock, paper, scissors** (`rock-paper-scissors/`): three choices against a random pick, text on a
   black screen, the score of this game and of every game played kept in the journal.

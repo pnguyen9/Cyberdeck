@@ -1,0 +1,2042 @@
+[import: story en]
+
+[style: Ending = gold, large, fade-in]
+[style: Roll = bold, gold]
+[style: Hurt = bold, red]
+[style: Good = bold, green]
+[style: Sign = italic, grey]
+
+[decision: Weapon = Rusty axe | Sturdy pick | Battle axe | Mrs Choppy]
+[decision: NextWeapon = Sturdy pick | Battle axe | Mrs Choppy | Nothing]
+[decision: Armour = Woolly jumper | Leather jerkin | Chainmail | Dwarfplate]
+[decision: NextArmour = Leather jerkin | Chainmail | Dwarfplate | Nothing]
+[decision multi: Bag = Lucky socks | Fancy crackers | Union card | Map]
+[decision: Where = Shop | Tavern | Delve | Bakery]
+[decision: Buy = Potion | Bomb | Rope | Weapon | Armour | Curios | Gems | Leave]
+[decision: Curio = Socks | Crackers | Back]
+[decision: Pint = Rest | Rumour | Stamp | Mayor | Leave]
+[decision: Start = Top | Deep]
+[decision: Outcome = Going | Home | Dead | Done]
+[decision: Place = Cellars | Grotto | Crypt | Forge | Hoard]
+[decision multi: Arrived = Cellars | Grotto | Crypt | Forge | Hoard]
+[decision: Sure = Yes | No]
+
+[counter: HP = 30]
+[counter: MaxHP = 30]
+[counter: Gold = 25]
+[counter: Level = 1]
+[counter: XP = 0]
+[counter: NextXP = 12]
+[counter: ToHit = 3]
+[counter: Atk = 0]
+[counter: AC = 10]
+[counter: Luck = 0]
+[counter: Potions = 2]
+[counter: Bombs = 0]
+[counter: Ropes = 0]
+[counter: Gems = 0]
+[counter: Stamps = 3]
+[counter: Inspired = 0]
+[counter: Floor = 1]
+[counter: Deepest = 1]
+[counter: Room = 0]
+[counter: Trips = 0]
+[counter: Price = 0]
+[counter: WeaponPrice = 40]
+[counter: ArmourPrice = 35]
+[decision: Door = Left | Ahead | Right | Potion | Rope]
+[decision: Kind = Fight | Treasure | Odd]
+[decision: LeftKind = Fight | Treasure | Odd]
+[decision: AheadKind = Fight | Treasure | Odd]
+[decision: RightKind = Fight | Treasure | Odd]
+[decision: FightHint = Deep claw marks | Something growling | A trail of bones | A door dented from inside | Muffled bickering | A smell of wet monster]
+[decision: TreasureHint = A glint under the door | The jingle of coins | A painted X | A sign saying NOT TREASURE]
+[decision: OddHint = Soft music | A smell of soup | A cold draught and a giggle | A doorbell | Cheerful whistling | Total silence]
+[decision: Hint = Deep claw marks | Something growling | A trail of bones | A door dented from inside | Muffled bickering | A smell of wet monster | A glint under the door | The jingle of coins | A painted X | A sign saying NOT TREASURE | Soft music | A smell of soup | A cold draught and a giggle | A doorbell | Cheerful whistling | Total silence]
+[decision: LeftHint = Deep claw marks | Something growling | A trail of bones | A door dented from inside | Muffled bickering | A smell of wet monster | A glint under the door | The jingle of coins | A painted X | A sign saying NOT TREASURE | Soft music | A smell of soup | A cold draught and a giggle | A doorbell | Cheerful whistling | Total silence]
+[decision: AheadHint = Deep claw marks | Something growling | A trail of bones | A door dented from inside | Muffled bickering | A smell of wet monster | A glint under the door | The jingle of coins | A painted X | A sign saying NOT TREASURE | Soft music | A smell of soup | A cold draught and a giggle | A doorbell | Cheerful whistling | Total silence]
+[decision: RightHint = Deep claw marks | Something growling | A trail of bones | A door dented from inside | Muffled bickering | A smell of wet monster | A glint under the door | The jingle of coins | A painted X | A sign saying NOT TREASURE | Soft music | A smell of soup | A cold draught and a giggle | A doorbell | Cheerful whistling | Total silence]
+[decision: Stairs = Down | Up]
+[decision: Lair = Fight | Crackers | Talk | Bribe | Leave]
+[decision: Foe = Gloop | Rat | Intern | Shroom | Bats | Clerk | Boney | Ghost | Mummy | Imp | Golem | Foreman | Mimic | Whelp | Ember]
+[decision: FoeName = The Gloop | The Big Rat | The Goblin Intern | The Grumpy Shroom | The Bat Choir | The Goblin Accountant | Boney the Skeleton | The Complaining Ghost | Uncle Wraps the Mummy | The Fire Imp | The Rock Golem | The Goblin Foreman | The Mimic | The Dragon Whelp | Auntie Ember]
+[decision: FoeMove = wobbles into your shins | nibbles your bootlaces | throws a mug of cold tea | puffs spores up your nose | screeches in three-part harmony | whacks you with a ledger | rattles a femur at you | wails about the draught | flaps a loose bandage | flicks hot coals at you | falls on you very slowly | swings a big wrench | bites you with its lid | breathes a small but sincere flame | swats you with her tail]
+[decision: Action = Swing | Heave | Guard | Potion | Bomb | Talk | Run]
+[decision: Result = Won | Lost | Fled | Talked]
+[decision: Odd = Well | Door | Merchant | Plate | Fountain | Bard | Troll | Union | Mushrooms | Shrine | Knight | Rubble | Campfire | Sign | Levers | Mirror | Dice | Library]
+[decision multi: Seen = Well | Door | Merchant | Plate | Fountain | Bard | Troll | Union | Mushrooms | Shrine | Knight | Rubble | Campfire | Sign | Levers | Mirror | Dice | Library]
+[decision: Odd choice = A | B | C]
+
+[counter: Next = 0]
+[counter: TalkedEmber = 0]
+[counter: Talked = 0]
+[counter: Turn = 0]
+[counter: Breath = 0]
+[counter: Guarding = 0]
+[counter: Damage = 0]
+[counter: FoeHP = 0]
+[counter: FoeMax = 0]
+[counter: FoeAC = 0]
+[counter: FoeHit = 0]
+[counter: FoeDmg = 0]
+[counter: FoeXP = 0]
+[counter: FoeGold = 0]
+[counter: FoeTalk = 0]
+[counter: OddsSeen = 0]
+[counter: I = 0]
+[counter: Pick = 0]
+
+[list: Prizes]
+[list: Lids = 9 × chest]
+
+[counter: Roll = 0]
+[counter: Bonus = 0]
+[counter: Total = 0]
+[counter lasting: Cheeses returned = 0]
+[counter lasting: Gnome rescues = 0]
+
+[shown: Weapon, Armour, Gold, Potions, Bombs, Ropes, Gems, Level, XP, Stamps, Bag, Cheeses returned, Gnome rescues]
+[shown after an ending: endings reached]
+
+# Knee-Deep
+[bg: town]
+[music: town]
+Mossbottom, a town of round doors, square meals and a great many dwarves, is getting ready for its Cheese Festival.
+Or it was. Overnight, the Great Cheese Wheel, three hundred years old, as wide as a cart and twice as smelly, has rolled off its plinth, through the square, and down into the Delve.
+[enter: mayor 72%]
+— Mayor Puddifoot: Citizens! Our cheese has been cheese-napped! The tracks lead into the Delve, and the Delve, as everyone knows, is full of tunnels far too small for any reasonable person.
+— Mayor Puddifoot: We need someone brave. Someone strong. Someone, and I say this with the deepest respect, knee-high.
+[enter: dwarf 25% fade]
+Every head in the square turns slowly towards you, the shortest dwarf in Mossbottom, who had only come out to buy bread.
+— Mayor Puddifoot: Splendid! A volunteer! What was your name again, small hero?
+[ask: Hero = Pebble]
+[set: Weapon = Rusty axe]
+[set: Armour = Woolly jumper]
+[dwarf: scared]
+— {Hero}: I didn't volunteer, I was just standing here.
+— Mayor Puddifoot: That is how all the great ones start, {Hero}. Here is your grandfather's axe, which we found in a drawer, and twenty-five gold for the shops. Bring back the cheese!
+[dwarf: think]
+— {Hero}: Did my grandfather ever use this axe?
+— Mayor Puddifoot: Once, on a stubborn turnip. The turnip won. Off you go!
+[exit: mayor]
+[dwarf: normal]
+How to play: each room down there has doors. Read what lies behind them, pick one, and deal with what you find. Fights are decided by rolling a twenty-sided die: roll high. If things go badly, the Rescue Gnomes will fetch you, for a fee. The journal (J) shows what you carry.
+[game mode]
+[loop]
+[play: Town]
+[if: Where is Bakery]
+[break]
+[end]
+[add: Trips]
+[play: Delve]
+[if: Outcome is Dead]
+[play: Rescue]
+[end]
+[end]
+[play: Bakery]
+
+# Scene: Town
+
+[bg: town]
+[music: town]
+[gauge: none]
+[enter: dwarf 25%]
+[dwarf: normal]
+[loop]
+[choice: Where]
+> Grizelda's Everything Shop = Shop
+> The Tipsy Anvil, the tavern = Tavern
+> Down into the Delve ({HP} of {MaxHP} HP) = Delve
+> Hang up the axe and open a bakery instead = Bakery [if: Trips >= 1]
+[if: Where is Shop]
+[play: Shop]
+[bg: town]
+[enter: dwarf 25%]
+[else if: Where is Tavern]
+[play: Tavern]
+[bg: town]
+[enter: dwarf 25%]
+[else if: Where is Bakery]
+[choice: Sure]
+> Yes. Bread never bit anybody. = Yes
+> No, the cheese needs me = No
+[if: Sure is Yes]
+[break]
+[end]
+[else]
+[break]
+[end]
+[end]
+
+# Scene: Shop
+
+[bg: shop]
+[enter: dwarf 25%]
+[enter: grizelda 72%]
+[if: Trips is 0]
+— Grizelda: Ooh, a customer! Welcome to Grizelda's Everything Shop, where everything is for sale, except the cat. And me. Mostly the cat.
+[else]
+— Grizelda: Back again, {Hero}? Still in one piece? How disappointing for the Gnomes.
+[end]
+[loop]
+[play: Price list]
+[choice: Buy]
+> A healing potion, 10 gold ({Potions} carried) = Potion
+> A bomb, 20 gold ({Bombs} carried) = Bomb
+> A rope to climb home from anywhere, 15 gold = Rope
+> {NextWeapon}, {WeaponPrice} gold = Weapon [if: NextWeapon is not Nothing]
+> {NextArmour}, {ArmourPrice} gold = Armour [if: NextArmour is not Nothing]
+> The shelf of curiosities = Curios
+> Sell your {Gems} gems, 25 gold each = Gems [if: Gems > 0]
+> Leave the shop ({Gold} gold left) = Leave
+[if: Buy is Leave]
+[break]
+[else if: Buy is Gems]
+[sound: coin]
+[set: Price = {Gems} * 25]
+[add: Gold {Price}]
+[set: Gems = 0]
+— Grizelda: Lovely and sparkly. {Price} gold for you, and a very small dent in my profits.
+[else if: Buy is Curios]
+[play: Curios]
+[else if: Buy is Potion]
+[set: Price = 10]
+[play: Pay]
+[if: Price is 0]
+[add: Potions]
+— Grizelda: Drink it when you're hurt, not when you're thirsty. I've had complaints.
+[end]
+[else if: Buy is Bomb]
+[set: Price = 20]
+[play: Pay]
+[if: Price is 0]
+[add: Bombs]
+— Grizelda: Light the fuse, throw it at them. In that order. Not the other order.
+[end]
+[else if: Buy is Rope]
+[set: Price = 15]
+[play: Pay]
+[if: Price is 0]
+[add: Ropes]
+— Grizelda: Throw it up, climb it up, and you're home for supper. It always reaches. Don't ask me how; I bought it from a wizard.
+[end]
+[else if: Buy is Weapon]
+[set: Price = {WeaponPrice}]
+[play: Pay]
+[if: Price is 0]
+[sound: levelup]
+[dwarf: happy]
+[play: New weapon]
+[dwarf: normal]
+[end]
+[else if: Buy is Armour]
+[set: Price = {ArmourPrice}]
+[play: Pay]
+[if: Price is 0]
+[sound: levelup]
+[dwarf: happy]
+[play: New armour]
+[dwarf: normal]
+[end]
+[end]
+[end]
+[exit: grizelda]
+
+# Scene: Price list
+
+[if: Weapon is Rusty axe]
+[set: NextWeapon = Sturdy pick]
+[set: WeaponPrice = 40]
+[else if: Weapon is Sturdy pick]
+[set: NextWeapon = Battle axe]
+[set: WeaponPrice = 110]
+[else if: Weapon is Battle axe]
+[set: NextWeapon = Mrs Choppy]
+[set: WeaponPrice = 240]
+[else]
+[set: NextWeapon = Nothing]
+[end]
+[if: Armour is Woolly jumper]
+[set: NextArmour = Leather jerkin]
+[set: ArmourPrice = 35]
+[else if: Armour is Leather jerkin]
+[set: NextArmour = Chainmail]
+[set: ArmourPrice = 100]
+[else if: Armour is Chainmail]
+[set: NextArmour = Dwarfplate]
+[set: ArmourPrice = 220]
+[else]
+[set: NextArmour = Nothing]
+[end]
+
+# Scene: Pay
+
+[if: Gold >= {Price}]
+[sound: coin]
+[add: Gold -{Price}]
+[set: Price = 0]
+[else]
+[grizelda: cross]
+— Grizelda: That costs {Price} gold, dearie, and you have {Gold}. I accept gold, gems, and nothing else. Especially not hugs.
+[grizelda: normal]
+[end]
+
+# Scene: New weapon
+
+[if: NextWeapon is Sturdy pick]
+[set: Weapon = Sturdy pick]
+[set: Atk = 2]
+— Grizelda: A good honest pick. Digs, chops, opens jars. Two more damage on every hit.
+[else if: NextWeapon is Battle axe]
+[set: Weapon = Battle axe]
+[set: Atk = 4]
+— Grizelda: A proper battle axe! It's taller than you. Try not to fall over when you swing it. Four more damage on every hit.
+[else]
+[set: Weapon = Mrs Choppy]
+[set: Atk = 6]
+— Grizelda: Mrs Choppy. Runes on the blade, a name on the handle, and she hums when she's happy. Six more damage. Don't let her near the cat.
+[end]
+
+# Scene: New armour
+
+[if: NextArmour is Leather jerkin]
+[set: Armour = Leather jerkin]
+[set: AC = 12]
+— Grizelda: A leather jerkin, only slightly chewed. Monsters will need to roll 12 or more to hit you, rather than 10.
+[else if: NextArmour is Chainmail]
+[set: Armour = Chainmail]
+[set: AC = 14]
+— Grizelda: Chainmail! It jingles, so nothing will be surprised by you ever again, but they'll need a 14 to hit.
+[else]
+[set: Armour = Dwarfplate]
+[set: AC = 16]
+— Grizelda: Dwarfplate, the finest. It's like wearing a small, angry house. They'll need a 16 to hit you.
+[end]
+
+# Scene: Curios
+
+— Grizelda: The curiosities! Every one of them is either magical or a very convincing fake.
+[choice: Curio]
+> Lucky socks, 70 gold: one more on every roll you make = Socks [if: Bag is not Lucky socks]
+> A box of fancy crackers, 150 gold = Crackers [if: Bag is not Fancy crackers]
+> Just looking = Back
+[if: Curio is Socks]
+[set: Price = 70]
+[play: Pay]
+[if: Price is 0]
+[set: Bag = Lucky socks]
+[set: Luck = 1]
+— Grizelda: Never washed, never lost a game of dice. Put them on and feel the luck soak in. Through the toes.
+[end]
+[else if: Curio is Crackers]
+[set: Price = 150]
+[play: Pay]
+[if: Price is 0]
+[set: Bag = Fancy crackers]
+[dwarf: think]
+— {Hero}: Crackers? In a dungeon?
+— Grizelda: Imported, dearie. Very fancy. There's nothing in the world that goes better with a good cheese. Trust an old shopkeeper: someday, someone down there will want these more than gold.
+[dwarf: normal]
+[end]
+[end]
+
+# Scene: Tavern
+
+[bg: tavern]
+[music: tavern]
+[enter: dwarf 25%]
+[enter: barnaby 72%]
+— Barnaby: Welcome to the Tipsy Anvil, {Hero}! Mind the floor, it's sticky on purpose.
+[loop]
+[choice: Pint]
+> A hot meal and a good sleep, 5 gold (back to {MaxHP} HP) = Rest [if: HP < {MaxHP}]
+> Any rumours, Barnaby? = Rumour
+> Fizzwick the gnome waves a loyalty card at you = Stamp [if: Stamps < 3]
+> What did the Mayor say again? = Mayor
+> Back to the square = Leave
+[if: Pint is Leave]
+[break]
+[else if: Pint is Rest]
+[if: Gold >= 5]
+[add: Gold -5]
+[set: HP = {MaxHP}]
+[sound: heal]
+[dwarf: happy]
+You eat a stew with more gravy than stew, sleep twelve hours in a chair, and wake up as good as new. {HP} HP.
+[dwarf: normal]
+[else]
+— Barnaby: Five gold, friend. I'd give it on the house, but the house has a mortgage.
+[end]
+[else if: Pint is Rumour]
+[play: Rumour]
+[else if: Pint is Stamp]
+[exit: barnaby]
+[enter: fizzwick 72%]
+— Fizzwick: Rescue Gnomes Incorporated! Your loyalty card has {Stamps} of 3 stamps left. A fresh stamp is 80 gold. Remember: no stamp, no rescue. We have a policy.
+[choice: Sure]
+> Buy a stamp, 80 gold = Yes [if: Gold >= 80]
+> No thanks = No
+[if: Sure is Yes]
+[sound: coin]
+[add: Gold -80]
+[add: Stamps]
+— Fizzwick: Stamped! You may now perish with confidence.
+[else]
+— Fizzwick: Your funeral. Literally. That's the policy.
+[end]
+[exit: fizzwick]
+[enter: barnaby 72%]
+[else]
+— Barnaby: The Mayor says the cheese went down the Delve, five floors deep by the tracks. Bring it back before the festival and you'll drink free for life. Half-pints.
+[if: Deepest > 1]
+— Barnaby: And remember the Bucket by the gate: it takes you straight down to floor {Deepest}, the deepest you've reached.
+[end]
+[end]
+[end]
+[exit: barnaby]
+[music: town]
+
+# Scene: Rumour
+
+[set: Roll = random 1 10]
+[if: Roll is 1]
+— Barnaby: They say the monsters down there can be talked round. Not all of them, and not always. Roll well and be polite.
+[else if: Roll is 2]
+— Barnaby: A friend of a friend rolled a natural twenty once. Double damage, he says. He still won't shut up about it.
+[else if: Roll is 3]
+— Barnaby: Watch out for chests on the deeper floors. Some of them have teeth. The chests, I mean. Well, the floors too.
+[else if: Roll is 4]
+— Barnaby: Grizelda's lucky socks are real, you know. Smell real, too.
+[else if: Roll is 5]
+— Barnaby: Hiding behind your beard halves what a blow does to you. It's science. Beard science.
+[else if: Roll is 6]
+— Barnaby: Dragons, I hear, are terribly lonely. And terribly fond of a snack. Fancy that.
+[else if: Roll is 7]
+— Barnaby: There's a goblin down there who'll sell you anything. And a goblin union that'll stop him. Goblins love paperwork.
+[else if: Roll is 8]
+— Barnaby: A bomb never misses. It's the one thing in life that doesn't.
+[else if: Roll is 9]
+— Barnaby: A door that growls has a monster behind it. A door that jingles has gold. A door that smells of soup... nobody knows. Somebody should check.
+[else]
+— Barnaby: If you hear a lute down there, give the bard a coin. A good song puts a spring in your swing.
+[end]
+
+# Scene: Rescue
+
+[gauge: none]
+[fade out: 1s]
+[music: stop]
+Everything goes dark, and a little bit muddy.
+[bg: tavern]
+[fade in: 1s]
+[music: tavern]
+[enter: dwarf 25% ko]
+[enter: fizzwick 72%]
+[sound: drink]
+[add: Gnome rescues]
+[if: Stamps <= 0]
+— Fizzwick: Ah. {Hero}. I see you've run out of stamps.
+[dwarf: scared]
+— Fizzwick: Rescue Gnomes Incorporated has a policy. I would love to help. The policy would not.
+[play: Policy]
+[end]
+[add: Stamps -1]
+[set: Gold = {Gold} * 0.5]
+[set: HP = {MaxHP}]
+[dwarf: hurt]
+— Fizzwick: Rise and shine! Rescue Gnomes Incorporated, at your service. Six of us carried you all the way up, which is a lot of stairs for a lot of gnomes.
+— Fizzwick: That's half your gold for the trouble, and one stamp off your loyalty card. {Stamps} left. Run out, and, well. We have a policy.
+[dwarf: normal]
+— {Hero}: How did you even find me?
+— Fizzwick: We followed the screaming. Good day!
+[exit: fizzwick]
+
+# Scene: Policy
+
+[exit: dwarf]
+[illustration: Policy]
+[music: sad]
+The Rescue Gnomes are very sorry. They have printed a little card that says so. The cheese stays where it is, and Mossbottom holds its festival around an empty plinth, which some people say is very modern.
+Still, next time you will know where the bombs are. And the dragon will still be there, smug as anything.
+[ending: The Gnomes Have a Policy]
+
+# Scene: Bakery
+
+[exit: dwarf]
+[illustration: Bakery]
+[music: town]
+You hang the axe over the door of a little bakery on the square. Your bread is excellent. Your scones are legendary. Your cheese straws, however, contain no cheese at all, and every customer mentions it.
+Somewhere far below, a dragon is sleeping on three hundred years of cheddar. You try not to think about it. You think about it all the time.
+[ending: Rolls Not Dice]
+
+# Scene: Delve
+
+[bg: gate]
+[music: delve]
+[enter: dwarf 25%]
+[dwarf: normal]
+[set: Floor = 1]
+[if: Deepest > 1]
+The Bucket creaks on its chain beside the Delve gate, ready to lower you to floor {Deepest}.
+[choice: Start]
+> Ride the Bucket down to floor {Deepest} = Deep
+> Take the stairs from the top = Top
+[if: Start is Deep]
+[set: Floor = {Deepest}]
+[sound: door]
+Down you go, swinging gently, past a sign that says NO REFUNDS.
+[end]
+[else]
+The Delve gate yawns at you. It smells of damp stone, old socks and, faintly, of cheese.
+[end]
+[gauge: HP / {MaxHP} top left numbers = {Hero}]
+[set: Outcome = Going]
+[loop]
+[play: Floor start]
+[set: Room = 0]
+[loop]
+[add: Room]
+[if: Room > 5]
+[break]
+[end]
+[play: Doors]
+[if: Door is Rope]
+[add: Ropes -1]
+[sound: door]
+You throw the rope up into the dark. It catches on something, somehow, and you climb until the dark turns into sky.
+[set: Outcome = Home]
+[break]
+[end]
+[play: Room]
+[if: Outcome is not Going]
+[break]
+[end]
+[end]
+[if: Outcome is not Going]
+[break]
+[end]
+[if: Floor is 5]
+[play: Lair]
+[break]
+[end]
+[play: Landing]
+[if: Outcome is not Going]
+[break]
+[end]
+[add: Floor]
+[end]
+[gauge: none]
+
+# Scene: Floor start
+
+[if: Floor is 1]
+[set: Place = Cellars]
+[else if: Floor is 2]
+[set: Place = Grotto]
+[else if: Floor is 3]
+[set: Place = Crypt]
+[else if: Floor is 4]
+[set: Place = Forge]
+[else]
+[set: Place = Hoard]
+[end]
+[transition: black 0.8s]
+[bg: {Place}]
+[music: delve]
+[enter: dwarf 25%]
+[if: Place is Cellars and Arrived is not Cellars or Place is Grotto and Arrived is not Grotto or Place is Crypt and Arrived is not Crypt or Place is Forge and Arrived is not Forge or Place is Hoard and Arrived is not Hoard]
+[set: Arrived = {Place}]
+[if: Floor is 1]
+Floor 1, the Cellars. Barrels, cobwebs, and a smell of something that was once a pickle. Somewhere, something squelches.
+[else if: Floor is 2]
+Floor 2, the Grotto. Mushrooms as tall as houses glow softly in blue and green. One of them is glaring at you.
+[else if: Floor is 3]
+Floor 3, the Crypt. Old tombs, old bones, and a polite little sign: PLEASE DO NOT WAKE THE RESIDENTS. Too late: they're up.
+[else if: Floor is 4]
+Floor 4, the Forge. Rivers of lava, anvils the size of cottages, and the heat of a thousand ovens. Your beard starts to curl.
+[else]
+Floor 5, the Hoard. Gold, everywhere. Gold on the floor, gold on the walls, gold in places gold has no business being. And under it all, the smell of very old cheese.
+[end]
+[else]
+Floor {Floor}, the {Place}, again. It hasn't missed you.
+[end]
+
+# Scene: Doors
+
+[play: Draw door]
+[set: LeftKind = {Kind}]
+[set: LeftHint = {Hint}]
+[play: Draw door]
+[set: AheadKind = {Kind}]
+[set: AheadHint = {Hint}]
+[play: Draw door]
+[set: RightKind = {Kind}]
+[set: RightHint = {Hint}]
+[dwarf: think]
+[loop]
+[choice: Door]
+> To the left: {LeftHint} = Left
+> Straight ahead: {AheadHint} = Ahead
+> To the right: {RightHint} = Right
+> Drink a potion first ({HP} of {MaxHP} HP) = Potion [if: Potions > 0 and HP < {MaxHP}]
+> Climb your rope back to town = Rope [if: Ropes > 0]
+[if: Door is Potion]
+[play: Drink]
+[else]
+[break]
+[end]
+[end]
+[dwarf: normal]
+[if: Door is Left]
+[set: Kind = {LeftKind}]
+[else if: Door is Ahead]
+[set: Kind = {AheadKind}]
+[else if: Door is Right]
+[set: Kind = {RightKind}]
+[end]
+
+# Scene: Draw door
+
+[set: Roll = random 1 10]
+[if: Roll <= 5]
+[set: Kind = Fight]
+[set: FightHint = random]
+[set: Hint = {FightHint}]
+[else if: Roll <= 7]
+[set: Kind = Treasure]
+[set: TreasureHint = random]
+[set: Hint = {TreasureHint}]
+[else]
+[set: Kind = Odd]
+[set: OddHint = random]
+[set: Hint = {OddHint}]
+[end]
+
+# Scene: Room
+
+[sound: door]
+[if: Kind is Fight]
+[play: Encounter]
+[else if: Kind is Treasure]
+[play: Treasure]
+[else]
+[play: Oddity]
+[end]
+[exit: dwarf]
+[enter: dwarf 25% instant]
+
+# Scene: Drink
+
+[add: Potions -1]
+[add: HP 20]
+[if: HP > {MaxHP}]
+[set: HP = {MaxHP}]
+[end]
+[dwarf: drink]
+[sound: drink]
+Glug, glug, hic. It tastes of strawberries and pennies. Back to [style: Good]{HP} HP[style: none].
+[dwarf: normal]
+
+# Scene: Landing
+
+[set: Next = {Floor}]
+[add: Next]
+[if: Deepest < {Next}]
+[set: Deepest = {Next}]
+[end]
+[dwarf: think]
+[if: Floor is 1]
+At the bottom of the Cellars, on the landing, lies a crumb of cheese the size of a footstool, and a crumpled note.
+[style: Sign]ONE (1) CHEESE. DELIVER TO AUNTIE E., BOTTOM FLOOR. HANDLE WITH CARE. DO NOT LICK.[style: none]
+— {Hero}: Somebody licked it.
+[else if: Floor is 2]
+A line of squashed mushrooms leads to the stairs, each one wearing a tiny bandage. The last one holds up a tiny sign.
+[style: Sign]A WHEEL ROLLED OVER ME AND ALL I GOT WAS THIS BANDAGE.[style: none]
+[else if: Floor is 3]
+[enter: foe Ghost 72%]
+— The Ghost: A wheel of cheese came through here at midnight. Huge. Smelly. Didn't even say excuse me. I've been dead four hundred years and I have never been so insulted.
+— {Hero}: Which way did it go?
+— The Ghost: Down. Everything goes down, eventually. That's the whole point of a crypt.
+[exit: foe]
+[else]
+[enter: foe Foreman 72%]
+Two goblins are having a tea break beside a cart with a broken axle.
+— The Foreman: We only rolled it down 'cos Auntie asked nice. She's not bad, Auntie. Just lonely. And big. And on fire, sometimes.
+— The Foreman: She said cheese is no fun without something to put it on. Whatever that means. Off you go, we're on break.
+[exit: foe]
+[end]
+[dwarf: normal]
+The stairs go down to floor {Next}. Beside them dangles a Bucket on a chain: from now on it can bring you straight back here.
+[choice: Stairs]
+> Down the stairs to floor {Next} ({HP} of {MaxHP} HP) = Down
+> Ride the Bucket up to town = Up
+[if: Stairs is Up]
+[sound: door]
+Up you go, swinging gently, all the way to daylight.
+[set: Outcome = Home]
+[end]
+
+# Scene: Lair
+
+[transition: black 1s]
+[bg: Hoard]
+[music: boss]
+[enter: dwarf 25%]
+[enter: ember 70% sleepy]
+At the very bottom of the Delve, on a hill of coins, an enormous dragon in a knitted shawl lies curled around the Great Cheese Wheel like a cat around a cushion. She snores. The coins rattle.
+[dwarf: scared]
+[sound: roar]
+[shake: light 0.6s]
+[ember: normal]
+— Auntie Ember: Visitors? VISITORS! Oh, nobody ever visits. Come in, come in. Mind the gold, it gets everywhere.
+[dwarf: normal]
+— {Hero}: I've come for the cheese, Madam.
+[ember: angry]
+— Auntie Ember: MY cheese? My lovely pillow? It smells like home. Well. Like a home with feet in it.
+[set: TalkedEmber = 0]
+[loop]
+[ember: normal]
+[choice: Lair]
+> Draw your {Weapon}: the cheese is going home = Fight
+> Offer her the box of fancy crackers = Crackers [if: Bag is Fancy crackers]
+> Talk to her: she seems a bit lonely = Talk [if: TalkedEmber is 0]
+> Ask her what it would take = Bribe
+> Back away slowly and ride the Bucket home = Leave
+[if: Lair is Leave]
+[sound: door]
+— Auntie Ember: Leaving already? Everybody always leaves. Take a biscuit for the road. No? Suit yourself.
+[set: Outcome = Home]
+[break]
+[else if: Lair is Crackers]
+[play: Cheese and crackers]
+[else if: Lair is Bribe]
+[ember: happy]
+— Auntie Ember: What would it take? Oh, you sweet little pebble. How about I give YOU something: three hundred gold, and you tell them up there that the cheese was eaten by a very big rat?
+[choice: Sure]
+> Take the gold = Yes
+> No. Mossbottom wants its cheese. = No
+[if: Sure is Yes]
+[play: Bribed]
+[end]
+[ember: angry]
+— Auntie Ember: Honest, are we? How tiresome.
+[else if: Lair is Talk]
+[set: TalkedEmber = 1]
+[set: Bonus = 0]
+[play: Roll]
+You sit down on a heap of coins and ask her how she's been. Really been. You roll [style: Roll]{Roll}[style: none], {Total} in all, against 16.
+[if: Total >= 16]
+[play: Tea on Tuesdays]
+[end]
+[ember: angry]
+— Auntie Ember: How I've BEEN? Lonely, that's how! And now some little busybody wants to take my pillow! Well, I never.
+[else]
+[set: Foe = Ember]
+[play: Foe stats]
+[exit: ember instant]
+[play: Fight]
+[if: Result is Won]
+[play: Grate victory]
+[end]
+[if: Result is Lost]
+[set: Outcome = Dead]
+[exit: foe]
+[dwarf: ko]
+[break]
+[end]
+[enter: ember 70%]
+[end]
+[end]
+[exit: ember]
+
+# Scene: Encounter
+
+[set: Roll = random 1 3]
+[if: Floor is 1]
+[if: Roll is 1]
+[set: Foe = Gloop]
+[else if: Roll is 2]
+[set: Foe = Rat]
+[else]
+[set: Foe = Intern]
+[end]
+[else if: Floor is 2]
+[if: Roll is 1]
+[set: Foe = Shroom]
+[else if: Roll is 2]
+[set: Foe = Bats]
+[else]
+[set: Foe = Clerk]
+[end]
+[else if: Floor is 3]
+[if: Roll is 1]
+[set: Foe = Boney]
+[else if: Roll is 2]
+[set: Foe = Ghost]
+[else]
+[set: Foe = Mummy]
+[end]
+[else if: Floor is 4]
+[if: Roll is 1]
+[set: Foe = Imp]
+[else if: Roll is 2]
+[set: Foe = Golem]
+[else]
+[set: Foe = Foreman]
+[end]
+[else]
+[if: Roll is 1]
+[set: Foe = Mimic]
+[else]
+[set: Foe = Whelp]
+[end]
+[end]
+[play: Foe stats]
+[play: Fight]
+[play: After fight]
+
+# Scene: Foe stats
+
+[if: Foe is Gloop]
+[set: FoeName = The Gloop]
+[set: FoeMove = wobbles into your shins]
+[set: FoeMax = 10]
+[set: FoeAC = 9]
+[set: FoeHit = 2]
+[set: FoeDmg = 0]
+[set: FoeXP = 5]
+[set: FoeGold = 3]
+[set: FoeTalk = 11]
+[else if: Foe is Rat]
+[set: FoeName = The Big Rat]
+[set: FoeMove = nibbles your bootlaces]
+[set: FoeMax = 9]
+[set: FoeAC = 11]
+[set: FoeHit = 3]
+[set: FoeDmg = 0]
+[set: FoeXP = 5]
+[set: FoeGold = 2]
+[set: FoeTalk = 13]
+[else if: Foe is Intern]
+[set: FoeName = The Goblin Intern]
+[set: FoeMove = throws a mug of cold tea]
+[set: FoeMax = 12]
+[set: FoeAC = 10]
+[set: FoeHit = 2]
+[set: FoeDmg = 0]
+[set: FoeXP = 6]
+[set: FoeGold = 6]
+[set: FoeTalk = 10]
+[else if: Foe is Shroom]
+[set: FoeName = The Grumpy Shroom]
+[set: FoeMove = puffs spores up your nose]
+[set: FoeMax = 16]
+[set: FoeAC = 11]
+[set: FoeHit = 3]
+[set: FoeDmg = 1]
+[set: FoeXP = 8]
+[set: FoeGold = 8]
+[set: FoeTalk = 13]
+[else if: Foe is Bats]
+[set: FoeName = The Bat Choir]
+[set: FoeMove = screeches in three-part harmony]
+[set: FoeMax = 13]
+[set: FoeAC = 13]
+[set: FoeHit = 3]
+[set: FoeDmg = 0]
+[set: FoeXP = 8]
+[set: FoeGold = 6]
+[set: FoeTalk = 14]
+[else if: Foe is Clerk]
+[set: FoeName = The Goblin Accountant]
+[set: FoeMove = whacks you with a ledger]
+[set: FoeMax = 18]
+[set: FoeAC = 12]
+[set: FoeHit = 3]
+[set: FoeDmg = 1]
+[set: FoeXP = 9]
+[set: FoeGold = 14]
+[set: FoeTalk = 11]
+[else if: Foe is Boney]
+[set: FoeName = Boney the Skeleton]
+[set: FoeMove = rattles a femur at you]
+[set: FoeMax = 20]
+[set: FoeAC = 12]
+[set: FoeHit = 4]
+[set: FoeDmg = 1]
+[set: FoeXP = 11]
+[set: FoeGold = 12]
+[set: FoeTalk = 13]
+[else if: Foe is Ghost]
+[set: FoeName = The Complaining Ghost]
+[set: FoeMove = wails about the draught]
+[set: FoeMax = 18]
+[set: FoeAC = 13]
+[set: FoeHit = 4]
+[set: FoeDmg = 1]
+[set: FoeXP = 11]
+[set: FoeGold = 10]
+[set: FoeTalk = 12]
+[else if: Foe is Mummy]
+[set: FoeName = Uncle Wraps the Mummy]
+[set: FoeMove = flaps a loose bandage]
+[set: FoeMax = 26]
+[set: FoeAC = 11]
+[set: FoeHit = 3]
+[set: FoeDmg = 2]
+[set: FoeXP = 13]
+[set: FoeGold = 16]
+[set: FoeTalk = 15]
+[else if: Foe is Imp]
+[set: FoeName = The Fire Imp]
+[set: FoeMove = flicks hot coals at you]
+[set: FoeMax = 22]
+[set: FoeAC = 13]
+[set: FoeHit = 4]
+[set: FoeDmg = 2]
+[set: FoeXP = 14]
+[set: FoeGold = 18]
+[set: FoeTalk = 14]
+[else if: Foe is Golem]
+[set: FoeName = The Rock Golem]
+[set: FoeMove = falls on you very slowly]
+[set: FoeMax = 32]
+[set: FoeAC = 12]
+[set: FoeHit = 3]
+[set: FoeDmg = 3]
+[set: FoeXP = 16]
+[set: FoeGold = 20]
+[set: FoeTalk = 17]
+[else if: Foe is Foreman]
+[set: FoeName = The Goblin Foreman]
+[set: FoeMove = swings a big wrench]
+[set: FoeMax = 26]
+[set: FoeAC = 13]
+[set: FoeHit = 4]
+[set: FoeDmg = 2]
+[set: FoeXP = 15]
+[set: FoeGold = 26]
+[set: FoeTalk = 12]
+[else if: Foe is Mimic]
+[set: FoeName = The Mimic]
+[set: FoeMove = bites you with its lid]
+[set: FoeMax = 26]
+[set: FoeAC = 14]
+[set: FoeHit = 5]
+[set: FoeDmg = 2]
+[set: FoeXP = 17]
+[set: FoeGold = 40]
+[set: FoeTalk = 15]
+[else if: Foe is Whelp]
+[set: FoeName = The Dragon Whelp]
+[set: FoeMove = breathes a small but sincere flame]
+[set: FoeMax = 28]
+[set: FoeAC = 13]
+[set: FoeHit = 5]
+[set: FoeDmg = 3]
+[set: FoeXP = 18]
+[set: FoeGold = 30]
+[set: FoeTalk = 14]
+[else]
+[set: FoeName = Auntie Ember]
+[set: FoeMove = swats you with her tail]
+[set: FoeMax = 60]
+[set: FoeAC = 14]
+[set: FoeHit = 6]
+[set: FoeDmg = 3]
+[set: FoeXP = 0]
+[set: FoeGold = 0]
+[set: FoeTalk = 99]
+[end]
+
+# Scene: Fight
+
+[music: fight]
+[set: FoeHP = {FoeMax}]
+[set: Talked = 0]
+[set: Turn = 0]
+[set: Breath = 0]
+[enter: foe {Foe} 72% slide-from-right]
+[gauge: HP / {MaxHP} top left numbers = {Hero}]
+[gauge: FoeHP / {FoeMax} top right numbers = {FoeName}]
+[play: Foe hello]
+[loop]
+[add: Turn]
+[set: Guarding = 0]
+[dwarf: normal]
+[choice: Action below]
+> Swing your {Weapon} = Swing
+> Mighty heave = Heave
+> Hide behind your beard = Guard
+> Potion ({Potions}) = Potion [if: Potions > 0]
+> Bomb ({Bombs}) = Bomb [if: Bombs > 0]
+> Talk = Talk [if: Talked is 0 and Foe is not Ember]
+> Run away = Run [if: Foe is not Ember]
+[if: Action is Swing or Action is Heave]
+[set: Bonus = {ToHit}]
+[if: Action is Heave]
+[add: Bonus -4]
+[end]
+[play: Roll]
+[dwarf: attack]
+[if: Roll is 1]
+[play: Fumble]
+[else if: Roll is 20 or Total >= {FoeAC}]
+[set: Damage = random 1 6]
+[if: Action is Heave]
+[set: Bonus = random 1 6]
+[add: Damage {Bonus}]
+[end]
+[add: Damage {Atk}]
+[if: Roll is 20]
+[set: Damage = {Damage} * 2]
+[sound: crit]
+[flash: white]
+[shake: strong 0.5s]
+A [style: Roll]natural 20![style: none] Your {Weapon} comes down like the hammer of the mountain kings: [style: Hurt]{Damage} damage[style: none].
+[else]
+[sound: hit]
+[shake: light 0.3s]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeAC}: a hit! [style: Hurt]{Damage} damage[style: none].
+[end]
+[add: FoeHP -{Damage}]
+[if: FoeHP < 0]
+[set: FoeHP = 0]
+[end]
+[else]
+[play: Miss]
+[end]
+[else if: Action is Guard]
+[set: Guarding = 1]
+[dwarf: scared]
+[sound: guard]
+You hide behind your beard. It is a very thick beard. Whatever comes next will hurt half as much.
+[else if: Action is Potion]
+[play: Drink]
+[else if: Action is Bomb]
+[add: Bombs -1]
+[set: Damage = random 6 16]
+[add: FoeHP -{Damage}]
+[if: FoeHP < 0]
+[set: FoeHP = 0]
+[end]
+[dwarf: attack]
+[sound: bomb]
+[flash: white]
+[shake: strong 0.6s]
+You light the fuse and throw. In that order. BOOM! [style: Hurt]{Damage} damage[style: none], and a lot of smoke.
+[else if: Action is Talk]
+[set: Talked = 1]
+[set: Bonus = 0]
+[if: Bag is Union card and Foe is Intern or Bag is Union card and Foe is Clerk or Bag is Union card and Foe is Foreman]
+[set: Bonus = 5]
+[end]
+[play: Roll]
+[dwarf: think]
+[if: Total >= {FoeTalk}]
+[play: Talk win]
+[set: Result = Talked]
+[break]
+[end]
+[play: Talk fail]
+[else]
+[set: Bonus = 0]
+[play: Roll]
+[if: Total >= 10]
+[dwarf: scared]
+[sound: run]
+You roll [style: Roll]{Roll}[style: none] and run, astonishingly fast for someone with legs this short. You end up back where you started, with nothing, but alive.
+[set: Result = Fled]
+[break]
+[end]
+[dwarf: scared]
+You roll [style: Roll]{Roll}[style: none], turn to run, and trip over your own beard.
+[end]
+[if: FoeHP is 0]
+[set: Result = Won]
+[break]
+[end]
+[play: Foe turn]
+[if: HP is 0]
+[set: Result = Lost]
+[break]
+[end]
+[end]
+
+# Scene: Roll
+
+[sound: dice]
+[set: Roll = random 1 20]
+[set: Total = {Roll}]
+[add: Total {Bonus}]
+[add: Total {Luck}]
+[if: Inspired > 0]
+[add: Total 2]
+[add: Inspired -1]
+[end]
+
+# Scene: Fumble
+
+[sound: fumble]
+[set: Roll = random 1 5]
+[if: Roll is 1]
+A [style: Roll]natural 1[style: none]. Your {Weapon} flies out of your hands, bounces off the ceiling and lands back in them. Nobody believes it either.
+[else if: Roll is 2]
+A [style: Roll]natural 1[style: none]. You swing so hard you spin round twice and wave at the wall.
+[else if: Roll is 3]
+A [style: Roll]natural 1[style: none]. Your helmet falls over your eyes. By the time you push it back up, the moment has passed.
+[else if: Roll is 4]
+A [style: Roll]natural 1[style: none]. You sneeze mid-swing. {FoeName} says bless you. Awkward.
+[else]
+A [style: Roll]natural 1[style: none]. You step on your own beard and sit down very suddenly.
+[end]
+
+# Scene: Miss
+
+[sound: miss]
+[set: Bonus = random 1 4]
+[if: Bonus is 1]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeAC}: a miss. Your {Weapon} whistles past and hits a perfectly innocent rock.
+[else if: Bonus is 2]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeAC}: a miss. {FoeName} steps aside, a little smugly.
+[else if: Bonus is 3]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeAC}: a miss, by about the width of a dwarf.
+[else]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeAC}: a miss. You meant to do that. You tell everyone you meant to do that.
+[end]
+
+# Scene: Foe turn
+
+[if: Foe is Ember]
+[add: Breath]
+[if: Breath >= 3]
+[set: Breath = 0]
+[set: Damage = random 2 12]
+[add: Damage 6]
+[if: Guarding is 1]
+[set: Damage = {Damage} * 0.5]
+[end]
+[add: HP -{Damage}]
+[if: HP < 0]
+[set: HP = 0]
+[end]
+[dwarf: hurt]
+[sound: roar]
+[flash: red 0.4s]
+[shake: strong 0.6s]
+WHOOSH! Auntie Ember breathes fire all over you. Your eyebrows will grow back. [style: Hurt]{Damage} damage[style: none].
+[if: HP > 0 and Guarding is 1]
+Hiding behind your beard saved half of it. The beard is a little crispy now.
+[end]
+[else]
+[play: Foe swing]
+[if: Breath is 2 and HP > 0]
+Auntie Ember takes a very, very deep breath. It might be a good moment to hide behind something. A beard, for instance.
+[end]
+[end]
+[else]
+[play: Foe swing]
+[end]
+
+# Scene: Foe swing
+
+[set: Roll = random 1 20]
+[set: Total = {Roll}]
+[add: Total {FoeHit}]
+[if: Roll is 1]
+[sound: miss]
+{FoeName} trips over nothing at all. Embarrassing for everyone.
+[else if: Total >= {AC}]
+[set: Damage = random 1 6]
+[add: Damage {FoeDmg}]
+[if: Guarding is 1]
+[set: Damage = {Damage} * 0.5]
+[end]
+[add: HP -{Damage}]
+[if: HP < 0]
+[set: HP = 0]
+[end]
+[dwarf: hurt]
+[sound: ouch]
+[shake: light 0.3s]
+{FoeName} {FoeMove}! It rolls {Roll}, {Total} against your {AC}: [style: Hurt]you lose {Damage} HP[style: none].
+[else]
+[sound: miss]
+{FoeName} {FoeMove}, but rolls {Roll}, {Total} against your {AC}, and misses.
+[end]
+
+# Scene: After fight
+
+[gauge: FoeHP none]
+[if: Result is Lost]
+[set: Outcome = Dead]
+[sound: faint]
+[dwarf: ko]
+Everything goes wobbly, then sideways, then dark.
+[exit: foe fade]
+[else if: Result is Fled]
+[exit: foe fade]
+[else if: Result is Talked]
+[exit: foe fade]
+[set: Price = {FoeXP} * 0.5]
+[add: XP {Price}]
+You get [style: Good]{Price} XP[style: none] for your words. Words count.
+[play: Level up]
+[else]
+[play: Foe bye]
+[exit: foe fade]
+[sound: coin]
+[set: Price = random 1 10]
+[add: Price {FoeGold}]
+[add: Gold {Price}]
+[add: XP {FoeXP}]
+[dwarf: happy]
+You win! [style: Good]{FoeXP} XP and {Price} gold[style: none].
+[set: Roll = random 1 6]
+[if: Roll is 6]
+[add: Potions]
+There's a potion in the mess, too. Probably not poison.
+[end]
+[play: Level up]
+[end]
+[music: delve]
+[dwarf: normal]
+
+# Scene: Level up
+
+[if: XP >= {NextXP}]
+[add: Level]
+[add: MaxHP 8]
+[add: ToHit 1]
+[set: HP = {MaxHP}]
+[add: NextXP {Level} * 10]
+[sound: levelup]
+[dwarf: happy]
+[style: Good]Level {Level}![style: none] You feel taller. You are not taller. Back to {MaxHP} HP, and one more on every swing.
+[end]
+
+# Scene: Foe hello
+
+[if: Foe is Gloop]
+A blue blob plops off the ceiling. It has two eyes, no manners, and it is eating a sock. Possibly yours.
+[else if: Foe is Rat]
+A rat the size of a pony sits on a barrel, chewing a whole loaf. It looks at you as if you might be dessert.
+[else if: Foe is Intern]
+A small goblin with a lanyard leaps out. "Halt! Nobody gets past without an appointment! Do you have an appointment? I'm new."
+[else if: Foe is Shroom]
+A mushroom taller than you turns round, slowly. "Do you have ANY idea how long it took me to grow this tall?"
+[else if: Foe is Bats]
+Forty bats hang upside down in neat rows, hold a note, and dive at you, still in tune.
+[else if: Foe is Clerk]
+A goblin in spectacles looks up from a ledger. "You are walking through this corridor without a permit. That is a fine. Or a fight. Your choice. Fights are cheaper."
+[else if: Foe is Boney]
+A skeleton sits up in its tomb, cracks every one of its two hundred and six bones, and reaches for a sword.
+[else if: Foe is Ghost]
+A ghost drifts through the wall. "Oh, wonderful. Another living person. Tracking warmth all over my nice cold crypt."
+[else if: Foe is Mummy]
+Something wrapped in bandages shuffles out of the dark, arms held out. "Hug?" it groans. It is not a nice hug. It has never been a nice hug.
+[else if: Foe is Imp]
+A little red imp cartwheels across a puddle of lava and lands in front of you, smoking slightly. "Ooh, a dwarf! Dwarves burn ever so slowly!"
+[else if: Foe is Golem]
+A pile of rocks stands up. And up. And up some more. It looks down at you for a very long time, thinking rock thoughts.
+[else if: Foe is Foreman]
+A goblin in a hard hat blows a whistle. "Oi! This is a work site! Nobody on the work site without a hat!" Your helmet does not count, apparently.
+[else if: Foe is Mimic]
+The chest in the corner yawns. Chests don't yawn. It has teeth, and a tongue, and the tongue is reaching for your boots.
+[else if: Foe is Whelp]
+A dragon the size of a large dog bounds up, wagging its tail. Then it remembers it is a dragon, and growls, a bit squeakily.
+[else]
+Auntie Ember uncurls, and keeps uncurling, until she fills the whole cave. The cheese rolls gently behind her. She cracks her knuckles. Dragons have knuckles.
+[end]
+
+# Scene: Talk win
+
+[if: Foe is Gloop]
+You roll [style: Roll]{Roll}[style: none]. You tell the Gloop it has a lovely colour. It turns pink, wobbles bashfully and slides away under a door.
+[else if: Foe is Rat]
+You roll [style: Roll]{Roll}[style: none]. You point out a much bigger loaf in the next room. There is no loaf. The rat leaves anyway, full of hope.
+[else if: Foe is Intern]
+You roll [style: Roll]{Roll}[style: none]. You tell the intern that you are from Head Office. The intern salutes, apologises four times and runs off to make you a cup of tea.
+[else if: Foe is Shroom]
+You roll [style: Roll]{Roll}[style: none]. You compliment its spots. The Shroom turns away, blushing a deep mauve. "Well. They ARE my best feature."
+[else if: Foe is Bats]
+You roll [style: Roll]{Roll}[style: none]. You hum the low part. The bats are so delighted to finally have a bass that they fly off to rehearse.
+[else if: Foe is Clerk]
+You roll [style: Roll]{Roll}[style: none]. You fill in form 27B in triplicate. The accountant is so moved that it stamps it APPROVED and lets you through.
+[else if: Foe is Boney]
+You roll [style: Roll]{Roll}[style: none]. You ask Boney what it does for fun. It has not been asked that in three hundred years. It goes off to think about it.
+[else if: Foe is Ghost]
+You roll [style: Roll]{Roll}[style: none]. You agree that the crypt is very draughty and promise to write a strongly worded letter. The ghost floats off, satisfied.
+[else if: Foe is Mummy]
+You roll [style: Roll]{Roll}[style: none]. You give Uncle Wraps a hug. A short one. He sniffs, and shuffles off, rewrapped in happiness.
+[else if: Foe is Imp]
+You roll [style: Roll]{Roll}[style: none]. You challenge the imp to a staring contest, and win, because it blinks every time a spark lands in its eye. It storms off.
+[else if: Foe is Golem]
+You roll [style: Roll]{Roll}[style: none]. You tell the golem a joke about gravel. It thinks about it for a full minute, then laughs so hard it falls into pieces. It will be fine. Eventually.
+[else if: Foe is Foreman]
+You roll [style: Roll]{Roll}[style: none]. You remind the foreman that it is tea time. Every goblin within earshot downs tools at once. Nobody even notices you go.
+[else if: Foe is Mimic]
+You roll [style: Roll]{Roll}[style: none]. You tell the mimic it is the most convincing chest you have ever seen. It shuts its lid with pride and pretends you were never here.
+[else]
+You roll [style: Roll]{Roll}[style: none]. You tell the whelp it's a very good dragon. Yes it is. Yes it IS. It rolls over for a tummy scratch, then wanders off happy.
+[end]
+
+# Scene: Talk fail
+
+[if: Foe is Gloop]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You try to reason with the Gloop. The Gloop does not have a brain to reason with.
+[else if: Foe is Rat]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You offer the rat a crumb. It wanted the whole hand.
+[else if: Foe is Intern]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. "Nice try. My manager said you'd say that."
+[else if: Foe is Shroom]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You call it a toadstool. It is NOT a toadstool.
+[else if: Foe is Bats]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You join in, off key. The whole choir turns on you.
+[else if: Foe is Clerk]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You fill in the form in pencil. The accountant gasps.
+[else if: Foe is Boney]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You make a joke about having a bone to pick. Boney has heard it a thousand times.
+[else if: Foe is Ghost]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You say it's actually quite cosy in here. The ghost is outraged.
+[else if: Foe is Mummy]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You ask if he's tried a shower. Uncle Wraps is deeply hurt. Also, he would unravel.
+[else if: Foe is Imp]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You tell the imp to cool down. Imps hate that.
+[else if: Foe is Golem]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. The golem is still thinking about what you said before you said it.
+[else if: Foe is Foreman]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. "Union? What union? Back to work! Er, you're not working. Get him!"
+[else if: Foe is Mimic]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You knock politely on its lid. It bites the knocking hand.
+[else]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You say "Who's a good dragon?" It turns out the answer is not this one.
+[end]
+
+# Scene: Foe bye
+
+[if: Foe is Gloop]
+The Gloop splats into a puddle, and the puddle slinks off in a sulk.
+[else if: Foe is Rat]
+The rat squeaks, drops its loaf and flees. It will tell all the other rats about you.
+[else if: Foe is Intern]
+The intern quits on the spot. "This job is NOT what the poster said!"
+[else if: Foe is Shroom]
+The Shroom topples over with a soft poof. Little spores drift away, looking for somewhere quieter to grow.
+[else if: Foe is Bats]
+The choir scatters, still humming. A few of them hold a final note for drama.
+[else if: Foe is Clerk]
+The accountant files itself under DEFEATED and goes home early.
+[else if: Foe is Boney]
+Boney falls into a neat pile of bones. The skull winks at you. Probably a draught.
+[else if: Foe is Ghost]
+The ghost fades away, complaining. You can still hear it, faintly, three rooms later.
+[else if: Foe is Mummy]
+Uncle Wraps unravels completely. Underneath there is only a very small, very embarrassed beetle.
+[else if: Foe is Imp]
+The imp goes out with a hiss and a little puff of smoke, like a candle with opinions.
+[else if: Foe is Golem]
+The golem crumbles into gravel. Very good gravel. Somebody could build a nice path with this.
+[else if: Foe is Foreman]
+The foreman blows his whistle one last time and declares the site closed for the day.
+[else if: Foe is Mimic]
+The mimic's lid snaps shut for good. Inside it there is real treasure, which seems unfair on all the other chests.
+[else]
+The whelp flops over, sulking, and refuses to look at you. It will grow up to be a dragon who tells stories about you.
+[end]
+
+# Scene: Treasure
+
+[if: Floor >= 3]
+[set: Roll = random 1 6]
+[if: Roll is 1]
+A chest sits alone in the middle of the room. It is breathing.
+[set: Foe = Mimic]
+[play: Foe stats]
+[play: Fight]
+[play: After fight]
+[end]
+[end]
+[if: Outcome is Going]
+[sound: chest]
+Nine chests stand in three neat rows. A sign hangs above them.
+[style: Sign]TAKE ONE. ONLY ONE. WE ARE WATCHING. — THE MANAGEMENT[style: none]
+[unset: Prizes]
+[add: Prizes = gold]
+[add: Prizes = gold]
+[add: Prizes = potion]
+[add: Prizes = bomb]
+[add: Prizes = gem]
+[add: Prizes = rope]
+[add: Prizes = scroll]
+[add: Prizes = sock]
+[add: Prizes = moth]
+[shuffle: Prizes]
+[unset: Lids]
+[set: I = 0]
+[loop]
+[if: I >= 9]
+[break]
+[end]
+[add: I]
+[add: Lids = chest]
+[end]
+[choice: Pick grid 3 × 3 from Lids with tile]
+> Pick one chest. Only one. The sign was very clear about this.
+[set: Lids Pick = {Prizes Pick}]
+[sound: chest]
+[if: Prizes Pick is gold]
+[set: Price = random 5 15]
+[add: Price {Floor} * 10]
+[add: Gold {Price}]
+[sound: coin]
+[dwarf: happy]
+Gold! [style: Good]{Price} gold[style: none], all shiny, one of them slightly bitten.
+[else if: Prizes Pick is potion]
+[add: Potions]
+[dwarf: happy]
+A healing potion, still fizzy. You have {Potions} now.
+[else if: Prizes Pick is bomb]
+[add: Bombs]
+[dwarf: happy]
+A bomb! You put it away very, very carefully. You have {Bombs} now.
+[else if: Prizes Pick is gem]
+[add: Gems]
+[dwarf: happy]
+A gem the size of your nose. Grizelda will pay 25 gold for it. You have {Gems} now.
+[else if: Prizes Pick is rope]
+[add: Ropes]
+A rope! Throw it up from any room to climb home. You have {Ropes} now.
+[else if: Prizes Pick is scroll]
+[set: Price = {Floor} * 5]
+[add: XP {Price}]
+[dwarf: think]
+A scroll titled [style: Sign]Hitting Things: A Beginner's Guide[style: none]. You read it twice. [style: Good]{Price} XP[style: none].
+[play: Level up]
+[else if: Prizes Pick is sock]
+[dwarf: think]
+A single sock. Not even a lucky one. You keep it anyway: you are a dwarf, and dwarves keep things.
+[else]
+[dwarf: scared]
+A moth flies out of the chest, looks around, and seems as disappointed as you are.
+[end]
+[set: I = 0]
+[loop]
+[if: I >= 9]
+[break]
+[end]
+[add: I]
+[set: Lids I = {Prizes I}]
+[end]
+[dwarf: normal]
+[choice: Pick grid 3 × 3 from Lids with tile]
+> The other lids fly open, so that you can see what you missed. Pick any chest to move on.
+[end]
+
+# Scene: Oddity
+
+[if: OddsSeen >= 18]
+[unset: Seen]
+[set: OddsSeen = 0]
+[end]
+[set: Odd = random not in Seen]
+[set: Seen = {Odd}]
+[add: OddsSeen]
+[if: Odd is Well]
+[play: Wishing well]
+[else if: Odd is Door]
+[play: Talking door]
+[else if: Odd is Merchant]
+[play: Discount goblin]
+[else if: Odd is Plate]
+[play: Pressure plate]
+[else if: Odd is Fountain]
+[play: Pink fountain]
+[else if: Odd is Bard]
+[play: The bard]
+[else if: Odd is Troll]
+[play: Sleeping troll]
+[else if: Odd is Union]
+[play: Goblin union]
+[else if: Odd is Mushrooms]
+[play: Mushroom ring]
+[else if: Odd is Shrine]
+[play: Saint Gravel]
+[else if: Odd is Knight]
+[play: Stuck knight]
+[else if: Odd is Rubble]
+[play: Cave-in]
+[else if: Odd is Campfire]
+[play: Warm campfire]
+[else if: Odd is Sign]
+[play: Signpost]
+[else if: Odd is Levers]
+[play: Three levers]
+[else if: Odd is Mirror]
+[play: Rude mirror]
+[else if: Odd is Dice]
+[play: Dice game]
+[else]
+[play: Odd books]
+[end]
+
+# Scene: Hurt a little
+
+[add: HP -{Damage}]
+[if: HP < 1]
+[set: HP = 1]
+[end]
+[dwarf: hurt]
+[sound: ouch]
+[shake: light 0.3s]
+
+# Scene: Wishing well
+
+[enter: well 70%]
+A wishing well, in a dungeon. Someone has painted on it: [style: Sign]WISHES 10 GOLD. NO REFUNDS. NO WISHING FOR MORE WISHES.[style: none]
+[choice: Odd choice]
+> Throw in 10 gold and make a wish = A [if: Gold >= 10]
+> Shout down it to hear the echo = B
+> Walk on = C
+[if: Odd choice is A]
+[add: Gold -10]
+[sound: coin]
+[set: Bonus = 0]
+[play: Roll]
+[if: Total >= 12]
+[add: MaxHP 4]
+[set: HP = {MaxHP}]
+[sound: magic]
+[dwarf: happy]
+You roll [style: Roll]{Roll}[style: none]. You wish to be taller. The well thinks about it, and makes you [style: Good]sturdier[style: none] instead: 4 more HP, for good. Close enough.
+[else]
+[dwarf: think]
+You roll [style: Roll]{Roll}[style: none]. A frog pops out of the well, looks at you, says "No," and hops back in.
+[end]
+[else if: Odd choice is B]
+[dwarf: think]
+— {Hero}: HELLO!
+— ???: Hello yourself. Some of us are trying to sleep down here.
+[else]
+You walk on. Some wishes are better left unwished.
+[end]
+[exit: well]
+
+# Scene: Talking door
+
+[enter: talkingdoor 70%]
+A door with a face carved in it clears its throat.
+— The Door: Answer my riddle and pass with a gift. Fail, and I shall be very disappointed in you. What has a beard, a helmet, and is shorter than this riddle?
+[choice: Odd choice]
+> A very short wizard = A
+> Me? = B
+> A garden gnome = C
+[if: Odd choice is B]
+[sound: coin]
+[set: Price = random 10 20]
+[add: Gold {Price}]
+[dwarf: happy]
+— The Door: Correct! Most people find it too hurtful to say. Here: [style: Good]{Price} gold[style: none] from my letterbox.
+[else]
+[dwarf: think]
+— The Door: Wrong. It was you. It's always you. Off you go, I'm disappointed.
+[end]
+[exit: talkingdoor]
+
+# Scene: Discount goblin
+
+[enter: sneak 70%]
+— Sneak: Psst! Over 'ere. Sneak's Discount Dungeon Supplies. Everything fell off the back of a cart. Every single thing.
+[choice: Odd choice]
+> A potion, cheap: 6 gold = A [if: Gold >= 6]
+> The mystery box: 15 gold = B [if: Gold >= 15]
+> No thank you = C
+[if: Odd choice is A]
+[add: Gold -6]
+[add: Potions]
+[sound: coin]
+— Sneak: Lovely. Totally genuine. Ninety per cent potion. Ten per cent... also potion.
+[else if: Odd choice is B]
+[add: Gold -15]
+[sound: chest]
+[set: Roll = random 1 4]
+[if: Roll is 1]
+[add: Bombs 2]
+[dwarf: happy]
+Inside the box: [style: Good]two bombs[style: none], wrapped in a doily.
+[else if: Roll is 2]
+[add: Gems 2]
+[dwarf: happy]
+Inside the box: [style: Good]two gems[style: none]. Sneak looks as surprised as you are.
+[else if: Roll is 3]
+[add: Ropes]
+[add: Potions]
+Inside the box: a rope and a potion. Fair enough.
+[else]
+[dwarf: think]
+Inside the box: a smaller box. Inside that: an even smaller box. Inside that: a note saying [style: Sign]HA[style: none].
+[end]
+[else]
+— Sneak: Suit yourself. I was never 'ere.
+[end]
+[exit: sneak]
+
+# Scene: Pressure plate
+
+[dwarf: scared]
+Click. You look down. You are standing on a stone plate that has definitely just gone down a little.
+[set: Bonus = 0]
+[play: Roll]
+[if: Total >= 11]
+[sound: miss]
+You roll [style: Roll]{Roll}[style: none] and dive aside as a rubber chicken swings down from the ceiling, right where your head was. Someone down here has a sense of humour.
+[else]
+[set: Damage = random 2 6]
+[add: Damage {Floor}]
+[play: Hurt a little]
+You roll [style: Roll]{Roll}[style: none]. A bucket of cold soup tips over your head, followed by the bucket. [style: Hurt]{Damage} damage[style: none], mostly to your dignity.
+[end]
+[dwarf: normal]
+
+# Scene: Pink fountain
+
+[enter: fountain 70%]
+A little fountain burbles in an alcove. The water is a pleasant shade of pink. That's normal. Probably.
+[choice: Odd choice]
+> Have a sip = A
+> Fill up your water bottle and go = B
+[if: Odd choice is A]
+[set: Roll = random 1 3]
+[if: Roll is 1]
+[set: Damage = 3]
+[play: Hurt a little]
+Hiccups! Dreadful, violent hiccups. [style: Hurt]3 damage[style: none], and a very squeaky minute.
+[else]
+[set: HP = {MaxHP}]
+[sound: heal]
+[dwarf: happy]
+Delicious! It tastes of raspberries and warm blankets. [style: Good]Back to {MaxHP} HP[style: none].
+[end]
+[else]
+You fill the bottle. Later, it turns out to be lemonade. Not useful, but nice.
+[end]
+[exit: fountain]
+
+# Scene: The bard
+
+[enter: melody 70%]
+A bard sits on a rock, tuning a lute that has seen better days, and better bards.
+— Melody: A song for a coin, little hero? I do ballads, shanties and one very long poem about a sandwich.
+[choice: Odd choice]
+> Give her 5 gold for a song = A [if: Gold >= 5]
+> Ask about the sandwich poem = B
+> Sneak past before she starts = C
+[if: Odd choice is A]
+[add: Gold -5]
+[sound: magic]
+[set: Inspired = 5]
+[dwarf: happy]
+She sings The Ballad of {Hero} the Mighty, which she makes up on the spot. You feel [style: Good]inspired[style: none]: two more on your next five rolls.
+[else if: Odd choice is B]
+[set: Inspired = 2]
+She recites all forty verses. By the end, you feel strangely moved, and slightly peckish. [style: Good]Two more on your next two rolls.[style: none]
+[else]
+You tiptoe past. She starts anyway, and follows you for a bit.
+[end]
+[exit: melody]
+
+# Scene: Sleeping troll
+
+[enter: troll 70%]
+A troll is asleep across the passage, snoring like a landslide. Beside him, a sack. The sack jingles every time he breathes.
+[choice: Odd choice]
+> Sneak up and pinch the sack = A
+> Tiptoe around him = B
+> Wake him up and ask nicely = C
+[if: Odd choice is A]
+[set: Bonus = 0]
+[play: Roll]
+[if: Total >= 13]
+[sound: coin]
+[set: Price = random 20 40]
+[add: Gold {Price}]
+[dwarf: happy]
+You roll [style: Roll]{Roll}[style: none]. You lift the sack as gently as a soufflé. [style: Good]{Price} gold[style: none]! The troll mumbles "five more minutes" and rolls over.
+[else]
+[set: Damage = random 4 9]
+[play: Hurt a little]
+You roll [style: Roll]{Roll}[style: none]. The troll opens one eye, flicks you down the corridor, and goes back to sleep. [style: Hurt]{Damage} damage[style: none].
+[end]
+[else if: Odd choice is B]
+You tiptoe past. He smells of old cabbage and dreams.
+[else]
+[troll: awake]
+— The Troll: Mmf? Oh. A little one. You want gold? Here. Don't tell the others. They think I'm scary.
+[sound: coin]
+[add: Gold 5]
+He gives you five gold and a sticky sweet. You keep the sweet for an emergency.
+[end]
+[exit: troll]
+
+# Scene: Goblin union
+
+[enter: foe Clerk 70%]
+A goblin with a clipboard stands under a banner: [style: Sign]GOBLIN WORKERS' UNION. FAIR WAGES. TEA BREAKS. NO HEROES.[style: none]
+— The Rep: Join the union! Two gold a month, and every goblin down here will treat you like family. Mostly. We have some difficult cousins.
+[choice: Odd choice]
+> Join, for 2 gold = A [if: Gold >= 2 and Bag is not Union card]
+> Ask about the tea breaks = B
+> Say you're management = C
+[if: Odd choice is A]
+[add: Gold -2]
+[set: Bag = Union card]
+[dwarf: happy]
+— The Rep: Welcome, comrade! Show this card to any goblin and they'll be much easier to [style: Good]talk round[style: none].
+[else if: Odd choice is B]
+— The Rep: Three a day, plus biscuits. We fought hard for those biscuits.
+[else]
+[dwarf: scared]
+The rep gasps, blows a whistle, and every goblin in earshot boos you for a full minute.
+[end]
+[exit: foe]
+
+# Scene: Mushroom ring
+
+[enter: mushrooms 70%]
+A ring of spotty mushrooms grows in a perfect circle. Some of them are humming.
+[choice: Odd choice]
+> Eat one. For science. = A
+> Step into the ring = B
+> Leave them to their humming = C
+[if: Odd choice is A]
+[set: Roll = random 1 3]
+[if: Roll is 1]
+[add: MaxHP 3]
+[add: HP 3]
+[dwarf: happy]
+You feel enormous! You're not. But you are [style: Good]3 HP sturdier[style: none], for good.
+[else if: Roll is 2]
+[dwarf: think]
+For a while the colours are very loud and the walls want to tell you about their day. Then it wears off.
+[else]
+[set: Damage = 4]
+[play: Hurt a little]
+Your tummy disagrees, loudly. [style: Hurt]4 damage[style: none].
+[end]
+[else if: Odd choice is B]
+[sound: magic]
+[set: Inspired = 3]
+The humming swells, the mushrooms sway, and you feel [style: Good]lucky[style: none]: two more on your next three rolls.
+[else]
+The mushrooms hum a little louder as you leave, as if to say good riddance.
+[end]
+[exit: mushrooms]
+
+# Scene: Saint Gravel
+
+[enter: shrine 70%]
+A little shrine to Saint Gravel, patron of dwarves, lost buttons and things that fall down the back of the sofa.
+[choice: Odd choice]
+> Pray for healing = A
+> Leave 20 gold for good luck = B [if: Gold >= 20]
+> Polish the statue = C
+[if: Odd choice is A]
+[set: HP = {MaxHP}]
+[sound: heal]
+[dwarf: happy]
+A warm glow, a faint smell of biscuits. [style: Good]Back to {MaxHP} HP[style: none].
+[else if: Odd choice is B]
+[add: Gold -20]
+[add: ToHit 1]
+[sound: magic]
+[dwarf: happy]
+The statue winks. You will be [style: Good]one better on every swing[style: none], for good.
+[else]
+You give Saint Gravel a good polish. He looks very pleased. Under the base you find a button. You keep it, as is traditional.
+[end]
+[exit: shrine]
+
+# Scene: Stuck knight
+
+[enter: lorimer 70%]
+A very tall knight is stuck in a very low tunnel, bent double, his helmet wedged against the ceiling.
+— Sir Lorimer: Ah! A small person! Splendid. I am Sir Lorimer the Lofty, on a quest for the famous cheese. I appear to be slightly stuck.
+[choice: Odd choice]
+> Help him out = A
+> Ask why he's after your cheese = B
+> Leave him there = C
+[if: Odd choice is A]
+[set: Bonus = 0]
+[play: Roll]
+[add: Potions]
+[sound: heal]
+[dwarf: happy]
+You roll [style: Roll]{Roll}[style: none] and pull, push, and finally kick. He pops free with a sound like a cork. He gives you a [style: Good]potion[style: none] and goes back up, saying quests are better on the surface.
+[else if: Odd choice is B]
+— Sir Lorimer: YOUR cheese? Well. I suppose you are shorter than me, which down here is a great advantage. Very well, it's yours. Do give the dragon my regards.
+[dwarf: think]
+— {Hero}: What dragon?
+— Sir Lorimer: Hm? Oh, nothing. Good luck!
+[else]
+— Sir Lorimer: I shall be fine! Knights are very patient! Mostly!
+[end]
+[exit: lorimer]
+
+# Scene: Cave-in
+
+[enter: rubble 70%]
+A cave-in blocks half the passage. Something glitters between the stones.
+[choice: Odd choice]
+> Dig, like a proper dwarf = A
+> Squeeze past = B
+[if: Odd choice is A]
+[set: Bonus = 0]
+[play: Roll]
+[if: Total >= 9]
+[add: Gems]
+[sound: coin]
+[dwarf: happy]
+You roll [style: Roll]{Roll}[style: none]. Dwarf hands know their stones. A [style: Good]gem[style: none]! Your ancestors would be proud. Mildly.
+[else]
+[set: Damage = 3]
+[play: Hurt a little]
+You roll [style: Roll]{Roll}[style: none]. The glitter was a worm wearing a sequin. A rock falls on your toe. [style: Hurt]3 damage[style: none].
+[end]
+[else]
+You squeeze past, breathe in, and feel very slim for a moment.
+[end]
+[exit: rubble]
+
+# Scene: Warm campfire
+
+[enter: campfire 70%]
+A campfire, still warm. Someone left in a hurry: there's a kettle on, and half a sausage.
+[choice: Odd choice]
+> Have a nap by the fire = A
+> Eat the sausage and go = B
+[if: Odd choice is A]
+[set: Roll = random 1 4]
+[if: Roll is 1]
+[dwarf: scared]
+You wake up to find a goblin trying on your helmet. It runs off with [style: Hurt]10 gold[style: none] and no helmet, which you consider a draw.
+[add: Gold -10]
+[if: Gold < 0]
+[set: Gold = 0]
+[end]
+[else]
+[set: HP = {MaxHP}]
+[sound: heal]
+[dwarf: happy]
+You sleep like a log next to a log. [style: Good]Back to {MaxHP} HP[style: none].
+[end]
+[else]
+[add: HP 5]
+[if: HP > {MaxHP}]
+[set: HP = {MaxHP}]
+[end]
+[dwarf: happy]
+It's a very good sausage. [style: Good]5 HP[style: none] and a warm feeling.
+[end]
+[exit: campfire]
+
+# Scene: Signpost
+
+[enter: sign 70%]
+A sign on a stick, very firmly: [style: Sign]THERE IS DEFINITELY NO TREASURE BEHIND THIS SIGN.[style: none]
+[choice: Odd choice]
+> Look behind the sign = A
+> Trust the sign = B
+[if: Odd choice is A]
+[set: Bonus = 0]
+[play: Roll]
+[if: Total >= 8]
+[set: Price = random 10 25]
+[add: Gold {Price}]
+[sound: coin]
+[dwarf: happy]
+You roll [style: Roll]{Roll}[style: none]. Behind the sign: [style: Good]{Price} gold[style: none], and a smaller sign: [style: Sign]OK FINE.[style: none]
+[else]
+[dwarf: think]
+You roll [style: Roll]{Roll}[style: none]. Behind the sign there is another sign: [style: Sign]TOLD YOU.[style: none]
+[end]
+[else]
+You trust the sign. The sign seems touched. Nobody ever trusts the sign.
+[end]
+[exit: sign]
+
+# Scene: Three levers
+
+[enter: levers 70%]
+Three levers stick out of the wall, labelled [style: Sign]GOOD[style: none], [style: Sign]BAD[style: none] and [style: Sign]???[style: none].
+[choice: Odd choice]
+> Pull GOOD = A
+> Pull BAD = B
+> Pull ??? = C
+[if: Odd choice is A]
+[set: Damage = 3]
+[play: Hurt a little]
+A boxing glove on a spring punches you on the nose. [style: Hurt]3 damage[style: none]. The labels were a lie.
+[else if: Odd choice is B]
+[add: Potions]
+[sound: chest]
+[dwarf: happy]
+A little hatch opens and pushes out a [style: Good]potion[style: none] and a card saying [style: Sign]WELL DONE FOR READING THE SITUATION.[style: none]
+[else]
+[set: Roll = random 1 2]
+[if: Roll is 1]
+[add: Bombs]
+[sound: chest]
+[dwarf: happy]
+A [style: Good]bomb[style: none] drops into your arms. Unlit, thankfully.
+[else]
+[sound: fumble]
+Confetti. Just confetti. Lots and lots of it. You'll be finding it for weeks.
+[end]
+[end]
+[exit: levers]
+
+# Scene: Rude mirror
+
+[enter: mirror 70%]
+— The Mirror: Well, well. What have we here? A walking beard with a hat on it?
+[choice: Odd choice]
+> Insult it right back = A
+> Agree, it's a magnificent beard = B
+> Turn it to face the wall = C
+[if: Odd choice is A]
+[set: Bonus = 0]
+[play: Roll]
+[if: Total >= 12]
+[add: Gems]
+[sound: coin]
+[dwarf: happy]
+You roll [style: Roll]{Roll}[style: none]. You tell it that it has a face only a mirror could love. The mirror cracks up, laughing, and coughs up a [style: Good]gem[style: none] as a prize.
+[else]
+[dwarf: hurt]
+You roll [style: Roll]{Roll}[style: none]. Your comeback arrives about three minutes late. The mirror is still laughing as you leave.
+[end]
+[else if: Odd choice is B]
+[set: Inspired = 3]
+[dwarf: happy]
+— The Mirror: Ha! Confidence. I respect that. Go get them, beard. [style: Good]Two more on your next three rolls.[style: none]
+[else]
+— The Mirror: Hey! Hey, that's rude! I'm talking to the wall now! The wall is a better listener anyway!
+[end]
+[exit: mirror]
+
+# Scene: Dice game
+
+[enter: foe Boney 70%]
+A skeleton sits at a little table with two dice and a candle.
+— Boney: Fancy a game? Highest roll wins. I'll match whatever you bet. I've got nothing but time, and twenty gold.
+[choice: Odd choice]
+> Bet 10 gold = A [if: Gold >= 10]
+> Bet 20 gold = B [if: Gold >= 20]
+> No thanks = C
+[if: Odd choice is A or Odd choice is B]
+[set: Price = 10]
+[if: Odd choice is B]
+[set: Price = 20]
+[end]
+[set: Bonus = 0]
+[play: Roll]
+[set: Damage = random 1 20]
+[if: Total > {Damage}]
+[add: Gold {Price}]
+[sound: coin]
+[dwarf: happy]
+You roll {Total}, Boney rolls {Damage}. [style: Good]You win {Price} gold![style: none] Boney's jaw drops. Literally: you have to help him put it back.
+[else if: Total is {Damage}]
+You both roll {Total}. Boney says that never happens, then says it again, slower.
+[else]
+[add: Gold -{Price}]
+[dwarf: hurt]
+You roll {Total}, Boney rolls {Damage}. [style: Hurt]You lose {Price} gold.[style: none] Bones always have the luck. It's in the name: lucky bones.
+[end]
+[else]
+— Boney: Pity. I never get visitors who aren't trying to kill me.
+[end]
+[exit: foe]
+
+# Scene: Odd books
+
+[enter: bookshelf 70%]
+A bookshelf, alone in a corridor. Most of the books are called [style: Sign]Fighting Dwarves: A Guide[style: none]. One is called [style: Sign]Being a Dwarf: Advanced[style: none].
+[choice: Odd choice]
+> Read the advanced one = A
+> Read the guide to fighting you = B
+[if: Odd choice is A]
+[set: Price = {Floor} * 4]
+[add: XP {Price}]
+[dwarf: think]
+The first chapter is called Stand Up Straight, the second No, Straighter. You learn a great deal. [style: Good]{Price} XP[style: none].
+[play: Level up]
+[else]
+[set: Inspired = 4]
+[dwarf: think]
+Now you know what they know about you. Rule one: dwarves hit hard. Rule two: dwarves are short, aim low. You'll aim high, then. [style: Good]Two more on your next four rolls.[style: none]
+[end]
+[exit: bookshelf]
+
+# Scene: Grate victory
+
+[gauge: none]
+[exit: foe fade]
+[enter: ember 70% sleepy]
+[sound: faint]
+Auntie Ember sits down with a thump that rattles every coin in the Hoard.
+— Auntie Ember: Oh, FINE. Take it. Take my pillow. I'll just lie here on a pile of sharp, cold, uncomfortable gold, shall I. All alone.
+[dwarf: happy]
+— {Hero}: I'll send you a postcard.
+— Auntie Ember: ...Would you? Really?
+[exit: ember]
+[exit: dwarf]
+[music: win]
+[illustration: Victory]
+[add: Cheeses returned]
+It takes you three days to roll the Great Cheese Wheel up five floors. Goblins hold doors. Skeletons clap. The Gloop wobbles alongside for a bit, for moral support.
+Mossbottom holds the finest Cheese Festival in three hundred years. The Mayor gives a speech about courage. You give a speech about stairs. And every week, a postcard goes down the Delve, addressed to Auntie E.
+[ending: A Grate Victory]
+
+# Scene: Cheese and crackers
+
+[ember: happy]
+You open the box of fancy crackers. The smell of baked butter drifts across the Hoard. Auntie Ember's nostrils twitch. Her eyes go very wide. Her tail starts to wag.
+— Auntie Ember: Are those... crackers? I haven't had a cracker in four hundred years. Cheese is no fun without something to put it on!
+— {Hero}: Share the cheese with Mossbottom, and there's a box every festival.
+— Auntie Ember: Every festival? Oh, you clever little pebble. Deal!
+[exit: ember]
+[exit: dwarf]
+[music: win]
+[illustration: Crackers]
+[add: Cheeses returned]
+That year, Mossbottom holds its Cheese Festival at the bottom of the Delve, for the first time in history. The goblins bring tea. The bats sing. The Gloop is a surprisingly good dancer.
+Auntie Ember carries the cheese back up herself afterwards, under one arm, and stays for the fireworks. She lights them. All of them. At once.
+[ending: Cheese and Crackers]
+
+# Scene: Tea on Tuesdays
+
+[ember: happy]
+— Auntie Ember: Nobody's asked me that in centuries. Well. Since you ask. It's been very quiet. The goblins only talk about tea breaks, and the skeletons only talk about bones.
+She talks. You listen. It takes four hours, two pots of tea and most of a fruitcake she had under a pile of crowns.
+— Auntie Ember: You know what, little one? Take the cheese. But you come back every Tuesday and tell me what's happening up there. Every Tuesday!
+[exit: ember]
+[exit: dwarf]
+[music: win]
+[illustration: Tuesdays]
+[add: Cheeses returned]
+The Great Cheese Wheel comes home in time for the festival. The Mayor never quite understands why you leave every Tuesday with a fruitcake and a newspaper.
+And down in the Hoard, a dragon in a knitted shawl waits by the stairs, every Tuesday, pretending she isn't waiting at all.
+[ending: Tea on Tuesdays]
+
+# Scene: Bribed
+
+[sound: coin]
+[add: Gold 300]
+[exit: ember]
+[exit: dwarf]
+[music: town]
+[illustration: Bribe]
+You walk out of the Delve three hundred gold richer, and tell everyone the cheese was eaten by a very big rat.
+Nobody believes you. A rat that big would have been noticed. You buy the biggest house in Mossbottom, and it always, always smells faintly of cheese. You know why.
+[ending: Rich and Cheeseless]
