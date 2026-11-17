@@ -34,7 +34,7 @@ export const FONT_STACKS: Readonly<Record<FontChoice, string>> = {
   mono: 'ui-monospace, "Cascadia Mono", "DejaVu Sans Mono", Menlo, monospace',
 }
 
-export const LOOK_PRESETS = ['cyberpunk', 'graphite', 'paper', 'dusk', 'contrast'] as const
+export const LOOK_PRESETS = ['cyberpunk', 'graphite', 'paper', 'dusk', 'playground', 'forest', 'ocean', 'contrast'] as const
 export type LookPreset = (typeof LOOK_PRESETS)[number]
 
 function flat(colour: string): Pick<AppLook, 'backgroundKind' | 'backgroundColour' | 'corners'> {
@@ -56,6 +56,30 @@ export const PRESET_LOOKS: Readonly<Record<LookPreset, AppLook>> = {
     textColour: '#f8f4ff',
     accentColour: '#ffd27f',
     readableBox: true,
+  },
+  /** Bright and sunny, for children: a sky, sun, mint and candy gradient under a white box. */
+  playground: {
+    borderColour: '#d9480f',
+    borderKind: 'dashed',
+    backgroundKind: 'gradient',
+    backgroundColour: '#7fd3ff',
+    corners: ['#7fd3ff', '#ffe066', '#8ef0b5', '#ffa8d0'],
+    font: 'readable',
+    textColour: '#1d2b64',
+    accentColour: '#a1006b',
+    readableBox: true,
+  },
+  forest: { borderColour: '#4f7a5a', borderKind: 'solid', ...flat('#14241a'), font: 'system', textColour: '#eaf4e4', accentColour: '#a7e08a', readableBox: false },
+  ocean: {
+    borderColour: '#5a8fb8',
+    borderKind: 'solid',
+    backgroundKind: 'gradient',
+    backgroundColour: '#0b2545',
+    corners: ['#0b2545', '#13315c', '#0d3b4f', '#134e5e'],
+    font: 'system',
+    textColour: '#e8f6ff',
+    accentColour: '#7fdbff',
+    readableBox: false,
   },
   contrast: { borderColour: '#ffffff', borderKind: 'solid', ...flat('#000000'), font: 'readable', textColour: '#ffffff', accentColour: '#ffff00', readableBox: false },
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.5.0 — 2026-11-17
+
+### Both applications
+- Three more **Appearance** presets: **Playground**, bright and sunny, for children (a sky, sun,
+  mint and candy gradient under a white box, wide letters); **Forest**, dark green; **Ocean**, deep
+  blue.
+
 ## 3.4.2 — 2026-11-16
 
 ### Both applications

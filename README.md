@@ -197,7 +197,7 @@ a new notion gets its word here before it gets code.
 | Word | Meaning | In the code |
 |---|---|---|
 | Appearance | How Cyberdeck's or Datajack's own screens look: background, borders, font, colours. Never a game's, which its author's CSS sets. | `AppLook` |
-| Preset | A look ready to take: Cyberpunk (the default), Graphite, Paper, Dusk, High contrast. | `LookPreset` |
+| Preset | A look ready to take: Cyberpunk (the default), Graphite, Paper, Dusk, Playground (bright, for children), Forest, Ocean, High contrast. | `LookPreset` |
 | Readable box | A plain box under an application's text, dark or light as its background is, so that a busy background never gets in the way. | `readableBox` |
 
 ## Development
@@ -872,7 +872,8 @@ A **project** holds the whole game. Its screens:
   **Alt+PageDown** go to the previous and next tab; each tab may be given keys of its own there.
   Alt is left out of the defaults for single tabs: browsers keep Alt+digits for their own tabs.
 - **Appearance** (on the projects screen and in the header): Cyberdeck's own look, kept in the browser.
-  A preset (*Cyberpunk*, the default, *Graphite*, *Paper*, *Dusk*, *High contrast*), or each part in
+  A preset (*Cyberpunk*, the default, *Graphite*, *Paper*, *Dusk*, *Playground*, bright
+  and meant for children, *Forest*, *Ocean*, *High contrast*), or each part in
   depth: the background, one colour or a gradient from four corners; the readable box under the text,
   dark on a dark background and light on a bright one; the font, the text's colour and the titles';
   the borders' colour and kind (solid, dashed, dotted, double, none). Colours are picked or typed as
