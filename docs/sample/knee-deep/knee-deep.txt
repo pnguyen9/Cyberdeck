@@ -10,11 +10,20 @@
 [decision: NextWeapon = Sturdy pick | Battle axe | Mrs Choppy | Nothing]
 [decision: Armour = Woolly jumper | Leather jerkin | Chainmail | Dwarfplate]
 [decision: NextArmour = Leather jerkin | Chainmail | Dwarfplate | Nothing]
-[decision multi: Bag = Lucky socks | Fancy crackers | Union card | Map]
+[decision multi: Bag = Lucky socks | Fancy crackers | Union card | Map | Rubber duck | Candle hat | Cat portrait | Knitting kit | Small talk book | Snow globe | Hungry chest | Kazoo | Spare beard | Tiny statue | Umbrella | Gnome whistle | Phrasebook | Cup holder helmet | Postcard | Mouldy crown | Knightly shield | Golden parachute]
 [decision: Where = Shop | Tavern | Delve | Bakery]
 [decision: Buy = Potion | Bomb | Rope | Weapon | Armour | Curios | Gems | Leave]
-[decision: Curio = Socks | Crackers | Back]
-[decision: Pint = Rest | Rumour | Stamp | Mayor | Leave]
+[decision: Curio = Socks | Crackers | Bargain | Back]
+[decision: Bargain = Duck | Hat | Portrait | Knitting | Book | Globe | Chest | Kazoo | Beard | Statue | Sandwich | Short rope | Old stamp | Umbrella | Whistle | Phrasebook | Helmet | Onions | Postcard]
+[decision multi: Offered = Duck | Hat | Portrait | Knitting | Book | Globe | Chest | Kazoo | Beard | Statue | Sandwich | Short rope | Old stamp | Umbrella | Whistle | Phrasebook | Helmet | Onions | Postcard]
+[decision: BargainName = a rubber duck | a hat with a candle on it | a portrait of the cat | a knitting kit | a book called Small Talk for Large Monsters | a snow globe of Mossbottom | a chest that is definitely not a mimic | a kazoo | a spare beard | a tiny statue of you | a cheese sandwich | a slightly short rope | a slightly expired gnome stamp | a dragon-proof umbrella | a whistle only gnomes can hear | a goblin phrasebook | a helmet with a cup holder | a jar of pickled onions | a postcard of the Delve]
+[decision: Shelf = Fighting | Handy | Silly | Nothing]
+[decision multi: Claimed = King Fungus | Sir Rattlebones | Gristle Goldgrin]
+[decision lasting: Keepsake = Lucky socks | Fancy crackers | Union card | Rubber duck | Candle hat | Cat portrait | Knitting kit | Small talk book | Snow globe | Hungry chest | Kazoo | Spare beard | Tiny statue | Umbrella | Gnome whistle | Phrasebook | Cup holder helmet | Mouldy crown | Knightly shield | Golden parachute | Nothing]
+[decision lasting: Last ending = Victory | Crackers | Tea | Bribe | Bakery | Policy]
+[decision: Pint = Rest | Kitchen | Rumour | Stamp | Mayor | Posters | Leave]
+[decision: Meal = Quickstout | Pie | Rock cake]
+[decision: Menu = Quickstout | Pie | Rock cake | Back]
 [decision: Start = Top | Deep]
 [decision: Outcome = Going | Home | Dead | Done]
 [decision: Place = Cellars | Grotto | Crypt | Forge | Hoard]
@@ -36,6 +45,15 @@
 [counter: Ropes = 0]
 [counter: Gems = 0]
 [counter: Stamps = 3]
+[counter: MaxStamps = 3]
+[counter: Purse = 25]
+[counter: BargainPrice = 0]
+[counter: BargainsDrawn = 0]
+[counter: ShelfTrip = -1]
+[counter: BargainSold = 0]
+[counter: Chatty = 0]
+[counter: ExtraAC = 0]
+[counter: Revived = 0]
 [counter: Inspired = 0]
 [counter: Floor = 1]
 [counter: Deepest = 1]
@@ -56,11 +74,11 @@
 [decision: LeftHint = Deep claw marks | Something growling | A trail of bones | A door dented from inside | Muffled bickering | A smell of wet monster | A glint under the door | The jingle of coins | A painted X | A sign saying NOT TREASURE | Soft music | A smell of soup | A cold draught and a giggle | A doorbell | Cheerful whistling | Total silence]
 [decision: AheadHint = Deep claw marks | Something growling | A trail of bones | A door dented from inside | Muffled bickering | A smell of wet monster | A glint under the door | The jingle of coins | A painted X | A sign saying NOT TREASURE | Soft music | A smell of soup | A cold draught and a giggle | A doorbell | Cheerful whistling | Total silence]
 [decision: RightHint = Deep claw marks | Something growling | A trail of bones | A door dented from inside | Muffled bickering | A smell of wet monster | A glint under the door | The jingle of coins | A painted X | A sign saying NOT TREASURE | Soft music | A smell of soup | A cold draught and a giggle | A doorbell | Cheerful whistling | Total silence]
-[decision: Stairs = Down | Up]
+[decision: Stairs = Down | Up | Boss]
 [decision: Lair = Fight | Crackers | Talk | Bribe | Leave]
-[decision: Foe = Gloop | Rat | Intern | Shroom | Bats | Clerk | Boney | Ghost | Mummy | Imp | Golem | Foreman | Mimic | Whelp | Ember]
-[decision: FoeName = The Gloop | The Big Rat | The Goblin Intern | The Grumpy Shroom | The Bat Choir | The Goblin Accountant | Boney the Skeleton | The Complaining Ghost | Uncle Wraps the Mummy | The Fire Imp | The Rock Golem | The Goblin Foreman | The Mimic | The Dragon Whelp | Auntie Ember]
-[decision: FoeMove = wobbles into your shins | nibbles your bootlaces | throws a mug of cold tea | puffs spores up your nose | screeches in three-part harmony | whacks you with a ledger | rattles a femur at you | wails about the draught | flaps a loose bandage | flicks hot coals at you | falls on you very slowly | swings a big wrench | bites you with its lid | breathes a small but sincere flame | swats you with her tail]
+[decision: Foe = Gloop | Rat | Intern | Shroom | Bats | Clerk | Boney | Ghost | Mummy | Imp | Golem | Foreman | Mimic | Whelp | Ember | Fungus | Rattlebones | Goldgrin]
+[decision: FoeName = The Gloop | The Big Rat | The Goblin Intern | The Grumpy Shroom | The Bat Choir | The Goblin Accountant | Boney the Skeleton | The Complaining Ghost | Uncle Wraps the Mummy | The Fire Imp | The Rock Golem | The Goblin Foreman | The Mimic | The Dragon Whelp | Auntie Ember | King Fungus the Fourth | Sir Rattlebones the Undefeated | Gristle Goldgrin]
+[decision: FoeMove = wobbles into your shins | nibbles your bootlaces | throws a mug of cold tea | puffs spores up your nose | screeches in three-part harmony | whacks you with a ledger | rattles a femur at you | wails about the draught | flaps a loose bandage | flicks hot coals at you | falls on you very slowly | swings a big wrench | bites you with its lid | breathes a small but sincere flame | swats you with her tail | bonks you with his sceptre | whacks you with the flat of his sword | hits you with a briefcase full of invoices]
 [decision: Action = Swing | Heave | Guard | Potion | Bomb | Talk | Run]
 [decision: Result = Won | Lost | Fled | Talked]
 [decision: Odd = Well | Door | Merchant | Plate | Fountain | Bard | Troll | Union | Mushrooms | Shrine | Knight | Rubble | Campfire | Sign | Levers | Mirror | Dice | Library]
@@ -94,13 +112,35 @@
 [counter: Total = 0]
 [counter lasting: Cheeses returned = 0]
 [counter lasting: Gnome rescues = 0]
+[counter lasting: Bounties claimed = 0]
 
-[shown: Weapon, Armour, Gold, Potions, Bombs, Ropes, Gems, Level, XP, Stamps, Bag, Cheeses returned, Gnome rescues]
+[shown: Weapon, Armour, Meal, Gold, Potions, Bombs, Ropes, Gems, Level, XP, Stamps, Bag, Claimed, Cheeses returned, Gnome rescues, Bounties claimed]
 [shown after an ending: endings reached]
 
 # Knee-Deep
 [bg: town]
 [music: town]
+[if: Last ending is Victory or Last ending is Crackers or Last ending is Tea or Last ending is Bribe or Last ending is Bakery or Last ending is Policy]
+[play: Return]
+[else]
+[play: First time]
+[end]
+[game mode]
+[loop]
+[play: Town]
+[if: Where is Bakery]
+[break]
+[end]
+[add: Trips]
+[play: Delve]
+[if: Outcome is Dead]
+[play: Rescue]
+[end]
+[end]
+[play: Bakery]
+
+# Scene: First time
+
 Mossbottom, a town of round doors, square meals and a great many dwarves, is getting ready for its Cheese Festival.
 Or it was. Overnight, the Great Cheese Wheel, three hundred years old, as wide as a cart and twice as smelly, has rolled off its plinth, through the square, and down into the Delve.
 [enter: mayor 72%]
@@ -121,19 +161,140 @@ Every head in the square turns slowly towards you, the shortest dwarf in Mossbot
 [exit: mayor]
 [dwarf: normal]
 How to play: each room down there has doors. Read what lies behind them, pick one, and deal with what you find. Fights are decided by rolling a twenty-sided die: roll high. If things go badly, the Rescue Gnomes will fetch you, for a fee. The journal (J) shows what you carry.
-[game mode]
-[loop]
-[play: Town]
-[if: Where is Bakery]
-[break]
+
+# Scene: Return
+
+[set: Purse = {Cheeses returned} * 15]
+[if: Purse > 45]
+[set: Purse = 45]
 [end]
-[add: Trips]
-[play: Delve]
-[if: Outcome is Dead]
-[play: Rescue]
+[add: Purse 25]
+[set: Gold = {Purse}]
+[enter: mayor 72%]
+[if: Last ending is Victory]
+— Mayor Puddifoot: Citizens! It has happened AGAIN! A postcard came up the Delve this morning. It says: "Borrowed the cheese back. Pillow too lumpy without it. Love, Auntie E."
+[else if: Last ending is Crackers]
+— Mayor Puddifoot: Citizens! The crackers ran out, and so did our cheese! It went rolling down the Delve last night, with a dragon pushing it from behind.
+[else if: Last ending is Tea]
+— Mayor Puddifoot: Citizens! Somebody missed a Tuesday. ONE Tuesday! And now a dragon is holding our cheese hostage until somebody comes for tea.
+[else if: Last ending is Bribe]
+— Mayor Puddifoot: Citizens! The very big rat has struck again! It has eaten our brand new three-hundred-year-old cheese, all of it, in one night, and left dragon footprints. A clever rat.
+[else if: Last ending is Bakery]
+— Mayor Puddifoot: Citizens! The new Great Cheese Wheel has rolled down the Delve! Our baker must be thrilled: still no cheese in the cheese straws, and now none anywhere else either.
+[else]
+— Mayor Puddifoot: Citizens! The cheese is still down there! The Rescue Gnomes have printed you a brand new loyalty card, and want everyone to know it was nothing personal. It was policy.
 [end]
+[enter: dwarf 25% fade]
+[if: Cheeses returned >= 3]
+Every head in the square turns towards you, then towards your statue by the fountain, which is exactly knee-high and has a pigeon on it, then towards the second statue, which the town put up because the first one kept getting stepped on.
+[else if: Cheeses returned >= 1]
+Every head in the square turns towards you, then towards your statue by the fountain. It is exactly knee-high. A pigeon has made it its home.
+[else]
+Every head in the square turns slowly towards you. Again.
 [end]
-[play: Bakery]
+— Mayor Puddifoot: Our hero! You again! Remind me of your name? I meet so many heroes.
+[ask: Hero = Pebble]
+[set: Weapon = Rusty axe]
+[set: Armour = Woolly jumper]
+[dwarf: think]
+— {Hero}: What happened to my old axe?
+[if: Cheeses returned >= 1]
+— Mayor Puddifoot: It's in the town museum, behind a velvet rope. So here is your grandfather's axe again, and {Purse} gold: a little more for every cheese you have brought home. The town is grateful. Within reason.
+[else]
+— Mayor Puddifoot: Sold, to pay for the cheese. So here is your grandfather's axe again, and twenty-five gold, as before. The town has a budget.
+[end]
+[exit: mayor]
+[dwarf: normal]
+[play: Take back]
+[if: Gnome rescues >= 5]
+[set: MaxStamps = 4]
+[set: Stamps = 4]
+[enter: fizzwick 72%]
+— Fizzwick: {Hero}! Our most valued customer! {Gnome rescues} rescues and counting! Rescue Gnomes Incorporated is proud to offer you the Gold Card: [style: Good]four stamps instead of three[style: none]. Please keep falling over.
+[exit: fizzwick]
+[end]
+
+# Scene: Take back
+
+[if: Keepsake is Lucky socks or Keepsake is Fancy crackers or Keepsake is Union card or Keepsake is Rubber duck or Keepsake is Candle hat or Keepsake is Cat portrait or Keepsake is Knitting kit or Keepsake is Small talk book or Keepsake is Snow globe or Keepsake is Hungry chest or Keepsake is Kazoo or Keepsake is Spare beard or Keepsake is Tiny statue or Keepsake is Umbrella or Keepsake is Gnome whistle or Keepsake is Phrasebook or Keepsake is Cup holder helmet or Keepsake is Mouldy crown or Keepsake is Knightly shield or Keepsake is Golden parachute]
+[enter: barnaby 72%]
+[sound: chest]
+[dwarf: happy]
+[if: Keepsake is Lucky socks]
+[set: Luck = 1]
+— Barnaby: Your lucky socks, kept safe in my cellar. I had to keep them in a jar. The jar is not well. [style: Good]One more on every roll.[style: none]
+[else if: Keepsake is Fancy crackers]
+— Barnaby: Your box of fancy crackers! Not one missing. I counted them every night. I was very tempted.
+[else if: Keepsake is Union card]
+— Barnaby: Your union card. A goblin came asking for your dues. I paid them. You owe me two gold.
+[else if: Keepsake is Rubber duck]
+— Barnaby: Your rubber duck. It's been in my bath. Don't ask how it got there; I don't know either.
+[else if: Keepsake is Candle hat]
+— Barnaby: Your hat with the candle on it. I used it to find the cellar stairs. And the cellar. And, once, my wife.
+[else if: Keepsake is Cat portrait]
+— Barnaby: Your portrait of Grizelda's cat. It's been watching me. All year. It never blinks.
+[else if: Keepsake is Knitting kit]
+— Barnaby: Your knitting kit. I finished the scarf you started. It's a sock now. It's a long story.
+[else if: Keepsake is Small talk book]
+[set: Chatty = 2]
+— Barnaby: Your book, Small Talk for Large Monsters. Read it twice. I can now chat to anything. The cellar rats are lovely people. [style: Good]Two more on every roll to talk round a monster.[style: none]
+[else if: Keepsake is Snow globe]
+— Barnaby: Your snow globe of Mossbottom. I shook it once and it snowed outside for a week. Coincidence. Probably.
+[else if: Keepsake is Hungry chest]
+— Barnaby: Your chest that is definitely not a mimic. It ate a ham. A whole ham. I'm not saying anything, I'm just saying.
+[else if: Keepsake is Kazoo]
+— Barnaby: Your kazoo. The regulars asked me to give it back. Quickly. Before you play it.
+[else if: Keepsake is Spare beard]
+[add: MaxHP 5]
+[set: HP = {MaxHP}]
+— Barnaby: Your spare beard, brushed and oiled. Something to hide behind. [style: Good]Five more HP.[style: none]
+[else if: Keepsake is Umbrella]
+— Barnaby: Your dragon-proof umbrella. It rained in the cellar. It worked.
+[else if: Keepsake is Gnome whistle]
+— Barnaby: Your gnome whistle. I blew it once, to see. Six gnomes turned up and charged me for the call-out.
+[else if: Keepsake is Phrasebook]
+— Barnaby: Your goblin phrasebook. I learned one phrase from it. It got me thrown out of a goblin restaurant.
+[else if: Keepsake is Cup holder helmet]
+[add: ExtraAC]
+[add: AC]
+— Barnaby: Your helmet with the cup holder. There's still a cup of tea in it. I didn't like to move it. [style: Good]One more to your armour.[style: none]
+[else if: Keepsake is Mouldy crown]
+[add: MaxHP 10]
+[set: HP = {MaxHP}]
+— Barnaby: King Fungus's crown. The mould on it has grown a tiny crown of its own. [style: Good]Ten more HP.[style: none]
+[else if: Keepsake is Knightly shield]
+[add: ExtraAC]
+[add: AC]
+— Barnaby: Sir Rattlebones' shield. He came by asking for it. I said finders keepers. He said that was only fair, that's chivalry. [style: Good]One more to your armour.[style: none]
+[else if: Keepsake is Golden parachute]
+— Barnaby: Your golden parachute. I've been polishing it. It's the most valuable thing in this tavern, the tavern included.
+[else]
+— Barnaby: Your tiny statue of yourself. People kept leaving flowers in front of it. I sold the flowers. Here's the statue.
+[end]
+[set: Bag = {Keepsake}]
+[if: Keepsake is Small talk book]
+[set: Offered = Book]
+[add: BargainsDrawn]
+[else if: Keepsake is Spare beard]
+[set: Offered = Beard]
+[add: BargainsDrawn]
+[else if: Keepsake is Umbrella]
+[set: Offered = Umbrella]
+[add: BargainsDrawn]
+[else if: Keepsake is Gnome whistle]
+[set: Offered = Whistle]
+[add: BargainsDrawn]
+[else if: Keepsake is Phrasebook]
+[set: Offered = Phrasebook]
+[add: BargainsDrawn]
+[else if: Keepsake is Cup holder helmet]
+[set: Offered = Helmet]
+[add: BargainsDrawn]
+[end]
+[unset: Keepsake]
+[exit: barnaby]
+[dwarf: normal]
+[end]
 
 # Scene: Town
 
@@ -177,6 +338,22 @@ How to play: each room down there has doors. Read what lies behind them, pick on
 — Grizelda: Ooh, a customer! Welcome to Grizelda's Everything Shop, where everything is for sale, except the cat. And me. Mostly the cat.
 [else]
 — Grizelda: Back again, {Hero}? Still in one piece? How disappointing for the Gnomes.
+[end]
+[if: ShelfTrip is not {Trips}]
+[set: ShelfTrip = {Trips}]
+[set: BargainSold = 1]
+[if: Cheeses returned is 0 and Offered is not Statue]
+[set: Offered = Statue]
+[add: BargainsDrawn]
+[end]
+[if: BargainsDrawn < 19]
+[set: Bargain = random not in Offered]
+[set: Offered = {Bargain}]
+[add: BargainsDrawn]
+[set: BargainSold = 0]
+[play: Bargain label]
+— Grizelda: There's something new on the curiosity shelf, by the way. There always is, after you've been down there. Don't ask me who delivers it.
+[end]
 [end]
 [loop]
 [play: Price list]
@@ -312,6 +489,7 @@ How to play: each room down there has doors. Read what lies behind them, pick on
 [set: AC = 16]
 — Grizelda: Dwarfplate, the finest. It's like wearing a small, angry house. They'll need a 16 to hit you.
 [end]
+[add: AC {ExtraAC}]
 
 # Scene: Curios
 
@@ -319,7 +497,23 @@ How to play: each room down there has doors. Read what lies behind them, pick on
 [choice: Curio]
 > Lucky socks, 70 gold: one more on every roll you make = Socks [if: Bag is not Lucky socks]
 > A box of fancy crackers, 150 gold = Crackers [if: Bag is not Fancy crackers]
+> Today's bargain: {BargainName}, {BargainPrice} gold = Bargain [if: BargainSold is 0]
 > Just looking = Back
+[if: Curio is Bargain]
+[if: Bargain is Old stamp and Stamps >= {MaxStamps}]
+— Grizelda: Your loyalty card is full, dearie. I'll keep the stamp back here until it isn't.
+[else]
+[set: Price = {BargainPrice}]
+[play: Pay]
+[if: Price is 0]
+[set: BargainSold = 1]
+[play: Bargain bought]
+[end]
+[end]
+[end]
+[if: Curio is Back and BargainSold is 1]
+— Grizelda: Today's bargain is gone, but there'll be a new one after your next trip down. There always is.
+[end]
 [if: Curio is Socks]
 [set: Price = 70]
 [play: Pay]
@@ -340,6 +534,142 @@ How to play: each room down there has doors. Read what lies behind them, pick on
 [end]
 [end]
 
+# Scene: Bargain label
+
+[if: Bargain is Duck]
+[set: BargainName = a rubber duck]
+[set: BargainPrice = 4]
+[else if: Bargain is Hat]
+[set: BargainName = a hat with a candle on it]
+[set: BargainPrice = 12]
+[else if: Bargain is Portrait]
+[set: BargainName = a portrait of the cat]
+[set: BargainPrice = 8]
+[else if: Bargain is Knitting]
+[set: BargainName = a knitting kit]
+[set: BargainPrice = 15]
+[else if: Bargain is Book]
+[set: BargainName = a book called Small Talk for Large Monsters]
+[set: BargainPrice = 45]
+[else if: Bargain is Globe]
+[set: BargainName = a snow globe of Mossbottom]
+[set: BargainPrice = 6]
+[else if: Bargain is Chest]
+[set: BargainName = a chest that is definitely not a mimic]
+[set: BargainPrice = 10]
+[else if: Bargain is Kazoo]
+[set: BargainName = a kazoo]
+[set: BargainPrice = 3]
+[else if: Bargain is Beard]
+[set: BargainName = a spare beard]
+[set: BargainPrice = 25]
+[else if: Bargain is Statue]
+[set: BargainName = a tiny statue of you]
+[set: BargainPrice = 5]
+[else if: Bargain is Sandwich]
+[set: BargainName = a cheese sandwich]
+[set: BargainPrice = 4]
+[else if: Bargain is Short rope]
+[set: BargainName = a slightly short rope]
+[set: BargainPrice = 7]
+[else if: Bargain is Umbrella]
+[set: BargainName = a dragon-proof umbrella]
+[set: BargainPrice = 30]
+[else if: Bargain is Whistle]
+[set: BargainName = a whistle only gnomes can hear]
+[set: BargainPrice = 40]
+[else if: Bargain is Phrasebook]
+[set: BargainName = a goblin phrasebook]
+[set: BargainPrice = 18]
+[else if: Bargain is Helmet]
+[set: BargainName = a helmet with a cup holder]
+[set: BargainPrice = 35]
+[else if: Bargain is Onions]
+[set: BargainName = a jar of pickled onions]
+[set: BargainPrice = 5]
+[else if: Bargain is Postcard]
+[set: BargainName = a postcard of the Delve]
+[set: BargainPrice = 2]
+[else]
+[set: BargainName = a slightly expired gnome stamp]
+[set: BargainPrice = 35]
+[end]
+
+# Scene: Bargain bought
+
+[if: Bargain is Duck]
+[set: Bag = Rubber duck]
+— Grizelda: It squeaks. That's all it does, but it does it beautifully.
+[else if: Bargain is Hat]
+[set: Bag = Candle hat]
+— Grizelda: Now you'll see everything coming. Everything will also see you coming. Swings and roundabouts.
+[else if: Bargain is Portrait]
+[set: Bag = Cat portrait]
+[grizelda: cross]
+— Grizelda: The cat is not for sale. His likeness, however, is. He sat for it for three whole seconds.
+[grizelda: normal]
+[else if: Bargain is Knitting]
+[set: Bag = Knitting kit]
+— Grizelda: For the long evenings down there. Knitters always find each other, you know. It's like a secret society, with more wool.
+[else if: Bargain is Book]
+[set: Bag = Small talk book]
+[set: Chatty = 2]
+— Grizelda: Chapter one: "So, Do You Come Here Often?" Chapter two: "Please Don't Eat Me." [style: Good]Two more on every roll to talk a monster round.[style: none]
+[else if: Bargain is Globe]
+[set: Bag = Snow globe]
+— Grizelda: Give it a shake. Look, it's snowing on Mossbottom! It never snows on Mossbottom. That's what makes it magical.
+[else if: Bargain is Chest]
+[set: Bag = Hungry chest]
+— Grizelda: Definitely not a mimic. It's just a chest with a healthy appetite. Keep your fingers out of it, and feed it on Sundays.
+[else if: Bargain is Kazoo]
+[set: Bag = Kazoo]
+— Grizelda: Please don't play it in the shop.
+[else if: Bargain is Beard]
+[set: Bag = Spare beard]
+[add: MaxHP 5]
+[add: HP 5]
+— Grizelda: A spare beard, for hiding behind when the first one isn't enough. [style: Good]Five more HP.[style: none]
+[else if: Bargain is Statue]
+[set: Bag = Tiny statue]
+— Grizelda: They sell like hot cakes. Well. Like lukewarm cakes. You've bought the only one so far.
+[else if: Bargain is Sandwich]
+[sound: heal]
+[add: HP 8]
+[if: HP > {MaxHP}]
+[set: HP = {MaxHP}]
+[end]
+You eat it on the spot. It is a very good sandwich. {HP} of {MaxHP} HP.
+[else if: Bargain is Short rope]
+[add: Ropes]
+— Grizelda: It's a little short, but it's never once been needed to be long. It'll get you home. Mostly.
+[else if: Bargain is Umbrella]
+[set: Bag = Umbrella]
+— Grizelda: Dragon-proof, it says on the handle. I've never tested it. Nobody who tested it has come back to complain. [style: Good]Five less damage from fire, spores and other big moves.[style: none]
+[else if: Bargain is Whistle]
+[set: Bag = Gnome whistle]
+— Grizelda: Blow it when you fall over, and the Rescue Gnomes come running, and feel so appreciated they charge less. [style: Good]A rescue takes a quarter of your gold, not half.[style: none]
+[else if: Bargain is Phrasebook]
+[set: Bag = Phrasebook]
+— Grizelda: Page one: "Where is the tea break?" Page two: "Please put the club down." That's all the goblin anyone needs. [style: Good]Three more on every roll to talk a goblin round.[style: none]
+[else if: Bargain is Helmet]
+[set: Bag = Cup holder helmet]
+[add: ExtraAC]
+[add: AC]
+— Grizelda: A proper helmet, with a cup holder. Hands free for fighting, tea always within reach. [style: Good]One more to your armour.[style: none]
+[else if: Bargain is Onions]
+[add: HP 3]
+[if: HP > {MaxHP}]
+[set: HP = {MaxHP}]
+[end]
+You eat the whole jar on the spot. Your breath could now strip paint. Three HP back, and every monster on the floor knows exactly where you are.
+[else if: Bargain is Postcard]
+[set: Bag = Postcard]
+— Grizelda: "Greetings from the Delve!" Very popular with people who have never been. Send it to someone who'd appreciate it.
+[else]
+[add: Stamps]
+— Grizelda: Fizzwick won't notice the date. He never looks at the date. He only looks at the gold.
+[end]
+
 # Scene: Tavern
 
 [bg: tavern]
@@ -347,17 +677,36 @@ How to play: each room down there has doors. Read what lies behind them, pick on
 [enter: dwarf 25%]
 [enter: barnaby 72%]
 — Barnaby: Welcome to the Tipsy Anvil, {Hero}! Mind the floor, it's sticky on purpose.
+[if: remembered Fungus trophy]
+Above the bar hangs a dried purple mushroom cap, labelled [style: Sign]KING FUNGUS IV, TOPPLED BY {Hero}[style: none]. He grew back, but the cap stays.
+[end]
+[if: remembered Rattlebones trophy]
+Beside it, in a glass case, a single bony finger: all Sir Rattlebones would ever admit to losing.
+[end]
+[if: remembered Goldgrin trophy]
+And in a gold frame, a letter of resignation signed by one Gristle Goldgrin, Chief Executive Goblin. Barnaby dusts it every morning.
+[end]
 [loop]
 [choice: Pint]
-> A hot meal and a good sleep, 5 gold (back to {MaxHP} HP) = Rest [if: HP < {MaxHP}]
+> A hot meal and a good sleep, 5 gold (back to {MaxHP} HP) = Rest [if: HP < {MaxHP} and Cheeses returned is 0]
+> A hot meal and a good sleep, free for the hero who brought the cheese home (back to {MaxHP} HP) = Rest [if: HP < {MaxHP} and Cheeses returned >= 1]
+> What's cooking, Barnaby? One treat at a time, good until the gnomes carry you home = Kitchen
 > Any rumours, Barnaby? = Rumour
-> Fizzwick the gnome waves a loyalty card at you = Stamp [if: Stamps < 3]
+> Fizzwick the gnome waves a loyalty card at you = Stamp [if: Stamps < {MaxStamps}]
 > What did the Mayor say again? = Mayor
+> Read the WANTED posters by the door = Posters
 > Back to the square = Leave
 [if: Pint is Leave]
 [break]
 [else if: Pint is Rest]
-[if: Gold >= 5]
+[if: Cheeses returned >= 1]
+[set: HP = {MaxHP}]
+[sound: heal]
+[dwarf: happy]
+— Barnaby: On the house! I promised the cheese hero free drinks for life. Half-pints. The stew is a loophole.
+You sleep twelve hours in a chair and wake up as good as new. {HP} HP.
+[dwarf: normal]
+[else if: Gold >= 5]
 [add: Gold -5]
 [set: HP = {MaxHP}]
 [sound: heal]
@@ -367,12 +716,16 @@ You eat a stew with more gravy than stew, sleep twelve hours in a chair, and wak
 [else]
 — Barnaby: Five gold, friend. I'd give it on the house, but the house has a mortgage.
 [end]
+[else if: Pint is Kitchen]
+[play: Kitchen]
 [else if: Pint is Rumour]
 [play: Rumour]
+[else if: Pint is Posters]
+[play: Posters]
 [else if: Pint is Stamp]
 [exit: barnaby]
 [enter: fizzwick 72%]
-— Fizzwick: Rescue Gnomes Incorporated! Your loyalty card has {Stamps} of 3 stamps left. A fresh stamp is 80 gold. Remember: no stamp, no rescue. We have a policy.
+— Fizzwick: Rescue Gnomes Incorporated! Your loyalty card has {Stamps} of {MaxStamps} stamps left. A fresh stamp is 80 gold. Remember: no stamp, no rescue. We have a policy.
 [choice: Sure]
 > Buy a stamp, 80 gold = Yes [if: Gold >= 80]
 > No thanks = No
@@ -395,6 +748,43 @@ You eat a stew with more gravy than stew, sleep twelve hours in a chair, and wak
 [end]
 [exit: barnaby]
 [music: town]
+
+# Scene: Kitchen
+
+— Barnaby: From the kitchen! One at a time, mind: a dwarf only has the one stomach. It stays with you until you get carried home. Things don't survive the gnomes.
+[if: Meal is Quickstout or Meal is Pie or Meal is Rock cake]
+— Barnaby: You've still got my {Meal} in you. Order something else and it replaces it. That's digestion.
+[end]
+[choice: Menu]
+> A pint of Quickstout, 40 gold: on a roll of 16 or more, you act again before the foe can = Quickstout [if: Gold >= 40 and Meal is not Quickstout]
+> Granny Anvil's meat pie, 30 gold: two more damage on every hit = Pie [if: Gold >= 30 and Meal is not Pie]
+> A rock cake, 30 gold: every ordinary blow does two less to you = Rock cake [if: Gold >= 30 and Meal is not Rock cake]
+> Nothing for now = Back
+[if: Menu is Quickstout]
+[add: Gold -40]
+[set: Meal = Quickstout]
+[sound: drink]
+[dwarf: happy]
+— Barnaby: Quickstout. Brewed by my cousin, who is very fast and no longer allowed near the brewery. It doesn't always work. When it does, you'll know.
+You drink it in one go. Your left foot starts tapping on its own. Then your right one. They seem to be in a hurry.
+[dwarf: normal]
+[else if: Menu is Pie]
+[add: Gold -30]
+[set: Meal = Pie]
+[sound: drink]
+[dwarf: happy]
+— Barnaby: Granny Anvil's meat pie. What meat? Granny Anvil doesn't say, and nobody asks Granny Anvil anything twice.
+You feel heavy, solid, and very, very sure of your swing.
+[dwarf: normal]
+[else if: Menu is Rock cake]
+[add: Gold -30]
+[set: Meal = Rock cake]
+[sound: drink]
+[dwarf: happy]
+— Barnaby: A rock cake. The recipe says rock. We took it literally.
+You chew it for some time. Your jaw, your belly and somehow your whole skin feel a little harder.
+[dwarf: normal]
+[end]
 
 # Scene: Rumour
 
@@ -434,6 +824,15 @@ Everything goes dark, and a little bit muddy.
 [enter: fizzwick 72%]
 [sound: drink]
 [add: Gnome rescues]
+[if: Meal is Quickstout or Meal is Pie or Meal is Rock cake]
+[unset: Meal]
+— Fizzwick: Whatever you had for lunch didn't survive the trip. Gnomes aren't gentle carriers. We have a policy about that too.
+[end]
+[if: Bag is Golden parachute]
+[unset: Bag = Golden parachute]
+[set: HP = {MaxHP}]
+— Fizzwick: A golden parachute! Rescue Gnomes Incorporated honours every golden parachute. No charge, no stamp. We have a policy. A nicer one, for once.
+[else]
 [if: Stamps <= 0]
 — Fizzwick: Ah. {Hero}. I see you've run out of stamps.
 [dwarf: scared]
@@ -441,14 +840,23 @@ Everything goes dark, and a little bit muddy.
 [play: Policy]
 [end]
 [add: Stamps -1]
+[if: Bag is Gnome whistle]
+[set: Gold = {Gold} * 0.75]
+[else]
 [set: Gold = {Gold} * 0.5]
+[end]
 [set: HP = {MaxHP}]
 [dwarf: hurt]
 — Fizzwick: Rise and shine! Rescue Gnomes Incorporated, at your service. Six of us carried you all the way up, which is a lot of stairs for a lot of gnomes.
+[if: Bag is Gnome whistle]
+— Fizzwick: You blew the whistle! So considerate. Only a quarter of your gold, then, and one stamp off your loyalty card. {Stamps} left.
+[else]
 — Fizzwick: That's half your gold for the trouble, and one stamp off your loyalty card. {Stamps} left. Run out, and, well. We have a policy.
+[end]
 [dwarf: normal]
 — {Hero}: How did you even find me?
 — Fizzwick: We followed the screaming. Good day!
+[end]
 [exit: fizzwick]
 
 # Scene: Policy
@@ -458,6 +866,7 @@ Everything goes dark, and a little bit muddy.
 [music: sad]
 The Rescue Gnomes are very sorry. They have printed a little card that says so. The cheese stays where it is, and Mossbottom holds its festival around an empty plinth, which some people say is very modern.
 Still, next time you will know where the bombs are. And the dragon will still be there, smug as anything.
+[set: Last ending = Policy]
 [ending: The Gnomes Have a Policy]
 
 # Scene: Bakery
@@ -467,7 +876,50 @@ Still, next time you will know where the bombs are. And the dragon will still be
 [music: town]
 You hang the axe over the door of a little bakery on the square. Your bread is excellent. Your scones are legendary. Your cheese straws, however, contain no cheese at all, and every customer mentions it.
 Somewhere far below, a dragon is sleeping on three hundred years of cheddar. You try not to think about it. You think about it all the time.
+[set: Last ending = Bakery]
+[play: Leave behind]
 [ending: Rolls Not Dice]
+
+# Scene: Leave behind
+
+[if: Bag is Lucky socks or Bag is Spare beard or Bag is Cup holder helmet or Bag is Umbrella or Bag is Mouldy crown or Bag is Knightly shield or Bag is Fancy crackers or Bag is Union card or Bag is Small talk book or Bag is Knitting kit or Bag is Phrasebook or Bag is Gnome whistle or Bag is Golden parachute or Bag is Rubber duck or Bag is Candle hat or Bag is Cat portrait or Bag is Snow globe or Bag is Hungry chest or Bag is Kazoo or Bag is Tiny statue]
+Barnaby offers to keep one thing in his cellar for you. Just in case. Cheeses have a way of rolling off again.
+[choice: Shelf]
+> Something for fighting = Fighting [if: Bag is Lucky socks or Bag is Spare beard or Bag is Cup holder helmet or Bag is Umbrella or Bag is Mouldy crown or Bag is Knightly shield]
+> Something handy = Handy [if: Bag is Fancy crackers or Bag is Union card or Bag is Small talk book or Bag is Knitting kit or Bag is Phrasebook or Bag is Gnome whistle or Bag is Golden parachute]
+> Something silly = Silly [if: Bag is Rubber duck or Bag is Candle hat or Bag is Cat portrait or Bag is Snow globe or Bag is Hungry chest or Bag is Kazoo or Bag is Tiny statue]
+> Nothing, thank you = Nothing
+[if: Shelf is Fighting]
+[choice: Keepsake]
+> Your lucky socks = Lucky socks [if: Bag is Lucky socks]
+> Your spare beard = Spare beard [if: Bag is Spare beard]
+> Your helmet with a cup holder = Cup holder helmet [if: Bag is Cup holder helmet]
+> Your dragon-proof umbrella = Umbrella [if: Bag is Umbrella]
+> King Fungus's mouldy crown = Mouldy crown [if: Bag is Mouldy crown]
+> Sir Rattlebones' shield = Knightly shield [if: Bag is Knightly shield]
+> On second thought, nothing = Nothing
+[else if: Shelf is Handy]
+[choice: Keepsake]
+> Your box of fancy crackers = Fancy crackers [if: Bag is Fancy crackers]
+> Your union card = Union card [if: Bag is Union card]
+> Your book, Small Talk for Large Monsters = Small talk book [if: Bag is Small talk book]
+> Your knitting kit = Knitting kit [if: Bag is Knitting kit]
+> Your goblin phrasebook = Phrasebook [if: Bag is Phrasebook]
+> Your gnome whistle = Gnome whistle [if: Bag is Gnome whistle]
+> Your golden parachute = Golden parachute [if: Bag is Golden parachute]
+> On second thought, nothing = Nothing
+[else if: Shelf is Silly]
+[choice: Keepsake]
+> Your rubber duck = Rubber duck [if: Bag is Rubber duck]
+> Your hat with a candle on it = Candle hat [if: Bag is Candle hat]
+> Your portrait of the cat = Cat portrait [if: Bag is Cat portrait]
+> Your snow globe = Snow globe [if: Bag is Snow globe]
+> Your chest that is definitely not a mimic = Hungry chest [if: Bag is Hungry chest]
+> Your kazoo = Kazoo [if: Bag is Kazoo]
+> Your tiny statue of yourself = Tiny statue [if: Bag is Tiny statue]
+> On second thought, nothing = Nothing
+[end]
+[end]
 
 # Scene: Delve
 
@@ -667,14 +1119,109 @@ Two goblins are having a tea break beside a cart with a broken axle.
 [end]
 [dwarf: normal]
 The stairs go down to floor {Next}. Beside them dangles a Bucket on a chain: from now on it can bring you straight back here.
+[if: Floor is 2 and Claimed is not King Fungus or Floor is 3 and Claimed is not Sir Rattlebones or Floor is 4 and Claimed is not Gristle Goldgrin]
+Beside the stairs there is a door with a WANTED poster nailed to it.
+[end]
+[loop]
 [choice: Stairs]
 > Down the stairs to floor {Next} ({HP} of {MaxHP} HP) = Down
 > Ride the Bucket up to town = Up
+> Knock on the door with the WANTED poster = Boss [if: Floor is 2 and Claimed is not King Fungus or Floor is 3 and Claimed is not Sir Rattlebones or Floor is 4 and Claimed is not Gristle Goldgrin]
+[if: Stairs is Boss]
+[play: Bounty]
+[if: Outcome is Dead]
+[break]
+[end]
+[else]
+[break]
+[end]
+[end]
 [if: Stairs is Up]
 [sound: door]
 Up you go, swinging gently, all the way to daylight.
 [set: Outcome = Home]
 [end]
+
+# Scene: Posters
+
+Three WANTED posters are nailed by the door, under a sign: [style: Sign]FOR HEROES WITH TOO MUCH TIME AND NOT ENOUGH SENSE.[style: none]
+[style: Sign]WANTED! KING FUNGUS THE FOURTH. Floor 2. Has declared the Grotto a kingdom, and taxes everyone who walks through it. Reward: 100 gold.[style: none]
+[style: Sign]WANTED! SIR RATTLEBONES THE UNDEFEATED. Floor 3. Has challenged every passer-by to a duel since the year 811. Never lost. Never quite won either. Reward: 150 gold.[style: none]
+[style: Sign]WANTED! GRISTLE GOLDGRIN, CHIEF EXECUTIVE GOBLIN. Floor 4. Owns the Forge, the goblins and three of the walls. Wanted for crimes against wages. Reward: 250 gold.[style: none]
+— Barnaby: Not for beginners, mind. The last one who tried came back in a bucket. Not the Bucket. A bucket. Their doors are on the landings, at the bottom of each floor.
+[if: Claimed is King Fungus or Claimed is Sir Rattlebones or Claimed is Gristle Goldgrin]
+— Barnaby: And somebody has already written {Hero} across some of them. In very large letters. Was that you?
+[else if: remembered Fungus trophy or remembered Rattlebones trophy or remembered Goldgrin trophy]
+— Barnaby: Same three as last year. They always come back. Like weeds. One of them is literally a weed.
+[end]
+
+# Scene: Bounty
+
+[dwarf: normal]
+[if: Floor is 2]
+[set: Foe = Fungus]
+Behind the door, a cavern glows purple. On a throne carved from one enormous toadstool sits a mushroom in a crown, a cape and a very bad mood.
+[else if: Floor is 3]
+[set: Foe = Rattlebones]
+Behind the door lies a tomb as big as a ballroom. Little gravestones line the walls, two hundred and twelve of them, each one saying [style: Sign]HERE I FELL. GOT UP AGAIN.[style: none]
+[else]
+[set: Foe = Goldgrin]
+Behind the door there is an office. Carpet. A water cooler. A desk the size of a cart, and behind it, in a very tall chair, a very small goblin.
+[end]
+[play: Foe stats]
+[play: Fight]
+[play: After fight]
+[if: Result is Won or Result is Talked]
+[play: Bounty reward]
+[end]
+
+# Scene: Bounty reward
+
+[sound: levelup]
+[dwarf: happy]
+[add: Bounties claimed]
+[if: Foe is Fungus]
+[set: Claimed = King Fungus]
+[remember: Fungus trophy]
+[add: Gold 100]
+[if: Bag is Mouldy crown]
+[set: HP = {MaxHP}]
+[add: Potions]
+The bounty, 100 gold, is pinned to the back of the throne. A second crown rolls to your feet. You are already wearing the first one. It was his spare. Kings always have a spare. Beside the throne sits his royal mushroom soup, still warm. It would be rude not to. You keep a flask of it for later. [style: Good]100 gold, all your HP back, and one more potion.[style: none]
+[else]
+[set: Bag = Mouldy crown]
+[add: MaxHP 10]
+[add: HP 10]
+The bounty, 100 gold, is pinned to the back of the throne. Somebody planned ahead. The king's crown rolls to your feet: a bit mouldy, a bit small, and a perfect fit. You feel royally sturdy. [style: Good]100 gold, and ten more HP.[style: none]
+[end]
+[else if: Foe is Rattlebones]
+[set: Claimed = Sir Rattlebones]
+[remember: Rattlebones trophy]
+[add: Gold 150]
+[if: Bag is Knightly shield]
+[set: HP = {MaxHP}]
+[add: Potions]
+In the biggest tomb lies the bounty, 150 gold, and a shield, dented two hundred and twelve times. You already have it. Sir Rattlebones looks at it, then at you, then at his empty arm. He has been fighting you with a cheese board. Out of respect, he offers you a cup from his victory cask, laid down in the year 811 for the day he finally won. He says it won't keep. [style: Good]150 gold, all your HP back, and one more potion.[style: none]
+[else]
+[set: Bag = Knightly shield]
+[add: ExtraAC]
+[add: AC]
+In the biggest tomb lies the bounty, 150 gold, and Sir Rattlebones' shield, dented two hundred and twelve times. [style: Good]150 gold, and one more to your armour.[style: none]
+[end]
+[else]
+[set: Claimed = Gristle Goldgrin]
+[remember: Goldgrin trophy]
+[add: Gold 250]
+[if: Bag is Golden parachute]
+[set: HP = {MaxHP}]
+[add: Potions]
+The desk drawer holds the bounty, 250 gold, and a second golden parachute. Company policy: one per executive. Gristle takes it back and gives you a gift voucher for the water cooler instead. You drink three cups of the executive water. It has bubbles. You fill your flask for the road. [style: Good]250 gold, all your HP back, and one more potion.[style: none]
+[else]
+[set: Bag = Golden parachute]
+The desk drawer holds the bounty, 250 gold, and a golden parachute with your name already on it. Goblins think of everything. [style: Good]250 gold. And the next time you fall, the Rescue Gnomes will catch you for free.[style: none]
+[end]
+[end]
+[dwarf: normal]
 
 # Scene: Lair
 
@@ -688,8 +1235,38 @@ At the very bottom of the Delve, on a hill of coins, an enormous dragon in a kni
 [sound: roar]
 [shake: light 0.6s]
 [ember: normal]
+[if: Last ending is Victory]
+— Auntie Ember: YOU. The pillow thief! You said you'd send postcards. You sent FOUR. Four postcards, in a whole year.
+[else if: Last ending is Crackers]
+— Auntie Ember: Oh, it's you! Did you bring crackers? Tell me you brought crackers. The last box lasted a week. I'm not proud of it.
+[else if: Last ending is Tea]
+— Auntie Ember: Is it Tuesday? It's not Tuesday. Oh, it's YOU! You missed a Tuesday, you know. I made a fruitcake. I ate the fruitcake. All of it. Out of spite.
+[else if: Last ending is Bribe]
+— Auntie Ember: Back for more gold, little pebble? The rat story didn't work, did it. Nobody believes in big rats any more.
+[else if: Last ending is Bakery]
+— Auntie Ember: The baker! I've heard about your scones, even down here. Did you bring scones? You didn't bring scones.
+[else if: Last ending is Policy]
+— Auntie Ember: Oh, it's the Rescue Gnomes' favourite customer! They send me their newsletter. You're on the front page. Twice.
+[else]
 — Auntie Ember: Visitors? VISITORS! Oh, nobody ever visits. Come in, come in. Mind the gold, it gets everywhere.
+[end]
 [dwarf: normal]
+[if: Bag is Postcard]
+— Auntie Ember: Is that a postcard? For ME? "Greetings from the Delve." I LIVE in the Delve. ...I'm keeping it. I'm putting it on the wall. I don't have a wall. I'll get a wall.
+[unset: Bag = Postcard]
+[end]
+[if: Bag is Rubber duck]
+— Auntie Ember: Is that a rubber duck in your pocket? I had one when I was a hatchling. His name was Admiral Squeak. I melted him by accident. I still think about him.
+[end]
+[if: Bag is Snow globe]
+— Auntie Ember: Is that Mossbottom, in a little glass ball? Let me shake it. Oh! It's snowing! I've never seen snow. It's always so warm in here. That's mostly me.
+[end]
+[if: Bag is Tiny statue]
+— Auntie Ember: You carry a statue of yourself around? That's the most dragon thing I've ever seen a dwarf do. I'm almost impressed.
+[end]
+[if: Bag is Cat portrait]
+— Auntie Ember: Is that a portrait of a cat? He looks like he's judging me. I like him.
+[end]
 — {Hero}: I've come for the cheese, Madam.
 [ember: angry]
 — Auntie Ember: MY cheese? My lovely pillow? It smells like home. Well. Like a home with feet in it.
@@ -722,7 +1299,11 @@ At the very bottom of the Delve, on a hill of coins, an enormous dragon in a kni
 — Auntie Ember: Honest, are we? How tiresome.
 [else if: Lair is Talk]
 [set: TalkedEmber = 1]
-[set: Bonus = 0]
+[set: Bonus = {Chatty}]
+[if: Bag is Knitting kit]
+[add: Bonus 4]
+You take out your knitting kit. Auntie Ember's eyes go to the needles, then to her shawl, then back to the needles. Knitters always find each other.
+[end]
 [play: Roll]
 You sit down on a heap of coins and ask her how she's been. Really been. You roll [style: Roll]{Roll}[style: none], {Total} in all, against 16.
 [if: Total >= 16]
@@ -937,6 +1518,36 @@ You sit down on a heap of coins and ask her how she's been. Really been. You rol
 [set: FoeXP = 18]
 [set: FoeGold = 30]
 [set: FoeTalk = 14]
+[else if: Foe is Fungus]
+[set: FoeName = King Fungus the Fourth]
+[set: FoeMove = bonks you with his sceptre]
+[set: FoeMax = 50]
+[set: FoeAC = 14]
+[set: FoeHit = 6]
+[set: FoeDmg = 3]
+[set: FoeXP = 40]
+[set: FoeGold = 20]
+[set: FoeTalk = 19]
+[else if: Foe is Rattlebones]
+[set: FoeName = Sir Rattlebones the Undefeated]
+[set: FoeMove = whacks you with the flat of his sword]
+[set: FoeMax = 60]
+[set: FoeAC = 15]
+[set: FoeHit = 7]
+[set: FoeDmg = 5]
+[set: FoeXP = 60]
+[set: FoeGold = 30]
+[set: FoeTalk = 21]
+[else if: Foe is Goldgrin]
+[set: FoeName = Gristle Goldgrin]
+[set: FoeMove = hits you with a briefcase full of invoices]
+[set: FoeMax = 90]
+[set: FoeAC = 16]
+[set: FoeHit = 9]
+[set: FoeDmg = 5]
+[set: FoeXP = 90]
+[set: FoeGold = 50]
+[set: FoeTalk = 24]
 [else]
 [set: FoeName = Auntie Ember]
 [set: FoeMove = swats you with her tail]
@@ -951,11 +1562,16 @@ You sit down on a heap of coins and ask her how she's been. Really been. You rol
 
 # Scene: Fight
 
+[if: Foe is Ember or Foe is Fungus or Foe is Rattlebones or Foe is Goldgrin]
+[music: boss]
+[else]
 [music: fight]
+[end]
 [set: FoeHP = {FoeMax}]
 [set: Talked = 0]
 [set: Turn = 0]
 [set: Breath = 0]
+[set: Revived = 0]
 [enter: foe {Foe} 72% slide-from-right]
 [gauge: HP / {MaxHP} top left numbers = {Hero}]
 [gauge: FoeHP / {FoeMax} top right numbers = {FoeName}]
@@ -988,6 +1604,9 @@ You sit down on a heap of coins and ask her how she's been. Really been. You rol
 [add: Damage {Bonus}]
 [end]
 [add: Damage {Atk}]
+[if: Meal is Pie]
+[add: Damage 2]
+[end]
 [if: Roll is 20]
 [set: Damage = {Damage} * 2]
 [sound: crit]
@@ -1028,9 +1647,13 @@ You light the fuse and throw. In that order. BOOM! [style: Hurt]{Damage} damage[
 [else if: Action is Talk]
 [set: Talked = 1]
 [set: Bonus = 0]
-[if: Bag is Union card and Foe is Intern or Bag is Union card and Foe is Clerk or Bag is Union card and Foe is Foreman]
+[if: Bag is Union card and Foe is Intern or Bag is Union card and Foe is Clerk or Bag is Union card and Foe is Foreman or Bag is Union card and Foe is Goldgrin]
 [set: Bonus = 5]
 [end]
+[if: Bag is Phrasebook and Foe is Intern or Bag is Phrasebook and Foe is Clerk or Bag is Phrasebook and Foe is Foreman or Bag is Phrasebook and Foe is Goldgrin]
+[add: Bonus 3]
+[end]
+[add: Bonus {Chatty}]
 [play: Roll]
 [dwarf: think]
 [if: Total >= {FoeTalk}]
@@ -1052,11 +1675,24 @@ You roll [style: Roll]{Roll}[style: none] and run, astonishingly fast for someon
 [dwarf: scared]
 You roll [style: Roll]{Roll}[style: none], turn to run, and trip over your own beard.
 [end]
+[if: FoeHP is 0 and Foe is Rattlebones and Revived is 0]
+[set: Revived = 1]
+[set: FoeHP = 25]
+[sound: magic]
+[shake: light 0.4s]
+Sir Rattlebones falls into a heap of bones. Then the heap twitches. The bones roll back together, the skull hops on top, and up he stands. "Undefeated!" he cries. "That one didn't count!"
+[end]
 [if: FoeHP is 0]
 [set: Result = Won]
 [break]
 [end]
+[if: Meal is Quickstout and Action is Swing and Roll >= 16 or Meal is Quickstout and Action is Heave and Roll >= 16]
+[sound: run]
+[dwarf: happy]
+Your feet remember the Quickstout. Before {FoeName} has worked out what happened, you're already winding up again. [style: Good]You act again.[style: none]
+[else]
 [play: Foe turn]
+[end]
 [if: HP is 0]
 [set: Result = Lost]
 [break]
@@ -1107,35 +1743,86 @@ You roll [style: Roll]{Roll}[style: none], {Total} against {FoeAC}: a miss. You 
 
 # Scene: Foe turn
 
-[if: Foe is Ember]
+[if: Foe is Ember or Foe is Fungus or Foe is Rattlebones or Foe is Goldgrin]
 [add: Breath]
 [if: Breath >= 3]
 [set: Breath = 0]
+[play: Big move]
+[else]
+[play: Foe swing]
+[if: Breath is 2 and HP > 0]
+[play: Big move warning]
+[end]
+[end]
+[else]
+[play: Foe swing]
+[end]
+
+# Scene: Big move
+
 [set: Damage = random 2 12]
+[if: Foe is Ember]
 [add: Damage 6]
+[else if: Foe is Fungus]
+[add: Damage 5]
+[else if: Foe is Rattlebones]
+[add: Damage 7]
+[else]
+[add: Damage 9]
+[end]
+[if: Bag is Umbrella]
+[add: Damage -5]
+[end]
 [if: Guarding is 1]
 [set: Damage = {Damage} * 0.5]
+[end]
+[if: Damage < 0]
+[set: Damage = 0]
 [end]
 [add: HP -{Damage}]
 [if: HP < 0]
 [set: HP = 0]
 [end]
 [dwarf: hurt]
+[if: Foe is Ember]
 [sound: roar]
 [flash: red 0.4s]
 [shake: strong 0.6s]
 WHOOSH! Auntie Ember breathes fire all over you. Your eyebrows will grow back. [style: Hurt]{Damage} damage[style: none].
+[else if: Foe is Fungus]
+[sound: magic]
+[flash: white 0.4s]
+King Fungus shakes his royal cap, and a cloud of golden spores fills the cave. You sneeze until your boots come off. [style: Hurt]{Damage} damage[style: none]. He breathes in the rest himself and looks much refreshed.
+[add: FoeHP 6]
+[if: FoeHP > {FoeMax}]
+[set: FoeHP = {FoeMax}]
+[end]
+[else if: Foe is Rattlebones]
+[sound: crit]
+[shake: strong 0.6s]
+Sir Rattlebones charges, every bone clattering like a cutlery drawer falling down the stairs. [style: Hurt]{Damage} damage[style: none].
+[else]
+[sound: run]
+[shake: strong 0.6s]
+Gristle Goldgrin rings a little bell. "Restructuring!" Forty goblins with clipboards stampede across the office, and you are in the way of all of them. [style: Hurt]{Damage} damage[style: none].
+[end]
 [if: HP > 0 and Guarding is 1]
-Hiding behind your beard saved half of it. The beard is a little crispy now.
+Hiding behind your beard saved half of it.
 [end]
-[else]
-[play: Foe swing]
-[if: Breath is 2 and HP > 0]
+[if: HP > 0 and Bag is Umbrella]
+Your dragon-proof umbrella took some of it too. It is now slightly less of an umbrella.
+[end]
+
+# Scene: Big move warning
+
+[if: Foe is Ember]
 Auntie Ember takes a very, very deep breath. It might be a good moment to hide behind something. A beard, for instance.
-[end]
-[end]
+[else if: Foe is Fungus]
+King Fungus's cap starts to puff up, glowing gold. Something very sneezy is coming. A beard would make a fine handkerchief.
+[else if: Foe is Rattlebones]
+Sir Rattlebones backs away to the far wall and paws the floor with one bony foot. You know that look. Bulls have that look.
 [else]
-[play: Foe swing]
+Gristle Goldgrin checks his pocket watch. "Nearly time for the quarterly review." Somewhere, a great many goblins are getting ready to run.
 [end]
 
 # Scene: Foe swing
@@ -1149,6 +1836,12 @@ Auntie Ember takes a very, very deep breath. It might be a good moment to hide b
 [else if: Total >= {AC}]
 [set: Damage = random 1 6]
 [add: Damage {FoeDmg}]
+[if: Meal is Rock cake]
+[add: Damage -2]
+[if: Damage < 1]
+[set: Damage = 1]
+[end]
+[end]
 [if: Guarding is 1]
 [set: Damage = {Damage} * 0.5]
 [end]
@@ -1245,6 +1938,16 @@ A goblin in a hard hat blows a whistle. "Oi! This is a work site! Nobody on the 
 The chest in the corner yawns. Chests don't yawn. It has teeth, and a tongue, and the tongue is reaching for your boots.
 [else if: Foe is Whelp]
 A dragon the size of a large dog bounds up, wagging its tail. Then it remembers it is a dragon, and growls, a bit squeakily.
+[else if: Foe is Fungus]
+"Kneel before King Fungus the Fourth!" bellows the mushroom. "The first three were also me. I keep growing back."
+[else if: Foe is Rattlebones]
+"Hold, traveller! I am Sir Rattlebones the Undefeated! Two hundred and twelve duels, two hundred and twelve... well. Let us say I got up every time." He raises his sword.
+[else if: Foe is Goldgrin]
+The goblin looks at you over his monocle. "No appointment? Then you're trespassing, and trespassing is billable." He presses a button, and two big goblins with big clubs step out of the walls.
+[if: Bag is Union card]
+[add: FoeAC -2]
+You hold up your union card. The two big goblins look at it, look at each other, and put down their clubs: they're on strike. Gristle has to defend himself, which he has not done in years. [style: Good]His armour drops by 2.[style: none]
+[end]
 [else]
 Auntie Ember uncurls, and keeps uncurling, until she fills the whole cave. The cheese rolls gently behind her. She cracks her knuckles. Dragons have knuckles.
 [end]
@@ -1277,6 +1980,12 @@ You roll [style: Roll]{Roll}[style: none]. You tell the golem a joke about grave
 You roll [style: Roll]{Roll}[style: none]. You remind the foreman that it is tea time. Every goblin within earshot downs tools at once. Nobody even notices you go.
 [else if: Foe is Mimic]
 You roll [style: Roll]{Roll}[style: none]. You tell the mimic it is the most convincing chest you have ever seen. It shuts its lid with pride and pretends you were never here.
+[else if: Foe is Fungus]
+You roll [style: Roll]{Roll}[style: none]. You kneel and call him Your Majesty. Nobody has ever done that. He is so moved he abdicates on the spot, and leaves for a quiet life in a nice damp corner.
+[else if: Foe is Rattlebones]
+You roll [style: Roll]{Roll}[style: none]. You declare the duel a draw, on points. Sir Rattlebones has never had a draw. He is delighted. He shakes your hand, and his arm comes off.
+[else if: Foe is Goldgrin]
+You roll [style: Roll]{Roll}[style: none]. You propose a merger. He doesn't know what it means either, but he signs. Your first decision as co-owner is a tea break for everyone. He resigns in protest.
 [else]
 You roll [style: Roll]{Roll}[style: none]. You tell the whelp it's a very good dragon. Yes it is. Yes it IS. It rolls over for a tummy scratch, then wanders off happy.
 [end]
@@ -1309,6 +2018,12 @@ You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. The golem 
 You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. "Union? What union? Back to work! Er, you're not working. Get him!"
 [else if: Foe is Mimic]
 You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You knock politely on its lid. It bites the knocking hand.
+[else if: Foe is Fungus]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You call him Your Mushiness. Wrong title. Very wrong title.
+[else if: Foe is Rattlebones]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. "Words? WORDS? Draw your blade, coward!" He has been saying that since 811.
+[else if: Foe is Goldgrin]
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. "Talk to my assistant." His assistant is also him, in a smaller hat.
 [else]
 You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You say "Who's a good dragon?" It turns out the answer is not this one.
 [end]
@@ -1341,6 +2056,12 @@ The golem crumbles into gravel. Very good gravel. Somebody could build a nice pa
 The foreman blows his whistle one last time and declares the site closed for the day.
 [else if: Foe is Mimic]
 The mimic's lid snaps shut for good. Inside it there is real treasure, which seems unfair on all the other chests.
+[else if: Foe is Fungus]
+King Fungus topples like a felled tree, a very soft and squashy tree. His crown rolls away across the floor.
+[else if: Foe is Rattlebones]
+Sir Rattlebones falls apart for the second time, and this time stays down. "A worthy foe," says his skull. "Same time next year?"
+[else if: Foe is Goldgrin]
+Gristle Goldgrin dives under his desk and slides out a letter of resignation, already signed.
 [else]
 The whelp flops over, sulking, and refuses to look at you. It will grow up to be a dragon who tells stories about you.
 [end]
@@ -1996,6 +2717,8 @@ Auntie Ember sits down with a thump that rattles every coin in the Hoard.
 [add: Cheeses returned]
 It takes you three days to roll the Great Cheese Wheel up five floors. Goblins hold doors. Skeletons clap. The Gloop wobbles alongside for a bit, for moral support.
 Mossbottom holds the finest Cheese Festival in three hundred years. The Mayor gives a speech about courage. You give a speech about stairs. And every week, a postcard goes down the Delve, addressed to Auntie E.
+[set: Last ending = Victory]
+[play: Leave behind]
 [ending: A Grate Victory]
 
 # Scene: Cheese and crackers
@@ -2010,8 +2733,11 @@ You open the box of fancy crackers. The smell of baked butter drifts across the 
 [music: win]
 [illustration: Crackers]
 [add: Cheeses returned]
+[unset: Bag = Fancy crackers]
 That year, Mossbottom holds its Cheese Festival at the bottom of the Delve, for the first time in history. The goblins bring tea. The bats sing. The Gloop is a surprisingly good dancer.
 Auntie Ember carries the cheese back up herself afterwards, under one arm, and stays for the fireworks. She lights them. All of them. At once.
+[set: Last ending = Crackers]
+[play: Leave behind]
 [ending: Cheese and Crackers]
 
 # Scene: Tea on Tuesdays
@@ -2027,6 +2753,8 @@ She talks. You listen. It takes four hours, two pots of tea and most of a fruitc
 [add: Cheeses returned]
 The Great Cheese Wheel comes home in time for the festival. The Mayor never quite understands why you leave every Tuesday with a fruitcake and a newspaper.
 And down in the Hoard, a dragon in a knitted shawl waits by the stairs, every Tuesday, pretending she isn't waiting at all.
+[set: Last ending = Tea]
+[play: Leave behind]
 [ending: Tea on Tuesdays]
 
 # Scene: Bribed
@@ -2039,4 +2767,6 @@ And down in the Hoard, a dragon in a knitted shawl waits by the stairs, every Tu
 [illustration: Bribe]
 You walk out of the Delve three hundred gold richer, and tell everyone the cheese was eaten by a very big rat.
 Nobody believes you. A rat that big would have been noticed. You buy the biggest house in Mossbottom, and it always, always smells faintly of cheese. You know why.
+[set: Last ending = Bribe]
+[play: Leave behind]
 [ending: Rich and Cheeseless]

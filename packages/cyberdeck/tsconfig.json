@@ -16,6 +16,8 @@
     "vite.config.ts",
     "../../fileBuild.ts",
     "../../webBuild.ts",
+    "../../sampleBuild.ts",
+    "../../scripts/samples/sampleArchives.ts",
     "vite.electron.config.ts"
   ],
   "exclude": [

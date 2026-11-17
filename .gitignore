@@ -6,3 +6,4 @@ release/
 site/
 coverage/
 checks/output/
+__pycache__/

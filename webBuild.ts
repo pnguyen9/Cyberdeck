@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join, relative, resolve, sep } from 'node:path'
 import { mergeConfig, type Plugin, type UserConfig } from 'vite'
 import { fileBuild } from './fileBuild'
+import { builtInSamples } from './sampleBuild'
 import { SERVICE_WORKER, TAKE_OVER } from './packages/stage/src/app/offline'
 
 /** What a web build says of its application: in the manifest, and to the page. */
@@ -32,8 +33,8 @@ export function versionOf(folder: string): string {
  */
 export function webApp(app: WebApp, mode: string): UserConfig {
   const version = versionOf(app.folder)
-  const shared: UserConfig = { base: './', define: { __APP_VERSION__: JSON.stringify(version) } }
-  return mode === 'file' ? mergeConfig(shared, fileBuild()) : { ...shared, plugins: [installableApp(app, version)] }
+  const shared: UserConfig = { base: './', define: { __APP_VERSION__: JSON.stringify(version) }, plugins: [builtInSamples()] }
+  return mode === 'file' ? mergeConfig(shared, fileBuild()) : mergeConfig(shared, { plugins: [installableApp(app, version)] })
 }
 
 /** The manifest browsers read to install the application; its paths are relative to it. */
@@ -57,10 +58,16 @@ export function manifestOf(app: Pick<WebApp, 'name' | 'description'>) {
   }
 }
 
-/** The files the service worker keeps, as paths relative to the page, with `/`; the worker itself left out. */
+/** The folder of the built-in samples. */
+export const SAMPLES_FOLDER = 'samples/'
+
+/** The script of a sample: big, and wanted by few, so the service worker keeps one only once it is picked. The covers are small, and the shelves show them: they are kept. */
+const isSampleScript = (path: string) => path.startsWith(SAMPLES_FOLDER) && path.endsWith('.js')
+
+/** The files the service worker keeps, as paths relative to the page, with `/`; the worker itself and the samples' scripts left out. */
 export function filesToKeep(paths: readonly string[]): string[] {
   return [...new Set(paths.map(path => path.split(sep).join('/')))]
-    .filter(path => path !== SERVICE_WORKER && !path.endsWith('.map'))
+    .filter(path => path !== SERVICE_WORKER && !path.endsWith('.map') && !isSampleScript(path))
     .sort()
 }
 
@@ -83,6 +90,7 @@ export function serviceWorkerOf(cacheName: string, appName: string, files: reado
     `const CACHE_NAME = ${JSON.stringify(cacheName)}`,
     `const FILES = ${JSON.stringify(files)}`,
     `const TAKE_OVER = ${JSON.stringify(TAKE_OVER)}`,
+    `const SAMPLES_FOLDER = ${JSON.stringify(SAMPLES_FOLDER)}`,
     code,
   ].join('\n')
 }

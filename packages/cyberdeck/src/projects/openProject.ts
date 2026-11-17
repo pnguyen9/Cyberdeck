@@ -162,14 +162,44 @@ export async function restoreBackup(store: ProjectStore, bytes: Uint8Array<Array
     }
   }
   await store.deleteProject(backup.project.id)
-  for (const chapter of backup.chapters) {
-    await store.writeChapter(backup.project.id, chapter)
-  }
-  for (const asset of backup.project.assets) {
-    await store.writeAsset(backup.project.id, asset.id, backup.assetFiles.get(asset.id)!, asset.mediaType)
-  }
-  await store.writeProject(backup.project)
+  await writeProjectFiles(store, backup.project, backup)
   return { project: backup.project, fromGame, chaptersLeftOut }
+}
+
+/** Writes a project's chapters and files, then the project itself last, so that an interrupted write never leaves it pointing at what is missing. */
+async function writeProjectFiles(store: ProjectStore, project: ProjectDocument, backup: ProjectBackup): Promise<void> {
+  for (const chapter of backup.chapters) {
+    await store.writeChapter(project.id, chapter)
+  }
+  for (const asset of project.assets) {
+    await store.writeAsset(project.id, asset.id, backup.assetFiles.get(asset.id)!, asset.mediaType)
+  }
+  await store.writeProject(project)
+}
+
+/**
+ * The name for a fresh copy of a project that exists: `Knee-Deep (2)`, or the first number after it
+ * that no project has taken.
+ */
+export function freshCopyName(name: string, existingNames: readonly string[]): string {
+  let number = 2
+  while (existingNames.includes(`${name} (${number})`)) {
+    number += 1
+  }
+  return `${name} (${number})`
+}
+
+/**
+ * Makes a new project from a game archive, such as a sample: the story's text, its files and settings
+ * as the game carries them, under a new identifier, so that no project is replaced or merged into,
+ * and the previews of the new one start from nothing. Unlike `restoreBackup`, nothing is deleted.
+ */
+export async function createProjectFromGame(store: ProjectStore, bytes: Uint8Array<ArrayBuffer>, name: string, environment: Environment = defaultEnvironment): Promise<ProjectDocument> {
+  const { backup } = projectFromGame(await readGameArchive(bytes))
+  const now = environment.now()
+  const project: ProjectDocument = { ...backup.project, id: environment.createId(), name, createdAt: now, updatedAt: now }
+  await writeProjectFiles(store, project, backup)
+  return project
 }
 
 /**

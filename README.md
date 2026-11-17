@@ -12,7 +12,7 @@ Open [docs/guide/index.html](docs/guide/index.html) in a browser, or read
 page (on GitHub, in an editor). This README is the complete reference.
 
 A sample story to try it with, *Sakura Week*, is in [docs/sample/sakura-week](docs/sample/sakura-week):
-import `sakura-week.txt`, then drop `sakura-week-assets.zip` in Cast & files: its `cover.png` becomes
+import `sakura-week.txt`, then drop `sakura-week-assets.zip` in Cast & files: its `cover.svg` becomes
 the game's cover.
 
 **Online**, the latest version, nothing to download: Datajack at
@@ -73,6 +73,7 @@ a new notion gets its word here before it gets code.
 | Release | The label an export carries, shown in libraries. | |
 | Backup | A project folder zipped, which *Restore* reads back. | `ProjectBackup` |
 | Library | The games installed in Datajack, each a card. | |
+| Sample | A story of `docs/sample` built into both applications: a shelf in Datajack's library to add games from, and *New project from a sample* in Cyberdeck. | `samples/<id>.<hash>.js`, `sampleBuild.ts` |
 | Profile | One player in Datajack: settings, saves, progress, memories and lasting values. | |
 
 **How the applications run**
@@ -1199,6 +1200,24 @@ code, `scripts/samples/`, so that nothing is downloaded and all of it is as free
 repository. Online, each is at `https://pnguyen9.github.io/Cyberdeck/sample/` and the same path
 (`sample/knee-deep/knee-deep.txt`, for instance), linked from the guide.
 
+The samples are also built into both applications, nothing to download: Datajack's library has a
+**Samples** shelf (*Add to library*, *In your library*, *Update*: *Update* when the content built in
+differs from what the shelf installed, saves kept), and Cyberdeck's projects screen has **New project
+from a sample**, which always makes a new project (a fresh copy, *Name (2)*, when one has the name).
+At build time `sampleBuild.ts` makes each sample into a game as an author would, with the editor's
+own code (text imported, zip added, exported). Every identifier is made of what it names (a
+chapter of its title, a page of its chapter and a hash of its own content, an entry of its name:
+`scripts/samples/stableIds.ts`), so that editing a sample moves none of the others' and a save keeps
+its place, or falls back to the start of its chapter. It writes `samples/<id>.<hash>.js`
+(a classic script, the archive in base64, loaded by inserting it: that works from a double-clicked
+file as well as from a server or Electron; the hash in its name keeps a cache from serving another
+release's) and each cover beside it, and a small index the code imports (`virtual:samples`). A sample's
+*same content* is the SHA-256 of the game as exported, without its date of export, not a release
+number. The service worker keeps the covers, and each script the first time it is fetched. Pages are
+cut with the width of each character in Georgia
+(`scripts/samples/textWidths.ts`), since Node cannot measure text; `checks/sample-page-cuts.check.mjs`
+imports each sample the normal way and compares every page's end.
+
 - **Knee-Deep** (`knee-deep/`): a very small dwarf, named by the player, goes down into the Delve for
   the town's stolen Great Cheese Wheel; a comic dungeon crawl of half an hour or more, with the dice
   of tabletop games. A town to come back to (a shop of weapons, armour, potions, bombs and ropes; a
@@ -1208,8 +1227,13 @@ repository. Online, each is at `https://pnguyen9.github.io/Cyberdeck/sample/` an
   roll a twenty-sided die against armour (a natural 20 doubles the damage, a natural 1 fumbles):
   swing, heave, hide behind the beard, drink, throw a bomb, talk the monster round or run; fifteen
   monsters, each with its own lines, levels gained from experience. Fallen, the hero is carried back
-  to town for half their gold, three times; the fourth is an ending. Five endings in all, four of
-  them with the dragon at the bottom. Every number a counter, every monster's stats set by one scene
+  to town for half their gold, three times; the fourth is an ending. Six endings in all, four of
+  them with the dragon at the bottom. Three optional bosses, stronger than the dragon, wait behind
+  WANTED posters on the landings, each with a big move every third turn and its own trick. The shop's
+  curiosity shelf offers a new bargain after every trip, from nineteen, mostly cheap and silly. What
+  carries over to the next playthrough, through `lasting` values and `[remember]`: one keepsake left
+  in the tavern's cellar, a bigger purse for every cheese returned, the trophies on the tavern wall,
+  and a town and a dragon that remember how the last game ended. Every number a counter, every monster's stats set by one scene
   (`[set: FoeName = The Gloop]`), the doors' hints decisions copied from one another
   (`[set: LeftHint = {Hint}]`), the pictures in a glossy cartoon style by
   `scripts/samples/knee_deep_assets.py`.

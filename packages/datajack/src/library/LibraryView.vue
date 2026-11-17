@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { emptyProgressOf, languageName, mergeProgress, parseProgress, parseSave, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
-import { AboutApp, AppLookButton, NewVersionBar, AUTOSAVE_SLOT, LanguageSelect, useLocale, useMessages, type ErasedData, type LanguageChoice, type SaveStore } from '@cyberdeck/stage'
-import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { AboutApp, AppLookButton, NewVersionBar, AUTOSAVE_SLOT, LanguageSelect, SampleCard, isHosted, useAboutApp, useLocale, useMessages, type ErasedData, type LanguageChoice, type SampleIndexEntry, type SaveStore } from '@cyberdeck/stage'
+import { computed, nextTick, onMounted, ref, shallowRef, watch } from 'vue'
 import { describeError } from '../i18n/errorMessages'
-import { describeInstall, libraryMessages } from '../i18n/libraryMessages'
+import { describeInstall, describeSampleInstall, libraryMessages } from '../i18n/libraryMessages'
+import { builtInSamples, installedSamples, installSample, SampleNotLoaded } from './builtInSamples'
 import type { GameLibrary, LibraryEntry } from './gameLibrary'
+import { sampleState } from './sampleShelf'
 
 const props = defineProps<{ library: GameLibrary; saveStore: SaveStore; profileName: string }>()
 const languageChoice = defineModel<LanguageChoice>('languageChoice', { required: true })
@@ -106,6 +108,44 @@ async function install(files: readonly File[]) {
   message.value = reports.length === 0 ? null : reports.join(' ')
   isInstalling.value = false
   await refresh()
+}
+
+/** What the shelf installed, read again after each installation. */
+const shelfRecord = ref(installedSamples())
+/** The sample being loaded, whose button waits. */
+const loadingSampleId = ref<string | null>(null)
+const shelf = computed(() => {
+  const libraryIds = new Set(entries.value.map(entry => entry.id))
+  return builtInSamples.map(sample => ({ sample, state: sampleState(sample, libraryIds, shelfRecord.value) }))
+})
+
+/** What the shelf says of the last installation, by the sample's card, where the player is looking. */
+const sampleReport = ref<{ sampleId: string; text: string; isError: boolean } | null>(null)
+const reportElements = new Map<string, HTMLElement>()
+const setReportElement = (sampleId: string, element: unknown) => {
+  if (element instanceof HTMLElement) {
+    reportElements.set(sampleId, element)
+  } else {
+    reportElements.delete(sampleId)
+  }
+}
+const about = useAboutApp()
+
+async function addSample(sample: SampleIndexEntry) {
+  loadingSampleId.value = sample.id
+  sampleReport.value = null
+  try {
+    sampleReport.value = { sampleId: sample.id, text: describeSampleInstall(await installSample(props.library, sample), text.value), isError: false }
+  } catch (error) {
+    const notLoaded = text.value.sampleNotLoaded(sample.name, about !== null && isHosted(about.howItRuns))
+    sampleReport.value = { sampleId: sample.id, text: error instanceof SampleNotLoaded ? notLoaded : errorText(error), isError: true }
+  }
+  shelfRecord.value = installedSamples()
+  loadingSampleId.value = null
+  await refresh()
+  // The button may be gone, a label in its place: the report takes the focus.
+  await nextTick()
+  reportElements.get(sample.id)?.focus()
 }
 
 async function play(entry: LibraryEntry, resumeFrom: SaveData | null) {
@@ -368,6 +408,27 @@ function onDrop(event: DragEvent) {
       </li>
     </ul>
 
+    <section class="shelf" aria-labelledby="samples-title">
+      <h2 id="samples-title" class="shelf-title">{{ text.samples }}</h2>
+      <p class="hint">{{ text.samplesIntro }}</p>
+      <ul class="samples">
+        <SampleCard v-for="{ sample, state } in shelf" :key="sample.id" :sample="sample">
+          <p v-if="state === 'update'" class="hint">{{ text.sampleChanged }}</p>
+          <button v-if="state !== 'inLibrary'" class="button" :class="{ primary: state === 'add' }" :disabled="loadingSampleId !== null" @click="addSample(sample)">
+            {{ loadingSampleId === sample.id ? text.installing : state === 'add' ? text.addToLibrary : text.updateSample }}
+          </button>
+          <span v-else class="in-library">{{ text.inYourLibrary }}</span>
+          <p
+            v-if="sampleReport?.sampleId === sample.id"
+            :ref="element => setReportElement(sample.id, element)"
+            tabindex="-1"
+            :class="sampleReport?.isError ? 'error' : 'message'"
+            :role="sampleReport?.isError ? 'alert' : 'status'"
+          >{{ sampleReport?.text }}</p>
+        </SampleCard>
+      </ul>
+    </section>
+
     <section class="erase">
       <button v-if="!isConfirmingErase" class="link-button" @click="isConfirmingErase = true">{{ text.eraseAll }}</button>
       <div v-else class="confirmation">
@@ -569,6 +630,29 @@ h1 {
 
 .erase {
   margin-top: 40px;
+}
+
+.shelf-title {
+  margin: 32px 0 0;
+  font-size: 22px;
+}
+
+.shelf .hint {
+  margin: 4px 0 0;
+}
+
+.samples {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: 16px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.in-library {
+  font-weight: 600;
+  color: var(--look-success);
 }
 
 .credits {

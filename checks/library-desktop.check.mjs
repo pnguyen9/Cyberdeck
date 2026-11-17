@@ -1,5 +1,6 @@
 // The library of Datajack's desktop build: games installed as files, their assets stored by content
-// and served to the page, played, resumed after a restart, removed with their files but not the saves.
+// and served to the page, played, resumed after a restart, removed with their files but not the saves;
+// then a sample added from the shelf.
 import { existsSync, readdirSync } from 'node:fs'
 import { exportSampleGame, installGame, pause } from './harness.mjs'
 
@@ -49,4 +50,14 @@ export default async function check(page, { home, output, assets, serve }) {
   await pause(1000)
   page.check('removing deletes the game and its files', readdirSync(`${libraryFolder}/games`).length === 0 && readdirSync(`${libraryFolder}/assets`).length === 0, true)
   page.check('the saves stay', existsSync(`${home}/Documents/Datajack/Pascal`) && readdirSync(`${home}/Documents/Datajack/Pascal`).length === 1, true)
+
+  // A sample from the shelf, inside Electron: its script loads from the application's own files.
+  await page.evaluate(`[...document.querySelectorAll('.samples .sample')].find(card => card.querySelector('h3').textContent === 'Pairs').querySelector('button').click()`)
+  await page.waitFor('.samples [role=status]', 30000)
+  await pause(500)
+  page.check('adding a sample from the shelf installs it, said by its card, which has the focus', await page.evaluate(`(() => { const status = document.querySelector('.samples [role=status]'); return [status.textContent, document.activeElement === status] })()`), ['Pairs 1.0 installed.', true])
+  const sampleGames = readdirSync(`${libraryFolder}/games`)
+  page.check('the sample is a game of the library, as files', sampleGames.length === 1 && existsSync(`${libraryFolder}/games/${sampleGames[0]}/game.json`), true)
+  page.check('and the shelf says it is in the library', await page.evaluate(`[...document.querySelectorAll('.samples .sample')].find(card => card.querySelector('h3').textContent === 'Pairs').querySelector('.in-library')?.textContent`), 'In your library')
+  page.check('its cover is served from the installed files', await page.evaluate(`document.querySelector('.game .cover img')?.src.startsWith('datajack://app/installed-assets/') === true`), true)
 }

@@ -3,15 +3,13 @@ outlines, flat colours with one shadow band, banded irises and a ring of shine o
 
     python3 sakura_week_assets.py <folder>
 
-Each picture is written as SVG, then turned into PNG by headless Chromium. The sounds and music of
-the sample are not made here: they stay as they are in sakura-week-assets.zip.
+Each picture is written as SVG, which the engine shows as it is: sharp at any size, and a small
+download. The sounds and music of the sample are not made here: they stay as they are in
+sakura-week-assets.zip.
 """
 import math
 import random
-import shutil
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 LINE = '#5a3438'
@@ -1078,20 +1076,9 @@ SCENES = {
 
 # ------------------------------------------------------------------------------------- rendering
 
-def render(svg_text, path, width, height, transparent):
-    with tempfile.TemporaryDirectory() as work:
-        source = Path(work) / 'picture.svg'
-        source.write_text(svg_text)
-        shot = Path(work) / 'shot.png'
-        command = [CHROMIUM, '--headless', '--disable-gpu', '--hide-scrollbars', f'--window-size={width},{height}',
-                   f'--screenshot={shot}', source.as_uri()]
-        if transparent:
-            command.insert(2, '--default-background-color=00000000')
-        subprocess.run(command, check=True, capture_output=True)
-        shutil.move(shot, path)
+def write(svg_text, path):
+    path.write_text(svg_text)
 
-
-CHROMIUM = shutil.which('chromium') or shutil.which('chromium-browser') or shutil.which('google-chrome')
 
 SPRITES = {
     'mika': (mika, ('neutral', 'smile', 'shy', 'surprised')),
@@ -1109,11 +1096,11 @@ def main(folder, only=None):
             file = name if expression == 'neutral' else f'{name}-{expression}'
             if only and file not in only:
                 continue
-            render(draw(expression), folder / f'{file}.png', 600, 1000, True)
+            write(draw(expression), folder / f'{file}.svg')
     for file, draw in SCENES.items():
         if only and file not in only:
             continue
-        render(draw(), folder / f'{file}.png', 1600, 900, False)
+        write(draw(), folder / f'{file}.svg')
 
 
 if __name__ == '__main__':

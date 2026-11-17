@@ -1,6 +1,6 @@
 import { CHAPTER_START, flattenStoredNodes, moveNodes, previewImport, previewNodeEdit, readGameArchive, readProjectBackup, removeNodes, writeZip, StoryRuntime, type ChapterDocument } from '@cyberdeck/core'
 import { describe, expect, it } from 'vitest'
-import { createNewProject, listProjects, OpenProject, restoreBackup } from '../../src/projects/openProject'
+import { createNewProject, createProjectFromGame, freshCopyName, listProjects, OpenProject, restoreBackup } from '../../src/projects/openProject'
 import { memoryProjectStore } from './memoryProjectStore'
 
 const layout = { lineWidth: 40, maxLines: 2, measureText: (text: string) => [...text].length }
@@ -307,5 +307,46 @@ describe('projects', () => {
     expect(reopened.project.characters.map(character => character.name)).toEqual(['Jules'])
     await open.undo()
     expect(pageTexts(chapter())).toEqual(['A.', 'B.'])
+  })
+})
+
+describe('projects made from a game', () => {
+  async function sampleGame() {
+    const { open, environment } = await projectWith('# One\n[music: calm]\nHello.')
+    await open.addFiles([file('calm.ogg', 'audio/ogg', 1)])
+    return open.exportGame('1.0', open.project.chapterOrder, new Date(NOW))
+  }
+
+  it('name the copy after the project that has its name: (2), then the first number free', () => {
+    expect(freshCopyName('Knee-Deep', ['Knee-Deep'])).toBe('Knee-Deep (2)')
+    expect(freshCopyName('Knee-Deep', ['Knee-Deep', 'Knee-Deep (2)', 'Knee-Deep (4)'])).toBe('Knee-Deep (3)')
+  })
+
+  it('are new projects under a new identifier, whatever project has the game’s', async () => {
+    const bytes = await sampleGame()
+    const memory = memoryProjectStore()
+    const environment = testEnvironment()
+    const mine = await createNewProject(memory.store, 'The Letter', 'en', environment)
+    const original = await createProjectFromGame(memory.store, bytes, 'The Letter', environment)
+    const copy = await createProjectFromGame(memory.store, bytes, 'The Letter (2)', environment)
+
+    expect(new Set([mine.id, original.id, copy.id]).size).toBe(3)
+    expect((await listProjects(memory.store)).map(project => project.name).sort()).toEqual(['The Letter', 'The Letter', 'The Letter (2)'])
+    // Each has its own chapters and files; the one that was there is as it was.
+    const reopened = await OpenProject.open(memory.store, copy.id, environment)
+    expect(reopened.chapters.map(chapter => chapter.title)).toEqual(['One'])
+    expect(memory.assets.size).toBe(2)
+    expect((await OpenProject.open(memory.store, mine.id, environment)).chapters).toEqual([])
+  })
+
+  it('never delete a project that carries the identifier of the game', async () => {
+    const bytes = await sampleGame()
+    const memory = memoryProjectStore()
+    const gameId = (await readGameArchive(bytes)).manifest.project.id
+    const environment = testEnvironment()
+    await memory.store.writeProject({ ...(await createNewProject(memoryProjectStore().store, 'Mine', 'en', environment)), id: gameId, name: 'Mine' })
+    await createProjectFromGame(memory.store, bytes, 'The Letter', environment)
+    expect((await memory.store.readProject(gameId) as { name: string }).name).toBe('Mine')
+    expect(await listProjects(memory.store)).toHaveLength(2)
   })
 })

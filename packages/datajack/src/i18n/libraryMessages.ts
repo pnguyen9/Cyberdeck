@@ -60,6 +60,14 @@ const en = {
   changed: (name: string, changes: string) => `${name}: ${changes}.`,
   olderArchive: (gameName: string, release: string) => `This archive of ${gameName} is older than ${release}, installed already: nothing to add.`,
   olderArchiveChanged: (gameName: string, release: string, changes: string) => `This archive of ${gameName} is older than ${release}, installed already: ${changes}.`,
+  samples: 'Samples',
+  samplesIntro: 'Games to try, built into Datajack. Adding one puts it in your library, among the games you downloaded.',
+  addToLibrary: 'Add to library',
+  inYourLibrary: 'In your library',
+  updateSample: 'Update',
+  sampleChanged: 'This sample has changed since you added it. Updating keeps your saves: one made on a line that changed resumes at the start of its chapter, or of the story.',
+  sampleNotLoaded: (name: string, isHosted: boolean) => `${name} could not be loaded. ${isHosted ? 'Check your connection, then try again.' : 'Try again.'}`,
+  sampleUpToDate: (name: string) => `${name} is up to date in your library.`,
 }
 
 type LibraryMessages = typeof en
@@ -122,6 +130,14 @@ const fr: LibraryMessages = {
   changed: (name, changes) => `${name} : ${changes}.`,
   olderArchive: (gameName, release) => `Cette archive de ${gameName} est plus ancienne que la version ${release} déjà installée : rien à ajouter.`,
   olderArchiveChanged: (gameName, release, changes) => `Cette archive de ${gameName} est plus ancienne que la version ${release} déjà installée : ${changes}.`,
+  samples: 'Exemples',
+  samplesIntro: 'Des jeux à essayer, fournis avec Datajack. En ajouter un le place dans votre bibliothèque, avec les jeux que vous avez téléchargés.',
+  addToLibrary: 'Ajouter à la bibliothèque',
+  inYourLibrary: 'Dans votre bibliothèque',
+  updateSample: 'Mettre à jour',
+  sampleChanged: 'Cet exemple a changé depuis que vous l’avez ajouté. La mise à jour garde vos sauvegardes\u00a0: une sauvegarde faite sur une ligne modifiée reprend au début de son chapitre, ou de l’histoire.',
+  sampleNotLoaded: (name, isHosted) => `Impossible de charger ${name}. ${isHosted ? 'Vérifiez votre connexion, puis réessayez.' : 'Réessayez.'}`,
+  sampleUpToDate: name => `${name} est à jour dans votre bibliothèque.`,
 }
 
 export const libraryMessages = { en, fr }
@@ -143,4 +159,12 @@ export function describeInstall(outcome: InstallOutcome, text: LibraryMessages):
       : text.olderArchiveChanged(outcome.gameName, outcome.release, changes)
   }
   return changes === '' ? text.nothingNew(name) : text.changed(name, changes)
+}
+
+/**
+ * What adding a sample did: the sample's name when it is new, as for any game; for one already in
+ * the library, that it is up to date, not the chapters rewritten, which for a long sample are dozens.
+ */
+export function describeSampleInstall(outcome: InstallOutcome, text: LibraryMessages): string {
+  return outcome.isNewGame || outcome.wasOlder ? describeInstall(outcome, text) : text.sampleUpToDate(outcome.gameName)
 }

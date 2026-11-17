@@ -68,7 +68,11 @@ A new project opens on the **Import** tab. Paste your text there, or press **Ope
 >
 > No text yet? **Start without a text** opens an empty chapter in the storyboard, where you write it page by page. More chapters and scenes come from **New chapter** and **New scene**, on the story's level of the **Storyboard**.
 
-Whole games to play and take apart, each a text and the zip of its pictures and sounds: paste or open the text in **Import**, then drop the zip in **Cast & files**.
+> **Tip**
+>
+> The samples below are built into both applications, with nothing to download. In Cyberdeck, the projects screen has **New project from a sample**: the sample opens as a new project of its own, text and files together, never replacing one you have (if a project has its name, you choose between **Open mine** and **Fresh copy**). In Datajack, the library has a **Samples** shelf: **Add to library** installs one, to play from its card like any game.
+
+The same games, to download, each a text and the zip of its pictures and sounds: paste or open the text in **Import**, then drop the zip in **Cast & files**.
 
 - **Sakura Week**, a week of school before a festival: [text](https://pnguyen9.github.io/Cyberdeck/sample/sakura-week/sakura-week.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/sakura-week/sakura-week-assets.zip).
 - **Knee-Deep**, a very small dwarf, a dragon and a stolen cheese, in a dungeon of random rooms: [text](https://pnguyen9.github.io/Cyberdeck/sample/knee-deep/knee-deep.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/knee-deep/knee-deep-assets.zip).

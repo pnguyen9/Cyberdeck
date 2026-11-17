@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { languageName, languagesOf, type ProjectDocument } from '@cyberdeck/core'
-import { AboutApp, AppLookButton, NewVersionBar, useLocale, useMessages, type ErasedData, type SaveStore } from '@cyberdeck/stage'
-import { onMounted, ref, shallowRef } from 'vue'
+import { AboutApp, AppLookButton, NewVersionBar, SampleCard, isHosted, loadSample, useAboutApp, useLocale, useMessages, type ErasedData, type SampleIndexEntry, type SaveStore } from '@cyberdeck/stage'
+import { nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { samples } from 'virtual:samples'
 import { commonMessages } from '../i18n/commonMessages'
 import { errorText } from '../i18n/errorMessages'
 import { projectsMessages } from '../i18n/projectsMessages'
 import LanguageSelect from '../settings/LanguageSelect.vue'
-import { createNewProject, listProjects, restoreBackup } from './openProject'
+import { createNewProject, createProjectFromGame, freshCopyName, listProjects, restoreBackup } from './openProject'
 import type { ProjectStore } from './projectStore'
 
 const props = defineProps<{ store: ProjectStore; previewSaves: SaveStore }>()
@@ -56,8 +57,116 @@ function create() {
   return attempt(async () => {
     // The language of the first text imported becomes the story's; until then, the editor's.
     const project = await createNewProject(props.store, newName.value, locale.value)
-    emit('open', project.id)
+    openProject(project.id)
   })
+}
+
+/** The sample being loaded or copied, whose button waits. */
+const loadingSampleId = ref<string | null>(null)
+/** The sample whose name a project has already, with its archive loaded, waiting for the author to say what to do. */
+const clashing = ref<{ sample: SampleIndexEntry; archive: Uint8Array<ArrayBuffer>; mine: ProjectDocument } | null>(null)
+/** What went wrong with a sample, said by its card. */
+const sampleError = ref<{ sampleId: string; text: string } | null>(null)
+let openMineButton: HTMLButtonElement | null = null
+const setOpenMineButton = (element: unknown) => {
+  openMineButton = element instanceof HTMLButtonElement ? element : null
+}
+const startButtons = new Map<string, HTMLButtonElement>()
+const setStartButton = (sampleId: string, element: unknown) => {
+  if (element instanceof HTMLButtonElement) {
+    startButtons.set(sampleId, element)
+  } else {
+    startButtons.delete(sampleId)
+  }
+}
+const about = useAboutApp()
+
+/** Counts what the author started: a sample that finishes loading after another start, or after leaving, opens nothing. */
+let latestStart = 0
+let isGone = false
+onBeforeUnmount(() => {
+  isGone = true
+})
+function openProject(projectId: string) {
+  latestStart += 1
+  emit('open', projectId)
+}
+
+/** Always a new project: if one has the sample's name, the author is asked, never replaced or merged into. */
+async function startFromSample(sample: SampleIndexEntry) {
+  const start = ++latestStart
+  message.value = null
+  errorMessage.value = null
+  sampleError.value = null
+  clashing.value = null
+  loadingSampleId.value = sample.id
+  try {
+    let archive: Uint8Array<ArrayBuffer>
+    try {
+      archive = await loadSample(sample)
+    } catch {
+      sampleError.value = { sampleId: sample.id, text: text.value.sampleNotLoaded(sample.name, about !== null && isHosted(about.howItRuns)) }
+      return
+    }
+    if (start !== latestStart || isGone) {
+      return
+    }
+    const mine = projects.value.find(project => project.name === sample.name)
+    if (mine === undefined) {
+      await makeProject(start, archive, sample.name)
+      return
+    }
+    clashing.value = { sample, archive, mine }
+    await nextTick()
+    openMineButton?.focus()
+  } catch (error) {
+    errorMessage.value = errorText(error, locale.value)
+  } finally {
+    if (!isGone) {
+      loadingSampleId.value = null
+    }
+  }
+}
+
+async function makeProject(start: number, archive: Uint8Array<ArrayBuffer>, name: string) {
+  const project = await createProjectFromGame(props.store, archive, name)
+  if (start === latestStart && !isGone) {
+    emit('open', project.id)
+  }
+}
+
+async function makeFreshCopy() {
+  const asked = clashing.value
+  if (asked === null || loadingSampleId.value !== null) {
+    return
+  }
+  const start = ++latestStart
+  clashing.value = null
+  loadingSampleId.value = asked.sample.id
+  try {
+    await makeProject(start, asked.archive, freshCopyName(asked.sample.name, projects.value.map(project => project.name)))
+  } catch (error) {
+    errorMessage.value = errorText(error, locale.value)
+  } finally {
+    if (!isGone) {
+      loadingSampleId.value = null
+    }
+  }
+}
+
+function openMine() {
+  if (clashing.value !== null) {
+    openProject(clashing.value.mine.id)
+  }
+}
+
+async function cancelClash() {
+  const sampleId = clashing.value?.sample.id
+  clashing.value = null
+  await nextTick()
+  if (sampleId !== undefined) {
+    startButtons.get(sampleId)?.focus()
+  }
 }
 
 function restore(fileList: FileList | null) {
@@ -149,7 +258,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
           </div>
         </div>
         <template v-else>
-          <button class="open-project" @click="emit('open', project.id)">
+          <button class="open-project" @click="openProject(project.id)">
             <span class="project-name">{{ project.name }}</span>
             <span class="muted">
               {{ common.chapterCount(project.chapterOrder.length) }}
@@ -171,6 +280,25 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
       <button class="button primary" type="submit" :disabled="newName.trim() === ''">{{ text.create }}</button>
     </form>
     <p class="muted">{{ text.languageComesWithText }}</p>
+
+    <h2 class="section-title">{{ text.newFromSample }}</h2>
+    <p class="muted">{{ text.samplesIntro }}</p>
+    <ul class="samples">
+      <SampleCard v-for="sample in samples" :key="sample.id" :sample="sample">
+        <div v-if="clashing?.sample.id === sample.id" class="confirmation">
+          <p>{{ text.sampleExists(sample.name) }}</p>
+          <div class="actions">
+            <button :ref="setOpenMineButton" class="button primary" @click="openMine">{{ text.openMine }}</button>
+            <button class="button" @click="makeFreshCopy">{{ text.freshCopy }}</button>
+            <button class="button" @click="cancelClash">{{ common.cancel }}</button>
+          </div>
+        </div>
+        <button v-else :ref="element => setStartButton(sample.id, element)" class="button" :disabled="loadingSampleId !== null" @click="startFromSample(sample)">
+          {{ loadingSampleId === sample.id ? text.loadingSample : text.startFromSample }}
+        </button>
+        <p v-if="sampleError?.sampleId === sample.id" class="error" role="alert">{{ sampleError?.text }}</p>
+      </SampleCard>
+    </ul>
 
     <h2 class="section-title">{{ text.backups }}</h2>
     <label class="button file-button">
@@ -278,5 +406,14 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
 
 .new-project .name {
   flex: 1 1 260px;
+}
+
+.samples {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 </style>

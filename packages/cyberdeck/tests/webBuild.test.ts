@@ -15,8 +15,8 @@ describe('the web build', () => {
 
   it('is installable, except as files to double-click, which are built as such', () => {
     const plugins = (mode: string) => (webApp({ name: 'Cyberdeck', description: '', folder }, mode).plugins ?? []).map(plugin => (plugin as { name: string }).name)
-    expect(plugins('production')).toEqual(['installable-app'])
-    expect(plugins('file')).toEqual(['classic-script'])
+    expect(plugins('production')).toEqual(['built-in-samples', 'installable-app'])
+    expect(plugins('file')).toEqual(['built-in-samples', 'classic-script'])
     expect(webApp({ name: 'Cyberdeck', description: '', folder }, 'file').build?.outDir).toBe('dist-file')
   })
 
@@ -27,9 +27,9 @@ describe('the web build', () => {
     expect(manifest.icons.some(icon => icon.sizes === '512x512' && icon.purpose === 'maskable')).toBe(true)
   })
 
-  it('keeps every file of the release but the worker and source maps, with forward slashes', () => {
-    expect(filesToKeep(['index.html', 'sw.js', 'assets/index-1.js', 'assets/index-1.js.map', 'icon.svg', 'assets/index-1.js']))
-      .toEqual(['assets/index-1.js', 'icon.svg', 'index.html'])
+  it('keeps every file of the release but the worker, the samples’ scripts and source maps, with forward slashes', () => {
+    expect(filesToKeep(['index.html', 'sw.js', 'assets/index-1.js', 'assets/index-1.js.map', 'icon.svg', 'assets/index-1.js', 'samples/knee-deep.0123456789ab.js', 'samples/knee-deep.cover.0123456789ab.svg']))
+      .toEqual(['assets/index-1.js', 'icon.svg', 'index.html', 'samples/knee-deep.cover.0123456789ab.svg'])
   })
 
   it('names the cache by the application, its version and its files', () => {
@@ -48,6 +48,7 @@ describe('the web build', () => {
       'const CACHE_NAME = "datajack-3.3.0-abc"',
       'const FILES = ["./","index.html"]',
       'const TAKE_OVER = "take-over"',
+      'const SAMPLES_FOLDER = "samples/"',
       '// the code',
     ])
   })

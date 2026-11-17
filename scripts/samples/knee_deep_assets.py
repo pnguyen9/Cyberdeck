@@ -693,8 +693,85 @@ def ember(expression='normal'):
     return sprite(shadow(560, 420) + body, d, 1120)
 
 
+def crown(d, cx, base, w, name):
+    """A gold crown, its band on base, w wide."""
+    h = w * 0.6
+    points = f'M{cx - w / 2} {base} l0 {-h} l{w / 6} {h * 0.5} l{w / 6} {-h * 0.7} l{w / 6} {h * 0.7} l{w / 6} {-h * 0.7} l{w / 6} {h * 0.7} l{w / 6} {-h * 0.5} l0 {h} z'
+    return (shape(d, name, points, '#fff6a0', '#d09000', 6)
+            + f'<rect x="{cx - w / 2 - 6}" y="{base - 22}" width="{w + 12}" height="30" rx="10" fill="#f0c020" stroke="{INK}" stroke-width="6"/>'
+            + ''.join(f'<circle cx="{cx + dx * w}" cy="{base - 7}" r="9" fill="{c}" stroke="{INK}" stroke-width="3"/>' for dx, c in ((-0.3, '#e0304a'), (0, '#3a8ad0'), (0.3, '#30b060'))))
+
+
+def fungus():
+    """King Fungus the Fourth: a royal mushroom, purple cap, gold spots, a crown and a sceptre."""
+    d = Defs()
+    return sprite(shadow(300, 220) + scaled(
+        legs(d, 'kl', (240, 360), '#f0e0c8', '#a08060', top=FEET_Y - 80, rx=50)
+        + shape(d, 'cape', f'M150 {FEET_Y - 380} q-80 200 -40 370 h380 q40 -170 -40 -370 z', '#e04050', '#7a1020', 6)
+        + ''.join(f'<circle cx="{x}" cy="{FEET_Y - 30}" r="12" fill="#fff" stroke="{INK}" stroke-width="3"/><circle cx="{x}" cy="{FEET_Y - 30}" r="4" fill="{INK}"/>' for x in range(130, 480, 50))
+        + shape(d, 'kstem', f'M200 {FEET_Y - 60} q-20 -280 30 -420 h140 q50 140 30 420 z', '#fff8ec', '#c8b090')
+        + mascot_eyes(255, 345, FEET_Y - 330, 'normal', 0.9) + brows(300, FEET_Y - 380, 45, 'cross')
+        + mouth(300, FEET_Y - 230, 'grin', 40)
+        + f'<path d="M230 {FEET_Y - 250} q30 40 70 20 q40 20 70 -20 q-20 60 -70 60 q-50 0 -70 -60 z" fill="#f4f0e8" stroke="{INK}" stroke-width="4"/>'
+        + f'<g transform="translate(490 {FEET_Y - 230}) rotate(12)"><rect x="-10" y="-160" width="20" height="230" rx="8" fill="{d.linear("sc", "#fff6a0", "#c08000", 1, 0)}" stroke="{INK}" stroke-width="5"/>'
+        + blob(d, 'orb', 0, -180, 36, 36, '#ffe0f0', '#c03080', 5) + '</g>'
+        + blob(d, 'kh', 470, FEET_Y - 230, 30, 30, '#fff8ec', '#c8b090', 5, False)
+        + shape(d, 'kcap', f'M40 {FEET_Y - 470} q0 -330 260 -340 q260 10 260 340 q-260 60 -520 0 z', '#c88af0', '#4a1a8a', 7)
+        + ''.join(f'<ellipse cx="{x}" cy="{FEET_Y - y}" rx="{r}" ry="{r * 0.8}" fill="{d.radial("gs", "#fff6a0", "#d09000")}" stroke="{INK}" stroke-width="3"/>'
+                  for x, y, r in ((160, 600, 40), (430, 580, 44), (230, 520, 26), (390, 690, 24), (500, 500, 20)))
+        + shine(160, FEET_Y - 720, 40, 20, -30, 0.6)
+        + crown(d, 300, FEET_Y - 790, 170, 'kcrown'), 0.85), d)
+
+
+def rattlebones():
+    """Sir Rattlebones the Undefeated: Boney, but a knight, with a plumed helm and a dented shield."""
+    d = Defs()
+    bone = ('#ffffff', '#b8b4a0')
+    ribs = ''.join(f'<path d="M{300 - w} {y} q{w} 30 {2 * w} 0" stroke="{INK}" stroke-width="18" fill="none" stroke-linecap="round"/>'
+                   f'<path d="M{300 - w} {y} q{w} 30 {2 * w} 0" stroke="#f4f0e0" stroke-width="10" fill="none" stroke-linecap="round"/>'
+                   for w, y in ((90, 470), (100, 520), (95, 570), (80, 620)))
+    return sprite(shadow(300, 200) + scaled(
+        legs(d, 'rl', (250, 350), *bone, top=FEET_Y - 200, rx=46)
+        + f'<rect x="288" y="420" width="24" height="260" rx="10" fill="#f4f0e0" stroke="{INK}" stroke-width="5"/>' + ribs
+        + f'<path d="M200 430 q100 -30 200 0 l-6 70 q-94 -24 -188 0 z" fill="{d.linear("pauld", "#e8eef8", "#7a88a0")}" stroke="{INK}" stroke-width="5"/>'
+        + blob(d, 'rpelvis', 300, 690, 90, 44, *bone, 5)
+        + f'<path d="M410 440 l60 120" stroke="{INK}" stroke-width="26" stroke-linecap="round"/><path d="M410 440 l60 120" stroke="#f4f0e0" stroke-width="16" stroke-linecap="round"/>'
+        + f'<g transform="translate(480 560) rotate(20)"><rect x="-12" y="-330" width="24" height="310" fill="{d.linear("rsword", "#ffffff", "#8a98b0", 1, 0)}" stroke="{INK}" stroke-width="5"/><rect x="-60" y="-24" width="120" height="22" rx="8" fill="#c08a2a" stroke="{INK}" stroke-width="5"/></g>'
+        + f'<g transform="translate(150 590)">' + shape(d, 'shield', 'M-110 -130 h220 q0 170 -110 240 q-110 -70 -110 -240 z', '#ff8a6a', '#a02010', 7)
+        + f'<path d="M0 -130 v240 M-110 -40 h220" stroke="#ffd34d" stroke-width="16"/><path d="M40 -60 l18 14 l-10 20" stroke="{INK}" stroke-width="4" fill="none"/></g>'
+        + f'<path d="M300 140 q-60 -120 30 -130 q-10 50 60 60 q-60 10 -90 70 z" fill="{d.radial("plume", "#ff8ad0", "#a01060")}" stroke="{INK}" stroke-width="5"/>'
+        + f'<path d="M160 310 q0 -160 140 -170 q140 10 140 170 l0 60 q-140 30 -280 0 z" fill="{d.linear("helm", "#f4f8ff", "#6a7890")}" stroke="{INK}" stroke-width="7"/>'
+        + shine(220, 210, 34, 16, -30, 0.8)
+        + f'<rect x="190" y="270" width="220" height="40" rx="16" fill="{INK}"/>'
+        + '<circle cx="250" cy="290" r="11" fill="#fff"/><circle cx="350" cy="290" r="11" fill="#fff"/>'
+        + ''.join(f'<path d="M{x} 330 v34" stroke="{INK}" stroke-width="5"/>' for x in (240, 270, 300, 330, 360))
+        + f'<rect x="230" y="385" width="140" height="44" rx="18" fill="#fff" stroke="{INK}" stroke-width="6"/>'
+        + ''.join(f'<path d="M{x} 389 v36" stroke="{INK}" stroke-width="4"/>' for x in (265, 300, 335)), 0.95), d)
+
+
+def goldgrin():
+    """Gristle Goldgrin, Chief Executive Goblin: a goblin in a pinstripe suit, top hat, monocle, gold everywhere."""
+    d = Defs()
+    extra = (f'<path d="M175 {FEET_Y - 330} q125 50 250 0 l-10 215 q-115 30 -230 0 z" fill="{d.radial("suit", "#5a5a7a", "#1a1a2a")}" stroke="{INK}" stroke-width="5"/>'
+             + ''.join(f'<path d="M{x} {FEET_Y - 320} v200" stroke="#8a8aaa" stroke-width="2"/>' for x in range(205, 400, 30))
+             + f'<path d="M260 {FEET_Y - 335} l40 70 l40 -70 z" fill="#fff" stroke="{INK}" stroke-width="4"/>'
+             + f'<path d="M300 {FEET_Y - 300} l-16 20 l16 100 l16 -100 z" fill="#ffd34d" stroke="{INK}" stroke-width="4"/>'
+             + f'<path d="M210 {FEET_Y - 280} q90 90 180 0" stroke="#ffd34d" stroke-width="8" fill="none"/>'
+             + blob(d, 'medal', 300, FEET_Y - 190, 22, 22, '#fff6a0', '#d09000', 4, False)
+             + f'<g transform="translate(470 {FEET_Y - 220})">' + blob(d, 'sack', 0, 0, 70, 80, '#e8c890', '#8a6020', 6)
+             + f'<path d="M-30 -70 q30 -30 60 0" stroke="{INK}" stroke-width="6" fill="none"/><text x="0" y="22" text-anchor="middle" font-size="64" font-family="Arial Black, sans-serif" font-weight="900" fill="#ffd34d" stroke="{INK}" stroke-width="3" paint-order="stroke">G</text></g>'
+             + blob(d, 'gh2', 420, FEET_Y - 250, 30, 30, '#b8ec8a', '#4f8a2a', 5, False))
+    hat = (f'<rect x="200" y="140" width="200" height="190" rx="14" fill="{d.linear("tophat", "#4a4a5a", "#101018")}" stroke="{INK}" stroke-width="6"/>'
+           + f'<rect x="200" y="280" width="200" height="34" fill="#ffd34d" stroke="{INK}" stroke-width="4"/>'
+           + f'<rect x="150" y="314" width="300" height="30" rx="14" fill="#2a2a3a" stroke="{INK}" stroke-width="6"/>' + shine(240, 180, 20, 30, 0, 0.5)
+           + f'<circle cx="345" cy="400" r="44" fill="none" stroke="#ffd34d" stroke-width="8"/><path d="M386 414 q20 60 -10 120" stroke="#ffd34d" stroke-width="4" fill="none"/>'
+           + f'<path d="M250 446 q-20 -20 -50 -6 M350 446 q20 -20 50 -6" stroke="{INK}" stroke-width="5" fill="none"/>')
+    return sprite(shadow(300, 170) + goblin(d, extra, hat, 'normal', 'grin', False, 0.9, ('#5a5a7a', '#1a1a2a')), d)
+
+
 FOES = {'gloop': gloop, 'rat': rat, 'intern': intern, 'shroom': shroom, 'bats': bats, 'clerk': clerk, 'boney': boney, 'ghost': ghost,
-        'mummy': mummy, 'imp': imp, 'golem': golem, 'foreman': foreman, 'mimic': mimic, 'whelp': whelp}
+        'mummy': mummy, 'imp': imp, 'golem': golem, 'foreman': foreman, 'mimic': mimic, 'whelp': whelp,
+        'fungus': fungus, 'rattlebones': rattlebones, 'goldgrin': goldgrin}
 
 
 # ------------------------------------------------------------------------------------- props of the odd rooms

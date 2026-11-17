@@ -24,7 +24,7 @@ export default async function check(page, { url, output }) {
   await pause(500)
   const report = await page.statusText()
   // The cover, which no entry of the story takes, becomes the game's cover, as it has none yet.
-  page.check('every file of the zip finds its entry, the cover the game\'s cover', [report.includes('Not used'), report.includes('cover.png → Cover of the game')], [false, true])
+  page.check('every file of the zip finds its entry, the cover the game\'s cover', [report.includes('Not used'), report.includes('cover.svg → Cover of the game')], [false, true])
   page.check('the sounds and music among them', ['calm.ogg → Music calm', 'door.ogg → Sound door'].every(match => report.includes(match)), true)
   page.check('and no entry is left without a file', await page.evaluate(`document.querySelectorAll('.cast .missing-count').length`), 0)
   await page.screenshot('cast')
@@ -32,8 +32,8 @@ export default async function check(page, { url, output }) {
   // A cover far from 16:9 is said to be cut; the sample's own, at 16:9, is not.
   const portrait = join(output, 'portrait.svg')
   writeFileSync(portrait, '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200"><rect width="900" height="1200" fill="pink"/></svg>')
-  const cover = join(output, 'cover.png')
-  writeFileSync(cover, execFileSync('unzip', ['-p', join(sample, 'sakura-week-assets.zip'), 'sakura-week-assets/cover.png']))
+  const cover = join(output, 'cover.svg')
+  writeFileSync(cover, execFileSync('unzip', ['-p', join(sample, 'sakura-week-assets.zip'), 'sakura-week-assets/cover.svg']))
   await page.clickButton('Details', '.tab')
   await page.waitFor('.cover-actions input[type=file]')
   await page.setFiles('.cover-actions input[type=file]', [portrait])

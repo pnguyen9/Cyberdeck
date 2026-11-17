@@ -1,5 +1,35 @@
 # Changelog
 
+## 3.6.0 — 2026-11-17
+
+### Both applications
+- The samples are built in, with nothing to download. **Datajack**'s library has a **Samples**
+  shelf: each sample with its cover and description, **Add to library** to install it (nothing is
+  installed until then), **In your library** once it is, and **Update** when the sample built into
+  Datajack differs from the one added; saves are kept, and the sample is played from its own card
+  like any game. **Cyberdeck**'s projects screen has **New project from a sample**: the sample opens
+  as a new project of its own, never replacing or merging into yours; if a project has its name,
+  **Open mine** opens it and **Fresh copy** makes *Name (2)*. In the web builds, a sample is fetched
+  when picked, and kept for offline use from then on. Each sample's chapters, pages and entries keep
+  their identifiers when its text is edited, so a save made before an update still finds its place.
+
+### Samples
+- **Knee-Deep** carries something over from one playthrough to the next: a keepsake left in
+  Barnaby's cellar, a bigger starting purse for every cheese returned, free meals for the hero, a
+  Gold Card from the Rescue Gnomes for their best customer, trophies on the tavern wall, and a
+  Mayor and a dragon who remember how the last game ended.
+- Grizelda's curiosity shelf has a new bargain after every trip, one of nineteen: mostly cheap and
+  silly, a few modestly useful.
+- Three optional bosses for strong heroes, behind WANTED posters on the landings of floors 2, 3
+  and 4: King Fungus the Fourth, Sir Rattlebones the Undefeated and Gristle Goldgrin, Chief
+  Executive Goblin, each with a reward and a trophy.
+- Barnaby's kitchen serves one treat at a time, good until the gnomes carry the hero home: a
+  Quickstout that sometimes lets the hero act twice, a meat pie for harder hits, or a rock cake
+  for a harder skin. Beating a boss again while carrying its trophy gives a hearty meal and a
+  laugh instead of a second trophy.
+- **Sakura Week**'s pictures are drawings (SVG) instead of PNG: as before on screen, sharp at any
+  size, and its files shrink from 7.1 MB to 560 KB.
+
 ## 3.5.1 — 2026-11-17
 
 ### Both applications
