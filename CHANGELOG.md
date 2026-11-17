@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Documentation
+- The guide has a section on the logic itself, *Thinking it through*: a decision not made yet,
+  how `and` and `or` combine (and without brackets), the order of `[else if]` tests, and a way out
+  of every loop.
+
 ## 3.5.0 — 2026-11-17
 
 ### Both applications

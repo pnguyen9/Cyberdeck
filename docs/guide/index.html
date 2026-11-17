@@ -221,6 +221,7 @@ turns it into pages, characters and choices. Your players play it in Datajack.</
     <li><a href="#decisions">More about decisions, and counters</a></li>
     <li><a href="#tracking">Keeping track of decisions</a></li>
     <li><a href="#loops">Places to come back to</a></li>
+    <li><a href="#logic">Thinking it through</a></li>
     <li><a href="#scenes">Scenes: write once, play anywhere</a></li>
     <li><a href="#routes">Chapters of a route</a></li>
     <li><a href="#staging">Characters on stage</a></li>
@@ -625,7 +626,54 @@ The candy floss stuck to her fingers.
 <p>An option followed by <code>[if: …]</code> is offered only while that holds: here, each place disappears
 once visited.</p>
 
-<h2 id="scenes">14. Scenes: write once, play anywhere</h2>
+<h2 id="logic">14. Thinking it through</h2>
+<p>Conditions and loops ask for no programming, only a little logic: saying exactly when something should
+happen. A few things are worth keeping in mind.</p>
+<h3>A decision not made yet</h3>
+<p>Until something gives it a value, a decision holds none. <code>[if: Answer is Truth]</code> is then
+false, and <code>[if: Answer is not Truth]</code> true, even for a player who never saw the choice. To mean
+“they chose something else”, name what they chose: <code>[if: Answer is Dodge]</code>. In the same way,
+<code>[else]</code> plays for every other case, the decision not made yet included.</p>
+<p>A <code>multi</code> decision holds several values: <code>is</code> asks whether one of them is that value,
+<code>is not</code> whether none is.</p>
+<h3>And, or</h3>
+<p><code>and</code> needs both parts to hold, <code>or</code> either one. When a condition mixes them,
+<code>and</code> goes first, as in speech:</p>
+<pre>[if: Mood is Calm and Answer is Truth or remembered The ghost's name]</pre>
+<p>holds for a calm player who told the truth, or for anyone who remembers the ghost's name. There are no
+brackets to group them otherwise. For “calm, and either the truth or the ghost's name”, put one
+<code>[if]</code> inside the other:</p>
+<pre>[if: Mood is Calm]
+[if: Answer is Truth or remembered The ghost's name]
+— Marie: I trust you.
+[end]
+[end]</pre>
+<p>“Neither” takes <code>and</code>: <code>[if: Answer is not Truth and Answer is not Dodge]</code>. With
+<code>or</code> there, it would hold for everyone, since nobody gave both answers.</p>
+<h3>Counters, and the order of the tests</h3>
+<p><code>Affection &gt;= 3</code> includes 3; <code>Affection &gt; 3</code> starts at 4. Between
+<code>[if]</code>, its <code>[else if]</code> and <code>[else]</code>, the first that holds plays, and none of
+the others: put the narrowest test first.</p>
+<pre>[if: Affection >= 5]
+— Marie: Stay.
+[else if: Affection >= 3]
+— Marie: See you tomorrow?
+[else]
+— Marie: Bye.
+[end]</pre>
+<p>The other way round, <code>Affection &gt;= 3</code> would catch 5 too, and “Stay.” would never play.</p>
+<h3>A way out of every loop</h3>
+<p>A <code>[loop]</code> plays until a <code>[break]</code>, so each time round, something must bring the player
+closer to it: an option that leaves, or a counter that grows towards the test that breaks, as in the hub
+where time runs out (section 27). The import warns when nothing inside a loop can leave it, but it cannot
+tell whether your test will ever hold: a <code>[break]</code> under <code>[if: Hour &gt;= 22]</code> waits
+for ever if nothing adds to <code>Hour</code>.</p>
+<h3>Checking it</h3>
+<p>In the preview, <strong>State</strong> lets you give the values a branch needs and see what plays
+(section 10). The Index points out a value tested but never given (section 12), and <strong>Every
+path</strong> on the map shows where each option leads.</p>
+
+<h2 id="scenes">15. Scenes: write once, play anywhere</h2>
 <p>A bad end that can happen in chapter 2 and again in chapter 5 is written once, as a scene, and played
 wherever you need it. After a scene, the story goes on where it was, unless the scene ended it.</p>
 <pre># Chapter 2
@@ -640,7 +688,7 @@ The guard lets you pass.
 <p>In the storyboard, select a <code>[play]</code> card and press <strong>Open the scene</strong>; the scene's board
 says where it is played from, each a link back.</p>
 
-<h2 id="routes">15. Chapters of a route</h2>
+<h2 id="routes">16. Chapters of a route</h2>
 <p>A chapter that belongs to one route only says so right under its title. Other players pass it by:</p>
 <pre># Chapter 3 — Marie's route
 [only if: Route is Marie]</pre>
@@ -648,7 +696,7 @@ says where it is played from, each a link back.</p>
 a route, framed together, the condition written once. In a chapter's panel, <strong>Played only if</strong>
 sets its condition; <strong>Apply to its route</strong> sets it for every chapter of the route at once.</p>
 
-<h2 id="staging">16. Characters on stage</h2>
+<h2 id="staging">17. Characters on stage</h2>
 <table>
   <tr><th>You write</th><th>What happens</th></tr>
   <tr><td><code>[enter: marie right smile]</code></td><td>Where she stands and how she looks. Places: <code>far-left</code>, <code>left</code>, <code>center</code>, <code>right</code>, <code>far-right</code>, or <code>35%</code> of the width.</td></tr>
@@ -663,7 +711,7 @@ turns them the right way. Drawn from the waist up, as most Japanese visual novel
 <em>upper body</em> there, for all your characters or for one: they are drawn taller than the screen, the
 head near its top, and <code>near</code> zooms on the face.</p>
 
-<h2 id="effects">17. Sounds, voices, videos and screen effects</h2>
+<h2 id="effects">18. Sounds, voices, videos and screen effects</h2>
 <table>
   <tr><th>You write</th><th>What happens</th></tr>
   <tr><td><code>[sound: door]</code></td><td>A sound plays once. Its file is named after it: <code>door.ogg</code>.</td></tr>
@@ -677,7 +725,7 @@ head near its top, and <code>near</code> zooms on the face.</p>
 </table>
 <p>Inside a sentence, a sound, shake or flash plays when the text reaches it.</p>
 
-<h2 id="text">18. How the text looks</h2>
+<h2 id="text">19. How the text looks</h2>
 <p>Give a style a name and what it looks like, then use it inside the text:</p>
 <pre>[style: Whisper = italic, small, grey]
 — Marie: [style: whisper]Don't tell anyone.[style: none] Promise?</pre>
@@ -705,14 +753,14 @@ them a look with a style named <code>chapter title</code>, and the ending's name
 <p>For long narration, <code>[text: full]</code> writes over the whole screen, as in a book, the pages
 piling up until <code>[clear]</code>. <code>[text: box]</code> brings the text box back.</p>
 
-<h2 id="illustrations">19. Illustrations and the gallery</h2>
+<h2 id="illustrations">20. Illustrations and the gallery</h2>
 <pre>[illustration: Sunrise]
 …
 [illustration: none]</pre>
 <p>A full-screen picture of a key moment. Players find the ones they have seen in the game's
 <strong>Gallery</strong>, in their library; the others stay locked.</p>
 
-<h2 id="word">20. Working in Word</h2>
+<h2 id="word">21. Working in Word</h2>
 <p>You can write your whole story in Word and open the <code>.docx</code> in the Import tab. Titles in
 the “Heading 1” style become chapters. A dialogue line that Word turned into a bulleted list is still dialogue.</p>
 <p>To edit in Word again later, <strong>Export as text</strong> (in a chapter's panel, on the story's level) writes the
@@ -724,7 +772,7 @@ keep working.</p>
 translator, choose <strong>As written</strong> under <strong>Paragraphs</strong>, in the Export tab: the
 pages cut from one paragraph are joined again, and the text reads as you wrote it.</p>
 
-<h2 id="tools">21. Tree view, shortcuts and backups</h2>
+<h2 id="tools">22. Tree view, shortcuts and backups</h2>
 <p>The grid keeps each block folded, to see the whole chapter at a glance and move things around. The
 storyboard's <strong>Tree</strong> view unfolds everything instead: one card per line, the branches of each
 block side by side, to follow how the story goes. Here is the fair of chapter 2 in both views.</p>
@@ -764,7 +812,7 @@ the projects screen, brings it back, on this computer or another. Do it now and 
 but still have your game? Give the game's file to the same button: the project comes back from it, with all
 the chapters the game carried.</p>
 
-<h2 id="players">22. What your players see</h2>
+<h2 id="players">23. What your players see</h2>
 <p>Players have their own <strong>Settings</strong>, in three categories. <strong>General</strong>: text
 speed, volumes (music and videos, sounds, voices), the speed of auto mode, full screen. <strong>Accessibility</strong>: larger text,
 a plainer font, a stronger contrast, pages read aloud, choices that wait for them, captions on
@@ -807,7 +855,7 @@ their colours, borders and shadows, and a class named after a character, <code>.
 give her name a colour in Cast &amp; files. In the preview, <strong>State</strong> shows what the story holds on
 the page shown: each decision, counter and name, what is remembered.</p>
 
-<h2 id="names">23. The player's name, and timed choices</h2>
+<h2 id="names">24. The player's name, and timed choices</h2>
 <p>To let players name the hero, ask for it, then write the name between braces wherever it goes:</p>
 <pre>[ask: Hero = Alex]
 — {Hero}: So that's my name.
@@ -830,7 +878,7 @@ pictures in view: a row of up to three, two by two for four, then in three or fo
 options, the moves of a fight; long sentences read better in the column. With a time, write it either side:
 <code>[choice: Move 10s below]</code>. A decision whose own name ends in <em>below</em> keeps its name.</p>
 
-<h2 id="values">24. Values in the text, and chance</h2>
+<h2 id="values">25. Values in the text, and chance</h2>
 <p>Braces show a value the story keeps: a counter, a decision, a name the player gave.</p>
 <pre>[counter: Hour = 8]
 [decision multi: Clues = Letter | Key]
@@ -841,7 +889,7 @@ also be a counter's. To write a brace itself, double it: <code>{{</code>.</p>
 <p>For a counter, <code>[set: Weather = random 1 6]</code> draws a number between the two, so that the same
 choices may lead elsewhere. A save keeps what was drawn, and going back draws the same again.</p>
 
-<h2 id="translating">25. Translating your story</h2>
+<h2 id="translating">26. Translating your story</h2>
 <p>A translation lives in the same project, beside your story: the same chapters, pictures and sounds, the
 same decisions, its own text. Say which language a text is in on its first line, with its standard code,
 and import it as usual:</p>
@@ -866,7 +914,7 @@ as text writes its language on the first line, so that a translator's version co
   <a href="images/languages.png"><img src="images/languages.png" alt="The story's level in French: the first chapter translated, the second hollow, its English title standing in, and Story in: French at the top." loading="lazy"></a>
 </figure>
 
-<h2 id="further">26. Recipes for bigger stories</h2>
+<h2 id="further">27. Recipes for bigger stories</h2>
 <p>A few ways to put the pieces together, for stories that branch more than once.</p>
 
 <h3>Routes that meet at the end</h3>
@@ -976,7 +1024,7 @@ stay]</code>.</p>
 [shown after an ending: Trust, endings reached]</pre>
 
 <h3>A story in two languages</h3>
-<p>Write it in your language, then lay the translation over it, chapter by chapter, as section 25 shows.
+<p>Write it in your language, then lay the translation over it, chapter by chapter, as section 26 shows.
 Ship it once every chapter has its translation: players pick their language on the game's card.</p>
 
 <h3>A little chance</h3>

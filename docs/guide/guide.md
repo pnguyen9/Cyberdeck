@@ -22,19 +22,20 @@ Write your story as you would in Word, with a few notes in brackets for the stag
 11. [More about decisions, and counters](#11-more-about-decisions-and-counters)
 12. [Keeping track of decisions](#12-keeping-track-of-decisions)
 13. [Places to come back to](#13-places-to-come-back-to)
-14. [Scenes: write once, play anywhere](#14-scenes-write-once-play-anywhere)
-15. [Chapters of a route](#15-chapters-of-a-route)
-16. [Characters on stage](#16-characters-on-stage)
-17. [Sounds, voices, videos and screen effects](#17-sounds-voices-videos-and-screen-effects)
-18. [How the text looks](#18-how-the-text-looks)
-19. [Illustrations and the gallery](#19-illustrations-and-the-gallery)
-20. [Working in Word](#20-working-in-word)
-21. [Tree view, shortcuts and backups](#21-tree-view-shortcuts-and-backups)
-22. [What your players see](#22-what-your-players-see)
-23. [The player's name, and timed choices](#23-the-players-name-and-timed-choices)
-24. [Values in the text, and chance](#24-values-in-the-text-and-chance)
-25. [Translating your story](#25-translating-your-story)
-26. [Recipes for bigger stories](#26-recipes-for-bigger-stories)
+14. [Thinking it through](#14-thinking-it-through)
+15. [Scenes: write once, play anywhere](#15-scenes-write-once-play-anywhere)
+16. [Chapters of a route](#16-chapters-of-a-route)
+17. [Characters on stage](#17-characters-on-stage)
+18. [Sounds, voices, videos and screen effects](#18-sounds-voices-videos-and-screen-effects)
+19. [How the text looks](#19-how-the-text-looks)
+20. [Illustrations and the gallery](#20-illustrations-and-the-gallery)
+21. [Working in Word](#21-working-in-word)
+22. [Tree view, shortcuts and backups](#22-tree-view-shortcuts-and-backups)
+23. [What your players see](#23-what-your-players-see)
+24. [The player's name, and timed choices](#24-the-players-name-and-timed-choices)
+25. [Values in the text, and chance](#25-values-in-the-text-and-chance)
+26. [Translating your story](#26-translating-your-story)
+27. [Recipes for bigger stories](#27-recipes-for-bigger-stories)
 
 ---
 
@@ -380,7 +381,61 @@ The candy floss stuck to her fingers.
 
 An option followed by `[if: …]` is offered only while that holds: here, each place disappears once visited.
 
-## 14. Scenes: write once, play anywhere
+## 14. Thinking it through
+
+Conditions and loops ask for no programming, only a little logic: saying exactly when something should happen. A few things are worth keeping in mind.
+
+### A decision not made yet
+
+Until something gives it a value, a decision holds none. `[if: Answer is Truth]` is then false, and `[if: Answer is not Truth]` true, even for a player who never saw the choice. To mean “they chose something else”, name what they chose: `[if: Answer is Dodge]`. In the same way, `[else]` plays for every other case, the decision not made yet included.
+
+A `multi` decision holds several values: `is` asks whether one of them is that value, `is not` whether none is.
+
+### And, or
+
+`and` needs both parts to hold, `or` either one. When a condition mixes them, `and` goes first, as in speech:
+
+```text
+[if: Mood is Calm and Answer is Truth or remembered The ghost's name]
+```
+
+holds for a calm player who told the truth, or for anyone who remembers the ghost's name. There are no brackets to group them otherwise. For “calm, and either the truth or the ghost's name”, put one `[if]` inside the other:
+
+```text
+[if: Mood is Calm]
+[if: Answer is Truth or remembered The ghost's name]
+— Marie: I trust you.
+[end]
+[end]
+```
+
+“Neither” takes `and`: `[if: Answer is not Truth and Answer is not Dodge]`. With `or` there, it would hold for everyone, since nobody gave both answers.
+
+### Counters, and the order of the tests
+
+`Affection >= 3` includes 3; `Affection > 3` starts at 4. Between `[if]`, its `[else if]` and `[else]`, the first that holds plays, and none of the others: put the narrowest test first.
+
+```text
+[if: Affection >= 5]
+— Marie: Stay.
+[else if: Affection >= 3]
+— Marie: See you tomorrow?
+[else]
+— Marie: Bye.
+[end]
+```
+
+The other way round, `Affection >= 3` would catch 5 too, and “Stay.” would never play.
+
+### A way out of every loop
+
+A `[loop]` plays until a `[break]`, so each time round, something must bring the player closer to it: an option that leaves, or a counter that grows towards the test that breaks, as in the hub where time runs out (section 27). The import warns when nothing inside a loop can leave it, but it cannot tell whether your test will ever hold: a `[break]` under `[if: Hour >= 22]` waits for ever if nothing adds to `Hour`.
+
+### Checking it
+
+In the preview, **State** lets you give the values a branch needs and see what plays (section 10). The Index points out a value tested but never given (section 12), and **Every path** on the map shows where each option leads.
+
+## 15. Scenes: write once, play anywhere
 
 A bad end that can happen in chapter 2 and again in chapter 5 is written once, as a scene, and played wherever you need it. After a scene, the story goes on where it was, unless the scene ended it.
 
@@ -398,7 +453,7 @@ The guard lets you pass.
 
 In the storyboard, select a `[play]` card and press **Open the scene**; the scene's board says where it is played from, each a link back.
 
-## 15. Chapters of a route
+## 16. Chapters of a route
 
 A chapter that belongs to one route only says so right under its title. Other players pass it by:
 
@@ -409,7 +464,7 @@ A chapter that belongs to one route only says so right under its title. Other pl
 
 On the story's level of the storyboard, chapters following one another under the same condition form a route, framed together, the condition written once. In a chapter's panel, **Played only if** sets its condition; **Apply to its route** sets it for every chapter of the route at once.
 
-## 16. Characters on stage
+## 17. Characters on stage
 
 | You write | What happens |
 |---|---|
@@ -422,7 +477,7 @@ On the story's level of the storyboard, chapters following one another under the
 
 In **Cast & files**, tell Cyberdeck which way each character was drawn looking, and it turns them the right way. Drawn from the waist up, as most Japanese visual novels draw them? Choose *upper body* there, for all your characters or for one: they are drawn taller than the screen, the head near its top, and `near` zooms on the face.
 
-## 17. Sounds, voices, videos and screen effects
+## 18. Sounds, voices, videos and screen effects
 
 | You write | What happens |
 |---|---|
@@ -437,7 +492,7 @@ In **Cast & files**, tell Cyberdeck which way each character was drawn looking, 
 
 Inside a sentence, a sound, shake or flash plays when the text reaches it.
 
-## 18. How the text looks
+## 19. How the text looks
 
 Give a style a name and what it looks like, then use it inside the text:
 
@@ -465,7 +520,7 @@ For anything else, **Definitions** takes CSS. Each class is a style:
 
 For long narration, `[text: full]` writes over the whole screen, as in a book, the pages piling up until `[clear]`. `[text: box]` brings the text box back.
 
-## 19. Illustrations and the gallery
+## 20. Illustrations and the gallery
 
 ```text
 [illustration: Sunrise]
@@ -475,7 +530,7 @@ For long narration, `[text: full]` writes over the whole screen, as in a book, t
 
 A full-screen picture of a key moment. Players find the ones they have seen in the game's **Gallery**, in their library; the others stay locked.
 
-## 20. Working in Word
+## 21. Working in Word
 
 You can write your whole story in Word and open the `.docx` in the Import tab. Titles in the “Heading 1” style become chapters. A dialogue line that Word turned into a bulleted list is still dialogue.
 
@@ -483,7 +538,7 @@ To edit in Word again later, **Export as text** (in a chapter's panel, on the st
 
 Exported as is, each page is a paragraph, so that it comes back cut the same. To send a text to a translator, choose **As written** under **Paragraphs**, in the Export tab: the pages cut from one paragraph are joined again, and the text reads as you wrote it.
 
-## 21. Tree view, shortcuts and backups
+## 22. Tree view, shortcuts and backups
 
 The grid keeps each block folded, to see the whole chapter at a glance and move things around. The storyboard's **Tree** view unfolds everything instead: one card per line, the branches of each block side by side, to follow how the story goes. Here is the fair of chapter 2 in both views.
 
@@ -509,7 +564,7 @@ From the keyboard, <kbd>Tab</kbd> goes from box to box, bringing each into view,
 
 **Back up** downloads your whole project as one file. **Restore a backup…**, on the projects screen, brings it back, on this computer or another. Do it now and then. Lost your project, but still have your game? Give the game's file to the same button: the project comes back from it, with all the chapters the game carried.
 
-## 22. What your players see
+## 23. What your players see
 
 Players have their own **Settings**, in three categories. **General**: text speed, volumes (music and videos, sounds, voices), the speed of auto mode, full screen. **Accessibility**: larger text, a plainer font, a stronger contrast, pages read aloud, choices that wait for them, captions on videos, and a name over the text box that slides to who speaks, jumps there, or stays put. Players with a screen reader hear each page whole as it appears. **Controls**: their own keys. They open them in a game, or from their library, before playing; a game can have its own, from its card, a slower text for one, a louder music for another. You have nothing to do for any of it: it works in every game. Datajack's own screens, the profiles, the library and the gallery, wear the look the player chooses with **Appearance**, as in Cyberdeck; your game keeps yours.
 
@@ -529,7 +584,7 @@ Datajack plays on phones and tablets too, the keyboard and the mouse working as 
 
 The look of the text box and of the names is yours to set, too. Images named `text-box.png` and `name-plate.png`, dropped in Cast & files, frame them, stretched by their edges so that their corners stay whole: a floral border, for instance. In the CSS, `.text-box` and `.name-plate` change their colours, borders and shadows, and a class named after a character, `.marie`, her plate alone; or give her name a colour in Cast & files. In the preview, **State** shows what the story holds on the page shown: each decision, counter and name, what is remembered.
 
-## 23. The player's name, and timed choices
+## 24. The player's name, and timed choices
 
 To let players name the hero, ask for it, then write the name between braces wherever it goes:
 
@@ -558,7 +613,7 @@ Any option can be it: with `> Yes. = Accept [timeout]`, waiting means yes.
 
 Options usually stand in a column over the middle of the stage. Write `below` after the choice's name, `[choice: Move below]`, and they sit side by side at the bottom, where the text box stands, leaving the pictures in view: a row of up to three, two by two for four, then in three or four columns. It suits short options, the moves of a fight; long sentences read better in the column. With a time, write it either side: `[choice: Move 10s below]`. A decision whose own name ends in *below* keeps its name.
 
-## 24. Values in the text, and chance
+## 25. Values in the text, and chance
 
 Braces show a value the story keeps: a counter, a decision, a name the player gave.
 
@@ -572,7 +627,7 @@ A decision shows its values, separated by commas. A name that means nothing to t
 
 For a counter, `[set: Weather = random 1 6]` draws a number between the two, so that the same choices may lead elsewhere. A save keeps what was drawn, and going back draws the same again.
 
-## 25. Translating your story
+## 26. Translating your story
 
 A translation lives in the same project, beside your story: the same chapters, pictures and sounds, the same decisions, its own text. Say which language a text is in on its first line, with its standard code, and import it as usual:
 
@@ -593,7 +648,7 @@ marie]`, the names of decisions and their values. What players read of an ending
 
 ![The story's level in French: the first chapter translated, the second hollow, its English title standing in, and Story in: French at the top.](images/languages.png)
 
-## 26. Recipes for bigger stories
+## 27. Recipes for bigger stories
 
 A few ways to put the pieces together, for stories that branch more than once.
 
@@ -740,7 +795,7 @@ Show little at first, and more once the player has seen an ending, for those hun
 
 ### A story in two languages
 
-Write it in your language, then lay the translation over it, chapter by chapter, as section 25 shows. Ship it once every chapter has its translation: players pick their language on the game's card.
+Write it in your language, then lay the translation over it, chapter by chapter, as section 26 shows. Ship it once every chapter has its translation: players pick their language on the game's card.
 
 ### A little chance
 
