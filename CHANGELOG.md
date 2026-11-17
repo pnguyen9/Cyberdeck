@@ -13,6 +13,12 @@
   when picked, and kept for offline use from then on. Each sample's chapters, pages and entries keep
   their identifiers when its text is edited, so a save made before an update still finds its place.
 
+### Datajack
+- Each profile has its own **Appearance** and language: a child can play with Playground while a
+  parent keeps Dusk. The profiles screen shows those of the profile played last, and no longer
+  offers **Appearance**; its language menu still works before anyone is chosen. Existing profiles
+  start with the look and language chosen until now, and so do new ones.
+
 ### Samples
 - **Knee-Deep** carries something over from one playthrough to the next: a keepsake left in
   Barnaby's cellar, a bigger starting purse for every cheese returned, free meals for the hero, a

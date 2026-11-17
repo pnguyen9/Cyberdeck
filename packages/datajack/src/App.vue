@@ -28,9 +28,13 @@ import { createBrowserProfileStore, type Profile, type ProfileStore } from './pr
 import ProfilesView from './profiles/ProfilesView.vue'
 import LandscapeOffer from './play/LandscapeOffer.vue'
 
+/** The last look a profile chose, which the profiles screen shows. */
+const DEVICE_LOOK_KEY = 'datajack:look'
 const desktop = window.datajackDesktop
-/** Every screen below speaks the player's language, the game's settings included. */
-const languageChoice = createLanguageChoice(() => window.localStorage)
+/** Null while the player picks or creates a profile. */
+const profile = shallowRef<Profile | null>(null)
+/** Every screen below speaks the profile's language, the game's settings included; the profiles screen the last one chosen. */
+const languageChoice = createLanguageChoice(() => window.localStorage, () => profile.value?.id ?? null)
 const locale = computed(() => localeOfChoice(languageChoice.value))
 provideLocale(locale)
 watchEffect(() => {
@@ -39,16 +43,20 @@ watchEffect(() => {
 const text = computed(() => appMessages[locale.value])
 /**
  * The version and how the page runs, for the library and the profiles; the service worker of the web
- * build; Datajack's own look, the same for every profile (it shows before one is chosen), never a game's.
+ * build; Datajack's own look, never a game's: each profile's (one that never chose one takes the
+ * device's), the profiles screen showing the last one chosen.
  */
-provideApp({ name: 'Datajack', hasDesktopBridge: desktop !== undefined, keepSafe: { en: appMessages.en.keepSafe, fr: appMessages.fr.keepSafe } })
+provideApp({
+  name: 'Datajack',
+  hasDesktopBridge: desktop !== undefined,
+  keepSafe: { en: appMessages.en.keepSafe, fr: appMessages.fr.keepSafe },
+  lookKeys: () => profile.value === null ? [DEVICE_LOOK_KEY] : [`${DEVICE_LOOK_KEY}:${profile.value.id}`, DEVICE_LOOK_KEY],
+})
 const profileStore: ProfileStore = desktop === undefined
   ? createBrowserProfileStore(() => window.localStorage, () => crypto.randomUUID(), () => new Date().toISOString())
   : createDesktopProfileStore(desktop)
 const library = new GameLibrary(desktop === undefined ? createIndexedDbLibraryStorage() : createDesktopLibraryStorage(desktop))
 const isLoading = ref(true)
-/** Null while the player picks or creates a profile. */
-const profile = shallowRef<Profile | null>(null)
 const saveStore = computed(() => profile.value === null ? null : profileStore.saveStore(profile.value.id))
 /** Each profile has its own settings, kept in the browser (Electron's page too). */
 const settingsStore = computed(() => profile.value === null ? null : createStorageSettingsStore(() => window.localStorage, `datajack:settings:${profile.value.id}`))

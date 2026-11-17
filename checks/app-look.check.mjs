@@ -72,7 +72,7 @@ export default async function check(page, { url, serve }) {
   page.check('the preview\'s stage keeps its look', await page.evaluate(`[${colourOf('.viewport', 'backgroundColor')}, ${colourOf('.viewport .text')}, ${colourOf('.viewport .text', 'fontFamily')}.includes('monospace')]`), ['rgb(0, 0, 0)', 'rgb(242, 244, 248)', false])
   await page.screenshot('cyberdeck-preview')
 
-  // Datajack has its own, the same for every profile: it shows before one is chosen.
+  // Datajack has its own, each profile's: before one is chosen, the last profile's shows.
   const datajack = await serve('datajack')
   await page.navigate(datajack)
   await page.waitFor('.profiles-header')
@@ -105,4 +105,38 @@ export default async function check(page, { url, serve }) {
   await page.clickButton('Settings', '.header-tools .button')
   await page.waitFor('.settings-screen .overlay')
   page.check('the player\'s settings, drawn as in a game, keep their look', await page.evaluate(`${colourOf('.settings-screen', 'backgroundColor')}`), 'rgb(5, 7, 12)')
+
+  await page.press('Escape')
+  await pause(200)
+
+  // Each profile its own look and language; the profiles screen shows the last profile's, without the setting.
+  const lookOf = () => page.evaluate(`[document.documentElement.dataset.look, document.documentElement.lang]`)
+  await page.evaluate(`document.querySelector('.profile-button').click()`)
+  await page.waitFor('.profiles-header')
+  page.check('the profiles screen shows the last profile\'s look, and does not change it', [await lookOf(), await page.evaluate(`[...document.querySelectorAll('.profiles-header .button')].some(button => button.textContent.trim() === 'Appearance')`)], [['playground', 'en'], false])
+  await page.evaluate(`document.querySelector('.new-profile .text-input').focus()`)
+  await page.typeText('Kim')
+  await page.evaluate(`document.querySelector('.new-profile button[type=submit]').click()`)
+  await page.waitFor('.library')
+  page.check('a new profile starts from it', await lookOf(), ['playground', 'en'])
+  await page.clickButton('Appearance', '.header-tools .button')
+  await page.waitFor('dialog.app-look[open]')
+  await page.evaluate(`document.querySelector('.preset[data-preset=dusk]').click()`)
+  await page.press('Escape')
+  await page.evaluate(`(() => { const select = document.querySelector('.header-tools select'); select.value = 'fr'; select.dispatchEvent(new Event('change')) })()`)
+  await pause(600)
+  page.check('and chooses its own', await lookOf(), ['dusk', 'fr'])
+
+  await page.evaluate(`document.querySelector('.profile-button').click()`)
+  await page.waitFor('.profiles-header')
+  page.check('the profiles screen follows the last profile', await lookOf(), ['dusk', 'fr'])
+  await page.evaluate(`[...document.querySelectorAll('.play-profile')].find(button => button.textContent.includes('Pascal')).click()`)
+  await page.waitFor('.library')
+  page.check('the other profile kept its own', await lookOf(), ['playground', 'en'])
+  await page.reload()
+  await page.waitFor('.library')
+  page.check('and keeps it after a reload', await lookOf(), ['playground', 'en'])
+  await page.evaluate(`document.querySelector('.profile-button').click()`)
+  await page.waitFor('.profiles-header')
+  page.check('the profiles screen now shows it', await lookOf(), ['playground', 'en'])
 }

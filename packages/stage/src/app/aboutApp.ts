@@ -13,6 +13,8 @@ export interface AppOptions {
   hasDesktopBridge: boolean
   /** What keeps the work safe should the browser erase it, in each language: exporting it. */
   keepSafe: Readonly<Record<Locale, string>>
+  /** Where its look is kept, the first holding one read (Datajack: the profile's, then the device's); `<name>:look` without. */
+  lookKeys?: () => readonly string[]
 }
 
 /** What the first screen says of the application: its version, how it runs, and a new version once online. */
@@ -31,7 +33,7 @@ const ABOUT_APP: InjectionKey<AboutApp> = Symbol('about-app')
 
 /**
  * Given once at the application's root: its version (`__APP_VERSION__`) and how the page runs, for
- * its first screen and the setting of its look; its own look, kept under `<name>:look`; and on a
+ * its first screen and the setting of its look; its own look, kept under `<name>:look` or `lookKeys`; and on a
  * web host, the service worker that keeps the application offline and tells of new versions (never
  * on the development server, whose files change as they are edited).
  */
@@ -57,7 +59,7 @@ export function provideApp(options: AppOptions): AboutApp {
   }
   const about: AboutApp = { name: options.name, version: __APP_VERSION__, howItRuns: how, keepSafe: options.keepSafe, newVersion, isNewVersionPutOff: ref(false) }
   provide(ABOUT_APP, about)
-  provideAppLook(() => window.localStorage, `${options.name.toLowerCase()}:look`)
+  provideAppLook(() => window.localStorage, options.lookKeys ?? `${options.name.toLowerCase()}:look`)
   return about
 }
 

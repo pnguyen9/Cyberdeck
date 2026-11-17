@@ -507,7 +507,9 @@ files.
 
 Cyberdeck and Datajack speak English and French: each follows the system's language unless another
 is chosen (Cyberdeck: the projects screen and a project's header; Datajack: the profiles screen,
-the library and the game's Settings), and keeps the choice in the browser. A game's own words, such
+the library and the game's Settings), and keeps the choice in the browser. In Datajack each profile
+has its own; one that never chose takes the device's, which is the profile's played last and the one
+the profiles screen speaks. A game's own words, such
 as « Fin. » on its end screen, follow the language the story is written in, its project's language.
 The story syntax itself is the same in every language. Each package keeps its messages in tables,
 one per language, of the same shape: another language is one more table each.
@@ -1110,10 +1112,11 @@ key on AZERTY and QWERTY; they are named as on a US keyboard, so on another layo
 differ from the letter printed on the key. Datajack keeps the settings per
 profile; Cyberdeck keeps the author's for its previews.
 
-**Appearance**, in the library's header and on the profiles screen, sets the look of Datajack's own screens
-(profiles, library, gallery) as in Cyberdeck (see Editing): presets or each part in depth, kept in the
-browser for every profile, since it shows before one is chosen. Games, their settings and their map
-keep their own look.
+**Appearance**, in the library's header, sets the look of Datajack's own screens (profiles, library,
+gallery) as in Cyberdeck (see Editing): presets or each part in depth, kept in the browser for each
+profile (`datajack:look:<profile>`). A profile that never chose takes the device's (`datajack:look`),
+the look of the profile played last, which the profiles screen shows without offering to change it.
+Games, their settings and their map keep their own look.
 
 ### Inputs
 

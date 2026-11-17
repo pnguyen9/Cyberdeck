@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AboutApp, AppLookButton, NewVersionBar, LanguageSelect, useLocale, useMessages, type LanguageChoice } from '@cyberdeck/stage'
+import { AboutApp, NewVersionBar, LanguageSelect, useLocale, useMessages, type LanguageChoice } from '@cyberdeck/stage'
 import { onMounted, ref, useTemplateRef, watch } from 'vue'
 import { MAXIMUM_PROFILE_NAME_LENGTH, profileNameProblem } from '../../electron/profileNames'
 import { profileMessages } from '../i18n/profileMessages'
@@ -145,7 +145,6 @@ function confirmRemove(profile: Profile) {
           <span>{{ text.language }}</span>
           <LanguageSelect v-model="languageChoice" />
         </label>
-        <AppLookButton class="button" />
       </div>
     </header>
 
