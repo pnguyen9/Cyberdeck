@@ -37,6 +37,7 @@ const en = {
   mayErase: 'Your browser may erase this app’s data. Safari does so after about seven days without a visit, unless the app is installed.',
   newVersion: (name: string) => `A new version of ${name} is online.`,
   reload: 'Reload',
+  sampleWithNewVersion: (sample: string, name: string) => `${sample} now comes with the new version of ${name}: reload, then try again.`,
   later: 'Later',
 }
 
@@ -78,6 +79,7 @@ const fr: AboutMessages = {
   mayErase: 'Votre navigateur peut effacer les données de cette application. Safari le fait au bout d’environ sept jours sans visite, sauf si elle est installée.',
   newVersion: name => `Une nouvelle version de ${name} est en ligne.`,
   reload: 'Recharger',
+  sampleWithNewVersion: (sample, name) => `${sample} vient désormais avec la nouvelle version de ${name}\u00a0: rechargez, puis réessayez.`,
   later: 'Plus tard',
 }
 

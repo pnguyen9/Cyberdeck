@@ -27,6 +27,8 @@ export interface AboutApp {
   newVersion: Readonly<Ref<(() => void) | null>>
   /** *Later* was said to the new version: it is offered again on the next visit. */
   isNewVersionPutOff: Ref<boolean>
+  /** Asks the host for a new version now, as when the page is shown again: `newVersion` is set once one is ready. Does nothing off a web host. */
+  checkNewVersion: () => void
 }
 
 const ABOUT_APP: InjectionKey<AboutApp> = Symbol('about-app')
@@ -40,6 +42,7 @@ const ABOUT_APP: InjectionKey<AboutApp> = Symbol('about-app')
 export function provideApp(options: AppOptions): AboutApp {
   const how = howThisPageRuns(options.hasDesktopBridge)
   const newVersion = ref<(() => void) | null>(null)
+  let checkNewVersion = () => {}
   if (!import.meta.env.DEV && isHosted(how) && 'serviceWorker' in navigator) {
     keepOffline(
       navigator.serviceWorker,
@@ -48,16 +51,19 @@ export function provideApp(options: AppOptions): AboutApp {
         newVersion.value = takeOver
       },
       () => window.location.reload(),
-      check => document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          check()
-        }
-      }),
+      check => {
+        checkNewVersion = check
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            check()
+          }
+        })
+      },
     ).catch(() => {
       // A browser refusing service workers (private windows, some settings) still runs the page, online.
     })
   }
-  const about: AboutApp = { name: options.name, version: __APP_VERSION__, howItRuns: how, keepSafe: options.keepSafe, newVersion, isNewVersionPutOff: ref(false) }
+  const about: AboutApp = { name: options.name, version: __APP_VERSION__, howItRuns: how, keepSafe: options.keepSafe, newVersion, isNewVersionPutOff: ref(false), checkNewVersion: () => checkNewVersion() }
   provide(ABOUT_APP, about)
   provideAppLook(() => window.localStorage, options.lookKeys ?? `${options.name.toLowerCase()}:look`)
   return about

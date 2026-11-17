@@ -1,6 +1,6 @@
 {
   "name": "cyberdeck-workspace",
-  "version": "3.6.1",
+  "version": "3.6.2",
   "private": true,
   "license": "Unlicense",
   "description": "Cyberdeck (visual novel engine) and Datajack (player)",

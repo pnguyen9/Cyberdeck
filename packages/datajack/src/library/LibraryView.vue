@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { emptyProgressOf, languageName, mergeProgress, parseProgress, parseSave, type PlayableStory, type ProgressData, type SaveData } from '@cyberdeck/core'
-import { AboutApp, AppLookButton, NewVersionBar, AUTOSAVE_SLOT, LanguageSelect, SampleCard, isHosted, useAboutApp, useLocale, useMessages, type ErasedData, type LanguageChoice, type SampleIndexEntry, type SaveStore } from '@cyberdeck/stage'
+import { AboutApp, AppLookButton, NewVersionBar, SampleNotLoadedNote, AUTOSAVE_SLOT, LanguageSelect, SampleCard, isHosted, useAboutApp, useLocale, useMessages, type ErasedData, type LanguageChoice, type SampleIndexEntry, type SaveStore } from '@cyberdeck/stage'
 import { computed, nextTick, onMounted, ref, shallowRef, watch } from 'vue'
 import { describeError } from '../i18n/errorMessages'
 import { describeInstall, describeSampleInstall, libraryMessages } from '../i18n/libraryMessages'
@@ -120,7 +120,8 @@ const shelf = computed(() => {
 })
 
 /** What the shelf says of the last installation, by the sample's card, where the player is looking. */
-const sampleReport = ref<{ sampleId: string; text: string; isError: boolean } | null>(null)
+/** `notLoaded`: the sample's files could not be had, which a new version of Datajack may explain. */
+const sampleReport = ref<{ sampleId: string; text: string; isError: boolean; notLoaded?: boolean } | null>(null)
 const reportElements = new Map<string, HTMLElement>()
 const setReportElement = (sampleId: string, element: unknown) => {
   if (element instanceof HTMLElement) {
@@ -137,8 +138,14 @@ async function addSample(sample: SampleIndexEntry) {
   try {
     sampleReport.value = { sampleId: sample.id, text: describeSampleInstall(await installSample(props.library, sample), text.value), isError: false }
   } catch (error) {
-    const notLoaded = text.value.sampleNotLoaded(sample.name, about !== null && isHosted(about.howItRuns))
-    sampleReport.value = { sampleId: sample.id, text: error instanceof SampleNotLoaded ? notLoaded : errorText(error), isError: true }
+    const notLoaded = error instanceof SampleNotLoaded
+    const isOnHost = about !== null && isHosted(about.howItRuns)
+    sampleReport.value = { sampleId: sample.id, text: notLoaded ? text.value.sampleNotLoaded(sample.name, isOnHost) : errorText(error), isError: true, notLoaded }
+    if (notLoaded && isOnHost) {
+      // This page may be an older release, kept on the device, whose sample the host no longer has.
+      about.isNewVersionPutOff.value = false
+      about.checkNewVersion()
+    }
   }
   shelfRecord.value = installedSamples()
   loadingSampleId.value = null
@@ -424,7 +431,10 @@ function onDrop(event: DragEvent) {
             tabindex="-1"
             :class="sampleReport?.isError ? 'error' : 'message'"
             :role="sampleReport?.isError ? 'alert' : 'status'"
-          >{{ sampleReport?.text }}</p>
+          >
+            <SampleNotLoadedNote v-if="sampleReport?.notLoaded" :sample="sample.name" :otherwise="sampleReport.text" />
+            <template v-else>{{ sampleReport?.text }}</template>
+          </p>
         </SampleCard>
       </ul>
     </section>

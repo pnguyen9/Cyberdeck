@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { languageName, languagesOf, type ProjectDocument } from '@cyberdeck/core'
-import { AboutApp, AppLookButton, NewVersionBar, SampleCard, isHosted, loadSample, useAboutApp, useLocale, useMessages, type ErasedData, type SampleIndexEntry, type SaveStore } from '@cyberdeck/stage'
+import { AboutApp, AppLookButton, NewVersionBar, SampleCard, SampleNotLoadedNote, isHosted, loadSample, useAboutApp, useLocale, useMessages, type ErasedData, type SampleIndexEntry, type SaveStore } from '@cyberdeck/stage'
 import { nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { samples } from 'virtual:samples'
 import { commonMessages } from '../i18n/commonMessages'
@@ -105,7 +105,13 @@ async function startFromSample(sample: SampleIndexEntry) {
     try {
       archive = await loadSample(sample)
     } catch {
-      sampleError.value = { sampleId: sample.id, text: text.value.sampleNotLoaded(sample.name, about !== null && isHosted(about.howItRuns)) }
+      const isOnHost = about !== null && isHosted(about.howItRuns)
+      sampleError.value = { sampleId: sample.id, text: text.value.sampleNotLoaded(sample.name, isOnHost) }
+      if (isOnHost) {
+        // This page may be an older release, kept on the device, whose sample the host no longer has.
+        about.isNewVersionPutOff.value = false
+        about.checkNewVersion()
+      }
       return
     }
     if (start !== latestStart || isGone) {
@@ -296,7 +302,7 @@ const formatDate = (date: string) => new Date(date).toLocaleString(locale.value,
         <button v-else :ref="element => setStartButton(sample.id, element)" class="button" :disabled="loadingSampleId !== null" @click="startFromSample(sample)">
           {{ loadingSampleId === sample.id ? text.loadingSample : text.startFromSample }}
         </button>
-        <p v-if="sampleError?.sampleId === sample.id" class="error" role="alert">{{ sampleError?.text }}</p>
+        <p v-if="sampleError?.sampleId === sample.id" class="error" role="alert"><SampleNotLoadedNote :sample="sample.name" :otherwise="sampleError?.text ?? ''" /></p>
       </SampleCard>
     </ul>
 

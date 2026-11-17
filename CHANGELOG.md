@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.6.2 — 2026-11-17
+
+### Both applications
+- Online, a sample that cannot be loaded because the page is still an older version (kept on the
+  device, while the site only has the latest version's samples) now says it comes with the new
+  version, with a Reload button beside it. The page checks for a new version straight away, and
+  the new-version bar comes back even after *Later*.
+
 ## 3.6.1 — 2026-11-17
 
 ### Both applications
