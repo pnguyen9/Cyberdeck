@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 3.5.1 — 2026-11-17
+
+### Both applications
+- The About panel reads more easily, in English and French: how the application runs and where its
+  data stays on two short lines, the install help as one line per browser, and plainer wording for
+  the license and for the note that a browser may erase the data.
 
 ### Documentation
 - The guide has a section on the logic itself, *Thinking it through*: a decision not made yet,

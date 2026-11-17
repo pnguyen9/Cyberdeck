@@ -49,9 +49,16 @@ function onClose() {
     >
       <h2 id="about-app-title">{{ text.aboutApp(about.name) }}</h2>
       <p class="about-version">{{ text.version(about.version) }}</p>
-      <p class="runs">{{ text.runs[about.howItRuns] }}</p>
+      <div class="runs">
+        <p>{{ text.runs[about.howItRuns] }}</p>
+        <p>{{ text.data[about.howItRuns] }}</p>
+      </div>
       <div v-if="about.howItRuns === 'web'" class="install">
-        <p v-for="line in text.install" :key="line">{{ line }}</p>
+        <p>{{ text.install.intro }}</p>
+        <ul>
+          <li v-for="step in text.install.steps" :key="step">{{ step }}</li>
+        </ul>
+        <p>{{ text.install.note }}</p>
       </div>
       <p>
         {{ text.license }}<a :href="LICENSE_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.unlicense }}<span class="new-tab">{{ text.newTab }}</span></a>{{ text.licenseAfter }}
@@ -133,6 +140,10 @@ function onClose() {
   margin: 0 0 10px;
 }
 
+.runs p:first-child {
+  margin-bottom: 2px;
+}
+
 .about-version {
   color: var(--look-accent);
   font-weight: 600;
@@ -156,6 +167,15 @@ function onClose() {
   margin-left: 0.3em;
   font-size: 0.85em;
   color: var(--look-soft);
+}
+
+.install ul {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+.install li + li {
+  margin-top: 4px;
 }
 
 .links {

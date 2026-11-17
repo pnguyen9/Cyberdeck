@@ -67,11 +67,11 @@ export default async function check(page, { url }) {
     page.check('Cyberdeck opens under a folder', await page.waitFor('.about-app'), true)
     page.check('with its version', await page.evaluate(`document.querySelector('.about-app .version')?.textContent`), `Cyberdeck ${version}`)
     page.check('saying a browser may erase its data, and to back up', await page.evaluate(`document.querySelector('.may-erase')?.textContent`),
-      'A browser may erase a site’s data (Safari does after about seven days without a visit, unless the app is installed). Keep a backup of each project (“Back up”, at the top of the project).')
+      'Your browser may erase this app’s data. Safari does so after about seven days without a visit, unless the app is installed. Keep a backup of each project (“Back up”, at the top of the project).')
     page.check('in a note to read, its first sentence in bold', await page.evaluate(`(() => {
       const note = document.querySelector('.may-erase')
       const style = getComputedStyle(note)
-      return [parseFloat(style.fontSize) >= 14, style.borderTopStyle !== 'none', note.querySelector('strong')?.textContent.startsWith('A browser may erase')]
+      return [parseFloat(style.fontSize) >= 14, style.borderTopStyle !== 'none', note.querySelector('strong')?.textContent.startsWith('Your browser may erase')]
     })()`), [true, true, true])
     page.check('its manifest is linked', await page.evaluate(`fetch(document.querySelector('link[rel=manifest]').href).then(response => response.json()).then(manifest => [manifest.name, manifest.start_url, manifest.icons.length])`), ['Cyberdeck', './', 4])
     page.check('its service worker takes the page’s folder', await page.waitUntil(`navigator.serviceWorker.ready.then(registration => registration.active !== null)`), true)
@@ -80,10 +80,10 @@ export default async function check(page, { url }) {
 
     await page.clickButton('About', '.about-button')
     await pause(300)
-    page.check('the About panel gives the version and how it runs', await page.evaluate(`[...document.querySelectorAll('.about-panel p')].slice(0, 2).map(paragraph => paragraph.textContent)`),
-      [`Version ${version}`, 'Runs as a web page: its data stays in this browser, on this device.'])
-    page.check('a web page tells how to install it, and to do so from an ordinary window', await page.evaluate(`[...document.querySelectorAll('.about-panel .install p')].map(paragraph => paragraph.textContent.split(':')[0].split('.')[0])`),
-      ['To install it as an application, opening in a window of its own', 'Firefox on a computer does not install web pages'])
+    page.check('the About panel gives the version and how it runs', await page.evaluate(`[...document.querySelectorAll('.about-panel p')].slice(0, 3).map(paragraph => paragraph.textContent)`),
+      [`Version ${version}`, 'Web page.', 'Your data stays in this browser, on this device.'])
+    page.check('a web page tells how to install it, and to do so from an ordinary window', await page.evaluate(`[...document.querySelectorAll('.about-panel .install :is(p, li)')].map(line => line.textContent.split(':')[0].split('.')[0])`),
+      ['You can install it as an app, with a window of its own', 'Chrome or Edge', 'Android', 'iPhone or iPad', 'Firefox on a computer cannot install web pages', 'Install it from a normal window, not a private one'])
     page.check('the license and the links, which say they open a new tab', await page.evaluate(`[...document.querySelectorAll('.about-panel a')].map(link => link.textContent + ' ' + link.href)`), [
       'Unlicense(new tab) https://github.com/pnguyen9/Cyberdeck/blob/main/LICENSE',
       'Guide(new tab) https://pnguyen9.github.io/Cyberdeck/guide/',
@@ -176,7 +176,7 @@ export default async function check(page, { url }) {
   page.check('nor the note of a web host', await page.evaluate(`document.querySelector('.may-erase') === null`), true)
   await page.clickButton('About', '.about-button')
   await pause(300)
-  page.check('it says it runs as files', await page.evaluate(`document.querySelectorAll('.about-panel p')[1]?.textContent`), 'Runs from files opened in the browser: its data stays in this browser, on this computer.')
+  page.check('it says it runs as files', await page.evaluate(`[...document.querySelectorAll('.about-panel .runs p')].map(paragraph => paragraph.textContent)`), ['Opened from files, in the browser.', 'Your data stays in this browser, on this computer.'])
   page.check('with no install help', await page.evaluate(`document.querySelector('.about-panel .install') === null`), true)
   await page.screenshot('files-about')
 }
