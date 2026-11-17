@@ -19,8 +19,9 @@
 [decision: BargainName = a rubber duck | a hat with a candle on it | a portrait of the cat | a knitting kit | a book called Small Talk for Large Monsters | a snow globe of Mossbottom | a chest that is definitely not a mimic | a kazoo | a spare beard | a tiny statue of you | a cheese sandwich | a slightly short rope | a slightly expired gnome stamp | a dragon-proof umbrella | a whistle only gnomes can hear | a goblin phrasebook | a helmet with a cup holder | a jar of pickled onions | a postcard of the Delve]
 [decision: Shelf = Fighting | Handy | Silly | Nothing]
 [decision multi: Claimed = King Fungus | Sir Rattlebones | Gristle Goldgrin]
-[decision lasting: Keepsake = Lucky socks | Fancy crackers | Union card | Rubber duck | Candle hat | Cat portrait | Knitting kit | Small talk book | Snow globe | Hungry chest | Kazoo | Spare beard | Tiny statue | Umbrella | Gnome whistle | Phrasebook | Cup holder helmet | Mouldy crown | Knightly shield | Golden parachute | Nothing]
+[decision lasting: Keepsake = Lucky socks | Fancy crackers | Union card | Rubber duck | Candle hat | Cat portrait | Knitting kit | Small talk book | Snow globe | Hungry chest | Kazoo | Spare beard | Tiny statue | Umbrella | Gnome whistle | Phrasebook | Cup holder helmet | Mouldy crown | Knightly shield | Golden parachute | Nothing | Back]
 [decision lasting: Last ending = Victory | Crackers | Tea | Bribe | Bakery | Policy]
+[decision lasting: Run = Playing | Finished | Policy]
 [decision: Pint = Rest | Kitchen | Rumour | Stamp | Mayor | Posters | Leave]
 [decision: Meal = Quickstout | Pie | Rock cake]
 [decision: Menu = Quickstout | Pie | Rock cake | Back]
@@ -32,7 +33,8 @@
 
 [counter: HP = 30]
 [counter: MaxHP = 30]
-[counter: Gold = 25]
+[counter lasting: Gold = 25]
+[counter: Savings = 0]
 [counter: Level = 1]
 [counter: XP = 0]
 [counter: NextXP = 12]
@@ -120,11 +122,20 @@
 # Knee-Deep
 [bg: town]
 [music: town]
+[set: Savings = 0]
+[if: Run is Finished]
+[set: Savings = {Gold} * 0.5]
+[else if: Run is Playing or Run is Policy]
+[set: Savings = {Gold} * 0.25]
+[end]
 [if: Last ending is Victory or Last ending is Crackers or Last ending is Tea or Last ending is Bribe or Last ending is Bakery or Last ending is Policy]
 [play: Return]
 [else]
 [play: First time]
 [end]
+[play: Savings]
+[play: Old glories]
+[set: Run = Playing]
 [game mode]
 [loop]
 [play: Town]
@@ -152,6 +163,7 @@ Every head in the square turns slowly towards you, the shortest dwarf in Mossbot
 [ask: Hero = Pebble]
 [set: Weapon = Rusty axe]
 [set: Armour = Woolly jumper]
+[set: Gold = 25]
 [dwarf: scared]
 — {Hero}: I didn't volunteer, I was just standing here.
 — Mayor Puddifoot: That is how all the great ones start, {Hero}. Here is your grandfather's axe, which we found in a drawer, and twenty-five gold for the shops. Bring back the cheese!
@@ -214,9 +226,72 @@ Every head in the square turns slowly towards you. Again.
 [exit: fizzwick]
 [end]
 
+# Scene: Savings
+
+[if: Savings > 0]
+[if: Run is Finished]
+[enter: barnaby 72%]
+— Barnaby: And your gold from last time, {Hero}! I kept it behind the bar, safe as houses. Well. Half of it. The town council borrowed the other half for festival bunting. They said borrowed. They always say borrowed.
+[play: Savings paid]
+[exit: barnaby]
+[else if: Run is Policy]
+[enter: fizzwick 72%]
+— Fizzwick: Rescue Gnomes Incorporated returns a quarter of your purse, as a gesture of goodwill. The rest went on paperwork. You would not believe the paperwork.
+[play: Savings paid]
+[exit: fizzwick]
+[else]
+[enter: barnaby 72%]
+— Barnaby: Your old purse turned up in the Bucket this morning, {Hero}. Most of it rolled off down the Delve on the way up. This is what's left.
+[play: Savings paid]
+[exit: barnaby]
+[end]
+[end]
+
+# Scene: Savings paid
+
+[add: Gold {Savings}]
+[sound: coin]
+[style: Good]{Savings} more gold[style: none]: {Gold} in all.
+
+# Scene: Old glories
+
+[if: remembered Fungus trophy or remembered Rattlebones trophy or remembered Goldgrin trophy or remembered Well wish or remembered Mushroom feast or remembered Gravel wink]
+[dwarf: happy]
+Some things stay with a hero from one adventure to the next.
+[end]
+[if: remembered Fungus trophy]
+[set: Bag = Mouldy crown]
+[add: MaxHP 10]
+The town museum lends you back King Fungus's mouldy crown, on the strict condition that you wear it. [style: Good]Ten more HP.[style: none]
+[end]
+[if: remembered Rattlebones trophy]
+[set: Bag = Knightly shield]
+[add: ExtraAC]
+[add: AC]
+Sir Rattlebones' shield hangs by your door, where he insists it stays until he wins it back. [style: Good]One more to your armour.[style: none]
+[end]
+[if: remembered Goldgrin trophy]
+[set: Bag = Golden parachute]
+A goblin courier delivers a fresh golden parachute, with a note: "Executive benefits renew yearly." [style: Good]Your next fall is free.[style: none]
+[end]
+[if: remembered Well wish]
+[add: MaxHP 4]
+You are still sturdier from the wishing well. [style: Good]Four more HP.[style: none]
+[end]
+[if: remembered Mushroom feast]
+[add: MaxHP 3]
+Somewhere inside, a humming mushroom still makes you feel enormous. [style: Good]Three more HP.[style: none]
+[end]
+[if: remembered Gravel wink]
+[add: ToHit 1]
+Saint Gravel's wink has not worn off. [style: Good]One better on every swing.[style: none]
+[end]
+[set: HP = {MaxHP}]
+[dwarf: normal]
+
 # Scene: Take back
 
-[if: Keepsake is Lucky socks or Keepsake is Fancy crackers or Keepsake is Union card or Keepsake is Rubber duck or Keepsake is Candle hat or Keepsake is Cat portrait or Keepsake is Knitting kit or Keepsake is Small talk book or Keepsake is Snow globe or Keepsake is Hungry chest or Keepsake is Kazoo or Keepsake is Spare beard or Keepsake is Tiny statue or Keepsake is Umbrella or Keepsake is Gnome whistle or Keepsake is Phrasebook or Keepsake is Cup holder helmet or Keepsake is Mouldy crown or Keepsake is Knightly shield or Keepsake is Golden parachute]
+[if: Keepsake is Lucky socks or Keepsake is Fancy crackers or Keepsake is Union card or Keepsake is Rubber duck or Keepsake is Candle hat or Keepsake is Cat portrait or Keepsake is Knitting kit or Keepsake is Small talk book or Keepsake is Snow globe or Keepsake is Hungry chest or Keepsake is Kazoo or Keepsake is Spare beard or Keepsake is Tiny statue or Keepsake is Umbrella or Keepsake is Gnome whistle or Keepsake is Phrasebook or Keepsake is Cup holder helmet]
 [enter: barnaby 72%]
 [sound: chest]
 [dwarf: happy]
@@ -258,16 +333,6 @@ Every head in the square turns slowly towards you. Again.
 [add: ExtraAC]
 [add: AC]
 — Barnaby: Your helmet with the cup holder. There's still a cup of tea in it. I didn't like to move it. [style: Good]One more to your armour.[style: none]
-[else if: Keepsake is Mouldy crown]
-[add: MaxHP 10]
-[set: HP = {MaxHP}]
-— Barnaby: King Fungus's crown. The mould on it has grown a tiny crown of its own. [style: Good]Ten more HP.[style: none]
-[else if: Keepsake is Knightly shield]
-[add: ExtraAC]
-[add: AC]
-— Barnaby: Sir Rattlebones' shield. He came by asking for it. I said finders keepers. He said that was only fair, that's chivalry. [style: Good]One more to your armour.[style: none]
-[else if: Keepsake is Golden parachute]
-— Barnaby: Your golden parachute. I've been polishing it. It's the most valuable thing in this tavern, the tavern included.
 [else]
 — Barnaby: Your tiny statue of yourself. People kept leaving flowers in front of it. I sold the flowers. Here's the statue.
 [end]
@@ -291,7 +356,6 @@ Every head in the square turns slowly towards you. Again.
 [set: Offered = Helmet]
 [add: BargainsDrawn]
 [end]
-[unset: Keepsake]
 [exit: barnaby]
 [dwarf: normal]
 [end]
@@ -867,6 +931,8 @@ Everything goes dark, and a little bit muddy.
 The Rescue Gnomes are very sorry. They have printed a little card that says so. The cheese stays where it is, and Mossbottom holds its festival around an empty plinth, which some people say is very modern.
 Still, next time you will know where the bombs are. And the dragon will still be there, smug as anything.
 [set: Last ending = Policy]
+[set: Run = Policy]
+[unset: Keepsake]
 [ending: The Gnomes Have a Policy]
 
 # Scene: Bakery
@@ -882,22 +948,26 @@ Somewhere far below, a dragon is sleeping on three hundred years of cheddar. You
 
 # Scene: Leave behind
 
-[if: Bag is Lucky socks or Bag is Spare beard or Bag is Cup holder helmet or Bag is Umbrella or Bag is Mouldy crown or Bag is Knightly shield or Bag is Fancy crackers or Bag is Union card or Bag is Small talk book or Bag is Knitting kit or Bag is Phrasebook or Bag is Gnome whistle or Bag is Golden parachute or Bag is Rubber duck or Bag is Candle hat or Bag is Cat portrait or Bag is Snow globe or Bag is Hungry chest or Bag is Kazoo or Bag is Tiny statue]
-Barnaby offers to keep one thing in his cellar for you. Just in case. Cheeses have a way of rolling off again.
+[set: Run = Finished]
+[unset: Keepsake]
+[if: Bag is Lucky socks or Bag is Spare beard or Bag is Cup holder helmet or Bag is Umbrella or Bag is Fancy crackers or Bag is Union card or Bag is Small talk book or Bag is Knitting kit or Bag is Phrasebook or Bag is Gnome whistle or Bag is Rubber duck or Bag is Candle hat or Bag is Cat portrait or Bag is Snow globe or Bag is Hungry chest or Bag is Kazoo or Bag is Tiny statue]
+Barnaby offers to keep one thing in his cellar for you. Just in case. Cheeses have a way of rolling off again. Crowns, shields and parachutes need no cellar: the town looks after those.
+[loop]
 [choice: Shelf]
-> Something for fighting = Fighting [if: Bag is Lucky socks or Bag is Spare beard or Bag is Cup holder helmet or Bag is Umbrella or Bag is Mouldy crown or Bag is Knightly shield]
-> Something handy = Handy [if: Bag is Fancy crackers or Bag is Union card or Bag is Small talk book or Bag is Knitting kit or Bag is Phrasebook or Bag is Gnome whistle or Bag is Golden parachute]
+> Something for fighting = Fighting [if: Bag is Lucky socks or Bag is Spare beard or Bag is Cup holder helmet or Bag is Umbrella]
+> Something handy = Handy [if: Bag is Fancy crackers or Bag is Union card or Bag is Small talk book or Bag is Knitting kit or Bag is Phrasebook or Bag is Gnome whistle]
 > Something silly = Silly [if: Bag is Rubber duck or Bag is Candle hat or Bag is Cat portrait or Bag is Snow globe or Bag is Hungry chest or Bag is Kazoo or Bag is Tiny statue]
 > Nothing, thank you = Nothing
+[if: Shelf is Nothing]
+[break]
+[end]
 [if: Shelf is Fighting]
 [choice: Keepsake]
-> Your lucky socks = Lucky socks [if: Bag is Lucky socks]
-> Your spare beard = Spare beard [if: Bag is Spare beard]
-> Your helmet with a cup holder = Cup holder helmet [if: Bag is Cup holder helmet]
-> Your dragon-proof umbrella = Umbrella [if: Bag is Umbrella]
-> King Fungus's mouldy crown = Mouldy crown [if: Bag is Mouldy crown]
-> Sir Rattlebones' shield = Knightly shield [if: Bag is Knightly shield]
-> On second thought, nothing = Nothing
+> Your lucky socks: one more on every roll = Lucky socks [if: Bag is Lucky socks]
+> Your spare beard: five more HP = Spare beard [if: Bag is Spare beard]
+> Your helmet with a cup holder: one more to your armour = Cup holder helmet [if: Bag is Cup holder helmet]
+> Your dragon-proof umbrella: less damage from big moves = Umbrella [if: Bag is Umbrella]
+> Back to the shelves = Back
 [else if: Shelf is Handy]
 [choice: Keepsake]
 > Your box of fancy crackers = Fancy crackers [if: Bag is Fancy crackers]
@@ -906,9 +976,8 @@ Barnaby offers to keep one thing in his cellar for you. Just in case. Cheeses ha
 > Your knitting kit = Knitting kit [if: Bag is Knitting kit]
 > Your goblin phrasebook = Phrasebook [if: Bag is Phrasebook]
 > Your gnome whistle = Gnome whistle [if: Bag is Gnome whistle]
-> Your golden parachute = Golden parachute [if: Bag is Golden parachute]
-> On second thought, nothing = Nothing
-[else if: Shelf is Silly]
+> Back to the shelves = Back
+[else]
 [choice: Keepsake]
 > Your rubber duck = Rubber duck [if: Bag is Rubber duck]
 > Your hat with a candle on it = Candle hat [if: Bag is Candle hat]
@@ -917,7 +986,14 @@ Barnaby offers to keep one thing in his cellar for you. Just in case. Cheeses ha
 > Your chest that is definitely not a mimic = Hungry chest [if: Bag is Hungry chest]
 > Your kazoo = Kazoo [if: Bag is Kazoo]
 > Your tiny statue of yourself = Tiny statue [if: Bag is Tiny statue]
-> On second thought, nothing = Nothing
+> Back to the shelves = Back
+[end]
+[if: Keepsake is not Back]
+[break]
+[end]
+[end]
+[if: Keepsake is Back]
+[unset: Keepsake]
 [end]
 [end]
 
@@ -1192,7 +1268,7 @@ The bounty, 100 gold, is pinned to the back of the throne. A second crown rolls 
 [set: Bag = Mouldy crown]
 [add: MaxHP 10]
 [add: HP 10]
-The bounty, 100 gold, is pinned to the back of the throne. Somebody planned ahead. The king's crown rolls to your feet: a bit mouldy, a bit small, and a perfect fit. You feel royally sturdy. [style: Good]100 gold, and ten more HP.[style: none]
+The bounty, 100 gold, is pinned to the back of the throne. Somebody planned ahead. The king's crown rolls to your feet: a bit mouldy, a bit small, and a perfect fit. You feel royally sturdy. [style: Good]100 gold, and ten more HP, in every adventure from now on.[style: none]
 [end]
 [else if: Foe is Rattlebones]
 [set: Claimed = Sir Rattlebones]
@@ -1206,7 +1282,7 @@ In the biggest tomb lies the bounty, 150 gold, and a shield, dented two hundred 
 [set: Bag = Knightly shield]
 [add: ExtraAC]
 [add: AC]
-In the biggest tomb lies the bounty, 150 gold, and Sir Rattlebones' shield, dented two hundred and twelve times. [style: Good]150 gold, and one more to your armour.[style: none]
+In the biggest tomb lies the bounty, 150 gold, and Sir Rattlebones' shield, dented two hundred and twelve times. [style: Good]150 gold, and one more to your armour, in every adventure from now on.[style: none]
 [end]
 [else]
 [set: Claimed = Gristle Goldgrin]
@@ -1218,7 +1294,7 @@ In the biggest tomb lies the bounty, 150 gold, and Sir Rattlebones' shield, dent
 The desk drawer holds the bounty, 250 gold, and a second golden parachute. Company policy: one per executive. Gristle takes it back and gives you a gift voucher for the water cooler instead. You drink three cups of the executive water. It has bubbles. You fill your flask for the road. [style: Good]250 gold, all your HP back, and one more potion.[style: none]
 [else]
 [set: Bag = Golden parachute]
-The desk drawer holds the bounty, 250 gold, and a golden parachute with your name already on it. Goblins think of everything. [style: Good]250 gold. And the next time you fall, the Rescue Gnomes will catch you for free.[style: none]
+The desk drawer holds the bounty, 250 gold, and a golden parachute with your name already on it. Goblins think of everything. [style: Good]250 gold. And the next time you fall, the Rescue Gnomes will catch you for free. A new one comes with every adventure.[style: none]
 [end]
 [end]
 [dwarf: normal]
@@ -2224,12 +2300,19 @@ A wishing well, in a dungeon. Someone has painted on it: [style: Sign]WISHES 10 
 [sound: coin]
 [set: Bonus = 0]
 [play: Roll]
-[if: Total >= 12]
-[add: MaxHP 4]
+[if: Total >= 12 and remembered Well wish]
 [set: HP = {MaxHP}]
+[add: Gold 15]
 [sound: magic]
 [dwarf: happy]
-You roll [style: Roll]{Roll}[style: none]. You wish to be taller. The well thinks about it, and makes you [style: Good]sturdier[style: none] instead: 4 more HP, for good. Close enough.
+You roll [style: Roll]{Roll}[style: none]. You wish to be taller. The well sighs: "You again. One wish per customer." It gives you your coin back with interest, and a splash of cold water to the face. [style: Good]15 gold and all your HP back.[style: none]
+[else if: Total >= 12]
+[add: MaxHP 4]
+[set: HP = {MaxHP}]
+[remember: Well wish]
+[sound: magic]
+[dwarf: happy]
+You roll [style: Roll]{Roll}[style: none]. You wish to be taller. The well thinks about it, and makes you [style: Good]sturdier[style: none] instead: 4 more HP, for good, in every adventure from now on. Close enough.
 [else]
 [dwarf: think]
 You roll [style: Roll]{Roll}[style: none]. A frog pops out of the well, looks at you, says "No," and hops back in.
@@ -2431,11 +2514,16 @@ A ring of spotty mushrooms grows in a perfect circle. Some of them are humming.
 > Leave them to their humming = C
 [if: Odd choice is A]
 [set: Roll = random 1 3]
-[if: Roll is 1]
+[if: Roll is 1 and remembered Mushroom feast]
+[set: HP = {MaxHP}]
+[dwarf: happy]
+You feel enormous again! The mushroom has nothing left to teach you, but it is very filling. [style: Good]All your HP back.[style: none]
+[else if: Roll is 1]
 [add: MaxHP 3]
 [add: HP 3]
+[remember: Mushroom feast]
 [dwarf: happy]
-You feel enormous! You're not. But you are [style: Good]3 HP sturdier[style: none], for good.
+You feel enormous! You're not. But you are [style: Good]3 HP sturdier[style: none], for good, in every adventure from now on.
 [else if: Roll is 2]
 [dwarf: think]
 For a while the colours are very loud and the walls want to tell you about their day. Then it wears off.
@@ -2466,12 +2554,19 @@ A little shrine to Saint Gravel, patron of dwarves, lost buttons and things that
 [sound: heal]
 [dwarf: happy]
 A warm glow, a faint smell of biscuits. [style: Good]Back to {MaxHP} HP[style: none].
+[else if: Odd choice is B and remembered Gravel wink]
+[add: Gold -20]
+[set: Inspired = 3]
+[sound: magic]
+[dwarf: happy]
+The statue winks again. Saints only wink for good once, but he means well: [style: Good]two more on your next three rolls[style: none].
 [else if: Odd choice is B]
 [add: Gold -20]
 [add: ToHit 1]
+[remember: Gravel wink]
 [sound: magic]
 [dwarf: happy]
-The statue winks. You will be [style: Good]one better on every swing[style: none], for good.
+The statue winks. You will be [style: Good]one better on every swing[style: none], for good, in every adventure from now on.
 [else]
 You give Saint Gravel a good polish. He looks very pleased. Under the base you find a button. You keep it, as is traditional.
 [end]

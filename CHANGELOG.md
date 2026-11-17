@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.6.1 — 2026-11-17
+
+### Both applications
+- The map no longer leaves a point on its own when the player goes back a page after picking an
+  option (the left arrow, Backspace, the mouse's back button, or the wheel turned up): the next
+  choice is still joined to the option picked. Only going back to the choice itself undoes the pick.
+
+### Samples
+- **Knee-Deep** keeps more from one playthrough to the next. A boss beaten once gives its reward at
+  the start of every later game: King Fungus's crown (+10 HP), Sir Rattlebones' shield (+1 armour)
+  and a fresh golden parachute. So do the blessings marked "for good": the wishing well's 4 HP, the
+  humming mushroom's 3 HP and Saint Gravel's wink (+1 on every swing); met again, they give
+  something else instead of stacking. Barnaby's cellar now keeps the keepsake until the next ending,
+  so quitting a game half-way no longer loses it, and choosing it offers **Back to the shelves**,
+  each fighting item saying what it does.
+- **Knee-Deep**'s next game starts with some of the last one's gold: half of it after an ending
+  (Barnaby kept it behind the bar; the council borrowed the rest for bunting), a quarter after the
+  Rescue Gnomes' policy or a game left unfinished.
+
 ## 3.6.0 — 2026-11-17
 
 ### Both applications

@@ -1235,8 +1235,9 @@ imports each sample the normal way and compares every page's end.
   WANTED posters on the landings, each with a big move every third turn and its own trick. The shop's
   curiosity shelf offers a new bargain after every trip, from nineteen, mostly cheap and silly. What
   carries over to the next playthrough, through `lasting` values and `[remember]`: one keepsake left
-  in the tavern's cellar, a bigger purse for every cheese returned, the trophies on the tavern wall,
-  and a town and a dragon that remember how the last game ended. Every number a counter, every monster's stats set by one scene
+  in the tavern's cellar (picked from three shelves, with a way back between them), a bigger purse
+  for every cheese returned, half the gold left (a quarter after a game over or a game left unfinished), the bosses' rewards and the trophies on the tavern wall, the blessings
+  of three odd encounters, and a town and a dragon that remember how the last game ended. Every number a counter, every monster's stats set by one scene
   (`[set: FoeName = The Gloop]`), the doors' hints decisions copied from one another
   (`[set: LeftHint = {Hint}]`), the pictures in a glossy cartoon style by
   `scripts/samples/knee_deep_assets.py`.

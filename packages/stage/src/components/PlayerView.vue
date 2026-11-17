@@ -161,6 +161,19 @@ const progress = shallowRef<ProgressData>(emptyProgress(props.story))
 /** The choice shown last, and the option picked there until we know where it leads. */
 let currentPointKey: string | null = null
 let pendingOption: PendingOption | null = null
+/** How many options the playthrough had picked with the one waiting: going back to before it undoes it. */
+let pendingChoiceCount = 0
+
+/**
+ * Going back keeps the option waiting to learn where it leads, unless it went back to its choice or
+ * before: a page stepped back to after the pick still leads to the next choice.
+ */
+function forgetPendingIfUndone() {
+  const choices = runtime.snapshot.choices
+  if (pendingOption !== null && (choices.length < pendingChoiceCount || choices[pendingChoiceCount - 1]?.optionId !== pendingOption.optionId)) {
+    pendingOption = null
+  }
+}
 /** Whether the page shown had been read before: skipping passes only those. */
 let pageWasRead = false
 const isSkipping = ref(false)
@@ -752,6 +765,7 @@ function resume(save: SaveData, fromMapPoint = false) {
   let outcome: RestoreOutcome = 'exact'
   pendingOption = save.arrivedBy ?? null
   const state = stateFromSave(props.story, save)
+  pendingChoiceCount = state.choices.length
   act(() => {
     outcome = runtime.restoreState(fromMapPoint ? withLasting(props.story, state, progress.value.lasting ?? { decisions: {}, counters: {} }) : state)
   })
@@ -865,9 +879,11 @@ function goBackTo(stopIndex: number) {
   }
   openPanel.value = 'none'
   errorMessage.value = null
-  pendingOption = null
   forgetTitleCard()
-  act(() => runtime.backTo(stopIndex))
+  act(() => {
+    runtime.backTo(stopIndex)
+    forgetPendingIfUndone()
+  })
   showWholePage()
   replayVoice()
 }
@@ -991,9 +1007,11 @@ function goBack() {
     return
   }
   errorMessage.value = null
-  pendingOption = null
   forgetTitleCard()
-  act(() => runtime.back())
+  act(() => {
+    runtime.back()
+    forgetPendingIfUndone()
+  })
   showWholePage()
   replayVoice()
 }
@@ -1088,6 +1106,7 @@ function markCell(number: number) {
 function choose(optionId: string) {
   if (makesMapPoints(runtime.snapshot.stage)) {
     pendingOption = currentPointKey === null ? null : { pointKey: currentPointKey, optionId }
+    pendingChoiceCount = runtime.snapshot.choices.length + 1
     if (pendingOption !== null) {
       progress.value = recordOptionPicked(progress.value, pendingOption)
       void props.saveStore.writeProgress(props.story.project.id, progress.value)
