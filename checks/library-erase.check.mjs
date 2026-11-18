@@ -56,7 +56,7 @@ export default async function check(page, { url, serve }) {
   page.check('played again: a save to continue, and progress', [(await buttons()).includes('Continue'), await hasProgress()], [true, true])
   await eraseOne('Its progress')
   page.check('erasing the progress of one game keeps its saves', [await page.statusText(), (await buttons()).includes('Continue'), await hasProgress()],
-    ['The progress of Erasable was erased: its endings, map, gallery, pages read and what it remembers.', true, false])
+    ['The progress of Erasable was erased: its endings, map, gallery, pages read and memories.', true, false])
   await eraseOne('Its saves')
   page.check('erasing its saves, it starts afresh, still installed', [await page.statusText(), (await buttons()).includes('Continue'), await page.evaluate(`document.querySelectorAll('.game').length`)],
     ['The saves of Erasable were erased.', false, 1])

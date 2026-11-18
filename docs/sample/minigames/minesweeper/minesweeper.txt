@@ -272,7 +272,7 @@ Boards cleared, in all: {Cleared}.
 [end]
 [end]
 [set: Shown Cell = boom]
-Boom! That one was a mine. Pick any cell to look at the board, then choose what next.
+Boom! That one was a mine. Look the board over, then pick any cell to choose what comes next.
 
 # Scene: Best time
 [if: Level is Beginner]

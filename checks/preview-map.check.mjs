@@ -34,7 +34,7 @@ export default async function check(page, { url }) {
   page.check('every path, explored from the story: both options taken, though one was played', [
     await page.evaluate(`document.querySelector('.map-screen .subtitle').textContent`),
     await page.evaluate(`[...document.querySelectorAll('.map-screen .options li')].map(option => option.textContent.trim())`),
-  ], ['every path, explored from the story', ['› Left', '› Right']])
+  ], ['every path the story allows', ['› Left', '› Right']])
   await page.clickButton('The paths played', '.switch-button')
   await pause(600)
   page.check('and back to the paths played', await page.evaluate(`[...document.querySelectorAll('.map-screen .options li')].map(option => option.textContent.trim())`), ['› Left', '? Right'])

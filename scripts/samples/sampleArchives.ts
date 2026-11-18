@@ -26,7 +26,7 @@ export const SAMPLES: readonly SampleSource[] = [
   { id: 'minesweeper', folder: 'minigames/minesweeper', name: 'Minesweeper', description: 'A minigame: a grid with hidden mines, numbers to read and flags to plant.' },
   { id: 'pairs', folder: 'minigames/pairs', name: 'Pairs', description: 'A minigame: sixteen tiles face down, eight pairs of animals to find, and a count of the turns it took.' },
   { id: 'rock-paper-scissors', folder: 'minigames/rock-paper-scissors', name: 'Rock, paper, scissors', description: 'A minigame: the oldest duel there is, played against a computer that may or may not be cheating.' },
-  { id: 'virtual-pet', folder: 'minigames/virtual-pet', name: 'Virtual pet', description: 'A minigame: Pip needs feeding, playing with, petting and sleep, and notices the time of day you come to visit.' },
+  { id: 'virtual-pet', folder: 'minigames/virtual-pet', name: 'Virtual pet', description: 'A minigame: Pip needs feeding, play, petting and sleep, and notices the time of day you come to visit.' },
 ]
 
 /** A sample as the shelves hold it. */

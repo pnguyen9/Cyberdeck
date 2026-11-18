@@ -68,8 +68,8 @@ export default async function check(page, { url }) {
   page.check('what looks forgotten is listed first', await page.evaluate(`[...document.querySelectorAll('.warnings li')].map(item => item.className + ' ' + (${TEXT_OF})(item))`), [
     'warning Decision Route tested, but no choice or [set] gives it a value: those conditions never hold. Give it one, or check how the tests spell it.',
     'warning Decision Clues Key is tested, but no choice or [set] gives it: those conditions never hold. Add an option with that value, or check its spelling.',
-    'notice Decision Clues Letter is given, but nothing tests it, nor an [else] after a test of this decision: it changes nothing yet. Test it where it should matter; a value left from an option renamed since goes by itself once nothing gives it.',
-    'notice Decision Answer No is given, but nothing tests it, nor an [else] after a test of this decision: it changes nothing yet. Test it where it should matter; a value left from an option renamed since goes by itself once nothing gives it.',
+    'notice Decision Clues Letter is given, but nothing tests it, not even an [else] after a test of this decision, so it changes nothing yet. Test it where it should matter. A value left over from an option since renamed goes away by itself once nothing gives it.',
+    'notice Decision Answer No is given, but nothing tests it, not even an [else] after a test of this decision, so it changes nothing yet. Test it where it should matter. A value left over from an option since renamed goes away by itself once nothing gives it.',
     'notice Memory The letter remembered, but never tested: it changes nothing yet. Test it with [if: remembered …] in a later playthrough.',
   ])
   await page.screenshot('index')

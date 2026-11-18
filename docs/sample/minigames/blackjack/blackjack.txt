@@ -51,16 +51,16 @@
 [music: lounge]
 [if: Money < 1]
 [set: Money = 1000.00]
-The house slides a fresh stack of chips your way: $1,000, on the house.
+The dealer slides a fresh stack of chips your way: $1,000, on the house.
 [end]
 Welcome to the table. You have {Money} dollars to play with; the journal (J) keeps the count.
 [choice: Rules]
 > Read the rules first = Read
 > I know how to play = Skip
 [if: Rules is Read]
-Get closer to 21 than the dealer, without going over. Number cards count their number, jacks, queens and kings 10, an ace 11, or 1 when 11 would take you over.
+Get closer to 21 than the dealer, without going over. Number cards count their number; jacks, queens and kings 10; an ace 11, or 1 when 11 would take you over.
 You and the dealer get two cards each; one of the dealer's stays face down. Hit to take a card, stand to keep your hand. Double down on your first two cards: double the bet, take exactly one more card. Five cards without going over 21 win at once: a five-card Charlie.
-The dealer draws until 17 or more. Beat the dealer and your bet is paid back twice over; an ace and a ten-card at once is a blackjack, paid 3 to 2. A tie gives your bet back.
+The dealer draws until 17 or more. Beat the dealer and you win as much as you bet; an ace and a ten-value card as your first two cards make a blackjack, paid 3 to 2. A tie gives your bet back.
 [end]
 [choice: Shoe]
 > One deck = One

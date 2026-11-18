@@ -43,6 +43,6 @@ export default async function check(page, { url, serve }) {
 
   await page.setFiles('.load-button .file-input', [file])
   await pause(1000)
-  page.check('loading the file says so', await page.statusText(), 'The progress of Homeward was loaded, joined to what you had reached.')
+  page.check('loading the file says so', await page.statusText(), 'The progress of Homeward was loaded and merged with what you had already reached.')
   page.check('and the ending reached is back', (await card())?.endsWith('endings reached: 1 of 1'), true)
 }

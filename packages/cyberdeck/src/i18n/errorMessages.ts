@@ -16,9 +16,9 @@ export type ErrorMessages = typeof en
 const fr: ErrorMessages = {
   projectWithoutName: 'Un projet a besoin d’un nom',
   coverNotAnImage: fileName => `${fileName} : une couverture doit être une image PNG, JPEG, WebP, AVIF, GIF ou SVG`,
-  zipUnreadable: fileName => `${fileName} n’a pas pu être ouvert comme un zip\u00a0: décompressez-le et déposez plutôt ses fichiers`,
+  zipUnreadable: fileName => `${fileName} n’a pas pu être ouvert comme archive zip\u00a0: décompressez-le, puis déposez ses fichiers`,
   cssTooLong: maximumLength => `Le CSS est trop long : ${maximumLength.toLocaleString('fr')} caractères au plus.`,
-  storageRefused: 'Le navigateur refuse de stocker les projets',
+  storageRefused: 'Le navigateur a refusé d’enregistrer les projets',
   saveFailed: 'Le navigateur n’a pas pu enregistrer le projet',
   fileMissing: assetId => `Le fichier ${assetId} est introuvable`,
 }

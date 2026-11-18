@@ -41,7 +41,7 @@ export interface SecureAppOptions {
 /** The system's own dialog before closing on changes not saved, in the system's language. */
 const UNSAVED_CHANGES_DIALOG = {
   en: { keepEditing: 'Keep editing', close: 'Close without saving', message: 'Changes are not saved', detail: 'Closing now loses them.' },
-  fr: { keepEditing: 'Continuer la modification', close: 'Fermer sans enregistrer', message: 'Des modifications ne sont pas enregistrées', detail: 'Fermer maintenant les perd.' },
+  fr: { keepEditing: 'Continuer à modifier', close: 'Fermer sans enregistrer', message: 'Certaines modifications ne sont pas enregistrées', detail: 'Si vous fermez maintenant, elles seront perdues.' },
 }
 
 const CONTENT_SECURITY_POLICY = [

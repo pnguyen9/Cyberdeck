@@ -200,7 +200,7 @@ useUnsavedChanges(() => hasChanges.value, ask)
     <h2 class="section-title">{{ text.cssOfStyles }}</h2>
     <p class="muted">
       {{ text.cssHelpStart }} <code>.ghost</code> {{ text.cssHelpDraws }} <code>[style: ghost]</code>{{ text.cssHelpClass }}
-      <code>.whisper</code> {{ text.cssHelpEnd }}
+      <code>{{ text.cssExampleClass }}</code> {{ text.cssHelpEnd }}
     </p>
     <textarea
       v-model="cssDraft"

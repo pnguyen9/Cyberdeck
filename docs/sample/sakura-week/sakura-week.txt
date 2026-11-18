@@ -254,7 +254,7 @@ The quiz is a blur, but the margin now holds an excellent little cat.
 [end]
 [end]
 [sound: bell]
-When the last bell rings, the whole class groans in relief.
+When the last bell rings, the whole class sighs with relief.
 The afternoon is yours again.
 [play: Afternoon]
 [transition: fade]
@@ -262,7 +262,7 @@ The afternoon is yours again.
 [tint: night]
 [music: dusk]
 Dinner is curry, which is the correct answer to every question.
-— Mom: So, how is the festival preparation going?
+— Mom: So, how are the festival preparations going?
 [if: MikaBond >= 1]
 You tell her about Mika's banner and its spelling troubles. Mom laughs until she needs a napkin.
 [end]
@@ -430,7 +430,7 @@ Its edge is covered in petals of every possible colour, because nobody could dec
 [else]
 — Mika: There you are! The banner is up! It says all the right words, mostly!
 [mika: shy]
-— Mika: I wish you had seen the painting. It was a lot more dramatic.
+— Mika: I wish you'd been there for the painting. It was a lot more dramatic.
 [end]
 [exit: mika]
 Class 2-B's goldfish stall is already surrounded by tiny hands and screaming paper nets.
@@ -462,7 +462,7 @@ At the edge of the grounds, a young cherry tree is hung with paper cranes. A tal
 He looks perfectly content.
 [end]
 [if: HayashiBond >= 2]
-Hayashi's dango stall has a queue longer than the stalls on either side.
+Hayashi's dango stall has a longer queue than the stalls on either side.
 [enter: hayashi center smile]
 — Hayashi: Kid! Don't just stand there. Quality control.
 You receive the first skewer of the day, still warm.
@@ -549,7 +549,7 @@ The first firework blooms over the town, gold and green and then silver, and the
 [enter: sota center smile]
 The library is empty and glowing, and Sota leads you up a narrow staircase to a window you never knew existed.
 — Sota: The best view in town. I don't tell anyone. The books would gossip.
-Below, the festival glitters. Above, the first firework opens, reflected in the glass of his round glasses.
+Below, the festival glitters. Above, the first firework opens, reflected in his round glasses.
 [sound: firework]
 — Sota: One thousand and one. Do you know what the extra one is for?
 — {Hero}: The duck?
@@ -566,8 +566,14 @@ The stall is closed for the night. Hayashi has pulled out two stools and a small
 — Hayashi: Sit. You've worked hard. Don't argue, I have candy.
 [sound: firework]
 [illustration: Porch]
-Behind the shop, on the little wooden porch, you watch the fireworks over the rooftops, a plate of dango between you and the tea going warm in your hands.
+Behind the shop, on the little wooden porch, you watch the fireworks over the rooftops, a plate of dango between you, and the tea warm in your hands.
+[if: Dango is Light]
 — Hayashi: Fifty years I've made these. First time someone told me they were too sweet.
+[else if: Dango is Sweet]
+— Hayashi: Fifty years I've made these. First time anyone but my grandson asked for them sweeter.
+[else]
+— Hayashi: Fifty years I've made these. First time someone called them perfect and I believed it.
+[end]
 — {Hero}: Was that bad?
 — Hayashi: Hmph. Best thing anyone's told me in years. Drink your tea.
 [illustration: none]
@@ -594,7 +600,7 @@ The cat purrs. The river glitters. The night goes on forever, just a little bit.
 You find yourselves on the hill, somehow, all of you, as if the town had been planning it all along.
 — Mika: Okay, who brought snacks?
 — Hayashi: Me. Obviously. Take one and stop asking.
-— Sota: The best view, as promised. Please keep your voice down. The fireworks are shy.
+— Sota: The best view, as promised. Please keep your voices down. The fireworks are shy.
 [enter: mochi center happy]
 [sound: meow]
 Mochi hops onto your shoulder, uninvited and completely welcome.
@@ -602,7 +608,7 @@ Mochi hops onto your shoulder, uninvited and completely welcome.
 [illustration: Fireworks]
 The sky explodes with light, and everyone is quiet, and everyone is smiling.
 — Mika: This is the best week ever.
-— {Hero}: It really was.
+— {Hero}: It really is.
 [illustration: none]
 [ending: Everyone Together]
 [else]
@@ -681,7 +687,7 @@ You look at the sky. It is turning gold at the edges, and your stomach has opini
 [sound: door]
 [if: SotaBond is 0]
 The library is so quiet you can hear the dust settling.
-Sunlight slants through tall windows, and at the long table by the window, a tall third-year in round glasses is folding a tiny square of paper with the focus of a surgeon.
+Sunlight slants through high windows, and at the long table by the window, a tall third-year in round glasses is folding a tiny square of paper with the focus of a surgeon.
 [enter: sota center normal]
 He doesn't look up. Next to his elbow sits a shoebox, and the box is full of paper cranes.
 — Sota: Please keep your voice down. The books are sleeping.
@@ -697,7 +703,7 @@ You fold. You unfold. You fold again. What emerges looks less like a crane and m
 — Sota: ...It has character.
 — {Hero}: It's a duck.
 [sota: smile]
-— Sota: Every wish needs a ride, even a duck. I'll hang it at the very end.
+— Sota: Every wish needs a ride, even if it's a duck. I'll hang it at the very end.
 [add: SotaBond]
 [else if: SotaBond is 1]
 Sota is already at the window table, folding. He nods at the empty chair without a word.
@@ -708,7 +714,7 @@ Folding is easier with someone patient across the table. He talks you through ev
 — {Hero}: Why a thousand cranes?
 [sota: smile]
 — Sota: My grandmother says a crane carries a wish for a thousand years. I figure a thousand cranes can carry the whole town's wishes.
-— Sota: Everyone writes one on a slip of paper, and we tie it to the Wishing Tree. What would you write?
+— Sota: Everyone writes one on a slip of paper, and we tie them to the Wishing Tree. What would you write?
 [choice: Wish]
 > A good week = Week
 > To be better at folding = Folding
@@ -731,7 +737,7 @@ The window table is covered in paper now: stacks of colour, strings of finished 
 — Sota: Seven hundred and eleven. You're a good influence. Last week I was at four hundred.
 — {Hero}: What can I do?
 — Sota: Hold this string. Don't breathe. Thank you.
-You thread cranes onto a long line of thread, one after another, red and gold and green and white.
+You thread cranes onto the long string, one after another, red and gold and green and white.
 [illustration: Cranes]
 They hang in the window light like a slow, silent waterfall of colour.
 [sota: shy]
@@ -884,7 +890,7 @@ Before you can protest, she drops a warm, sticky dango skewer into your palm.
 [else if: HayashiBond is 1]
 The bell above the door jingles, and Hayashi looks up from a tray of dough.
 [enter: hayashi center normal]
-— Hayashi: You again. Wash your hands. I need someone to skewer.
+— Hayashi: You again. Wash your hands. I need someone to do the skewering.
 You wash. You skewer. You discover that three dango per stick is harder than it looks.
 [hayashi: smile]
 — Hayashi: Not bad. Slow, but not bad. My grandson does six at a time and drops four.
@@ -954,7 +960,7 @@ You sit on the grass a polite distance away. Neither of you says anything. It is
 Mochi is on the same stone, sunning her belly, and does not move as you approach.
 [enter: mochi center normal]
 [if: HayashiBond >= 1]
-You take out the little paper twist of dried fish Hayashi pressed into your hand on the way out.
+You take out the little paper twist of dried fish Hayashi pressed into your hand on your way out of the shop.
 [mochi: happy]
 [sound: meow]
 Mochi's whole body shifts. She stretches, trots to the edge of the wall, and eats from your palm with astonishing delicacy.

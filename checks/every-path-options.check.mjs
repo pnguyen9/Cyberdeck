@@ -29,7 +29,7 @@ export default async function check(page, { url }) {
   await page.evaluate(`[...document.querySelectorAll('.viewport .quick-button')].find(button => button.textContent.trim() === 'Map').click()`)
   await page.waitFor('.map-screen .node')
   await pause(600)
-  page.check('the map from the first page, on every path', await page.evaluate(`document.querySelector('.map-screen .subtitle').textContent`), 'every path, explored from the story')
+  page.check('the map from the first page, on every path', await page.evaluate(`document.querySelector('.map-screen .subtitle').textContent`), 'every path the story allows')
   await page.clickButton('← Preview', '.close-button')
   await page.waitFor('.viewport .text')
   await pause(600)

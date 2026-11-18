@@ -524,9 +524,9 @@ one per language, of the same shape: another language is one more table each.
 | `Marie: Hello.` | Narration, with a warning: dialogue always starts with a dash and a name. |
 | `— Hello.` | Narration, dash kept, with a warning: dialogue always names who speaks. |
 | `# Chapter 1 — The Classroom` | Starts a chapter. |
-| `[only if: Route is Marie]` right under a chapter heading | The chapter is played only when this holds, and passed by otherwise: the chapters of a route. |
+| `[only if: Route is Marie]` right under a chapter heading | The chapter is played only when this holds, and skipped otherwise: the chapters of a route. |
 | `# Scene: Caught`, then `[play: Caught]` anywhere | A scene: pages of no chapter, played where `[play]` names it, after which the story goes on, unless the scene ended it. Scenes may play scenes, never themselves. A scene imported with the name of one of the project replaces it. |
-| `[import: story]` on the first line, `[import: story fr]` | Declares what the text is: `story`, `chapter` or `pages`; then, if wished, the language it is written in, as a standard code (`es`, `pt-BR`), which cuts its pages and says where it goes in a story of several languages. An unknown code is reported. |
+| `[import: story]` on the first line, `[import: story fr]` | Declares what the text is: `story`, `chapter` or `pages`; then, if wished, the language it is written in, as a standard code (`es`, `pt-BR`), which decides how its pages are cut and where it goes in a story of several languages. An unknown code is reported. |
 | `[bg: rooftop]` alone on a line, or before the text | Applies when the next page appears. |
 | `Wait, you mean [marie: surprised] the letter?` | Applies when the text reaches that point. |
 | `[bg: rooftop]` (or `background`), `[transition: fade]` | Changes the background; a transition applies to the next background change: `fade` (cross-fade), `black` or `white` (through that colour), with a duration if wished (`[transition: black 1.5s]`, 0.8 s by default). Without one, the background changes at once. |

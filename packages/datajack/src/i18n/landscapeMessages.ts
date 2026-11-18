@@ -9,8 +9,8 @@ const en = {
 type LandscapeMessages = typeof en
 
 const fr: LandscapeMessages = {
-  turn: 'Tournez votre appareil : le jeu se joue à l’horizontale.',
-  fullscreenOffer: 'Le jeu se joue mieux en plein écran.',
+  turn: 'Tournez votre appareil : le jeu se joue en mode paysage.',
+  fullscreenOffer: 'Le jeu est plus agréable en plein écran.',
   playFullscreen: 'Jouer en plein écran',
   notNow: 'Pas maintenant',
 }

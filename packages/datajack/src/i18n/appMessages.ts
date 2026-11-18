@@ -11,7 +11,7 @@ type AppMessages = typeof en
 const fr: AppMessages = {
   library: 'Bibliothèque',
   game: 'Jeu',
-  keepSafe: 'Gardez l’archive de chaque jeu, et exportez votre progression et vos sauvegardes dans des fichiers («\u00a0Progression dans un fichier\u00a0», et «\u00a0Enregistrer dans un fichier\u00a0» dans les sauvegardes d’un jeu).',
+  keepSafe: 'Conservez l’archive de chaque jeu, et exportez votre progression et vos sauvegardes dans des fichiers (« Exporter la progression » dans la bibliothèque, et « Enregistrer dans un fichier » dans les sauvegardes d’un jeu).',
 }
 
 export const appMessages = { en, fr }

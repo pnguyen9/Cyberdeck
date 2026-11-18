@@ -42,7 +42,7 @@ export default async function check(page, { url }) {
   const chapterId = await page.evaluate(`[...document.querySelectorAll('.chapter-picker option')].find(option => option.textContent === "Jules's route").value`)
   await page.setValue('.chapter-picker select', chapterId, 'change')
   await pause(300)
-  page.check('so does the storyboard', await page.evaluate(`document.querySelector('.storyboard .only-if')?.textContent.trim()`), 'Played only if Route is Jules; passed by otherwise.')
+  page.check('so does the storyboard', await page.evaluate(`document.querySelector('.storyboard .only-if')?.textContent.trim()`), 'Played only if Route is Jules; skipped otherwise.')
 
   await page.clickButton('Preview ▶', '.button')
   await page.waitFor('.viewport')

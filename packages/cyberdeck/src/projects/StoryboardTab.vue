@@ -1225,6 +1225,8 @@ const branchPageCount = (lane: BlockElement['branches'][number], block: BlockEle
             <p class="muted">{{ text.marker(text.markerKinds[markerKindOf(focusedEntry.node)], focusedEntry.text) }}</p>
             <button class="button small" @click="openStoryboard(focusedEntry.node.sceneId)">{{ text.openScene }}</button>
           </template>
+          <!-- An unset says what it takes away, `Clues: no more Key`: its kind would only say it twice. -->
+          <p v-else-if="focusedEntry?.type === 'marker' && focusedEntry.node.type === 'unset'" class="muted">{{ focusedEntry.text }}</p>
           <p v-else-if="focusedEntry?.type === 'marker'" class="muted">{{ text.marker(text.markerKinds[markerKindOf(focusedEntry.node)], focusedEntry.text) }}</p>
           <template v-else-if="focusedBlock?.node.type === 'loop'">
             <h3>{{ text.loopHeading(focusedBlock.numbers, pagesWord(focusedBlock.pageCount)) }}</h3>

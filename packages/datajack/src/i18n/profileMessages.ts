@@ -40,13 +40,13 @@ const fr: ProfileMessages = {
   remove: 'Supprimer',
   confirmRemove: profileName => `Supprimer ${profileName} ?`,
   savesStayIn: folder => `Ses sauvegardes restent dans ${folder}.`,
-  savesDeleted: 'Ses sauvegardes sont supprimées avec lui.',
+  savesDeleted: 'Ses sauvegardes seront supprimées avec ce profil.',
   changeSaveFolder: 'Changer le dossier de sauvegarde',
   createYourProfile: 'Créez votre profil',
   newProfile: 'Nouveau profil',
   profileKeepsSaves: 'Votre profil conserve vos sauvegardes',
   inFolderOfYourChoice: ' dans le dossier de votre choix',
-  opensDirectly: 'Datajack l’ouvrira directement la prochaine fois.',
+  opensDirectly: 'La prochaine fois, Datajack s’ouvrira directement sur ce profil.',
   name: 'Nom',
   savesGoTo: 'Dossier des sauvegardes',
   change: 'Changer…',
@@ -58,9 +58,9 @@ const fr: ProfileMessages = {
     ? 'Une sauvegarde s’y trouvait déjà : c’est elle qui a été conservée.'
     : `${count} sauvegardes s’y trouvaient déjà : ce sont elles qui ont été conservées.`,
   removed: profileName => `Le profil ${profileName} a été supprimé.`,
-  nameLength: maximumLength => `Un nom de profil doit compter de 1 à ${maximumLength} caractères.`,
+  nameLength: maximumLength => `Un nom de profil doit contenir entre 1 et ${maximumLength} caractères.`,
   nameTaken: name => `Un autre profil s’appelle déjà ${name}.`,
-  folderTaken: 'Un autre profil sauvegarde déjà dans ce dossier.',
+  folderTaken: 'Ce dossier est déjà utilisé par un autre profil.',
 }
 
 export const profileMessages = { en, fr }

@@ -24,7 +24,7 @@ export default async function check(page, { url }) {
     await pause(300)
   }
   await preview()
-  page.check('the State panel offers its values to change', await page.evaluate(`document.querySelector('.state-panel .hint')?.textContent.trim()`), 'Change any of these to try the story from here: what follows reads the new values.')
+  page.check('the State panel offers its values to change', await page.evaluate(`document.querySelector('.state-panel .hint')?.textContent.trim()`), 'Change any of these to try the story from here: the rest of the story uses the new values.')
   await page.setValue('.state-panel input[aria-label="Coins"]', '9')
   await page.evaluate(`document.querySelector('.state-panel input[aria-label="Coins"]').dispatchEvent(new Event('change'))`)
   await pause(200)

@@ -54,7 +54,7 @@ const fr: AboutMessages = {
     installed: 'Installée depuis le navigateur.',
   },
   data: {
-    desktop: 'Vos données sont rangées dans des dossiers sur cet ordinateur.',
+    desktop: 'Vos données sont enregistrées dans des dossiers sur cet ordinateur.',
     files: 'Vos données restent dans ce navigateur, sur cet ordinateur.',
     web: 'Vos données restent dans ce navigateur, sur cet appareil.',
     installed: 'Vos données restent dans ce navigateur, sur cet appareil.',
@@ -62,12 +62,12 @@ const fr: AboutMessages = {
   install: {
     intro: 'Vous pouvez l’installer comme une application, dans sa propre fenêtre\u00a0:',
     steps: [
-      'Chrome ou Edge\u00a0: le bouton d’installation au bout de la barre d’adresse, ou Installer dans le menu du navigateur.',
+      'Chrome ou Edge : le bouton d’installation à droite de la barre d’adresse, ou la commande Installer du menu du navigateur.',
       'Android\u00a0: Ajouter à l’écran d’accueil, dans le menu du navigateur.',
       'iPhone ou iPad\u00a0: Partager, puis Sur l’écran d’accueil.',
-      'Firefox sur ordinateur ne sait pas installer les pages web.',
+      'Firefox sur ordinateur ne permet pas d’installer les pages web.',
     ],
-    note: 'Installez-la depuis une fenêtre normale, pas une fenêtre privée. Une fenêtre privée oublie ses données à sa fermeture, et elles ne passent pas dans l’application.',
+    note: 'Installez l’application depuis une fenêtre normale, et non depuis une fenêtre de navigation privée : celle-ci efface ses données à la fermeture, et ces données ne sont pas transmises à l’application.',
   },
   license: 'Domaine public, sous l’',
   unlicense: 'Unlicense',
@@ -76,10 +76,10 @@ const fr: AboutMessages = {
   repository: 'Code source et téléchargements (GitHub)',
   newTab: '(nouvel onglet)',
   close: 'Fermer',
-  mayErase: 'Votre navigateur peut effacer les données de cette application. Safari le fait au bout d’environ sept jours sans visite, sauf si elle est installée.',
+  mayErase: 'Votre navigateur peut effacer les données de cette application. Safari les efface après environ sept jours sans utilisation, sauf si l’application est installée.',
   newVersion: name => `Une nouvelle version de ${name} est en ligne.`,
   reload: 'Recharger',
-  sampleWithNewVersion: (sample, name) => `${sample} vient désormais avec la nouvelle version de ${name}\u00a0: rechargez, puis réessayez.`,
+  sampleWithNewVersion: (sample, name) => `${sample} fait désormais partie de la nouvelle version de ${name} : rechargez l’application, puis réessayez.`,
   later: 'Plus tard',
 }
 

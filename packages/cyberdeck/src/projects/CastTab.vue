@@ -95,8 +95,8 @@ async function addFiles(fileList: FileList | null | undefined) {
     const unknownKind = unused('unknownKind')
     report = [
       used.length === 0 ? '' : text.value.filesAdded(used.length, used.map(match => `${match.fileName} → ${match.entry}`).join(', ')),
-      noEntry.length === 0 ? '' : text.value.filesUnused(noEntry.join(', ')),
-      unknownKind.length === 0 ? '' : text.value.filesNotPlayed(unknownKind.join(', ')),
+      noEntry.length === 0 ? '' : text.value.filesUnused(noEntry),
+      unknownKind.length === 0 ? '' : text.value.filesNotPlayed(unknownKind),
     ].filter(sentence => sentence !== '').join(' ')
   }, () => report)
 }

@@ -42,7 +42,7 @@
 [music: battle]
 Two creatures, one arena, and a crowd that has paid good money to see somebody fall over.
 Each turn, strike, use your creature's special move, guard against the next hit, or drink a potion.
-Special moves follow the elements: fire beats leaf, leaf beats water, water beats fire. They hit hard what they beat, and barely sting what beats them. Press J for your record.
+Special moves follow the elements: fire beats leaf, leaf beats water, water beats fire. They strike hard at what they beat, and barely sting what beats them. Press J for your record.
 [game mode]
 [loop]
 [choice: Mode]

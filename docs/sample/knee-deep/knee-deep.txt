@@ -158,7 +158,7 @@ Or it was. Overnight, the Great Cheese Wheel, three hundred years old, as wide a
 — Mayor Puddifoot: Citizens! Our cheese has been cheese-napped! The tracks lead into the Delve, and the Delve, as everyone knows, is full of tunnels far too small for any reasonable person.
 — Mayor Puddifoot: We need someone brave. Someone strong. Someone, and I say this with the deepest respect, knee-high.
 [enter: dwarf 25% fade]
-Every head in the square turns slowly towards you, the shortest dwarf in Mossbottom, who had only come out to buy bread.
+Every head in the square turns slowly towards you, the shortest dwarf in Mossbottom, who only came out to buy bread.
 — Mayor Puddifoot: Splendid! A volunteer! What was your name again, small hero?
 [ask: Hero = Pebble]
 [set: Weapon = Rusty axe]
@@ -172,7 +172,7 @@ Every head in the square turns slowly towards you, the shortest dwarf in Mossbot
 — Mayor Puddifoot: Once, on a stubborn turnip. The turnip won. Off you go!
 [exit: mayor]
 [dwarf: normal]
-How to play: each room down there has doors. Read what lies behind them, pick one, and deal with what you find. Fights are decided by rolling a twenty-sided die: roll high. If things go badly, the Rescue Gnomes will fetch you, for a fee. The journal (J) shows what you carry.
+How to play: each room down there has doors, each with a clue to what lies behind it. Pick one, and deal with what you find. Fights are decided by rolling a twenty-sided die: roll high. If things go badly, the Rescue Gnomes will fetch you, for a fee. The journal (J) shows what you carry.
 
 # Scene: Return
 
@@ -190,11 +190,11 @@ How to play: each room down there has doors. Read what lies behind them, pick on
 [else if: Last ending is Tea]
 — Mayor Puddifoot: Citizens! Somebody missed a Tuesday. ONE Tuesday! And now a dragon is holding our cheese hostage until somebody comes for tea.
 [else if: Last ending is Bribe]
-— Mayor Puddifoot: Citizens! The very big rat has struck again! It has eaten our brand new three-hundred-year-old cheese, all of it, in one night, and left dragon footprints. A clever rat.
+— Mayor Puddifoot: Citizens! The very big rat has struck again! It has eaten our brand-new three-hundred-year-old cheese, all of it, in one night, and left dragon footprints. A clever rat.
 [else if: Last ending is Bakery]
 — Mayor Puddifoot: Citizens! The new Great Cheese Wheel has rolled down the Delve! Our baker must be thrilled: still no cheese in the cheese straws, and now none anywhere else either.
 [else]
-— Mayor Puddifoot: Citizens! The cheese is still down there! The Rescue Gnomes have printed you a brand new loyalty card, and want everyone to know it was nothing personal. It was policy.
+— Mayor Puddifoot: Citizens! The cheese is still down there! The Rescue Gnomes have printed you a brand-new loyalty card, and want everyone to know it was nothing personal. It was policy.
 [end]
 [enter: dwarf 25% fade]
 [if: Cheeses returned >= 3]
@@ -705,7 +705,7 @@ Saint Gravel's wink has not worn off. [style: Good]One better on every swing.[st
 You eat it on the spot. It is a very good sandwich. {HP} of {MaxHP} HP.
 [else if: Bargain is Short rope]
 [add: Ropes]
-— Grizelda: It's a little short, but it's never once been needed to be long. It'll get you home. Mostly.
+— Grizelda: It's a little short, but it's never once needed to be long. It'll get you home. Mostly.
 [else if: Bargain is Umbrella]
 [set: Bag = Umbrella]
 — Grizelda: Dragon-proof, it says on the handle. I've never tested it. Nobody who tested it has come back to complain. [style: Good]Five less damage from fire, spores and other big moves.[style: none]
@@ -1765,7 +1765,7 @@ Sir Rattlebones falls into a heap of bones. Then the heap twitches. The bones ro
 [if: Meal is Quickstout and Action is Swing and Roll >= 16 or Meal is Quickstout and Action is Heave and Roll >= 16]
 [sound: run]
 [dwarf: happy]
-Your feet remember the Quickstout. Before {FoeName} has worked out what happened, you're already winding up again. [style: Good]You act again.[style: none]
+Your feet remember the Quickstout. {FoeName} is still working out what happened, and you're already winding up again. [style: Good]You act again.[style: none]
 [else]
 [play: Foe turn]
 [end]
@@ -2043,7 +2043,7 @@ You roll [style: Roll]{Roll}[style: none]. You hum the low part. The bats are so
 [else if: Foe is Clerk]
 You roll [style: Roll]{Roll}[style: none]. You fill in form 27B in triplicate. The accountant is so moved that it stamps it APPROVED and lets you through.
 [else if: Foe is Boney]
-You roll [style: Roll]{Roll}[style: none]. You ask Boney what it does for fun. It has not been asked that in three hundred years. It goes off to think about it.
+You roll [style: Roll]{Roll}[style: none]. You ask Boney what he does for fun. He has not been asked that in three hundred years. He goes off to think about it.
 [else if: Foe is Ghost]
 You roll [style: Roll]{Roll}[style: none]. You agree that the crypt is very draughty and promise to write a strongly worded letter. The ghost floats off, satisfied.
 [else if: Foe is Mummy]
@@ -2091,7 +2091,7 @@ You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You tell t
 [else if: Foe is Golem]
 You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. The golem is still thinking about what you said before you said it.
 [else if: Foe is Foreman]
-You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. "Union? What union? Back to work! Er, you're not working. Get him!"
+You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. "Union? What union? Back to work! Er, you're not working. Get 'em!"
 [else if: Foe is Mimic]
 You roll [style: Roll]{Roll}[style: none], {Total} against {FoeTalk}. You knock politely on its lid. It bites the knocking hand.
 [else if: Foe is Fungus]
@@ -2305,7 +2305,7 @@ A wishing well, in a dungeon. Someone has painted on it: [style: Sign]WISHES 10 
 [add: Gold 15]
 [sound: magic]
 [dwarf: happy]
-You roll [style: Roll]{Roll}[style: none]. You wish to be taller. The well sighs: "You again. One wish per customer." It gives you your coin back with interest, and a splash of cold water to the face. [style: Good]15 gold and all your HP back.[style: none]
+You roll [style: Roll]{Roll}[style: none]. You wish to be taller. The well sighs: "You again. One wish per customer." It gives you your coins back with interest, and a splash of cold water to the face. [style: Good]15 gold and all your HP back.[style: none]
 [else if: Total >= 12]
 [add: MaxHP 4]
 [set: HP = {MaxHP}]
@@ -2619,7 +2619,7 @@ You roll [style: Roll]{Roll}[style: none]. Dwarf hands know their stones. A [sty
 You roll [style: Roll]{Roll}[style: none]. The glitter was a worm wearing a sequin. A rock falls on your toe. [style: Hurt]3 damage[style: none].
 [end]
 [else]
-You squeeze past, breathe in, and feel very slim for a moment.
+You breathe in, squeeze past, and feel very slim for a moment.
 [end]
 [exit: rubble]
 
@@ -2658,7 +2658,7 @@ It's a very good sausage. [style: Good]5 HP[style: none] and a warm feeling.
 # Scene: Signpost
 
 [enter: sign 70%]
-A sign on a stick, very firmly: [style: Sign]THERE IS DEFINITELY NO TREASURE BEHIND THIS SIGN.[style: none]
+A sign on a stick says, very firmly: [style: Sign]THERE IS DEFINITELY NO TREASURE BEHIND THIS SIGN.[style: none]
 [choice: Odd choice]
 > Look behind the sign = A
 > Trust the sign = B

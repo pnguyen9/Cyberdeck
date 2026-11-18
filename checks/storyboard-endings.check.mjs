@@ -29,8 +29,8 @@ export default async function check(page, { url }) {
   await page.typeText(STORY)
   await pause(600)
   page.check('the import warns about the page no path reaches', await page.evaluate(`[...document.querySelectorAll('.problems li')].map(item => item.textContent.trim())`), [
-    'Line 8 — Never reached: every path before it ends, at an [ending] or in a block whose branches, [else] included, all end.',
-    'Line 13 — Never reached: every path before it ends, at an [ending] or in a block whose branches, [else] included, all end.',
+    'Line 8 — Never reached: every path stops before this point, at an [ending] or in a block where every branch, [else] included, ends.',
+    'Line 13 — Never reached: every path stops before this point, at an [ending] or in a block where every branch, [else] included, ends.',
   ])
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)

@@ -94,7 +94,7 @@ export default async function check(page, { url }) {
     'Prologue', 'Choice: Pairing', 'Marie, one', 'Marie, two', 'Epilogue', 'if Trust >= 2', 'if Trust >= 2', 'else',
   ])
   await page.screenshot('graph')
-  page.check('the graph says which keys work on it', await page.evaluate(`document.querySelector('.toolbar .keys').textContent.trim()`), 'Tab goes from box to box, Enter selects one and moves to its panel, Esc goes back to the box; the arrows move the map, + and − zoom.')
+  page.check('the graph says which keys work on it', await page.evaluate(`document.querySelector('.toolbar .keys').textContent.trim()`), 'Tab goes from box to box, Enter selects one and moves to its panel, Esc goes back to the box; the arrows move the view, + and − zoom.')
   await page.evaluate(`document.querySelector('.graph .box.choice').focus()`)
   await page.press('Enter')
   await pause(200)

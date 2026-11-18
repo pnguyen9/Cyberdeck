@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.6.3 — 2026-11-18
+
+### Both applications
+- The French interface has been rewritten throughout to read like natural French software, in
+  Cyberdeck, Datajack and the player. Some English messages that were too terse to be clear were
+  reworded too.
+
+### Samples
+- Every sample was proofread. **Blackjack** now explains the rules as the game plays them: a win
+  pays as much as you bet, and a blackjack counts only on your first two cards. In **Sakura Week**,
+  Hayashi's words on the porch now match how you liked her dango. The rest are small fixes to wording
+  and grammar in Knee-Deep, Sakura Week and the minigames.
+
 ## 3.6.2 — 2026-11-17
 
 ### Both applications

@@ -24,8 +24,8 @@ describe('errors shown to players', () => {
       describeError(new ArchiveError({ code: 'notAGame', path: 'game.json' }), 'fr'),
     ]
     expect(french).toEqual([
-      'Ce jeu a été conçu pour une version plus récente de Datajack : téléchargez la dernière',
-      'assets/cover.png n’est pas le fichier avec lequel le jeu a été exporté : l’archive a été modifiée ou endommagée',
+      'Ce jeu a été conçu pour une version plus récente de Datajack : téléchargez la dernière version',
+      'assets/cover.png ne correspond pas au fichier exporté avec le jeu : l’archive a été modifiée ou endommagée',
       'Cette archive ne contient pas game.json : ce n’est pas un jeu Datajack',
     ])
     expect(french.every(message => !/ [:;?!]/.test(message))).toBe(true)

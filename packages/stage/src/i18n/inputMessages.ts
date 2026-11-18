@@ -48,7 +48,7 @@ const fr: InputMessages = {
     Tab: 'Tab',
     Delete: 'Suppr',
     Insert: 'Inser',
-    Home: 'Origine',
+    Home: 'Début',
     End: 'Fin',
     ShiftLeft: 'Maj gauche',
     ShiftRight: 'Maj droite',

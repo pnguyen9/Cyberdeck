@@ -11,7 +11,7 @@ export default async function check(page, { url }) {
   await page.setValue('.import .source', STORY)
   await pause(800)
   page.check('the import says a list of twelve is long', await page.evaluate(`[...document.querySelectorAll('.import .problems li')].map(item => item.textContent.trim())`), [
-    'Line 10 — 12 options: more than fit on the screen, so players see them in a list that scrolls. Fewer reads more easily; a choice can lead to another.',
+    'Line 10 — 12 options: more than fit on the screen, so players have to scroll through them. Fewer options are easier to read, and a choice can lead to another one.',
   ])
   await page.clickButton('Import', '.import-actions .button')
   await pause(800)

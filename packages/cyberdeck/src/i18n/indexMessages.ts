@@ -17,7 +17,7 @@ const en = {
     switch (warning.code) {
       case 'declaredNeverUsed':
         return warning.name.kind === 'counter'
-          ? 'declared, but nothing changes it or tests it. Count with it in an [add] and an [if], or take its declaration out.'
+          ? 'declared, but nothing changes it or tests it. Change it with an [add] and test it in an [if], or take its declaration out.'
           : 'declared, but nothing gives it a value or tests it. Use it in a choice and an [if], or take its declaration out.'
       case 'testedNeverGiven':
         return 'tested, but no choice or [set] gives it a value: those conditions never hold. Give it one, or check how the tests spell it.'
@@ -26,9 +26,9 @@ const en = {
       case 'givenNeverTested':
         return 'given a value, but never tested nor shown: it changes nothing yet. Test it in an [if] where it should matter, or show it in the text with {…}.'
       case 'valueGivenNeverTested':
-        return `${warning.valueName} is given, but nothing tests it, nor an [else] after a test of this decision: it changes nothing yet. Test it where it should matter; a value left from an option renamed since goes by itself once nothing gives it.`
+        return `${warning.valueName} is given, but nothing tests it, not even an [else] after a test of this decision, so it changes nothing yet. Test it where it should matter. A value left over from an option since renamed goes away by itself once nothing gives it.`
       case 'counterTestedNeverChanged':
-        return 'tested, but no [add] or [set] changes it: it always holds its first value. Change it where the story counts.'
+        return 'tested, but no [add] or [set] changes it: it always holds its first value. Change it with an [add] or a [set] where it should change.'
       case 'counterChangedNeverTested':
         return 'counted, but never tested nor shown: it changes nothing yet. Test it in an [if], Trust >= 3 for instance, or show it in the text, {Trust}.'
       case 'memoryTestedNeverRemembered':
@@ -43,7 +43,7 @@ const en = {
         return 'no path plays it. Add [play: …] where it should be played.'
     }
   },
-  intro: 'Every decision, counter and memory of the story, with each place that declares, gives, changes, tests or shows it. Above them, what looks forgotten across the whole story, as a programmer\'s editor would point it out: first what changes how the story plays, then what is only unused.',
+  intro: 'Every decision, counter and memory of the story, with each place that declares, gives, changes, tests or shows it. Above them, what looks forgotten across the whole story, as a code editor would point it out: first what changes how the story plays, then what is only unused.',
   /** Where a card is in its chapter. */
   toLookAt: 'To look at',
   nothingToLookAt: 'Nothing. Checked: every decision and counter is given and tested, every value given is tested or taken by an [else], every memory is remembered and tested, every ending reached and every scene played.',
@@ -69,7 +69,7 @@ const en = {
   shownNever: 'never',
   shownAlways: 'always',
   shownAfterAnEnding: 'after a first ending',
-  shownHelp: 'What players see of what they hold: a decision while it holds a value, a counter its number. They read its name and values as written here, in every language. Written as [shown: …] among the definitions.',
+  shownHelp: 'What players see in their journal: a decision while it holds a value, a counter with its number. Its name and values appear as written here, in every language. Written as [shown: …] among the definitions.',
   endingsInJournal: 'The endings reached, in the players’ journal',
 }
 
@@ -86,7 +86,7 @@ const FRENCH_USE_WORDS: Readonly<Record<UseGroup, string>> = {
   changed: 'modifié',
   tested: 'testé',
   shown: 'affiché',
-  remembered: 'retenu',
+  remembered: 'mémorisé',
   forgotten: 'oublié',
   reached: 'atteint',
   used: 'utilisé',
@@ -106,36 +106,36 @@ const fr: IndexMessages = {
     switch (warning.code) {
       case 'declaredNeverUsed':
         return kind === 'counter'
-          ? 'déclaré, mais rien ne le modifie ni ne le teste. Comptez avec lui dans un [add] et un [if], ou retirez sa déclaration.'
+          ? 'déclaré, mais rien ne le modifie ni ne le teste. Modifiez-le avec un [add] et testez-le dans un [if], ou retirez sa déclaration.'
           : `${agreed('déclaré', kind)}, mais rien ne lui donne de valeur ni ne ${pronoun} teste. Utilisez-${pronoun} dans un choix et un [if], ou retirez sa déclaration.`
       case 'testedNeverGiven':
-        return `${agreed('testé', kind)}, mais aucun choix ni [set] ne lui donne de valeur : ces conditions ne sont jamais remplies. Donnez-lui-en une, ou vérifiez son orthographe dans les tests.`
+        return `${agreed('testé', kind)}, mais aucun choix ni [set] ne lui donne de valeur\u00a0: ces conditions ne sont donc jamais remplies. Donnez-lui une valeur, ou vérifiez son orthographe dans les tests.`
       case 'valueTestedNeverGiven':
-        return `${warning.valueName} est testée, mais aucun choix ni [set] ne la donne : ces conditions ne sont jamais remplies. Ajoutez une option avec cette valeur, ou vérifiez son orthographe.`
+        return `${warning.valueName} est testée, mais aucun choix ni [set] ne la donne\u00a0: ces conditions ne sont donc jamais remplies. Ajoutez une option avec cette valeur, ou vérifiez son orthographe.`
       case 'givenNeverTested':
-        return `reçoit une valeur, mais n’est jamais ${agreed('testé', kind)} ni ${agreed('affiché', kind)} : ${isFeminine(kind) ? 'elle' : 'il'} ne change rien pour l’instant. Testez-${pronoun} dans un [if] là où ${isFeminine(kind) ? 'elle' : 'il'} doit compter, ou affichez-${pronoun} dans le texte avec {…}.`
+        return `reçoit une valeur, mais n’est jamais ${agreed('testé', kind)} ni ${agreed('affiché', kind)}\u00a0: ${isFeminine(kind) ? 'elle' : 'il'} ne change donc rien pour l’instant. Testez-${pronoun} dans un [if] là où ${isFeminine(kind) ? 'elle' : 'il'} doit jouer un rôle, ou affichez-${pronoun} dans le texte avec {…}.`
       case 'valueGivenNeverTested':
-        return `${warning.valueName} est donnée, mais rien ne la teste, ni un [else] après un test de cette décision : elle ne change rien pour l’instant. Testez-la là où elle doit compter ; une valeur restée d’une option renommée depuis s’en va d’elle-même dès que rien ne la donne.`
+        return `${warning.valueName} est donnée, mais rien ne la teste, pas même un [else] après un test de cette décision\u00a0: elle ne change donc rien pour l’instant. Testez-la là où elle doit jouer un rôle. Si c’est une valeur restée d’une option renommée depuis, elle disparaîtra d’elle-même quand plus rien ne la donnera.`
       case 'counterTestedNeverChanged':
-        return 'testé, mais aucun [add] ni [set] ne le modifie : il garde toujours sa valeur de départ. Modifiez-le là où l’histoire compte.'
+        return 'testé, mais aucun [add] ni [set] ne le modifie\u00a0: il garde toujours sa valeur de départ. Modifiez-le avec un [add] ou un [set] là où il doit évoluer.'
       case 'counterChangedNeverTested':
         return 'modifié, mais jamais testé ni affiché : il ne change rien pour l’instant. Testez-le dans un [if], Confiance >= 3 par exemple, ou affichez-le dans le texte, {Confiance}.'
       case 'memoryTestedNeverRemembered':
-        return 'testé, mais jamais retenu : ces conditions ne sont jamais remplies. Ajoutez [remember: …] là où le joueur l’apprend.'
+        return 'testé, mais jamais mémorisé\u00a0: ces conditions ne sont donc jamais remplies. Ajoutez [remember: …] là où le joueur découvre l’information.'
       case 'memoryNeverTested':
-        return 'retenu, mais jamais testé : il ne change rien pour l’instant. Testez-le avec [if: remembered …] dans une partie suivante.'
+        return 'mémorisé, mais jamais testé\u00a0: il ne change rien pour l’instant. Testez-le avec [if: remembered …] dans les parties suivantes.'
       case 'endingNeverReached':
-        return 'aucun parcours n’y mène : tous les chemins s’arrêtent avant. Déplacez-la là où un parcours mène, ou regardez ce qui se termine avant elle.'
+        return 'aucun parcours n’y mène, car tous s’arrêtent avant. Déplacez-la sur un parcours existant, ou examinez ce qui se termine avant elle.'
       case 'styleNeverUsed':
         return 'déclaré, mais aucune page ne l’utilise. Utilisez-le avec [style: …], ou retirez sa déclaration.'
       case 'sceneNeverPlayed':
         return 'aucun parcours ne la joue. Ajoutez [play: …] là où elle doit être jouée.'
     }
   },
-  intro: 'Chaque décision, compteur et souvenir de l’histoire, avec chaque endroit qui le déclare, lui donne une valeur, le modifie, le teste ou l’affiche. Au-dessus, ce qui semble oublié dans toute l’histoire, comme l’indiquerait un éditeur de programmeur : d’abord ce qui change le déroulement de l’histoire, puis ce qui n’est simplement pas utilisé.',
+  intro: 'Toutes les décisions, tous les compteurs et tous les souvenirs de l’histoire, avec les endroits qui les déclarent, leur donnent une valeur, les modifient, les testent ou les affichent. Au-dessus, ce qui semble oublié dans l’ensemble de l’histoire, signalé comme le ferait un éditeur de code\u00a0: d’abord ce qui change le déroulement de l’histoire, puis ce qui est simplement inutilisé.',
   toLookAt: 'À vérifier',
-  nothingToLookAt: 'Rien. Vérifié : chaque décision et chaque compteur reçoit une valeur et est testé, chaque valeur donnée est testée ou prise par un [else], chaque souvenir est retenu et testé, chaque fin est atteinte et chaque scène est jouée.',
-  allKinds: 'Tout',
+  nothingToLookAt: 'Rien à signaler. Vérifié\u00a0: chaque décision et chaque compteur reçoit une valeur et est testé, chaque valeur donnée est testée ou prise en compte par un [else], chaque souvenir est mémorisé et testé, chaque fin est atteinte et chaque scène est jouée.',
+  allKinds: 'Tous',
   showOnly: 'Afficher',
   find: 'Chercher une décision, un compteur ou un souvenir',
   findPlaceholder: 'Une partie de son nom, ou d’une valeur',
@@ -157,7 +157,7 @@ const fr: IndexMessages = {
   shownNever: 'jamais',
   shownAlways: 'toujours',
   shownAfterAnEnding: 'après une première fin',
-  shownHelp: 'Ce que les joueurs voient de ce qu’ils détiennent\u00a0: une décision tant qu’elle a une valeur, un compteur son nombre. Ils lisent son nom et ses valeurs tels qu’écrits ici, dans toutes les langues. Écrit [shown: …] parmi les définitions.',
+  shownHelp: 'Dans leur journal, les joueurs voient une décision tant qu’elle a une valeur, et un compteur avec son nombre. Le nom et les valeurs y apparaissent tels qu’ils sont écrits ici, dans toutes les langues. Ce réglage s’écrit [shown: …] parmi les définitions.',
   endingsInJournal: 'Les fins atteintes, dans le journal des joueurs',
 }
 
