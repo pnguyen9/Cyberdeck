@@ -395,17 +395,20 @@ function withEndingNames(endings: readonly Ending[], nodes: readonly StoryNode[]
 /**
  * What players may see, with what an import says: each name named again moves to what it says now.
  * Names neither a decision nor a counter are left out, `checkReferences` having reported them.
+ * `[shown while not zero]` changes nothing for a decision, shown only while it holds something
+ * anyway, nor for the endings reached, none until one is: they are shown always, or once an ending is reached.
  */
 export function shownWith(shown: ShownToPlayers, declarations: readonly ShownDeclaration[], decisions: readonly Decision[], counters: readonly Counter[]): ShownToPlayers {
   const idsByName = new Map([...decisions, ...counters].map(entry => [normalizeName(entry.name), entry.id]))
+  const counterIds = new Set(counters.map(counter => counter.id))
   let result = shown
   for (const declaration of declarations) {
-    const when: ShownWhen = declaration.afterAnEnding ? 'afterAnEnding' : 'always'
     for (const name of declaration.names) {
       const id = idsByName.get(normalizeName(name))
       if (normalizeName(name) === ENDINGS_REACHED) {
-        result = { ...result, endings: when }
+        result = { ...result, endings: declaration.when === 'whileNotZero' ? 'afterAnEnding' : declaration.when }
       } else if (id !== undefined) {
+        const when: ShownWhen = declaration.when === 'whileNotZero' && !counterIds.has(id) ? 'always' : declaration.when
         result = withShown(result, id, when)
       }
     }

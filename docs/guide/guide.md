@@ -279,10 +279,11 @@ Players can see some of this in their **Journal**, but only what you choose:
 
 ```text
 [shown: Bag, Coins]
+[shown while not zero: Luck]
 [shown after an ending: Trust, endings reached]
 ```
 
-A decision shows while it holds something, a bag each item until it is taken away; a counter its number; `endings reached` the endings found. The second line waits until the player has reached an ending, for those hunting the others. Write these lines with your definitions, or choose in the Index, on a decision or a counter: **In the players’ journal**, and for the endings, at the top of the Index. Players read the names and values as you wrote them, in every language.
+A decision shows while it holds something, a bag each item until it is taken away; a counter its number, 0 included; `endings reached` the endings found. The second line shows a counter only while it is not 0: Luck appears once the player has some, and goes when it is spent. The third line waits until the player has reached an ending, for those hunting the others. Write these lines with your definitions, or choose in the Index, on a decision or a counter: **In the players’ journal**, and for the endings, at the top of the Index. Players read the names and values as you wrote them, in every language.
 
 ![The Journal in the player: the answer given, Truth, and the endings reached, 0 of 1.](images/journal.png)
 

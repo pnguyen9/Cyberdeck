@@ -471,11 +471,12 @@ class TextImporter {
         return
       }
       case 'shown':
-      case 'shown after an ending': {
+      case 'shown after an ending':
+      case 'shown while not zero': {
         // Names are listed with commas, `[shown: Bag, Trust]`, which no name in a tag holds.
         const names = (directive.written ?? text).split(',').map(name => name.trim().replace(/\s+/g, ' ')).filter(name => name !== '')
         if (names.length > 0) {
-          this.result.shown.push({ sourceLine: lineNumber, names, afterAnEnding: directive.name === 'shown after an ending' })
+          this.result.shown.push({ sourceLine: lineNumber, names, when: directive.name === 'shown after an ending' ? 'afterAnEnding' : directive.name === 'shown while not zero' ? 'whileNotZero' : 'always' })
         }
         return
       }

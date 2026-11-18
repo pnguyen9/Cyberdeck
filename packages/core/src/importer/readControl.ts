@@ -37,6 +37,7 @@ export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
   'forget',
   'shown',
   'shown after an ending',
+  'shown while not zero',
 ])
 
 /**

@@ -60,6 +60,7 @@ import {
   type PlayableStory,
   type ProjectDocument,
   type PageLayout,
+  type EndingsShownWhen,
   type ShownWhen,
   type ChapterView,
   type SaveData,
@@ -549,13 +550,13 @@ export class OpenProject {
     return this.saveProject(setDrawnFacing(this.currentProject, characterId, drawnFacing, this.now()))
   }
 
-  /** Whether players see a decision or a counter in their journal: never (null), always, or after an ending. */
+  /** Whether players see a decision or a counter in their journal: never (null), always, after an ending, or while a counter is not zero. */
   setShown(id: string, when: ShownWhen | null) {
     return this.saveProject(setShown(this.currentProject, id, when, this.now()))
   }
 
   /** Whether players see the endings they reached in their journal. */
-  setShownEndings(when: ShownWhen | null) {
+  setShownEndings(when: EndingsShownWhen | null) {
     return this.saveProject(setShownEndings(this.currentProject, when, this.now()))
   }
 

@@ -28,12 +28,14 @@ import { storyWords } from '../i18n/storyWords'
 const { open, project, chapters, scenes, documents, act, openStoryboard, indexFocus } = useEditor()
 
 /** Shown to players in their journal, or not: a `[shown]` line of the definitions, written for the author. */
-const shownChoice = (choice: string) => choice === 'always' || choice === 'afterAnEnding' ? choice : null
+const endingsShownChoice = (choice: string) => choice === 'always' || choice === 'afterAnEnding' ? choice : null
+/** Only a counter can be shown while it is not zero: a decision is shown only while it holds something anyway. */
+const shownChoice = (choice: string) => choice === 'whileNotZero' ? choice : endingsShownChoice(choice)
 function setShown(id: string, choice: string) {
   void act(() => open.setShown(id, shownChoice(choice)))
 }
 function setShownEndings(choice: string) {
-  void act(() => open.setShownEndings(shownChoice(choice)))
+  void act(() => open.setShownEndings(endingsShownChoice(choice)))
 }
 const locale = useLocale()
 const text = useMessages(indexMessages)
@@ -195,6 +197,7 @@ onMounted(() => {
               <select class="text-input" :value="shownWhen(project, name.id) ?? 'never'" :aria-describedby="`shown-help-${keyOf(name)}`" @change="setShown(name.id, ($event.target as HTMLSelectElement).value)">
                 <option value="never">{{ text.shownNever }}</option>
                 <option value="always">{{ text.shownAlways }}</option>
+                <option v-if="name.kind === 'counter'" value="whileNotZero">{{ text.shownWhileNotZero }}</option>
                 <option value="afterAnEnding">{{ text.shownAfterAnEnding }}</option>
               </select>
             </label>

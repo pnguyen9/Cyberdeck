@@ -135,7 +135,7 @@ a new notion gets its word here before it gets code.
 | Playthrough | One play from *New game* on. Decisions and counters belong to it. | |
 | Lasting | A decision or counter the profile carries from one playthrough to the next. | `LastingValues` |
 | Memory | What a profile remembers for good, `[remember]`, in every later playthrough. | `Memory` |
-| Shown | What the author lets players see in their journal, `[shown]`. | `ShownDeclaration` |
+| Shown | What the author lets players see in their journal, `[shown]`: always, while a counter is not zero, or once an ending is reached. | `ShownDeclaration` |
 
 **The stage**
 
@@ -577,7 +577,7 @@ one per language, of the same shape: another language is one more table each.
 | `{Board 3}`, `{Board Cell}`, `{Board size}`, `[if: Board Cell is cat]`, `[if: Queue size > 0]`, `[set: Near = {Counts 2}]` | A place shown, tested, or read back into a counter as a number; `size`, how many values the list holds, compared with a number or a counter (`[if: Cards size < {Cut}]`, Datajack 3.2.1). |
 | `[choice: Cell grid 4 × 4 from Shown with tile]` | A choice shown as rows of picture buttons, numbered from 1, left to right then down, up to 30 × 24: each shows the picture of `tile` named like what its place of `Shown` holds (the value itself without one), and picking one gives `Cell` its number. The arrows move, Enter or Space picks. The tile's entries are made for every value the story's lists may hold. A line under it, `> {Left} cells left to open`, is shown in the text box while the grid waits, its values filled in each time (Datajack 3.2). `, marking Flag` at the end gives a second way to pick a tile, a right click or F, which gives its number to `Flag` and 0 to `Cell` (picking does the reverse): to mark a tile rather than open it (Datajack 3.2). Needs Datajack 3.0. |
 | `[counter lasting: Coins = 0]`, `[decision multi lasting: Bag = Key \| Lamp]` | A counter or a decision the profile keeps from one playthrough to the next: within one it behaves as any other, going back undoing what was added or taken, and a new playthrough starts with what the last one left. What the player carries, apart from what the game knows (`[remember]`). Needs Datajack 2.0. |
-| `[shown: Bag, Coins]`, `[shown after an ending: Trust, endings reached]` | What players see in their **Journal**: decisions while they hold something (a bag its items, until taken away), counters their number, and with `endings reached` the endings reached; always, or once the profile has reached any ending. Nothing unless the author says so. Lines among the definitions, names separated by commas; the Index writes them too. |
+| `[shown: Bag, Coins]`, `[shown while not zero: Luck]`, `[shown after an ending: Trust, endings reached]` | What players see in their **Journal**: decisions while they hold something (a bag its items, until taken away), counters their number, and with `endings reached` the endings reached; always, or once the profile has reached any ending. `while not zero` shows a counter only while it is not 0 (Datajack 3.4); a decision named there shows as with `[shown]`, and the endings reached once there is one. Nothing unless the author says so. Lines among the definitions, names separated by commas; the Index writes them too. |
 | `[add: Trust]`, `[add: Trust 2]`, `[add: Trust -1]` | Adds to a counter: 1, or the amount after its name. `[set: Trust = 0]` gives it a value. |
 | `[add: Money -{Bet}]`, `[add: Money {Bet} * 2.5]`, `[set: Score = {Points}]`, `[if: Money >= {Bet}]` | A counter counting with another: adding, taking or setting what another holds, times a factor if wished, and comparing with it. Counters with different decimals count together exactly, the result rounded to what the counter keeps. Needs Datajack 2.1. |
 | `[set: Weather = random 1 6]` | Gives a counter a whole number drawn between the two, both included, so that the same choices may lead elsewhere. A save keeps the draws, and going back does not draw again: a player cannot draw until it suits them. Needs Datajack 1.4. |
@@ -867,8 +867,9 @@ A **project** holds the whole game. Its screens:
   (that condition never holds), a memory tested but never remembered, an ending no path reaches, a
   scene never played; and, less pressing, what is declared or given but never used (tested nor shown), a
   value given but never tested. With nothing to look at, it says what it checked. A decision or a
-  counter opened says whether players see it **in their journal**: never, always, or once an
-  ending is reached, the menu writing the `[shown]` line among the definitions.
+  counter opened says whether players see it **in their journal**: never, always, a counter only
+  while it is not 0, or once an ending is reached, the menu writing the `[shown]` line among the
+  definitions.
 - **Shortcuts** (the header button, or `?`): every shortcut by screen; click one and press the new
   keys to change it, Cyberdeck asking before taking keys another action uses. Changes are kept in
   the browser; *Default* and *Reset every shortcut* bring the defaults back. **Alt+PageUp** and

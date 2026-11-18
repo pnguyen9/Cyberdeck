@@ -69,7 +69,8 @@ const en = {
   shownNever: 'never',
   shownAlways: 'always',
   shownAfterAnEnding: 'after a first ending',
-  shownHelp: 'What players see in their journal: a decision while it holds a value, a counter with its number. Its name and values appear as written here, in every language. Written as [shown: …] among the definitions.',
+  shownWhileNotZero: 'while not 0',
+  shownHelp: 'What players see in their journal: a decision while it holds a value, a counter with its number, always or only while it is not 0. Its name and values appear as written here, in every language. Written as [shown: …] among the definitions.',
   endingsInJournal: 'The endings reached, in the players’ journal',
 }
 
@@ -157,7 +158,8 @@ const fr: IndexMessages = {
   shownNever: 'jamais',
   shownAlways: 'toujours',
   shownAfterAnEnding: 'après une première fin',
-  shownHelp: 'Dans leur journal, les joueurs voient une décision tant qu’elle a une valeur, et un compteur avec son nombre. Le nom et les valeurs y apparaissent tels qu’ils sont écrits ici, dans toutes les langues. Ce réglage s’écrit [shown: …] parmi les définitions.',
+  shownWhileNotZero: 'tant qu’il n’est pas à 0',
+  shownHelp: 'Dans leur journal, les joueurs voient une décision tant qu’elle a une valeur, et un compteur avec son nombre, toujours ou seulement tant qu’il n’est pas à 0. Le nom et les valeurs y apparaissent tels qu’ils sont écrits ici, dans toutes les langues. Ce réglage s’écrit [shown: …] parmi les définitions.',
   endingsInJournal: 'Les fins atteintes, dans le journal des joueurs',
 }
 

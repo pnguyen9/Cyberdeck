@@ -1,4 +1,4 @@
-import type { GaugeColor, GaugePlace } from '../format/storyFormat'
+import type { GaugeColor, GaugePlace, ShownWhen } from '../format/storyFormat'
 
 /**
  * Result of importing a text (pasted or from a Word document) into chapters.
@@ -402,7 +402,7 @@ export interface ImportResult {
   chapters: ImportedChapter[]
   /** `# Scene: Name`: pages of no chapter, played wherever a `[play: Name]` is. */
   scenes: ImportedChapter[]
-  /** `[shown: Bag, Trust]`, `[shown after an ending: …]`: what players may see, `endings reached` among the names for the endings. */
+  /** `[shown: Bag, Trust]`, `[shown after an ending: …]`, `[shown while not zero: …]`: what players may see, `endings reached` among the names for the endings. */
   shown: ShownDeclaration[]
   /** `[list: Board = 16 × none]`: lists, with what they hold at first. */
   lists?: { sourceLine: number; name: string; items: string[] }[]
@@ -414,5 +414,6 @@ export interface ImportResult {
 export interface ShownDeclaration {
   sourceLine: number
   names: string[]
-  afterAnEnding: boolean
+  /** `[shown]` always, `[shown after an ending]` once an ending is reached, `[shown while not zero]` while a counter is not 0. */
+  when: ShownWhen
 }

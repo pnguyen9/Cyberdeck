@@ -1,5 +1,5 @@
 import { shownAmount } from '../format/counterNumbers'
-import type { ProjectDocument } from '../format/storyFormat'
+import { shownWhileNotZero, type ProjectDocument } from '../format/storyFormat'
 import type { HeldValues } from './storyValues'
 
 /** A decision or a counter as the journal shows it: a decision's values held, a counter's number. */
@@ -19,12 +19,14 @@ export interface Journal {
 
 /**
  * What the player may see of what they hold, as the author chose with `[shown]`: what is shown
- * always, and once the profile has reached any ending, what is shown after one. A decision shows
- * while it holds something, a bag its items until they are taken away; a counter its number.
+ * always, the counters shown while they are not zero, and once the profile has reached any ending,
+ * what is shown after one. A decision shows while it holds something, a bag its items until they are
+ * taken away; a counter its number, 0 included unless it is shown only while not zero.
  */
 export function journalOf(project: ProjectDocument, held: HeldValues, endingIds: readonly string[]): Journal {
   const afterAnEnding = endingIds.length > 0
-  const shownIds = [...project.shown.always, ...(afterAnEnding ? project.shown.afterAnEnding : [])]
+  const whileNotZero = new Set(shownWhileNotZero(project.shown))
+  const shownIds = [...project.shown.always, ...whileNotZero, ...(afterAnEnding ? project.shown.afterAnEnding : [])]
   const decisions = new Map(project.decisions.map(decision => [decision.id, decision]))
   const counters = new Map(project.counters.map(counter => [counter.id, counter]))
   const entries = shownIds.flatMap((id): JournalEntry[] => {
@@ -37,7 +39,7 @@ export function journalOf(project: ProjectDocument, held: HeldValues, endingIds:
     const counter = counters.get(id)
     if (counter !== undefined) {
       const count = Object.hasOwn(held.counters, id) ? held.counters[id] ?? 0 : counter.initial
-      return [{ id, name: counter.name, kind: 'counter', items: [shownAmount(count, counter, project.locale)] }]
+      return count === 0 && whileNotZero.has(id) ? [] : [{ id, name: counter.name, kind: 'counter', items: [shownAmount(count, counter, project.locale)] }]
     }
     return []
   })
@@ -49,5 +51,5 @@ export function journalOf(project: ProjectDocument, held: HeldValues, endingIds:
 /** Whether the story shows players anything at all, now: otherwise the menu offers no journal. */
 export function hasJournal(project: ProjectDocument, endingIds: readonly string[]): boolean {
   const { always, afterAnEnding, endings } = project.shown
-  return always.length > 0 || endings === 'always' || (endingIds.length > 0 && (afterAnEnding.length > 0 || endings === 'afterAnEnding'))
+  return always.length > 0 || shownWhileNotZero(project.shown).length > 0 || endings === 'always' || (endingIds.length > 0 && (afterAnEnding.length > 0 || endings === 'afterAnEnding'))
 }

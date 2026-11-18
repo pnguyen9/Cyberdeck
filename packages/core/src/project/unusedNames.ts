@@ -1,7 +1,7 @@
 import { decisionChoosingPicture, entriesNamedByValue } from '../format/valueTags'
 import { placeholdersOfStoredNode } from '../format/textValues'
 import { normalizeName } from '../importer/storyNodes'
-import { flattenStoredNodes, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredCondition, type StoredNode } from '../format/storyFormat'
+import { flattenStoredNodes, withShown, type ChapterDocument, type ProjectDocument, type StageCommand, type StoredCondition, type StoredNode } from '../format/storyFormat'
 
 /**
  * Names the text made by naming them, which it names no longer: a track replaced by another, a
@@ -231,6 +231,6 @@ export function withoutNames(project: ProjectDocument, names: readonly UnusedNam
     characters: kept(project.characters).map(character => ({ ...character, expressions: kept(character.expressions) })),
     decisions: kept(project.decisions).map(decision => ({ ...decision, values: kept(decision.values) })),
     counters: kept(project.counters),
-    shown: { ...project.shown, always: project.shown.always.filter(id => !removed.has(id)), afterAnEnding: project.shown.afterAnEnding.filter(id => !removed.has(id)) },
+    shown: [...removed].reduce((shown, id) => withShown(shown, id, null), project.shown),
   }
 }

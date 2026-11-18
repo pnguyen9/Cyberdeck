@@ -1,14 +1,18 @@
 // What 2.0 adds to playing a story: a lasting counter carried into the next playthrough, a memory
-// forgotten, the journal showing what the author chose, a timed choice whose waiting answers "yes",
+// forgotten, the journal showing what the author chose, a counter there only while it is not zero, a timed choice whose waiting answers "yes",
 // offered as the others, the time running out on it; and a text exported with its paragraphs as written.
 import { advanceUntil, createProjectWithStory, pause, shownStep } from './harness.mjs'
 
 const STORY = `[counter lasting: Coins = 0]
 [decision multi: Bag = Key | Lamp]
+[counter: Luck]
+[counter: Debts]
 [shown: Bag, Coins]
+[shown while not zero: Luck, Debts]
 [remember: Met the guard]
 You have {Coins} coins in your pocket, and the night is long. The guard at the gate watches every move you make, as he has every night since the fair came to town. Nobody else is out, not even the cats that usually sleep under the carts. The wind carries the smell of rain from the hills, and somewhere a door bangs open and shut, open and shut, as if someone had forgotten to close it.
 [add: Coins 5]
+[add: Luck 2]
 [set: Bag = Key]
 [forget: Met the guard]
 [if: remembered Met the guard]
@@ -38,7 +42,7 @@ export default async function check(page, { url }) {
 
   await page.press('j')
   await pause(300)
-  page.check('the journal shows what the author chose: a bag by its items, a counter its number', await page.evaluate(`[...document.querySelectorAll('.viewport .entry')].map(entry => entry.innerText.replace(/\\s+/g, ' ').trim())`), ['Bag Key', 'Coins 5'])
+  page.check('the journal shows what the author chose: a bag by its items, a counter its number, one at 0 left out while not zero', await page.evaluate(`[...document.querySelectorAll('.viewport .entry')].map(entry => entry.innerText.replace(/\\s+/g, ' ').trim())`), ['Bag Key', 'Coins 5', 'Luck 2'])
   await page.screenshot('journal')
   await page.press('Escape')
   await pause(300)
@@ -67,4 +71,10 @@ export default async function check(page, { url }) {
   await pause(500)
   const written = await page.evaluate(`fetch([...document.querySelectorAll('.export .download')].at(-1).href).then(response => response.text())`)
   page.check('the text exported reads as written', written.includes('You have {Coins} coins in your pocket, and the night is long. The guard at the gate watches every move you make, as he has every night since the fair came to town. Nobody else is out, not even the cats that usually sleep under the carts. The wind carries the smell of rain from the hills, and somewhere a door bangs open and shut, open and shut, as if someone had forgotten to close it.'), true)
+
+  // The Index offers a counter, not a decision, to be shown only while it is not zero.
+  await page.clickButton('Index', '.tab')
+  await pause(400)
+  const shownChoice = name => page.evaluate(`(() => { const entry = [...document.querySelectorAll('.name-entry')].find(candidate => candidate.querySelector('.name-title')?.firstChild?.textContent.trim() === ${JSON.stringify(name)}); if (!entry.classList.contains('open')) entry.querySelector('.name-header').click(); return new Promise(resolve => setTimeout(() => { const select = entry.querySelector('.shown-choice select'); resolve([select.value, ...[...select.options].map(option => option.textContent.trim())]) }, 300)) })()`)
+  page.check('the Index shows a counter shown while not zero, a choice a decision does not offer', [await shownChoice('Luck'), await shownChoice('Bag')], [['whileNotZero', 'never', 'always', 'while not 0', 'after a first ending'], ['always', 'never', 'always', 'after a first ending']])
 }

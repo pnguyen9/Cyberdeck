@@ -6,7 +6,7 @@ import { idsReadBy } from './lists'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '3.3'
+export const FORMAT_VERSION = '3.4'
 
 /** True when this version of the code can read a document written in `version`: any version up to its own, every earlier major one included. */
 export function isSupportedFormatVersion(version: string): boolean {
@@ -229,27 +229,41 @@ export interface Frames {
 
 /**
  * What players may see of what they hold, in the window of what they collected: decisions and
- * counters by identifier, shown always or once the profile has reached an ending; and the endings
+ * counters by identifier, shown always or once the profile has reached an ending; counters shown
+ * while they are not zero, since 3.4, kept only by projects that have some; and the endings
  * reached. Nothing, unless the author says so. Since 2.0.
  */
 export interface ShownToPlayers {
   always: string[]
   afterAnEnding: string[]
-  endings: ShownWhen | null
+  whileNotZero?: string[]
+  endings: EndingsShownWhen | null
 }
 
-export type ShownWhen = 'always' | 'afterAnEnding'
+/** When a decision or a counter is shown: always, once an ending is reached, or while it is not zero, which only a counter can be. */
+export type ShownWhen = 'always' | 'afterAnEnding' | 'whileNotZero'
+/** When the endings reached are shown: always, or once there is one. */
+export type EndingsShownWhen = 'always' | 'afterAnEnding'
 
 export const NOTHING_SHOWN: ShownToPlayers = { always: [], afterAnEnding: [], endings: null }
 
-/** What players may see, with a decision or a counter moved to `when`: never (null), always, or after an ending. */
+/** The counters shown while they are not zero, none in a project from before 3.4. */
+export function shownWhileNotZero(shown: ShownToPlayers): readonly string[] {
+  return shown.whileNotZero ?? []
+}
+
+/** What players may see, with a decision or a counter moved to `when`: never (null), always, after an ending, or while not zero. */
 export function withShown(shown: ShownToPlayers, id: string, when: ShownWhen | null): ShownToPlayers {
   const always = shown.always.filter(candidate => candidate !== id)
   const afterAnEnding = shown.afterAnEnding.filter(candidate => candidate !== id)
+  const others = shownWhileNotZero(shown).filter(candidate => candidate !== id)
+  const whileNotZero = when === 'whileNotZero' ? [...others, id] : others
+  const { whileNotZero: _before, ...rest } = shown
   return {
-    ...shown,
+    ...rest,
     always: when === 'always' ? [...always, id] : always,
     afterAnEnding: when === 'afterAnEnding' ? [...afterAnEnding, id] : afterAnEnding,
+    ...(whileNotZero.length === 0 ? {} : { whileNotZero }),
   }
 }
 

@@ -478,7 +478,8 @@ const checkProjectFields: Check<ProjectDocument> = object({
   css,
   chapterTitleCards: boolean,
   frames: object({ textBox: nullable(string), namePlate: nullable(string) }),
-  shown: object({ always: array(string), afterAnEnding: array(string), endings: nullable(oneOf('always', 'afterAnEnding')) }),
+  // Counters shown while not zero, since 3.4: kept only by projects that have some.
+  shown: withOptional('whileNotZero', array(string), object({ always: array(string), afterAnEnding: array(string), endings: nullable(oneOf('always', 'afterAnEnding')) })),
   createdAt: string,
   updatedAt: string,
 })

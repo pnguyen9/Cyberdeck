@@ -1,13 +1,17 @@
 // A story played forward only, `[no going back: until an ending]`, in Datajack: no going back, saving
 // or loading, the reason told; the map records its choices as usual, without playing from them, which
-// would take the player back, each point telling, hovered, what the journal showed then; once an ending
+// would take the player back, each point telling, hovered, what the journal showed then (a counter
+// shown while not zero left out at 0); once an ending
 // is reached, everything comes back.
 import { createProfile, createProjectWithStory, exportGame, installGame, pause, shownStep } from './harness.mjs'
 
 export const app = 'datajack'
 
 const STORY = `[counter: Steps = 3]
+[counter: Keys = 0]
+[counter: Coins = 2]
 [shown: Steps]
+[shown while not zero: Keys, Coins]
 [no going back: until an ending]
 A path splits.
 [choice: Way]
@@ -39,7 +43,7 @@ export default async function check(page, { url, serve }) {
   await page.waitFor('.map-screen')
   await pause(500)
   page.check('the map records the choice, without playing from it', await mapPoint(page), [['Way', 'The story only goes forward here']])
-  page.check('its point tells, hovered, what the journal showed then', await page.evaluate(`document.querySelector('.map-screen .node.point')?.title`), 'Steps: 3')
+  page.check('its point tells, hovered, what the journal showed then, a counter at 0 shown while not zero left out', await page.evaluate(`document.querySelector('.map-screen .node.point')?.title`), 'Steps: 3\nCoins: 2')
   await page.clickButton('← Game', '.close-button')
   await page.waitFor('.viewport .text')
   await pause(800)

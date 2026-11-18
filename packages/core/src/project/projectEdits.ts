@@ -16,9 +16,11 @@ import {
   flattenStoredNodes,
   FORMAT_VERSION,
   mapInnerLists,
+  shownWhileNotZero,
   withShown,
   type ChapterDocument,
   type DefinitionKind,
+  type EndingsShownWhen,
   type Environment,
   type Facing,
   type Framing,
@@ -447,18 +449,20 @@ export function setDrawnFacing(project: ProjectDocument, characterId: string, dr
   }
 }
 
-/** Whether players see a decision or a counter in their journal: never (null), always, or once an ending is reached. */
+/** Whether players see a decision or a counter in their journal: never (null), always, once an ending is reached, or while a counter is not zero. */
 export function setShown(project: ProjectDocument, id: string, when: ShownWhen | null, now: string): ProjectDocument {
   return { ...project, shown: withShown(project.shown, id, when), updatedAt: now }
 }
 
 /** When players see a decision or a counter in their journal, as a menu shows it. */
 export function shownWhen(project: ProjectDocument, id: string): ShownWhen | null {
-  return project.shown.always.includes(id) ? 'always' : project.shown.afterAnEnding.includes(id) ? 'afterAnEnding' : null
+  return project.shown.always.includes(id) ? 'always'
+    : project.shown.afterAnEnding.includes(id) ? 'afterAnEnding'
+      : shownWhileNotZero(project.shown).includes(id) ? 'whileNotZero' : null
 }
 
 /** Whether players see the endings they reached in their journal: never (null), always, or once they reached one. */
-export function setShownEndings(project: ProjectDocument, when: ShownWhen | null, now: string): ProjectDocument {
+export function setShownEndings(project: ProjectDocument, when: EndingsShownWhen | null, now: string): ProjectDocument {
   return { ...project, shown: { ...project.shown, endings: when }, updatedAt: now }
 }
 

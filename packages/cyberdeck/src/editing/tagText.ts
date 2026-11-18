@@ -250,10 +250,12 @@ export function completionAt(text: string, caret: number, vocabulary: TagVocabul
       return completion(wordFrom, words(offered, details.gauge).filter(item => startsWith(item.label, lastWord)))
     }
     case 'shown':
-    case 'shown after an ending': {
-      // Names listed with commas: what follows the last comma is the name being typed.
+    case 'shown after an ending':
+    case 'shown while not zero': {
+      // Names listed with commas: what follows the last comma is the name being typed. Only a counter
+      // can be zero: a decision shows while it holds something anyway, the endings once one is reached.
       const listed = argumentText.slice(argumentText.lastIndexOf(',') + 1).trimStart()
-      const names = [...vocabulary.decisions.map(decision => decision.name), ...vocabulary.counters, 'endings reached']
+      const names = name === 'shown while not zero' ? vocabulary.counters : [...vocabulary.decisions.map(decision => decision.name), ...vocabulary.counters, 'endings reached']
       return completion(caret - listed.length, closing(names, details.decision).filter(item => startsWith(item.label, listed)))
     }
     case 'set':

@@ -5,7 +5,7 @@ import { counterValueText, describeAskNumber, describeGauge, describeCondition, 
 import { listsOf, listValueText } from '../format/lists'
 import { firstLanguageOf } from '../format/languages'
 import { effectText, lockText } from '../storyboard/describeNodes'
-import { ENDINGS_REACHED, flattenStoredNodes } from '../format/storyFormat'
+import { ENDINGS_REACHED, flattenStoredNodes, shownWhileNotZero } from '../format/storyFormat'
 import { isPropertyAlone } from '../format/textStyles'
 import { measuringValues, possibleValues } from '../format/textValues'
 import type { PageLayout } from '../pagination/paginate'
@@ -117,14 +117,16 @@ export function globalDefinitionLines(project: ProjectDocument, documents: reado
   ]
 }
 
-/** `[shown: …]` and `[shown after an ending: …]`, as the definitions write what players may see. */
+/** `[shown: …]`, `[shown while not zero: …]` and `[shown after an ending: …]`, as the definitions write what players may see. */
 function shownLines(project: ProjectDocument): string[] {
   const nameOf = new Map([...project.decisions, ...project.counters].map(entry => [entry.id, entry.name]))
   const names = (ids: readonly string[], endings: boolean) => [...ids.flatMap(id => nameOf.get(id) ?? []), ...(endings ? [ENDINGS_REACHED] : [])]
   const always = names(project.shown.always, project.shown.endings === 'always')
   const afterAnEnding = names(project.shown.afterAnEnding, project.shown.endings === 'afterAnEnding')
+  const whileNotZero = names(shownWhileNotZero(project.shown), false)
   return [
     ...(always.length === 0 ? [] : [`[shown: ${always.join(', ')}]`]),
+    ...(whileNotZero.length === 0 ? [] : [`[shown while not zero: ${whileNotZero.join(', ')}]`]),
     ...(afterAnEnding.length === 0 ? [] : [`[shown after an ending: ${afterAnEnding.join(', ')}]`]),
   ]
 }
