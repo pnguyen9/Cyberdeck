@@ -11,7 +11,16 @@ import type { ChapterDocument, ProjectDocument } from '@cyberdeck/core'
  * - chapters and scenes are named after their titles;
  * - pages, branches and options are named after their chapter and a short hash of their own content
  *   (what they hold apart from the pages inside them), with a number for the repeats of one chapter.
+ *
+ * An entry renamed keeps the identifier of its previous name when the sample says so (`PreviousNames`),
+ * so that saves made before the renaming still find it.
  */
+
+/**
+ * The names entries had before they were renamed, by where they are listed (`counters`, `decisions`…):
+ * `{ counters: { 'To hit': 'ToHit' } }` keeps `counters-tohit` for the counter now named `To hit`.
+ */
+export type PreviousNames = Readonly<Record<string, Readonly<Record<string, string>>>>
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json }
 
@@ -51,7 +60,7 @@ function identified(value: Json): Array<{ key: string; item: { [key: string]: Js
 }
 
 /** The identifiers the project's entries and the chapters would have, by the identifier they have. */
-function namedChanges(project: ProjectDocument, chapters: readonly ChapterDocument[]): Map<string, string> {
+function namedChanges(project: ProjectDocument, chapters: readonly ChapterDocument[], previousNames: PreviousNames): Map<string, string> {
   const changes = new Map<string, string>()
   const taken = new Set<string>([project.id])
   const claim = (old: string, wanted: string) => {
@@ -66,7 +75,8 @@ function namedChanges(project: ProjectDocument, chapters: readonly ChapterDocume
   const visit = (parent: { [key: string]: Json }, parentIdentifier: string | null) => {
     for (const { key, item } of identified(parent)) {
       const { id, ...content } = item
-      const label = [item.name, item.fileName, item.title].find((value): value is string => typeof value === 'string')
+      const current = [item.name, item.fileName, item.title].find((value): value is string => typeof value === 'string')
+      const label = current === undefined ? undefined : previousNames[key]?.[current] ?? current
       const own = claim(id, `${parentIdentifier ?? key}-${slugOf(label ?? '', content)}`)
       visit(item, own)
     }
@@ -107,10 +117,11 @@ function partChanges(chapter: ChapterDocument): Map<string, string> {
 
 /**
  * The project and its chapters and scenes with stable identifiers, and what each file's was before
- * (`assetIds`: new to old, to read the files by). The project's own identifier stays.
+ * (`assetIds`: new to old, to read the files by). The project's own identifier stays; an entry renamed
+ * in `previousNames` keeps the one of its previous name.
  */
-export function withStableIds(project: ProjectDocument, documents: readonly ChapterDocument[]): { project: ProjectDocument; documents: ChapterDocument[]; assetIds: Map<string, string> } {
-  const named = namedChanges(project, documents)
+export function withStableIds(project: ProjectDocument, documents: readonly ChapterDocument[], previousNames: PreviousNames = {}): { project: ProjectDocument; documents: ChapterDocument[]; assetIds: Map<string, string> } {
+  const named = namedChanges(project, documents, previousNames)
   const renamed = documents.map(document => replaced(document as unknown as Json, named) as unknown as ChapterDocument)
   const parts = renamed.map(partChanges)
   const everything = new Map([...named, ...parts.flatMap(changes => [...changes])])

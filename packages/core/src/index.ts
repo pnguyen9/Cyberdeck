@@ -11,7 +11,7 @@ export { chapterIn, firstLanguageOf, languageCode, languageName, languagesOf, pr
 export { alwaysStops, readingFlow, unreachableNodes, type FlowNode, type ReadingFlow } from './format/readingFlow'
 export { addFontFile, assignAsset, captionsMediaTypeOf, fontMediaTypeOf, matchAssetFile, type AssetTarget } from './assets/matchAssets'
 export type { RegistryCreations } from './format/stageRegistry'
-export { CONTROL_DIRECTIVE_NAMES } from './importer/readControl'
+export { CONTROL_DIRECTIVE_NAMES, SHOWN_DIRECTIVES } from './importer/readControl'
 export { ANIMATIONS_BY_DIRECTIVE, closestStageKeyword, interpretStageDirective, STAGE_KEYWORDS, type AnimationWords, type PositionWord, type StageInstruction, type StageVocabulary } from './stage/stageDirectives'
 export { flattenNodes, normalizeName } from './importer/storyNodes'
 export { checkChapterDocument, checkProjectDocument, DocumentError, isPlainIdentifier, MAXIMUM_CSS_LENGTH } from './format/checkDocuments'

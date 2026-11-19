@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { effectiveFacing, type ResolvedAnimation, type StageCatalog, type StageState } from '@cyberdeck/core'
 import StagePicture from './StagePicture.vue'
+import { feetOrigin, knownFeet, spriteFeet } from './spriteFeet'
 
 const props = defineProps<{ stage: StageState; catalog: StageCatalog }>()
 
@@ -36,7 +37,7 @@ const background = computed(() => {
   }
 })
 
-/** Nearer is larger and in front, farther smaller, behind and a little dimmer; sizes scale from the feet. */
+/** Nearer is larger and in front, farther smaller, behind and a little dimmer. */
 const DEPTH_STYLES = {
   near: { scale: '1.25', zIndex: 3, filter: 'none' },
   middle: { scale: '1', zIndex: 2, filter: 'none' },
@@ -81,17 +82,40 @@ const UPPER_BODY_BELOW = 280
 const FACE_ORIGIN = '50% 15%'
 const STAGE_EDGE_ORIGIN = `50% ${((UPPER_BODY_HEIGHT - UPPER_BODY_BELOW) / UPPER_BODY_HEIGHT * 100).toFixed(2)}%`
 
+/**
+ * Full body, sizes change around the feet, the lowest drawn row of the picture: a sprite with room
+ * under its feet stands on the same line near or far. Worked out once per picture; the bottom edge
+ * until then. Changes as each becomes known, read again by the characters below.
+ */
+const feetKnown = ref<Readonly<Record<string, number>>>({})
+watch(() => props.stage.characters.flatMap(onStage => {
+  const url = props.catalog.framing(onStage.characterId) === 'upperBody' ? null : props.catalog.expressionUrl(onStage.characterId, onStage.expressionId)
+  return url === null || feetKnown.value[url] !== undefined ? [] : [url]
+}), urls => {
+  for (const url of urls) {
+    const known = knownFeet(url)
+    if (known !== undefined) {
+      feetKnown.value = { ...feetKnown.value, [url]: known }
+      continue
+    }
+    void spriteFeet(url).then(feet => {
+      feetKnown.value = { ...feetKnown.value, [url]: feet }
+    })
+  }
+}, { immediate: true })
+
 const characters = computed(() => props.stage.characters.map(onStage => {
   const facing = effectiveFacing(onStage)
   const drawnFacing = props.catalog.drawnFacing(onStage.characterId)
   const turnover = turnovers.value[onStage.characterId]
   const expressionId = turnover?.expressionId ?? onStage.expressionId
   const isUpperBody = props.catalog.framing(onStage.characterId) === 'upperBody'
+  const imageUrl = props.catalog.expressionUrl(onStage.characterId, expressionId)
   return {
     characterId: onStage.characterId,
     name: props.catalog.characterName(onStage.characterId),
     expression: props.catalog.expressionName(onStage.characterId, expressionId),
-    imageUrl: props.catalog.expressionUrl(onStage.characterId, expressionId),
+    imageUrl,
     turnClass: turnover === undefined ? null : `turning-${turnover.half}`,
     turnStyle: turnover === undefined ? {} : { '--turn-ms': `${turnover.halfMs}ms` },
     facingArrow: facing === 'left' ? '←' : facing === 'right' ? '→' : '',
@@ -103,7 +127,7 @@ const characters = computed(() => props.stage.characters.map(onStage => {
       ...DEPTH_STYLES[onStage.depth],
       ...(isUpperBody
         ? { bottom: `-${UPPER_BODY_BELOW}px`, '--upper-body-height': `${UPPER_BODY_HEIGHT}px`, transformOrigin: onStage.depth === 'near' ? FACE_ORIGIN : STAGE_EDGE_ORIGIN }
-        : {}),
+        : { transformOrigin: feetOrigin(imageUrl === null ? 1 : feetKnown.value[imageUrl] ?? knownFeet(imageUrl) ?? 1) }),
     },
   }
 }))

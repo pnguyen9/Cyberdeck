@@ -1,5 +1,48 @@
 # Changelog
 
+## 3.7.0 — 2026-11-19
+
+### Both applications
+- `[shown while not zero: Inspired, Luck]` shows a counter in the players' journal only while it
+  is not 0: a buff counting down, a bonus not yet earned. In the Index, a counter's *In the
+  players' journal* menu offers it as **while not 0**. A story that uses it needs Datajack 3.7: the
+  story format is now 3.7, its number matching the applications' again.
+- `middle` beside a position is now the depth: `[move: marie 18% middle]` brings a character back
+  from near or far. Alone, `middle` still means the centre, as before.
+- A character drawn full body grows and shrinks around its feet, the lowest drawn line of its
+  picture, when it comes nearer or goes farther: a picture with empty space under the feet no
+  longer rises as it steps forward. Save pictures follow.
+
+### Datajack
+- A profile can have a **PIN**, a 4-digit code added, changed or removed from its own button next
+  to the profile's name (*Add a PIN* until there is one). Entering the profile asks for it, at
+  startup too, and so do erasing its saves or progress, and renaming, moving or removing it. Digits
+  can be typed or tapped on large keys; after five wrong tries in a row, Datajack waits 30 seconds,
+  then longer with each further one. A lock against other players, not against the browser's
+  developer tools: a forgotten PIN cannot be recovered in Datajack, and *Forgot the PIN?* says what
+  can be done.
+- In French, the built-in games are now **Échantillons**.
+
+### Samples
+- **Battle**: the three creatures line up on the stage, each named, to pick your partner; the one
+  picked steps forward, the others step back, and you team up with it or see the others again.
+- **Knee-Deep** grows:
+  - The journal shows your to-hit and armour, your blessings (each saying what it gives), and
+    Inspired and Luck while you have them.
+  - Barnaby's kitchen is cheaper (the pie 15 gold, the rock cake 20), so a newcomer can afford a
+    meal on the first day, and his bar pours **Anvil Ale**: two more on your next three rolls.
+  - Grizelda sells a **Humble hat** that stops XP, for those who want to beat the bosses at
+    level 1. The journal keeps which ones you have.
+  - A new odd encounter, **the Lost Property**: a heap of everything ever dropped down the Delve,
+    which cannot be talked to or run from. Slip past, or beat it for gold and plenty of XP; the
+    first win ever earns Saint Gravel's thanks.
+  - **The Deep Delve**: once you have won the cheese back, a new poster in the tavern offers a
+    harder adventure with a sixth floor, someone even older than Ember, and a seventh ending.
+  - A first game left before any ending now starts again with a short "back again" opening
+    rather than the newcomer's introduction.
+  - A game saved with Knee-Deep 3.6 keeps its to-hit and armour, now named *To hit* and *Armour
+    class* in the journal.
+
 ## 3.6.3 — 2026-11-18
 
 ### Both applications

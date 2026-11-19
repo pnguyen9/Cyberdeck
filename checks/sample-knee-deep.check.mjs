@@ -1,8 +1,9 @@
 // The Knee-Deep sample in docs/sample/knee-deep: its text imports without a problem and its files,
 // given as the zip they come in, each find their entry, its cover the game's; played, the hero is named,
-// the town offers its three places, the Delve shows the hero's gauge and three doors with what lies behind
-// them; then a player picking at random wanders it for a while, fighting, opening chests, meeting odd
-// folk, and never finds the game stuck or a value left unfilled.
+// the town offers its three places, the journal the hero's to-hit and armour by readable names, the Delve
+// shows the hero's gauge and three doors with what lies behind them; then a player picking at random wanders it for a while, fighting, opening chests, meeting odd
+// folk, and never finds the game stuck or a value left unfilled; met, the Lost Property can be neither
+// talked round nor run from.
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -54,6 +55,12 @@ export default async function check(page, { url }) {
   await untilOptions(page)
   page.check('the town offers the shop, the tavern and the Delve', await options(page), ['Grizelda\'s Everything Shop', 'The Tipsy Anvil, the tavern', 'Down into the Delve (30 of 30 HP)'])
   await page.screenshot('town')
+  await page.press('j')
+  await pause(300)
+  const journal = await page.evaluate(`[...document.querySelectorAll('.viewport .entry')].map(entry => entry.innerText.replace(/\\s+/g, ' ').trim())`)
+  page.check('the journal shows the to-hit and the armour, by readable names', ['To hit 3', 'Armour class 10'].every(entry => journal.includes(entry)), true)
+  await page.press('Escape')
+  await pause(300)
   await pick(page, 'Down into the Delve (30 of 30 HP)')
   await pause(400)
   await untilOptions(page)
@@ -65,7 +72,7 @@ export default async function check(page, { url }) {
   // A player picking at random, though never the endings that give up, swinging in fights, drinking when low.
   let seed = 7
   const random = count => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed % count }
-  const seen = { fight: false, grid: false, unfilled: [], stuck: 0, floors: new Set() }
+  const seen = { fight: false, grid: false, unfilled: [], stuck: 0, floors: new Set(), lostProperty: [] }
   for (let step = 0; step < 900; step++) {
     if (await page.evaluate(`!!document.querySelector('.viewport .end-screen')`)) {
       break
@@ -90,7 +97,11 @@ export default async function check(page, { url }) {
     }
     const offered = (await options(page)).filter(option => !/bakery|Take the gold|Bread never/i.test(option))
     if (offered.length > 0) {
-      if ((await gaugeLabels(page)).length === 2) {
+      const labels = await gaugeLabels(page)
+      if (labels.includes('The Lost Property')) {
+        seen.lostProperty.push(offered.some(option => option === 'Talk' || option === 'Run away'))
+      }
+      if (labels.length === 2) {
         if (!seen.fight) {
           page.check('a fight offers a swing of the weapon, named', offered.some(option => /^Swing your \S/.test(option)), true)
           await pause(600)
@@ -115,5 +126,7 @@ export default async function check(page, { url }) {
   page.check('the game never stood still with nothing to do', seen.stuck < 10, true)
   page.check('the wandering player fought, and opened chests', [seen.fight, seen.grid], [true, true])
   page.check('and went down at least one floor', seen.floors.size >= 1, true)
+  page.check('the Lost Property, if met, offers no talking and no running', seen.lostProperty.some(Boolean), false)
+  console.log(`  Lost Property fight turns seen: ${seen.lostProperty.length}`)
   await page.screenshot('wandered')
 }

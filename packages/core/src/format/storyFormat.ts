@@ -6,7 +6,7 @@ import { idsReadBy } from './lists'
  * A minor version adds optional things that older readers may ignore; a major version changes
  * the structure, and older readers must refuse the document.
  */
-export const FORMAT_VERSION = '3.4'
+export const FORMAT_VERSION = '3.7'
 
 /** True when this version of the code can read a document written in `version`: any version up to its own, every earlier major one included. */
 export function isSupportedFormatVersion(version: string): boolean {
@@ -230,7 +230,7 @@ export interface Frames {
 /**
  * What players may see of what they hold, in the window of what they collected: decisions and
  * counters by identifier, shown always or once the profile has reached an ending; counters shown
- * while they are not zero, since 3.4, kept only by projects that have some; and the endings
+ * while they are not zero, since 3.7, kept only by projects that have some; and the endings
  * reached. Nothing, unless the author says so. Since 2.0.
  */
 export interface ShownToPlayers {
@@ -247,7 +247,7 @@ export type EndingsShownWhen = 'always' | 'afterAnEnding'
 
 export const NOTHING_SHOWN: ShownToPlayers = { always: [], afterAnEnding: [], endings: null }
 
-/** The counters shown while they are not zero, none in a project from before 3.4. */
+/** The counters shown while they are not zero, none in a project from before 3.7. */
 export function shownWhileNotZero(shown: ShownToPlayers): readonly string[] {
   return shown.whileNotZero ?? []
 }

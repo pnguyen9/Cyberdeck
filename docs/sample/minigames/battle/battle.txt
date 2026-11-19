@@ -4,6 +4,7 @@
 
 [decision: Mode = Duel | Gauntlet]
 [decision: Mine = Pyrrup | Fernling | Ripplet]
+[decision: Sure = Yes | No]
 [decision: Foe = Pyrrup | Fernling | Ripplet]
 [decision: Attacker = Pyrrup | Fernling | Ripplet]
 [decision: Defender = Pyrrup | Fernling | Ripplet]
@@ -48,20 +49,61 @@ Special moves follow the elements: fire beats leaf, leaf beats water, water beat
 [choice: Mode]
 > One duel = Duel
 > Three in a row = Gauntlet
+Three creatures shuffle into the arena and stand in a row, trying their best to look picked.
+[enter: pyrrup 18% facing-right fade]
+On the left, Pyrrup, the ember fox: quick and fierce, but fragile. Its tail is on fire, and it would like you to know that this is normal.
+[enter: fernling 50% facing-right fade]
+In the middle, Fernling, the moss turtle: slow and sturdy. Something is growing on its head. Fernling has decided not to mind.
+[enter: ripplet 82% facing-right fade]
+On the right, Ripplet, the river axolotl: steady in everything, including its smile.
+[loop]
 Pick your partner.
-[choice: Mine]
-> Pyrrup, the ember fox: quick and fierce, but fragile = Pyrrup
-> Fernling, the moss turtle: slow and sturdy = Fernling
-> Ripplet, the river axolotl: steady in everything = Ripplet
+[choice: Mine below]
+> Pyrrup: quick and fierce, but fragile = Pyrrup
+> Fernling: slow and sturdy = Fernling
+> Ripplet: steady in everything = Ripplet
+[if: Mine is Pyrrup]
+[move: pyrrup center near]
+[move: fernling 16% far]
+[move: ripplet 84% far]
+Pyrrup bounds forward before you have quite finished pointing. The other two take a polite step back.
+[else if: Mine is Fernling]
+[move: fernling center near]
+[move: pyrrup 16% far]
+[move: ripplet 84% far]
+Fernling steps forward. It takes a while, but it gets there. The other two take a polite step back.
+[else]
+[move: ripplet center near]
+[move: pyrrup 16% far]
+[move: fernling 84% far]
+Ripplet glides forward and smiles at you. It was already smiling, but now it is at you. The other two take a polite step back.
+[end]
+[choice: Sure below]
+> Team up with {Mine} = Yes
+> See the others again = No
+[if: Sure is Yes]
+[break]
+[end]
+[move: pyrrup 18% middle]
+[move: fernling 50% middle]
+[move: ripplet 82% middle]
+All three shuffle back into line. Nobody takes it personally. Well, nobody says so.
+[end]
 [if: Mine is Pyrrup]
 [set: MaxHP = 34]
-[enter: pyrrup 21% near facing-right slide-from-left]
+[exit: fernling fade]
+[exit: ripplet fade]
+[move: pyrrup 21%]
 [else if: Mine is Fernling]
 [set: MaxHP = 46]
-[enter: fernling 21% near facing-right slide-from-left]
+[exit: pyrrup fade]
+[exit: ripplet fade]
+[move: fernling 21%]
 [else]
 [set: MaxHP = 40]
-[enter: ripplet 21% near facing-right slide-from-left]
+[exit: pyrrup fade]
+[exit: fernling fade]
+[move: ripplet 21%]
 [end]
 [set: HP = {MaxHP}]
 [gauge: HP / {MaxHP} top left numbers = Your {Mine}]

@@ -301,9 +301,9 @@ export function playerFormatVersion(project: ProjectDocument, documents: readonl
   // An older Datajack would read a forget as a remember, hide the option waiting takes, and carry nothing over.
   const needsDatajack20 = languagesOf(project).length > 1 || project.decisions.some(decision => decision.lasting === true) || project.counters.some(counter => counter.lasting === true)
     || documents.some(document => flattenStoredNodes(document.nodes).some(node => (node.type === 'remember' && node.forget === true) || (node.type === 'choice' && node.timeLimitMs !== undefined)))
-  // Datajack 3.3 would leave out of the journal the counters shown while not zero, even when they are not.
+  // Datajack 3.6 would leave out of the journal the counters shown while not zero, even when they are not.
   if (shownWhileNotZero(project.shown).length > 0) {
-    return '3.4'
+    return '3.7'
   }
   // Datajack 3.2 does not know a gauge, and would leave options meant below in the middle.
   if (documents.some(document => flattenStoredNodes(document.nodes).some(node => node.type === 'gauge' || (node.type === 'choice' && node.below === true)))) {

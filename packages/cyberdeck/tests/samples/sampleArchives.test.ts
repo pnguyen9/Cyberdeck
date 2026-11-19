@@ -93,6 +93,25 @@ Nothing changes here.
     }
   })
 
+  it('stay those of their previous names when the sample says so, so that older saves still find them', async () => {
+    const empty = await writeZip([], new Date('2026-01-01T00:00:00Z'))
+    const text = '[import: story en]\n[counter: To hit = 3]\n[counter: Luck = 0]\n[decision: Mood = Calm | Angry]\n\n# First\n[add: To hit 1]\nA line.\n'
+    const source = { id: 'tiny', folder: '', name: 'Tiny', description: 'A tiny story.' }
+    const plain = await readGameArchive((await buildSampleFrom(source, text, empty, new Date('2026-11-17T10:00:00Z'))).archive)
+    const kept = await readGameArchive((await buildSampleFrom({ ...source, previousNames: { counters: { 'To hit': 'ToHit' } } }, text, empty, new Date('2026-11-17T10:00:00Z'))).archive)
+    expect(plain.manifest.project.counters.map(counter => counter.id)).toEqual(['counters-to-hit', 'counters-luck'])
+    expect(kept.manifest.project.counters.map(counter => [counter.id, counter.name])).toEqual([['counters-tohit', 'To hit'], ['counters-luck', 'Luck']])
+    expect(JSON.stringify(kept.chapters)).toContain('"counters-tohit"')
+    expect(kept.manifest.project.decisions.map(decision => decision.id)).toEqual(plain.manifest.project.decisions.map(decision => decision.id))
+  })
+
+  it('of Knee-Deep stay those its saves of 3.6 point at, To hit and Armour class those of ToHit and AC', async () => {
+    const built = await buildSample(SAMPLES.find(sample => sample.id === 'knee-deep')!, samplesFolder, new Date('2026-11-17T10:00:00Z'))
+    const counters = (await readGameArchive(built.archive)).manifest.project.counters
+    expect(counters.find(counter => counter.name === 'To hit')?.id).toBe('counters-tohit')
+    expect(counters.find(counter => counter.name === 'Armour class')?.id).toBe('counters-ac')
+  }, 60_000)
+
   it('give the same hash for the same content, whatever the date of export, and another for other content', async () => {
     const empty = await writeZip([], new Date('2026-01-01T00:00:00Z'))
     const source = { id: 'tiny', folder: '', name: 'Tiny', description: 'A tiny story.' }

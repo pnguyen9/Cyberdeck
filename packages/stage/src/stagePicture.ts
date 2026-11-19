@@ -1,4 +1,5 @@
 import { effectiveFacing, type StageCatalog, type StageState } from '@cyberdeck/core'
+import { knownFeet } from './components/spriteFeet'
 import { STAGE_HEIGHT, STAGE_WIDTH } from './textboxLayout'
 
 /** A sixth of the stage, the shape of the game's cover: enough to recognise a moment in a list of saves. */
@@ -62,9 +63,12 @@ export async function stagePicture(stage: StageState, catalog: StageCatalog): Pr
     if (sprite === null) {
       continue
     }
-    const fit = Math.min(1, SPRITE_MAXIMUM.width / sprite.naturalWidth, SPRITE_MAXIMUM.height / sprite.naturalHeight) * DEPTH_SCALES[onStage.depth]
-    const width = sprite.naturalWidth * fit
-    const height = sprite.naturalHeight * fit
+    const fit = Math.min(1, SPRITE_MAXIMUM.width / sprite.naturalWidth, SPRITE_MAXIMUM.height / sprite.naturalHeight)
+    const width = sprite.naturalWidth * fit * DEPTH_SCALES[onStage.depth]
+    const height = sprite.naturalHeight * fit * DEPTH_SCALES[onStage.depth]
+    // Nearer or farther around the feet, as on stage: where they stand at the middle depth.
+    const feet = (url === null ? undefined : knownFeet(url)) ?? 1
+    const feetLine = STAGE_HEIGHT - sprite.naturalHeight * fit * (1 - feet)
     const centre = onStage.x / 100 * STAGE_WIDTH
     const facing = effectiveFacing(onStage)
     const drawnFacing = catalog.drawnFacing(onStage.characterId)
@@ -73,7 +77,7 @@ export async function stagePicture(stage: StageState, catalog: StageCatalog): Pr
       context.translate(centre * 2, 0)
       context.scale(-1, 1)
     }
-    context.drawImage(sprite, centre - width / 2, STAGE_HEIGHT - height, width, height)
+    context.drawImage(sprite, centre - width / 2, feetLine - height * feet, width, height)
     context.restore()
   }
   const illustrationUrl = stage.illustrationId === null ? null : catalog.illustrationUrl(stage.illustrationId)

@@ -1,5 +1,12 @@
 import type { AskBound, Condition, CounterValue, Directive, GaugeNode } from './importTypes'
-import { DEFAULT_GAUGE_PLACE, GAUGE_COLORS, type GaugeColor, type GaugePlace } from '../format/storyFormat'
+import { DEFAULT_GAUGE_PLACE, GAUGE_COLORS, type GaugeColor, type GaugePlace, type ShownWhen } from '../format/storyFormat'
+
+/** The `[shown…]` directives, each with when what it names is shown: `[shown: Bag]` always, `[shown after an ending: …]`, `[shown while not zero: …]`. */
+export const SHOWN_DIRECTIVES: Readonly<Record<string, ShownWhen>> = {
+  shown: 'always',
+  'shown after an ending': 'afterAnEnding',
+  'shown while not zero': 'whileNotZero',
+}
 
 /** Directives that shape the story rather than the stage. They must be alone on their line. */
 export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
@@ -35,9 +42,7 @@ export const CONTROL_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
   'ending',
   'remember',
   'forget',
-  'shown',
-  'shown after an ending',
-  'shown while not zero',
+  ...Object.keys(SHOWN_DIRECTIVES),
 ])
 
 /**

@@ -32,6 +32,9 @@ describe('interpretStageDirective', () => {
     expect(interpret('move', ['marie'])).toBeNull()
     expect(interpret('exit', ['marie', 'far'])).toBeNull()
     expect(interpret('enter', ['marie', 'near', 'far'])).toBeNull()
+    expect(interpret('move', ['marie', '18%', 'middle'])).toMatchObject({ depth: 'middle', position: { type: 'exact', x: 18 } })
+    expect(interpret('move', ['marie', 'middle', 'left'])).toMatchObject({ depth: 'middle', position: { type: 'preset', name: 'left' } })
+    expect(interpret('move', ['marie', 'middle'])).toMatchObject({ depth: null, position: { type: 'preset', name: 'center' } })
   })
 
   it('reads exact positions as percentages of the stage width', () => {

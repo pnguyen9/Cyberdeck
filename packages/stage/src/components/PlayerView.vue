@@ -78,6 +78,7 @@ import { LESS_MOTION, useSystemLessMotion, wantsLessMotion } from '../settings/l
 import FullScreenText from './FullScreenText.vue'
 import GaugePanel from './GaugePanel.vue'
 import { preparePicture } from './animatedPictures'
+import { spriteFeet } from './spriteFeet'
 import type { StyledPart } from '../textRuns'
 
 const props = defineProps<{
@@ -716,6 +717,13 @@ function preparePicturesAhead() {
         void preparePicture(url)
       }
     })
+    // Full-body sprites' feet, for sizes near or far to change around them from their first showing.
+    for (const onStage of stages.flatMap(stage => stage.characters)) {
+      const url = catalog.framing(onStage.characterId) === 'upperBody' ? null : catalog.expressionUrl(onStage.characterId, onStage.expressionId)
+      if (url !== null) {
+        void spriteFeet(url)
+      }
+    }
   })
 }
 

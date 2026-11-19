@@ -140,8 +140,11 @@ function classifyWord(word: string, vocabulary: StageVocabulary): ArgumentWord {
  */
 function readArgumentWords(words: readonly string[], directive: 'enter' | 'exit' | 'move', vocabulary: StageVocabulary) {
   const read = { position: null as PositionWord | null, facing: null as Facing | null, depth: null as Depth | null, expression: null as string | null, animation: { kind: null, durationMs: null, wait: false } as AnimationWords }
-  for (const word of words) {
-    const classified = classifyWord(word, vocabulary)
+  // `middle` is both an old name for the centre and a depth: beside another position, it is the depth.
+  const classifiedWords = words.map(word => ({ isMiddle: word.toLowerCase() === 'middle', classified: classifyWord(word, vocabulary) }))
+  const hasOtherPosition = classifiedWords.some(({ isMiddle, classified }) => !isMiddle && classified.type === 'position')
+  for (const { isMiddle, classified: asAlone } of classifiedWords) {
+    const classified: ArgumentWord = hasOtherPosition && isMiddle ? { type: 'depth', depth: 'middle' } : asAlone
     switch (classified.type) {
       case 'position':
         if (read.position !== null || directive === 'exit') {

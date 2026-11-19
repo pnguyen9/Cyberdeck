@@ -769,9 +769,84 @@ def goldgrin():
     return sprite(shadow(300, 170) + goblin(d, extra, hat, 'normal', 'grin', False, 0.9, ('#5a5a7a', '#1a1a2a')), d)
 
 
+def heap():
+    """The Lost Property: a lumbering mound of everything ever dropped down the Delve, two lost marbles for eyes."""
+    d = Defs()
+    junk = (
+        # an open umbrella sticking out on the left, a boot on the right, a clock face, keys, a rocking horse's head
+        f'<g transform="translate(150 {FEET_Y - 470}) rotate(-35)"><path d="M-110 0 q110 -130 220 0 q-27 -20 -55 0 q-27 -20 -55 0 q-27 -20 -55 0 q-27 -20 -55 0 z" fill="{d.radial("umb", "#ff8ad0", "#a01060")}" stroke="{INK}" stroke-width="6"/>'
+        f'<path d="M0 -60 v170 q0 24 -22 24" stroke="{INK}" stroke-width="8" fill="none" stroke-linecap="round"/></g>'
+        + f'<g transform="translate(590 {FEET_Y - 290}) rotate(20)"><path d="M-40 -110 h70 v120 h70 q20 0 20 30 v20 h-160 z" fill="{d.radial("boot", "#c8864a", "#5a2a0a")}" stroke="{INK}" stroke-width="6"/></g>'
+        + f'<g transform="translate(110 {FEET_Y - 200}) rotate(-10)"><path d="M0 0 q-20 -90 50 -110 q40 -10 60 30 l-20 20 q-20 -20 -40 0 l10 70 z" fill="{d.radial("horse", "#fff2c8", "#c0904a")}" stroke="{INK}" stroke-width="6"/><circle cx="60" cy="-80" r="8" fill="{INK}"/>'
+        f'<path d="M30 -110 q-30 -20 -40 20" stroke="#c0392b" stroke-width="10" fill="none" stroke-linecap="round"/></g>'
+    )
+    keys = ''.join(f'<g transform="translate({x} {y}) rotate({a})"><circle cx="0" cy="0" r="16" fill="none" stroke="#d4a017" stroke-width="7"/><path d="M16 0 h44 v12 M48 0 v10" stroke="#d4a017" stroke-width="7" fill="none"/></g>'
+                   for x, y, a in ((250, FEET_Y - 150, 20), (520, FEET_Y - 120, -30), (430, FEET_Y - 520, 60), (300, FEET_Y - 330, 140)))
+    socks = ''.join(f'<g transform="rotate(-15 {x} {y})"><path d="M{x} {y} v56 q0 30 30 30 h26 q14 0 14 -14 q0 -14 -14 -14 h-26 v-58 z" fill="{c}" stroke="{INK}" stroke-width="5"/>'
+                    f'<path d="M{x} {y + 14} h30" stroke="#fff" stroke-width="8"/></g>' for x, y, c in ((380, FEET_Y - 200, '#6ad0ff'), (560, FEET_Y - 440, '#a0ff8a'), (190, FEET_Y - 380, '#ffd34d')))
+    clock = (f'<g transform="translate(560 {FEET_Y - 600})"><rect x="-50" y="-120" width="100" height="220" rx="16" fill="{d.linear("clk", "#c8864a", "#5a2a0a", 1, 0)}" stroke="{INK}" stroke-width="6"/>'
+             f'<circle cx="0" cy="-60" r="38" fill="#fff8e0" stroke="{INK}" stroke-width="5"/><path d="M0 -60 v-26 M0 -60 l18 10" stroke="{INK}" stroke-width="5" stroke-linecap="round"/></g>')
+    cake = (f'<g transform="translate(350 {FEET_Y - 670})"><rect x="-90" y="-40" width="180" height="70" rx="10" fill="{d.linear("cake", "#fff8f0", "#f0c8d8")}" stroke="{INK}" stroke-width="5"/>'
+            f'<rect x="-55" y="-90" width="110" height="55" rx="10" fill="{d.linear("cake2", "#fff8f0", "#f0c8d8")}" stroke="{INK}" stroke-width="5"/>'
+            f'<path d="M-90 -10 q22 18 45 0 q22 18 45 0 q22 18 45 0 q22 18 45 0" stroke="#ff8ad0" stroke-width="6" fill="none"/>'
+            + shine(-30, -70, 20, 8, -10, 0.8) + '</g>')
+    body = (blob(d, 'pile', 360, FEET_Y - 330, 300, 320, '#b8b0c8', '#4a4458')
+            + ''.join(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="{c}" stroke="{INK}" stroke-width="4" opacity="0.9"/>'
+                      for x, y, rx, ry, c in ((230, FEET_Y - 250, 60, 40, '#8a7aa8'), (480, FEET_Y - 220, 70, 46, '#7a8aa8'), (360, FEET_Y - 470, 80, 50, '#9a8ab0'), (230, FEET_Y - 560, 50, 36, '#8a9ab8')))
+            + junk + socks + keys + clock + cake
+            # two lost marbles for eyes, glaring
+            + f'<circle cx="300" cy="{FEET_Y - 380}" r="44" fill="{d.radial("marb1", "#bff0ff", "#1a6ab0")}" stroke="{INK}" stroke-width="6"/>'
+            + f'<circle cx="430" cy="{FEET_Y - 380}" r="44" fill="{d.radial("marb2", "#ffd0f0", "#a01a8a")}" stroke="{INK}" stroke-width="6"/>'
+            + f'<circle cx="310" cy="{FEET_Y - 375}" r="16" fill="{INK}"/><circle cx="420" cy="{FEET_Y - 375}" r="16" fill="{INK}"/>'
+            + shine(288, FEET_Y - 398, 14, 8, -30, 0.9) + shine(418, FEET_Y - 398, 14, 8, -30, 0.9)
+            + brows(365, FEET_Y - 440, 65, 'cross')
+            + f'<path d="M290 {FEET_Y - 280} q75 -40 150 0" stroke="{INK}" stroke-width="9" fill="none" stroke-linecap="round"/>'
+            + f'<path d="M300 {FEET_Y - 284} l20 22 l18 -26 l20 22 l18 -26 l20 22 l20 -20" fill="#fff" stroke="{INK}" stroke-width="4"/>')
+    return sprite(shadow(360, 330) + scaled(body, 1.05, 360), d, 760)
+
+
+def flint():
+    """Great-Uncle Flint: a dragon so old he has gone half to stone; bushy white brows, ear trumpet, cardigan, walking stick."""
+    d = Defs()
+    stone = ('#d8d0c4', '#5a5248')
+    cracks = ''.join(f'<path d="{p}" stroke="#4a4038" stroke-width="5" fill="none" stroke-linecap="round"/>'
+                     for p in ('M420 300 l30 40 l-10 40', 'M700 520 l-40 30 l10 50', 'M380 620 l50 20', 'M760 300 l-30 30'))
+    moss = ''.join(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="#7ab04a" stroke="{INK}" stroke-width="3" opacity="0.9"/>' for x, y, rx, ry in ((470, 200, 40, 16), (650, 210, 34, 14), (330, 560, 30, 12)))
+    body = (f'<path d="M760 {FEET_Y - 60} q260 40 220 -240 q-10 -80 -80 -100 q60 80 20 190 q-30 100 -170 80 z" fill="{d.radial("ftail", *stone)}" stroke="{INK}" stroke-width="7"/>'
+            + shape(d, 'fwing1', 'M300 520 q-200 -240 -240 -100 q50 0 50 50 q60 -10 70 50 q70 -20 120 0 z', '#c8c0b4', '#6a6258', 6)
+            + shape(d, 'fwing2', 'M820 520 q200 -240 240 -100 q-50 0 -50 50 q-60 -10 -70 50 q-70 -20 -120 0 z', '#c8c0b4', '#6a6258', 6)
+            + f'<path d="M1010 470 l20 40 M1000 520 l30 10" stroke="#4a4038" stroke-width="5"/>'
+            + legs(d, 'fl', (430, 690), *stone, top=FEET_Y - 120, rx=80)
+            + blob(d, 'fbody', 560, FEET_Y - 300, 300, 290, *stone)
+            # a knitted cardigan, buttoned wrong
+            + f'<path d="M290 {FEET_Y - 480} q270 120 540 0 l-30 330 q-240 70 -480 0 z" fill="{d.radial("cardi", "#9ad0a0", "#2a6a3a")}" stroke="{INK}" stroke-width="6"/>'
+            + f'<path d="M560 {FEET_Y - 420} v300" stroke="{INK}" stroke-width="5"/>'
+            + ''.join(f'<circle cx="{530 if i % 2 else 590}" cy="{FEET_Y - 390 + i * 70}" r="14" fill="#c8864a" stroke="{INK}" stroke-width="4"/>' for i in range(4))
+            + ''.join(f'<path d="M{x} {FEET_Y - 460} v300" stroke="#2a6a3a" stroke-width="4" opacity="0.6"/>' for x in range(330, 800, 40))
+            # horns worn down to stubs
+            + f'<path d="M430 230 q-20 -70 10 -110 q20 60 50 90 z M690 230 q20 -70 -10 -110 q-20 60 -50 90 z" fill="#efe6d0" stroke="{INK}" stroke-width="5"/>'
+            + blob(d, 'fhead', 560, 340, 220, 180, *stone)
+            + blob(d, 'fsnout', 560, 440, 150, 86, '#e0d8cc', '#6a6258', 6, False)
+            + '<ellipse cx="520" cy="412" rx="14" ry="9" fill="#3a3028"/><ellipse cx="600" cy="412" rx="14" ry="9" fill="#3a3028"/>'
+            + mascot_eyes(490, 630, 340, 'normal', 0.9)
+            # bushy white eyebrows, cross
+            + f'<path d="M420 280 q40 -50 110 -10 q-30 -40 -80 -30 q-10 -20 -40 0 z M700 280 q-40 -50 -110 -10 q30 -40 80 -30 q10 -20 40 0 z" fill="#fff" stroke="{INK}" stroke-width="5"/>'
+            + mouth(560, 470, 'frown', 50)
+            # a long white moustache-beard
+            + f'<path d="M470 470 q-60 40 -40 140 q40 -60 80 -100 z M650 470 q60 40 40 140 q-40 -60 -80 -100 z" fill="#fff" stroke="{INK}" stroke-width="5"/>'
+            # an ear trumpet
+            + f'<g transform="translate(352 360) rotate(-15)"><path d="M0 0 l-110 -50 q-30 50 0 100 z" fill="{d.radial("trumpet", "#fff6a0", "#b07a0a")}" stroke="{INK}" stroke-width="6"/><rect x="-6" y="-10" width="60" height="20" rx="8" fill="#d4a017" stroke="{INK}" stroke-width="5"/></g>'
+            # the walking stick
+            + f'<path d="M900 {FEET_Y} v-430 q0 -60 50 -60 q50 0 50 50" stroke="#5a2a0a" stroke-width="26" fill="none" stroke-linecap="round"/>'
+            + f'<path d="M900 {FEET_Y} v-430 q0 -60 50 -60 q50 0 50 50" stroke="#a0602a" stroke-width="14" fill="none" stroke-linecap="round"/>'
+            + blob(d, 'fhand', 880, FEET_Y - 330, 46, 40, *stone, 5, False)
+            + cracks + moss)
+    return sprite(shadow(560, 420) + body, d, 1120)
+
+
 FOES = {'gloop': gloop, 'rat': rat, 'intern': intern, 'shroom': shroom, 'bats': bats, 'clerk': clerk, 'boney': boney, 'ghost': ghost,
         'mummy': mummy, 'imp': imp, 'golem': golem, 'foreman': foreman, 'mimic': mimic, 'whelp': whelp,
-        'fungus': fungus, 'rattlebones': rattlebones, 'goldgrin': goldgrin}
+        'fungus': fungus, 'rattlebones': rattlebones, 'goldgrin': goldgrin, 'heap': heap, 'flint': flint}
 
 
 # ------------------------------------------------------------------------------------- props of the odd rooms
@@ -1147,7 +1222,24 @@ def hoard():
                          + f'<rect y="0" width="{W}" height="{H}" fill="#ffd34d" opacity="0.06"/>'), d)
 
 
-BACKGROUNDS = {'town': town, 'shop': shop, 'tavern': tavern, 'gate': gate, 'cellars': cellars, 'grotto': grotto, 'crypt': crypt, 'forge': forge, 'hoard': hoard}
+def bedrock():
+    """Floor 6, under the Hoard: grey, ancient, dusty; fossils in the walls, an armchair cut from the rock, a ledger."""
+    d = Defs()
+    fossils = ''.join(f'<g transform="translate({x} {y}) scale({s})"><path d="M0 0 a40 40 0 1 1 30 -20 a26 26 0 1 0 -18 14 a14 14 0 1 1 10 -8" stroke="#8a8274" stroke-width="7" fill="none"/></g>'
+                      for x, y, s in ((220, 240, 1.2), (760, 140, 0.9), (1500, 260, 1.3), (1780, 520, 0.8), (420, 520, 0.7)))
+    bones = ''.join(f'<path d="M{x} {y} q60 -30 120 0 q60 30 120 0" stroke="#d8d0c0" stroke-width="12" fill="none" stroke-linecap="round" opacity="0.7"/>' for x, y in ((980, 330), (1240, 420)))
+    dust = ''.join(f'<circle cx="{(i * 389) % W}" cy="{(i * 157) % 720}" r="{2 + i % 3}" fill="#f4eee0" opacity="0.5"/>' for i in range(50))
+    chair = (f'<g transform="translate(1380 760)"><path d="M-260 0 v-300 q0 -120 120 -120 h280 q120 0 120 120 v300 z" fill="{d.linear("chair", "#a8a094", "#4a4238")}" stroke="{INK}" stroke-width="7"/>'
+             f'<rect x="-300" y="-160" width="80" height="160" rx="30" fill="#8a8274" stroke="{INK}" stroke-width="6"/><rect x="220" y="-160" width="80" height="160" rx="30" fill="#8a8274" stroke="{INK}" stroke-width="6"/></g>')
+    ledger = (f'<g transform="translate(460 760)"><path d="M-220 0 l20 -300 h200 l20 300 z M0 0 l20 -300 h200 l20 300 z" fill="#f4ecd4" stroke="{INK}" stroke-width="6"/>'
+              + ''.join(f'<path d="M{x} {-260 + i * 40} h{140}" stroke="#a09070" stroke-width="4"/>' for i in range(6) for x in (-180, 40))
+              + f'<text x="-100" y="-40" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="34" fill="#c0392b" transform="rotate(-8 -100 -40)">OVERDUE</text>'
+              f'<text x="120" y="-40" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="34" fill="#c0392b" transform="rotate(-8 120 -40)">OVERDUE</text></g>')
+    return scene(dungeon(d, ('#9a948a', '#5a564e', '#16140f'), ('#7a746a', '#24201a'), fossils + bones + ledger + chair + dust
+                         + f'<rect width="{W}" height="{H}" fill="#e8e0d0" opacity="0.06"/>'), d)
+
+
+BACKGROUNDS = {'town': town, 'shop': shop, 'tavern': tavern, 'gate': gate, 'cellars': cellars, 'grotto': grotto, 'crypt': crypt, 'forge': forge, 'hoard': hoard, 'bedrock': bedrock}
 
 
 # ------------------------------------------------------------------------------------- illustrations of the endings, and the cover
@@ -1262,7 +1354,22 @@ def cover():
                  + f'<text x="1300" y="320" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="54" fill="#fff6e0" stroke="{INK}" stroke-width="6" paint-order="stroke">a small dwarf, a big cheese</text>', d)
 
 
-ILLUSTRATIONS = {'victory': stairs_cg, 'crackers': crackers_cg, 'tuesdays': tuesdays_cg, 'bribe': bribe_cg, 'policy': policy_cg, 'bakery': bakery_cg, 'cover': cover}
+def overdue_cg():
+    d = Defs()
+    stamp = (f'<g transform="translate(1000 640) rotate(-12)"><rect x="-210" y="-60" width="420" height="120" rx="14" fill="none" stroke="#c0392b" stroke-width="12"/>'
+             f'<text x="0" y="28" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="86" fill="#c0392b">RENEWED</text></g>')
+    wheel = (f'<g transform="translate(1000 640)"><ellipse cx="0" cy="110" rx="300" ry="80" fill="#d8a020" stroke="{INK}" stroke-width="7"/>'
+             f'<rect x="-300" y="-20" width="600" height="130" fill="{d.linear("orind", "#ffe07a", "#d8a020")}"/>'
+             f'<path d="M-300 -20 v130 M300 -20 v130" stroke="{INK}" stroke-width="7"/>'
+             f'<ellipse cx="0" cy="-20" rx="300" ry="80" fill="{d.radial("ocheese", "#fff6c0", "#ffd34d")}" stroke="{INK}" stroke-width="7"/></g>')
+    return scene(bedrock().split('>', 1)[1].rsplit('</svg>', 1)[0].replace('id="', 'id="r').replace('url(#', 'url(#r')
+                 + f'<rect width="{W}" height="{H}" fill="#ffd34d" opacity="0.12"/>'
+                 + stand(flint(), 1180, 760, 760, 'a') + wheel + stamp
+                 + stand(ember('happy'), -60, 1000, 700, 'b') + stand(dwarf('happy'), 520, 1000, 760, 'c')
+                 + caption('Long Overdue'), d)
+
+
+ILLUSTRATIONS = {'victory': stairs_cg, 'crackers': crackers_cg, 'tuesdays': tuesdays_cg, 'bribe': bribe_cg, 'policy': policy_cg, 'bakery': bakery_cg, 'overdue': overdue_cg, 'cover': cover}
 
 
 # ------------------------------------------------------------------------------------- sounds and music

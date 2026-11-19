@@ -428,7 +428,8 @@ class TextWriter {
           this.characterName(command.characterId),
           this.placement(command.placement),
           command.facing === null ? '' : `facing-${command.facing}`,
-          command.depth ?? '',
+          // `middle` alone is the centre: without a position, the middle depth is the one a character enters at anyway.
+          command.depth === null || (command.depth === 'middle' && command.placement.type === 'auto') ? '' : command.depth,
           expression === 'normal' ? '' : expression,
           animationWords(command.animation),
         )}]`

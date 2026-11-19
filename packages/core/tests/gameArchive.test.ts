@@ -253,7 +253,7 @@ describe('game archives', () => {
         manifest.archiveFormat = 2
       }))).toBe('This game was made for a newer Datajack: download the latest one')
       expect(await refusal((files, game) => changeJson(files, chapterPath(game.one.id), chapter => {
-        chapter.formatVersion = '3.5'
+        chapter.formatVersion = '3.8'
       }))).toMatch(/chapter\.json is invalid: chapter\.formatVersion: expected a format version this player reads$/)
     })
 
@@ -291,7 +291,7 @@ describe('game archives', () => {
         manifest.archiveFormat = 2
       }))).toEqual({ code: 'newerPlayer' })
       expect(await problemOf((files, game) => changeJson(files, chapterPath(game.one.id), chapter => {
-        chapter.formatVersion = '3.5'
+        chapter.formatVersion = '3.8'
       }))).toMatchObject({ code: 'newerFormat', path: chapterPath(buildGame().one.id), detail: 'chapter.formatVersion: expected a format version this player reads' })
       expect(await problemOf(files => changeJson(files, MANIFEST_PATH, manifest => {
         manifest.project.id = '../escape'
@@ -322,6 +322,14 @@ describe('game archives', () => {
 })
 
 describe('checkChapterDocument', () => {
+  it('refuses a move to the middle depth that names no position, which no text could write', () => {
+    const animation = { kind: null, durationMs: null, wait: false }
+    const chapter = (move: object) => ({ formatVersion: '3.7', id: 'chapter', title: null, nodes: [{ type: 'stage', id: 'stage', commands: [{ type: 'move', characterId: 'marie', animation, ...move }] }], createdAt: '', updatedAt: '' })
+    expect(() => checkChapterDocument(chapter({ placement: null, depth: 'middle' }), 'chapter')).toThrow('chapter.nodes[0].commands[0].placement')
+    expect(checkChapterDocument(chapter({ placement: { type: 'exact', x: 18 }, depth: 'middle' }), 'chapter').nodes).toHaveLength(1)
+    expect(checkChapterDocument(chapter({ placement: null, depth: 'far' }), 'chapter').nodes).toHaveLength(1)
+  })
+
   it('bounds the nesting of branches', () => {
     let nodes: unknown[] = [{ type: 'break', id: 'break' }]
     for (let depth = 0; depth < 100; depth++) {
@@ -345,7 +353,7 @@ describe('checkChapterDocument', () => {
   })
 
   it('refuses documents from a newer minor version, which may hold nodes this player does not know', () => {
-    expect(() => checkChapterDocument({ formatVersion: '3.5', id: 'chapter', title: null, nodes: [], createdAt: '', updatedAt: '' }, 'chapter'))
+    expect(() => checkChapterDocument({ formatVersion: '3.8', id: 'chapter', title: null, nodes: [], createdAt: '', updatedAt: '' }, 'chapter'))
       .toThrow('chapter.formatVersion: expected a format version this player reads')
   })
 })

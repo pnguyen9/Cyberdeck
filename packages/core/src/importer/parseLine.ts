@@ -1,4 +1,5 @@
 import type { Directive, ImportProblem, InlineDirective } from './importTypes'
+import { SHOWN_DIRECTIVES } from './readControl'
 
 /** A problem found on a line, before the importer adds the line number. */
 export type LineProblem = Omit<ImportProblem, 'line'>
@@ -112,7 +113,7 @@ function tokenize(line: string, problems: LineProblem[]): Token[] {
 }
 
 /** Directives whose argument is read as written: a list of names separated by commas, or words players read. */
-const AS_WRITTEN_DIRECTIVES: ReadonlySet<string> = new Set(['shown', 'shown after an ending', 'shown while not zero', 'to be continued', 'ask number'])
+const AS_WRITTEN_DIRECTIVES: ReadonlySet<string> = new Set([...Object.keys(SHOWN_DIRECTIVES), 'to be continued', 'ask number'])
 
 /** `enter: marie left smile` → name `enter`, arguments `marie`, `left`, `smile`. Null when the name is missing. */
 function readDirective(content: string): Directive | null {

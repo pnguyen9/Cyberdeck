@@ -4,11 +4,17 @@ import { AboutApp, AppLookButton, NewVersionBar, SampleNotLoadedNote, AUTOSAVE_S
 import { computed, nextTick, onMounted, ref, shallowRef, watch } from 'vue'
 import { describeError } from '../i18n/errorMessages'
 import { describeInstall, describeSampleInstall, libraryMessages } from '../i18n/libraryMessages'
+import { pinMessages } from '../i18n/pinMessages'
+import { usePinAsk } from '../profiles/pinAsk'
+import LockIcon from '../profiles/LockIcon.vue'
+import PinDialog from '../profiles/PinDialog.vue'
+import type { ProfileLocks } from '../profiles/profileLocks'
+import type { Profile } from '../profiles/profileStore'
 import { builtInSamples, installedSamples, installSample, SampleNotLoaded } from './builtInSamples'
 import type { GameLibrary, LibraryEntry } from './gameLibrary'
 import { sampleState } from './sampleShelf'
 
-const props = defineProps<{ library: GameLibrary; saveStore: SaveStore; profileName: string }>()
+const props = defineProps<{ library: GameLibrary; saveStore: SaveStore; profile: Pick<Profile, 'id' | 'name'>; locks: ProfileLocks }>()
 const languageChoice = defineModel<LanguageChoice>('languageChoice', { required: true })
 const emit = defineEmits<{ play: [story: PlayableStory, resumeFrom: SaveData | null]; map: [story: PlayableStory]; gallery: [story: PlayableStory]; settings: []; gameSettings: [gameId: string, gameName: string]; switchProfile: [] }>()
 
@@ -25,6 +31,18 @@ const confirming = ref<{ gameId: string; action: 'remove' | 'restart' | 'erase' 
 const shownCredits = ref<string | null>(null)
 const locale = useLocale()
 const text = useMessages(libraryMessages)
+const pinText = useMessages(pinMessages)
+/** A profile with a PIN asks for it again before its saves or progress are erased, and before its PIN is changed. */
+const { asked: pinAsked, withPin, managePin, pinDone, pinClosed } = usePinAsk(props.locks)
+/** Whether this profile has a PIN, for the header's button: read again whenever the dialog sets, changes or removes it. */
+const hasPin = ref(props.locks.isLocked(props.profile.id))
+function choosePin() {
+  managePin(props.profile, said => {
+    hasPin.value = props.locks.isLocked(props.profile.id)
+    message.value = said
+    errorMessage.value = null
+  })
+}
 const errorText = (error: unknown) => describeError(error, locale.value)
 
 /**
@@ -188,7 +206,11 @@ function startOver(entry: LibraryEntry, hasAutosave: boolean) {
 }
 
 /** Erases one game's saves, or its progress, or both; the game stays installed. */
-async function eraseGameData(entry: LibraryEntry, erased: ErasedData) {
+function eraseGameData(entry: LibraryEntry, erased: ErasedData) {
+  withPin(props.profile, 'confirm', () => eraseGameDataNow(entry, erased))
+}
+
+async function eraseGameDataNow(entry: LibraryEntry, erased: ErasedData) {
   confirming.value = null
   await props.saveStore.eraseGame(entry.id, erased)
   message.value = text.value.erasedGameData(entry.name, erased)
@@ -205,7 +227,16 @@ async function remove(entry: LibraryEntry) {
 /** Erasing what Datajack keeps waits for the player to say what. */
 const isConfirmingErase = ref(false)
 
-async function eraseAll(withSaves: boolean) {
+/** The games are everyone's, the saves and progress only this profile's: those ask for its PIN. */
+function eraseAll(withSaves: boolean) {
+  if (withSaves) {
+    withPin(props.profile, 'confirm', () => eraseAllNow(true))
+  } else {
+    void eraseAllNow(false)
+  }
+}
+
+async function eraseAllNow(withSaves: boolean) {
   isConfirmingErase.value = false
   confirming.value = null
   try {
@@ -328,7 +359,11 @@ function onDrop(event: DragEvent) {
         </label>
         <button class="button" @click="emit('settings')">{{ text.settings }}</button>
         <AppLookButton class="button" />
-        <button class="profile-button" @click="emit('switchProfile')">{{ profileName }} <span class="switch">· {{ text.switchProfile }}</span></button>
+        <button class="button pin-button" aria-haspopup="dialog" @click="choosePin">
+          <template v-if="hasPin"><LockIcon /> {{ pinText.pin }}</template>
+          <template v-else>{{ pinText.addPin }}</template>
+        </button>
+        <button class="profile-button" @click="emit('switchProfile')">{{ profile.name }} <span class="switch">· {{ text.switchProfile }}</span></button>
       </div>
     </header>
 
@@ -442,7 +477,7 @@ function onDrop(event: DragEvent) {
     <section class="erase">
       <button v-if="!isConfirmingErase" class="link-button" @click="isConfirmingErase = true">{{ text.eraseAll }}</button>
       <div v-else class="confirmation">
-        <p>{{ text.confirmErase(profileName) }}</p>
+        <p>{{ text.confirmErase(profile.name) }}</p>
         <div class="actions">
           <button class="button danger" @click="eraseAll(false)">{{ text.eraseGames }}</button>
           <button class="button danger" @click="eraseAll(true)">{{ text.eraseGamesAndSaves }}</button>
@@ -450,6 +485,7 @@ function onDrop(event: DragEvent) {
         </div>
       </div>
     </section>
+    <PinDialog v-if="pinAsked !== null" :locks="locks" :profile="pinAsked.profile" :purpose="pinAsked.purpose" @done="pinDone" @close="pinClosed" />
     <AboutApp />
   </main>
 </template>

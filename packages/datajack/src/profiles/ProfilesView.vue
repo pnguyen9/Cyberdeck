@@ -2,14 +2,23 @@
 import { AboutApp, NewVersionBar, LanguageSelect, useLocale, useMessages, type LanguageChoice } from '@cyberdeck/stage'
 import { onMounted, ref, useTemplateRef, watch } from 'vue'
 import { MAXIMUM_PROFILE_NAME_LENGTH, profileNameProblem } from '../../electron/profileNames'
+import { pinMessages } from '../i18n/pinMessages'
 import { profileMessages } from '../i18n/profileMessages'
+import LockIcon from './LockIcon.vue'
+import { usePinAsk } from './pinAsk'
+import PinDialog from './PinDialog.vue'
+import type { ProfileLocks } from './profileLocks'
 import type { Profile, ProfileList, ProfileStore } from './profileStore'
 
-const props = defineProps<{ store: ProfileStore }>()
+/** `entering`: the profile Datajack opened last, which asks for its PIN before opening again. */
+const props = defineProps<{ store: ProfileStore; locks: ProfileLocks; entering?: string | null }>()
 const emit = defineEmits<{ chosen: [profile: Profile] }>()
 const languageChoice = defineModel<LanguageChoice>('languageChoice', { required: true })
 const locale = useLocale()
 const text = useMessages(profileMessages)
+const pinText = useMessages(pinMessages)
+/** A profile with a PIN asks for it before opening, and before being renamed, moved or removed. */
+const { asked: pinAsked, withPin, pinDone, pinClosed } = usePinAsk(props.locks)
 
 const list = ref<ProfileList>({ profiles: [], lastUsedId: null })
 const isLoaded = ref(false)
@@ -28,6 +37,10 @@ onMounted(async () => {
   isLoaded.value = true
   if (list.value.profiles.length === 0) {
     requestAnimationFrame(() => nameInput.value?.focus())
+  }
+  const entering = list.value.profiles.find(profile => profile.id === props.entering)
+  if (entering !== undefined) {
+    choose(entering)
   }
 })
 
@@ -73,10 +86,10 @@ function checkFolder(folder: string | null, otherProfiles: readonly Profile[]) {
 }
 
 function choose(profile: Profile) {
-  return attempt(async () => {
+  withPin(profile, 'enter', () => attempt(async () => {
     await props.store.use(profile.id)
     emit('chosen', profile)
-  })
+  }))
 }
 
 function create() {
@@ -128,6 +141,7 @@ function changeFolder(profile: Profile) {
 function confirmRemove(profile: Profile) {
   return attempt(async () => {
     await props.store.remove(profile.id)
+    props.locks.remove(profile.id)
     removingId.value = null
     await refresh()
     message.value = text.value.removed(profile.name)
@@ -174,11 +188,12 @@ function confirmRemove(profile: Profile) {
             <button class="play-profile" @click="choose(profile)">
               <span class="profile-name">{{ profile.name }}</span>
               <span v-if="profile.saveFolder !== null" class="folder">{{ profile.saveFolder }}</span>
+              <span v-if="locks.isLocked(profile.id)" class="locked"><LockIcon /> {{ pinText.lockedBadge }}</span>
             </button>
             <div class="actions">
-              <button class="link-button" @click="renaming = { id: profile.id, name: profile.name }">{{ text.rename }}</button>
-              <button v-if="store.choosesSaveFolder" class="link-button" @click="changeFolder(profile)">{{ text.changeSaveFolder }}</button>
-              <button class="link-button" @click="removingId = profile.id">{{ text.remove }}</button>
+              <button class="link-button" @click="withPin(profile, 'confirm', () => renaming = { id: profile.id, name: profile.name })">{{ text.rename }}</button>
+              <button v-if="store.choosesSaveFolder" class="link-button" @click="withPin(profile, 'confirm', () => changeFolder(profile))">{{ text.changeSaveFolder }}</button>
+              <button class="link-button" @click="withPin(profile, 'confirm', () => removingId = profile.id)">{{ text.remove }}</button>
             </div>
           </template>
         </li>
@@ -208,6 +223,7 @@ function confirmRemove(profile: Profile) {
 
     <p v-if="errorMessage !== null" class="error" role="alert">{{ errorMessage }}</p>
     <p v-if="message !== null" class="message" role="status">{{ message }}</p>
+    <PinDialog v-if="pinAsked !== null" :locks="locks" :profile="pinAsked.profile" :purpose="pinAsked.purpose" @done="pinDone" @close="pinClosed" />
     <AboutApp />
   </main>
 </template>
@@ -280,6 +296,11 @@ h2 {
 .play-profile:hover .profile-name,
 .play-profile:focus-visible .profile-name {
   color: var(--look-accent);
+}
+
+.locked {
+  font-size: 13px;
+  color: var(--look-muted);
 }
 
 .folder,

@@ -92,17 +92,17 @@ describe('what is shown while not zero', () => {
     expect(setShown(moved, level, null, 'now').shown).not.toHaveProperty('whileNotZero')
   })
 
-  it('is kept by the project document, which a project from before 3.4 reads without', () => {
+  it('is kept by the project document, which a project from before 3.7 reads without', () => {
     const { project } = storyFromText(WHILE_NOT_ZERO)
     expect(checkProjectDocument(JSON.parse(JSON.stringify(project)), 'project').shown).toEqual(project.shown)
     const { whileNotZero: _counters, ...older } = project.shown
     expect(checkProjectDocument({ ...project, shown: older }, 'project').shown).toEqual(older)
   })
 
-  it('needs Datajack 3.4, which an older Datajack would leave out of the journal', () => {
+  it('needs Datajack 3.7, which an older Datajack would leave out of the journal', () => {
     const story = storyFromText(WHILE_NOT_ZERO)
-    expect(playerFormatVersion(story.project, story.chapters)).toBe('3.4')
+    expect(playerFormatVersion(story.project, story.chapters)).toBe('3.7')
     const plain = storyFromText(STORY)
-    expect(playerFormatVersion(plain.project, plain.chapters)).not.toBe('3.4')
+    expect(playerFormatVersion(plain.project, plain.chapters)).not.toBe('3.7')
   })
 })

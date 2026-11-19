@@ -164,3 +164,29 @@ describe('replacing a chapter by its edited text', () => {
     expect(runtime.snapshot.step.type === 'page' && runtime.snapshot.step.page.text).toBe('The end.')
   })
 })
+
+describe('depth, where `middle` alone is the centre', () => {
+  const DEPTHS = ['[enter: Marie near]', '— Marie: Hi.', '[move: Marie 18% middle]', '— Marie: Back.', '[move: Marie far]', '— Marie: Away.', '[move: Marie middle]', '— Marie: Centre.'].join('\n')
+  const movesOf = (chapters: readonly ChapterDocument[]) => chapters.flatMap(chapter => flattenStoredNodes(chapter.nodes))
+    .flatMap(node => node.type === 'page' ? [...node.commandsBefore, ...node.inlineCommands] : node.type === 'stage' ? node.commands : [])
+    .flatMap(command => command.type === 'move' || command.type === 'enter' ? [{ type: command.type, placement: command.placement, depth: command.depth }] : [])
+
+  it('writes the middle depth beside a position, and reads it back as the depth', () => {
+    const first = projectFrom(DEPTHS)
+    const exported = exportText(first.project, first.chapters, { declareDecisions: false })
+    expect(exported).toContain('[move: Marie 18% middle]')
+    expect(exported).toContain('[move: Marie center]')
+    expect(movesOf(projectFrom(exported).chapters)).toEqual(movesOf(first.chapters))
+    expect(movesOf(first.chapters).map(move => move.depth)).toEqual(['near', 'middle', 'far', null])
+  })
+
+  it('leaves out the middle depth of a character entering without a position, where it stands anyway', () => {
+    const { project, chapters } = projectFrom('[enter: Marie]\n— Marie: Hi.')
+    const withMiddle = chapters.map(chapter => ({ ...chapter, nodes: chapter.nodes.map(node => node.type === 'page'
+      ? { ...node, commandsBefore: node.commandsBefore.map(command => command.type === 'enter' ? { ...command, depth: 'middle' as const } : command) }
+      : node) }))
+    const exported = exportText(project, withMiddle, { declareDecisions: false })
+    expect(exported).toContain('[enter: Marie]')
+    expect(movesOf(projectFrom(exported).chapters)).toEqual([{ type: 'enter', placement: { type: 'auto' }, depth: null }])
+  })
+})

@@ -39,6 +39,7 @@ import {
   readGauge,
   readRandom,
   declarationKind,
+  SHOWN_DIRECTIVES,
 } from './readControl'
 
 export interface ImportOptions {
@@ -476,7 +477,7 @@ class TextImporter {
         // Names are listed with commas, `[shown: Bag, Trust]`, which no name in a tag holds.
         const names = (directive.written ?? text).split(',').map(name => name.trim().replace(/\s+/g, ' ')).filter(name => name !== '')
         if (names.length > 0) {
-          this.result.shown.push({ sourceLine: lineNumber, names, when: directive.name === 'shown after an ending' ? 'afterAnEnding' : directive.name === 'shown while not zero' ? 'whileNotZero' : 'always' })
+          this.result.shown.push({ sourceLine: lineNumber, names, when: SHOWN_DIRECTIVES[directive.name]! })
         }
         return
       }

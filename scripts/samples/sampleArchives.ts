@@ -5,7 +5,7 @@ import { createGameArchive, ENGLISH_STORY_WORDS, previewImport, readGameArchive,
 import { sampleGameId } from '../../packages/stage/src/app/samples'
 import { createNewProject, OpenProject } from '../../packages/cyberdeck/src/projects/openProject'
 import { memoryProjectStore } from '../../packages/cyberdeck/tests/projects/memoryProjectStore'
-import { withStableIds } from './stableIds'
+import { withStableIds, type PreviousNames } from './stableIds'
 import { FALLBACK_WIDTH, GEORGIA_WIDTHS } from './textWidths'
 
 /** A sample of docs/sample: where its files are, and how the shelves present it. */
@@ -16,11 +16,15 @@ export interface SampleSource {
   folder: string
   name: string
   description: string
+  /** Entries renamed since a release, which keep the identifier of their previous name: saves made before still find them. */
+  previousNames?: PreviousNames
 }
 
 export const SAMPLES: readonly SampleSource[] = [
   { id: 'sakura-week', folder: 'sakura-week', name: 'Sakura Week', description: 'A school week in April, five days before the cherry blossom festival: friends to make, a job to choose, and an evening under the lanterns. Many choices, several endings.' },
-  { id: 'knee-deep', folder: 'knee-deep', name: 'Knee-Deep', description: 'A humorous dungeon crawl with a very small hero, a very large debt to a tavern keeper, and a Delve that keeps changing its mind. Fights, shops, bargains, bosses and endings that the next game remembers.' },
+  { id: 'knee-deep', folder: 'knee-deep', name: 'Knee-Deep', description: 'A humorous dungeon crawl with a very small hero, a very large debt to a tavern keeper, and a Delve that keeps changing its mind. Fights, shops, bargains, bosses and endings that the next game remembers.',
+    // Renamed in 3.7.0: counters-tohit and counters-ac stay, so that 3.6 saves keep them.
+    previousNames: { counters: { 'To hit': 'ToHit', 'Armour class': 'AC' } } },
   { id: 'battle', folder: 'minigames/battle', name: 'Battle', description: 'A minigame: two creatures in an arena, with fire, leaf and water special moves, guards and potions. A single duel or three in a row.' },
   { id: 'blackjack', folder: 'minigames/blackjack', name: 'Blackjack', description: 'A minigame: cards against the dealer, with a shoe of one to eight decks, hitting, standing, doubling and a purse that is kept from one game to the next.' },
   { id: 'minesweeper', folder: 'minigames/minesweeper', name: 'Minesweeper', description: 'A minigame: a grid with hidden mines, numbers to read and flags to plant.' },
@@ -98,7 +102,7 @@ export async function buildSampleFrom(source: SampleSource, text: string, assets
   await open.addFiles([{ name: `${source.id}-assets.zip`, mediaType: 'application/zip', bytes: assets }])
   await open.updateDetails({ description: source.description })
   const documents = (await memory.store.readChapters(open.project.id)) as ChapterDocument[]
-  const stable = withStableIds(open.project, documents)
+  const stable = withStableIds(open.project, documents, source.previousNames)
   const archive = await createGameArchive({
     project: stable.project,
     chapters: stable.documents,

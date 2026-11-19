@@ -75,6 +75,7 @@ a new notion gets its word here before it gets code.
 | Library | The games installed in Datajack, each a card. | |
 | Sample | A story of `docs/sample` built into both applications: a shelf in Datajack's library to add games from, and *New project from a sample* in Cyberdeck. | `samples/<id>.<hash>.js`, `sampleBuild.ts` |
 | Profile | One player in Datajack: settings, saves, progress, memories and lasting values. | |
+| PIN | Four digits a profile may be locked with, asked for before it opens, before its saves or progress are erased and before it is renamed, moved or removed; only a salted hash is kept. | `ProfileLocks`, `PinDialog` |
 
 **How the applications run**
 
@@ -546,7 +547,7 @@ one per language, of the same shape: another language is one more table each.
 | `[enter: marie left smile]`, `[enter: marie 35%]` | Positions: presets (`far-left`, `left`, `center`, `right`, `far-right`, or the project's own) or a percentage of the stage width. |
 | `[enter: marie slide-from-right 1.2s wait]`, `[exit: marie slide-to-left]`, `[move: marie right instant]` | Animations: `fade`, `instant`, `slide-from-left/right` (enter), `slide-to-left/right` (exit); a duration in `s` or `ms`; `wait` holds the text until the animation ends. |
 | `[enter: marie facing-left]` | Forces the way a character looks. |
-| `[enter: marie near]`, `[move: marie far]` | Depth: `near` is larger and in front, `far` smaller, behind and a little dimmer, `middle` by default. A move may change the depth alone, the position, or both. Saves keep it. A character drawn upper body grows around its face when near, and shrinks from the bottom of the stage when far, so that nothing floats. |
+| `[enter: marie near]`, `[move: marie far]` | Depth: `near` is larger and in front, `far` smaller, behind and a little dimmer, `middle` by default. A move may change the depth alone, the position, or both; `middle` beside a position is the depth (`[move: marie 18% middle]`), alone it is the centre. Saves keep it. A character drawn full body grows and shrinks around its feet, the lowest drawn line of its picture, so that near or far it stands on the same line, however much empty space its file has below them. A character drawn upper body grows around its face when near, and shrinks from the bottom of the stage when far, so that nothing floats. |
 | `[marie: surprised]` | Marie changes expression. Any name that is not a keyword is a character. |
 | `[card: ace flip]`, `[card: {Drawn} flip 0.6s wait]` | The picture turns over, as a card does: the old one narrows to its edge, the new one widens from it, in 0.4 s unless told; `wait` holds the text until it is done. A picture named `flip` alone is still a picture. Players who ask for less motion see it change at once. Needs Datajack 3.1. |
 | `[wait: 0.5]` | Pauses the text, in seconds, and the tags written after it: `[card: back] [wait: 0.3] [card: ace]` shows the back, then the ace. |
@@ -577,7 +578,7 @@ one per language, of the same shape: another language is one more table each.
 | `{Board 3}`, `{Board Cell}`, `{Board size}`, `[if: Board Cell is cat]`, `[if: Queue size > 0]`, `[set: Near = {Counts 2}]` | A place shown, tested, or read back into a counter as a number; `size`, how many values the list holds, compared with a number or a counter (`[if: Cards size < {Cut}]`, Datajack 3.2.1). |
 | `[choice: Cell grid 4 × 4 from Shown with tile]` | A choice shown as rows of picture buttons, numbered from 1, left to right then down, up to 30 × 24: each shows the picture of `tile` named like what its place of `Shown` holds (the value itself without one), and picking one gives `Cell` its number. The arrows move, Enter or Space picks. The tile's entries are made for every value the story's lists may hold. A line under it, `> {Left} cells left to open`, is shown in the text box while the grid waits, its values filled in each time (Datajack 3.2). `, marking Flag` at the end gives a second way to pick a tile, a right click or F, which gives its number to `Flag` and 0 to `Cell` (picking does the reverse): to mark a tile rather than open it (Datajack 3.2). Needs Datajack 3.0. |
 | `[counter lasting: Coins = 0]`, `[decision multi lasting: Bag = Key \| Lamp]` | A counter or a decision the profile keeps from one playthrough to the next: within one it behaves as any other, going back undoing what was added or taken, and a new playthrough starts with what the last one left. What the player carries, apart from what the game knows (`[remember]`). Needs Datajack 2.0. |
-| `[shown: Bag, Coins]`, `[shown while not zero: Luck]`, `[shown after an ending: Trust, endings reached]` | What players see in their **Journal**: decisions while they hold something (a bag its items, until taken away), counters their number, and with `endings reached` the endings reached; always, or once the profile has reached any ending. `while not zero` shows a counter only while it is not 0 (Datajack 3.4); a decision named there shows as with `[shown]`, and the endings reached once there is one. Nothing unless the author says so. Lines among the definitions, names separated by commas; the Index writes them too. |
+| `[shown: Bag, Coins]`, `[shown while not zero: Luck]`, `[shown after an ending: Trust, endings reached]` | What players see in their **Journal**: decisions while they hold something (a bag its items, until taken away), counters their number, and with `endings reached` the endings reached; always, or once the profile has reached any ending. `while not zero` shows a counter only while it is not 0; a decision named there shows as with `[shown]`, and the endings reached once there is one. Nothing unless the author says so. Lines among the definitions, names separated by commas; the Index writes them too. `while not zero` needs Datajack 3.7. |
 | `[add: Trust]`, `[add: Trust 2]`, `[add: Trust -1]` | Adds to a counter: 1, or the amount after its name. `[set: Trust = 0]` gives it a value. |
 | `[add: Money -{Bet}]`, `[add: Money {Bet} * 2.5]`, `[set: Score = {Points}]`, `[if: Money >= {Bet}]` | A counter counting with another: adding, taking or setting what another holds, times a factor if wished, and comparing with it. Counters with different decimals count together exactly, the result rounded to what the counter keeps. Needs Datajack 2.1. |
 | `[set: Weather = random 1 6]` | Gives a counter a whole number drawn between the two, both included, so that the same choices may lead elsewhere. A save keeps the draws, and going back does not draw again: a player cannot draw until it suits them. Needs Datajack 1.4. |
@@ -1159,6 +1160,28 @@ are renamed, moved or removed. Changing the folder moves the saves there, keepin
 in the new folder for the same game and slot. Removing a profile forgets it; on the desktop its
 files stay where they are. In the browser, profiles and saves live in the browser's storage.
 
+A profile may have a **PIN**, four digits, so that players sharing Datajack (parents and children,
+say) keep out of each other's profile. The **Add a PIN** button, next to the profile's name in the
+library (**PIN** with a padlock once there is one), sets it, changes it or removes it; changing or
+removing it asks for the current one. The digits are typed on the keyboard or on the dialog's own,
+and **OK** or Enter sends them; on a touch screen the system's keyboard stays closed. Datajack then
+asks for the PIN before opening the profile (at startup too: a locked profile never opens without
+it), and again before erasing its saves or progress, and before renaming, moving or removing it on
+the profiles screen, where the profile shows a padlock. Erasing only the games asks nothing: they are
+every profile's, and removing a game keeps every profile's saves. Five wrong PINs in a row make the
+player wait 30 seconds, then each further wrong one 1 minute, 5 minutes, then 15 minutes each time,
+until the right PIN starts the count again; the wait is kept with the lock, a restart does not end
+it, and a clock put back does not lengthen it. Only a salted hash of the PIN is kept (PBKDF2), beside
+the profile's settings in the page's storage, never the digits; nothing is encrypted. It is a lock
+against people using Datajack, not against the browser's developer tools or someone reading the
+disk. A forgotten PIN cannot be recovered in Datajack, so that a prank cannot be undone by another
+(*Forgot the PIN?*, under the digits, says the way out): the only way out is erasing what the browser
+keeps for Datajack, every profile and save with it (see *Erasing what the web builds store*). On the
+desktop, deleting the `Local Storage` folder of Datajack's application data folder
+(`~/.config/Datajack` on Linux, `%APPDATA%\Datajack` on Windows, `~/Library/Application
+Support/Datajack` on macOS), Datajack closed, forgets every profile's PIN, with every profile's
+settings, language and look; profiles and save files stay.
+
 On the desktop, each save is a file, `<save folder>/<game>/<slot>.json`, written beside the old one
 and swapped in one move, so that a crash never leaves half a save. The list of profiles is in the
 application's data folder.
@@ -1225,20 +1248,25 @@ imports each sample the normal way and compares every page's end.
 - **Knee-Deep** (`knee-deep/`): a very small dwarf, named by the player, goes down into the Delve for
   the town's stolen Great Cheese Wheel; a comic dungeon crawl of half an hour or more, with the dice
   of tabletop games. A town to come back to (a shop of weapons, armour, potions, bombs and ropes; a
-  tavern to rest and hear rumours), five floors of five rooms drawn at random, each room offering
+  tavern to rest, eat, drink and hear rumours), five floors of five rooms drawn at random, each room offering
   three doors that hint at what lies behind them: a fight, nine chests of which one may be opened (a
-  grid over a shuffled list), or one of eighteen odd encounters, none met twice before all are. Fights
+  grid over a shuffled list), or one of nineteen odd encounters, none met twice before all are, one of
+  them a fight with the Lost Property that may be slipped past. Fights
   roll a twenty-sided die against armour (a natural 20 doubles the damage, a natural 1 fumbles):
   swing, heave, hide behind the beard, drink, throw a bomb, talk the monster round or run; fifteen
   monsters, each with its own lines, levels gained from experience. Fallen, the hero is carried back
-  to town for half their gold, three times; the fourth is an ending. Six endings in all, four of
+  to town for half their gold, three times; the fourth is an ending. Seven endings in all, four of
   them with the dragon at the bottom. Three optional bosses, stronger than the dragon, wait behind
-  WANTED posters on the landings, each with a big move every third turn and its own trick. The shop's
+  WANTED posters on the landings, each with a big move every third turn and its own trick. Once the
+  dragon is beaten, a fourth poster offers the Deep Delve: tougher monsters and bigger rewards on
+  every floor, and a sixth floor below the Hoard with an older, grumpier dragon and the seventh
+  ending. A humble hat that stops all experience, for those who want to win at level 1. The shop's
   curiosity shelf offers a new bargain after every trip, from nineteen, mostly cheap and silly. What
   carries over to the next playthrough, through `lasting` values and `[remember]`: one keepsake left
   in the tavern's cellar (picked from three shelves, with a way back between them), a bigger purse
   for every cheese returned, half the gold left (a quarter after a game over or a game left unfinished), the bosses' rewards and the trophies on the tavern wall, the blessings
-  of three odd encounters, and a town and a dragon that remember how the last game ended. Every number a counter, every monster's stats set by one scene
+  of four odd encounters (listed in the journal with what they give), what was won at level 1 and
+  the Deep Delves cleared, and a town and a dragon that remember how the last game ended. Every number a counter, every monster's stats set by one scene
   (`[set: FoeName = The Gloop]`), the doors' hints decisions copied from one another
   (`[set: LeftHint = {Hint}]`), the pictures in a glossy cartoon style by
   `scripts/samples/knee_deep_assets.py`.
@@ -1267,7 +1295,11 @@ imports each sample the normal way and compares every page's end.
   seconds it took (`now`), and the best time of each level is kept, in the journal. A right click or
   F flags a cell (`marking Flag`), which picking then leaves closed.
 - **Battle** (`battle/`): one duel, or three foes in a row with HP carried over and a short rest
-  between them. Three creatures, fire beating leaf, leaf water, water fire; each turn strike, use a
+  between them. Three creatures, fire beating leaf, leaf water, water fire, picked from a line-up: the
+  three side by side, the options along the bottom (`[choice: Mine below]`), the one picked stepping
+  forward and the others back (`[move: fernling center near]`, `far`) until the player teams up with
+  it or sees the others again, who shuffle back into line (`[move: fernling 50% middle]`; a `[loop]`
+  left by `[break]`). Each turn strike, use a
   special move (three a battle), guard against the next hit or drink a potion, the foe choosing at
   random, a potion when low; the elements matter to special moves only. Both creatures' HP as bars
   (`[gauge]`), the moves along the bottom (`[choice: Action below]`), each side's poses through a

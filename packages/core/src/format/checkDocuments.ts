@@ -156,6 +156,18 @@ const placement: Check<Placement> = (value, path) => {
   }
 }
 
+/**
+ * A move back to the middle depth names where to: `middle` alone is the centre in the text, so a
+ * move to the middle depth that keeps its place could not be written, nor read back as it is. The
+ * importer never makes one; `[move: marie 25% middle]` says it.
+ */
+function movesSomewhere(check: Check<Extract<StageCommand, { type: 'move' }>>): Check<Extract<StageCommand, { type: 'move' }>> {
+  return (value, path) => {
+    const move = check(value, path)
+    return move.placement === null && move.depth === 'middle' ? fail(`${path}.placement`, 'a position, which a move to the middle depth names') : move
+  }
+}
+
 const STAGE_COMMANDS: { [Type in StageCommand['type']]: Check<Extract<StageCommand, { type: Type }>> } = {
   background: withValueFrom(object({ type: oneOf('background'), backgroundId: string })),
   transition: object({ type: oneOf('transition'), name: string, durationMs: nullable(duration) }),
@@ -175,7 +187,7 @@ const STAGE_COMMANDS: { [Type in StageCommand['type']]: Check<Extract<StageComma
   video: object({ type: oneOf('video'), videoId: string }),
   enter: withValueFrom(object({ type: oneOf('enter'), characterId: string, expressionId: string, placement, facing: nullable(facing), depth: nullable(depth), animation })),
   exit: object({ type: oneOf('exit'), characterId: string, animation }),
-  move: object({ type: oneOf('move'), characterId: string, placement: nullable(placement), depth: nullable(depth), animation }),
+  move: movesSomewhere(object({ type: oneOf('move'), characterId: string, placement: nullable(placement), depth: nullable(depth), animation })),
   expression: withOptional('turn', withFlag('wait', object({ durationMs: duration })), withValueFrom(object({ type: oneOf('expression'), characterId: string, expressionId: string }))),
   wait: object({ type: oneOf('wait'), seconds: (value, path) => finiteNumber(value, path) >= 0 && (value as number) <= 600 ? value as number : fail(path, 'at most ten minutes, in seconds') }),
 }
@@ -478,7 +490,7 @@ const checkProjectFields: Check<ProjectDocument> = object({
   css,
   chapterTitleCards: boolean,
   frames: object({ textBox: nullable(string), namePlate: nullable(string) }),
-  // Counters shown while not zero, since 3.4: kept only by projects that have some.
+  // Counters shown while not zero, since 3.7: kept only by projects that have some.
   shown: withOptional('whileNotZero', array(string), object({ always: array(string), afterAnEnding: array(string), endings: nullable(oneOf('always', 'afterAnEnding')) })),
   createdAt: string,
   updatedAt: string,

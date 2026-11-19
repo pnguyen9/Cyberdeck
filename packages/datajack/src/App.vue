@@ -24,6 +24,7 @@ import { createIndexedDbLibraryStorage } from './library/indexedDbLibraryStorage
 import GalleryView from './library/GalleryView.vue'
 import LibraryView from './library/LibraryView.vue'
 import { createDesktopProfileStore } from './profiles/desktopProfileStore'
+import { createProfileLocks } from './profiles/profileLocks'
 import { createBrowserProfileStore, type Profile, type ProfileStore } from './profiles/profileStore'
 import ProfilesView from './profiles/ProfilesView.vue'
 import LandscapeOffer from './play/LandscapeOffer.vue'
@@ -55,6 +56,10 @@ provideApp({
 const profileStore: ProfileStore = desktop === undefined
   ? createBrowserProfileStore(() => window.localStorage, () => crypto.randomUUID(), () => new Date().toISOString())
   : createDesktopProfileStore(desktop)
+/** The PINs of profiles, kept in the browser (Electron's page too) beside their settings. */
+const locks = createProfileLocks(() => window.localStorage)
+/** The profile played last, when its PIN must be entered before it opens again. */
+const entering = ref<string | null>(null)
 const library = new GameLibrary(desktop === undefined ? createIndexedDbLibraryStorage() : createDesktopLibraryStorage(desktop))
 const isLoading = ref(true)
 const saveStore = computed(() => profile.value === null ? null : profileStore.saveStore(profile.value.id))
@@ -164,11 +169,17 @@ function dismissLandscape(gameId: string) {
   landscapeDismissedFor.value = new Set([...landscapeDismissedFor.value, gameId])
 }
 
-/** The profile played last opens directly: the player is asked only the first time, or when switching. */
+/** The profile played last opens directly, unless it has a PIN: the player is asked only the first time, or when switching. */
 onMounted(async () => {
   try {
     const list = await profileStore.list()
-    profile.value = list.profiles.find(candidate => candidate.id === list.lastUsedId) ?? null
+    const last = list.profiles.find(candidate => candidate.id === list.lastUsedId) ?? null
+    // A profile with a PIN never opens without it: the profiles screen asks it first.
+    if (last !== null && locks.isLocked(last.id)) {
+      entering.value = last.id
+    } else {
+      profile.value = last
+    }
   } finally {
     isLoading.value = false
   }
@@ -177,7 +188,7 @@ onMounted(async () => {
 
 <template>
   <template v-if="!isLoading">
-    <ProfilesView v-if="profile === null || saveStore === null" v-model:language-choice="languageChoice" :store="profileStore" @chosen="chosen => profile = chosen" />
+    <ProfilesView v-if="profile === null || saveStore === null" v-model:language-choice="languageChoice" :store="profileStore" :locks="locks" :entering="entering" @chosen="chosen => { entering = null; profile = chosen }" />
     <MapView
       v-else-if="mapShown !== null"
       :story="mapShown.story"
@@ -218,7 +229,8 @@ onMounted(async () => {
       v-model:language-choice="languageChoice"
       :library="library"
       :save-store="saveStore"
-      :profile-name="profile.name"
+      :profile="profile"
+      :locks="locks"
       @play="(story, resumeFrom) => playing = { story, resumeFrom }"
       @map="story => showMap(story, 'library')"
       @gallery="showGallery"
