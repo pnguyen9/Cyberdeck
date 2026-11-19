@@ -434,11 +434,66 @@ export async function focusStoryCard(page, title) {
 export async function createProfile(page, url, name) {
   await page.navigate(url)
   await page.waitFor('.new-profile .text-input')
+  await newProfile(page, name)
+}
+
+/** Creates a profile from Datajack's profiles screen, which opens its library. */
+export async function newProfile(page, name) {
   await page.evaluate(`document.querySelector('.new-profile .text-input').focus()`)
   await page.typeText(name)
+  await pause(300)
   await page.evaluate(`document.querySelector('.new-profile button[type=submit]').click()`)
   await pause(800)
 }
+
+/** The games of Datajack's library, title and release, joined by commas. */
+export function libraryGames(page) {
+  return page.evaluate(`[...document.querySelectorAll('.game h2')].map(title => title.textContent.trim()).join()`)
+}
+
+/** From Datajack's library, back to the profiles screen. */
+export async function switchProfile(page) {
+  await page.evaluate(`document.querySelector('.profile-button').click()`)
+  await pause(500)
+}
+
+/** On Datajack's profiles screen, opens the profile of that name (a PIN, if it has one, is then asked). */
+export async function playProfile(page, name) {
+  await page.evaluate(`[...document.querySelectorAll('.play-profile')].find(button => button.querySelector('.profile-name').textContent === ${JSON.stringify(name)}).click()`)
+  await pause(800)
+}
+
+/** From Datajack's library, opens the library of another profile, creating it when there is none of that name. */
+export async function switchTo(page, name) {
+  await switchProfile(page)
+  const exists = await page.evaluate(`[...document.querySelectorAll('.profile-name')].some(element => element.textContent === ${JSON.stringify(name)})`)
+  if (exists) {
+    await playProfile(page, name)
+  } else {
+    await newProfile(page, name)
+  }
+}
+
+/** Types a PIN on the keyboard, in the field that has the focus, then sends it with Enter. */
+export async function typePin(page, pin) {
+  await page.typeText(pin)
+  await pause(200)
+  await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' })
+  await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 })
+  await pause(600)
+}
+
+/** On Datajack's profiles screen, clicks one of a profile's links, by its label: `Rename`, `Remove`… */
+export async function profileAction(page, name, action) {
+  await page.evaluate(`(() => {
+    const profile = [...document.querySelectorAll('.profile')].find(candidate => candidate.querySelector('.profile-name')?.textContent === ${JSON.stringify(name)})
+    ;[...profile.querySelectorAll('.actions .link-button')].find(button => button.textContent.trim() === ${JSON.stringify(action)}).click()
+  })()`)
+  await pause(500)
+}
+
+/** On Datajack's profiles screen, asks to remove a profile: its confirmation shows, or its PIN is asked. */
+export const askProfileRemoval = (page, name) => profileAction(page, name, 'Remove')
 
 /** Adds a game archive to Datajack's library. */
 export async function installGame(page, archivePath) {

@@ -84,7 +84,7 @@
 [decision: Stairs = Down | Up | Boss]
 [decision: Lair = Fight | Crackers | Talk | Bribe | Leave]
 [decision: Foe = Gloop | Rat | Intern | Shroom | Bats | Clerk | Boney | Ghost | Mummy | Imp | Golem | Foreman | Mimic | Whelp | Ember | Fungus | Rattlebones | Goldgrin | Heap | Flint]
-[decision: FoeName = The Gloop | The Big Rat | The Goblin Intern | The Grumpy Shroom | The Bat Choir | The Goblin Accountant | Boney the Skeleton | The Complaining Ghost | Uncle Wraps the Mummy | The Fire Imp | The Rock Golem | The Goblin Foreman | The Mimic | The Dragon Whelp | Auntie Ember | King Fungus the Fourth | Sir Rattlebones the Undefeated | Gristle Goldgrin | The Lost Property | Great-Uncle Flint]
+[decision: FoeName = The Gloop | The Big Rat | The Goblin Intern | The Grumpy Shroom | The Bat Choir | The Goblin Accountant | Boney the Skeleton | The Complaining Ghost | Uncle Wraps the Mummy | The Fire Imp | The Rock Golem | The Goblin Foreman | The Mimic | The Dragon Whelp | Auntie Ember | King Fungus the Fourth | Sir Rattlebones the Undefeated | Gristle Goldgrin | The Lost Property | The Lost Property Returns | The Bigger Lost Property | The Even Bigger Lost Property | The Enormous Lost Property | The Lost Property of Legend | Great-Uncle Flint]
 [decision: FoeMove = wobbles into your shins | nibbles your bootlaces | throws a mug of cold tea | puffs spores up your nose | screeches in three-part harmony | whacks you with a ledger | rattles a femur at you | wails about the draught | flaps a loose bandage | flicks hot coals at you | falls on you very slowly | swings a big wrench | bites you with its lid | breathes a small but sincere flame | swats you with her tail | bonks you with his sceptre | whacks you with the flat of his sword | hits you with a briefcase full of invoices | drops a grandfather clock on you | whacks you with his walking stick]
 [decision: Action = Swing | Heave | Guard | Potion | Bomb | Talk | Run]
 [decision: Result = Won | Lost | Fled | Talked]
@@ -108,6 +108,9 @@
 [counter: FoeGold = 0]
 [counter: FoeTalk = 0]
 [counter: OddsSeen = 0]
+[counter: Lost Property beaten = 0]
+[counter: Heap edge = 0]
+[counter: Growth = 0]
 [counter: I = 0]
 [counter: Pick = 0]
 
@@ -123,7 +126,7 @@
 [counter lasting: Deep Delve cleared = 0]
 
 [shown: Weapon, Armour, To hit, Armour class, Meal, Gold, Potions, Bombs, Ropes, Gems, Level, XP, Stamps, Bag, Blessings, Claimed, Cheeses returned, Gnome rescues, Bounties claimed]
-[shown while not zero: Inspired, Luck]
+[shown while not zero: Inspired, Luck, Lost Property beaten]
 [shown after an ending: Won at level 1, Deep Delve cleared, endings reached]
 
 # Knee-Deep
@@ -1821,6 +1824,31 @@ You sit down on a heap of coins and ask her how she's been. Really been. You rol
 [add: FoeXP 10]
 [set: FoeGold = {Floor} * 12]
 [set: FoeTalk = 99]
+[set: Growth = 0]
+[loop]
+[if: Growth >= {Lost Property beaten}]
+[break]
+[end]
+[set: FoeMax = {FoeMax} * 1.1]
+[set: FoeXP = {FoeXP} * 1.1]
+[set: FoeGold = {FoeGold} * 1.1]
+[add: Growth]
+[end]
+[set: Heap edge = {Lost Property beaten} * 0.4]
+[add: FoeAC {Heap edge}]
+[add: FoeHit {Heap edge}]
+[add: FoeDmg {Heap edge}]
+[if: Lost Property beaten >= 5]
+[set: FoeName = The Lost Property of Legend]
+[else if: Lost Property beaten is 4]
+[set: FoeName = The Enormous Lost Property]
+[else if: Lost Property beaten is 3]
+[set: FoeName = The Even Bigger Lost Property]
+[else if: Lost Property beaten is 2]
+[set: FoeName = The Bigger Lost Property]
+[else if: Lost Property beaten is 1]
+[set: FoeName = The Lost Property Returns]
+[end]
 [else if: Foe is Flint]
 [set: FoeName = Great-Uncle Flint]
 [set: FoeMove = whacks you with his walking stick]
@@ -3059,8 +3087,25 @@ Now you know what they know about you. Rule one: dwarves hit hard. Rule two: dwa
 
 [enter: foe Heap 72%]
 [shake: light 0.6s]
+[if: Lost Property beaten is 0]
 The floor shakes. Round the corner lumbers a heap of everything ever dropped down the Delve: odd socks, umbrellas, a rocking horse, eleven left boots, the keys to doors nobody remembers, and, near the top, half a wedding cake. Two lost marbles glare at you from the middle of it all.
 — The Lost Property: FOUND ONE. Small. Bearded. Slightly used. INTO THE COLLECTION.
+[else if: Lost Property beaten is 1]
+The floor shakes, and it sounds familiar. Round the corner lumbers the Lost Property, all picked up again: the umbrellas, the boots, the church bell, and a few new things besides, a garden gnome among them, who looks embarrassed.
+— The Lost Property: YOU AGAIN. WE HAVE BEEN COLLECTING. WE HAVE BEEN PRACTISING.
+[else if: Lost Property beaten is 2]
+The floor shakes, then the walls. The Lost Property squeezes round the corner, bigger than ever. Is that a piano? It is the tavern's piano. Barnaby has been looking everywhere for it.
+— The Lost Property: THE BEARDED ONE. THIS TIME WE BROUGHT FURNITURE.
+[else if: Lost Property beaten is 3]
+The ceiling drips gravel. The Lost Property has to come round the corner in two goes. Somewhere inside it, a cuckoo clock strikes thirteen, and a whole rowing boat sticks out of one side, oars and all.
+— The Lost Property: WE HAVE YOUR OLD JUMPER. WE HAVE BARNABY'S CELLAR DOOR. WE WILL HAVE YOU.
+[else if: Lost Property beaten is 4]
+The Delve groans. What comes round the corner is less a heap than a hillside: a windmill turns slowly near the top, a flock of lost sheep grazes on its slopes, and the church bell now has a church around it.
+— The Lost Property: ENORMOUS. WE ARE ENORMOUS NOW. THE GNOMES HAVE STARTED A SIGN-UP SHEET.
+[else]
+The Delve goes very quiet, the way a valley does before a storm. Then the Lost Property arrives, all of it, and there is no more corner. Things nobody has seen in a hundred years ride along inside it: a lost city's front gate, three lost causes, and the plot of a play.
+— The Lost Property: WE ARE THE LOST PROPERTY OF LEGEND. ALSO WE HAVE YOUR SOCK.
+[end]
 [dwarf: scared]
 [choice: Odd choice]
 > Stand your ground: you are nobody's lost property = A
@@ -3072,7 +3117,9 @@ The floor shakes. Round the corner lumbers a heap of everything ever dropped dow
 [play: Fight]
 [play: After fight]
 [if: Result is Won]
+[add: Lost Property beaten]
 [play: Saint Gravel's thanks]
+Somewhere behind you, something goes clink. Then clank. Then the slow scrape of a heap picking itself up, a bit bigger than before.
 [end]
 [else]
 [exit: foe]

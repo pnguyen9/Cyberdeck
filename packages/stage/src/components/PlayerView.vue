@@ -125,6 +125,24 @@ const bindings = computed(() => settings.value.bindings)
 const runtime = new StoryRuntime(props.story)
 const catalog = createStageCatalog(props.story)
 const snapshot = shallowRef<PlayerSnapshot>(runtime.snapshot)
+
+/**
+ * The stage under the cover: while a fade out darkens the screen, the stage as it was, so that what the
+ * story changes after `[fade out]`, a background, a tint, characters, appears only once the screen is covered.
+ */
+const stageBeforeCover = shallowRef<StageState | null>(null)
+let coverTimer: ReturnType<typeof setTimeout> | undefined
+watch(() => snapshot.value.stage, (stage, before) => {
+  if (stage.cover === null) {
+    clearTimeout(coverTimer)
+    stageBeforeCover.value = null
+  } else if (before.cover === null && stage.coverFadeMs > 0) {
+    clearTimeout(coverTimer)
+    stageBeforeCover.value = before
+    coverTimer = setTimeout(() => { stageBeforeCover.value = null }, stage.coverFadeMs)
+  }
+})
+const drawnStage = computed(() => stageBeforeCover.value ?? snapshot.value.stage)
 const canGoBack = ref(false)
 /**
  * In a part played as a game, `[game mode]`, or forward only, `[no going back]`, the player cannot go
@@ -1330,6 +1348,7 @@ onUnmounted(() => {
   stopVoice()
   clearTimeout(choiceTimer)
   clearTimeout(autoTimer)
+  clearTimeout(coverTimer)
   window.removeEventListener('mousedown', onMouseDown)
   window.removeEventListener('mouseup', onMouseUp)
   textBoxObserver.disconnect()
@@ -1362,7 +1381,7 @@ onUnmounted(() => {
     >
       <p class="announcement" aria-live="polite" aria-atomic="true">{{ announcement }}</p>
       <div ref="scene" class="scene">
-        <StageView :stage="snapshot.stage" :catalog="catalog" />
+        <StageView :stage="drawnStage" :catalog="catalog" />
       </div>
       <GaugePanel v-if="gauges.length > 0 && isHudShown" :gauges="gauges" :less-motion="lessMotion" />
       <div

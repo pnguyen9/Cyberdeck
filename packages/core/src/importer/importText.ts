@@ -428,6 +428,7 @@ class TextImporter {
           this.addProblem('error', 'invalidDecision', lineNumber, text)
         } else {
           this.result.decisions.push({ sourceLine: lineNumber, ...declaration, multiple, lasting })
+          this.reportCommasInValues(directive, lineNumber)
           this.addNode({ type: 'definition', sourceLine: lineNumber, kind: 'decision', name: declaration.name })
         }
         return
@@ -834,6 +835,19 @@ class TextImporter {
     }
     parsedLine.directivesBefore = parsedLine.directivesBefore.filter(directive => !isControlDirective(directive))
     parsedLine.inlineDirectives = parsedLine.inlineDirectives.filter(directive => !isControlDirective(directive))
+  }
+
+  /**
+   * `[decision: Name = The Lost Property, Again]`: tags read commas as spaces, so the value is
+   * `The Lost Property Again`; said once per value. A value of commas alone is no value at all.
+   */
+  private reportCommasInValues(directive: Directive, line: number) {
+    for (const value of readDecisionDeclaration(directive.written ?? '')?.values.filter(written => written.includes(',')) ?? []) {
+      const suggestion = asInTags(value)
+      if (suggestion !== '') {
+        this.result.problems.push({ severity: 'warning', code: 'commaInValue', line, subject: value, suggestion })
+      }
+    }
   }
 
   private addProblem(severity: ImportProblem['severity'], code: ImportProblem['code'], line: number, subject?: string) {

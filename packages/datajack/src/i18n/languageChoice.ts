@@ -1,11 +1,6 @@
 import { readLanguageChoice, writeLanguageChoice, type LanguageChoice } from '@cyberdeck/stage'
 import { ref, watch, type Ref } from 'vue'
-
-/** The device's language: the profiles screen's, before anyone is chosen; the last one a profile chose. */
-export const LANGUAGE_KEY = 'datajack:language'
-
-/** A profile's own language. */
-export const profileLanguageKey = (profileId: string) => `${LANGUAGE_KEY}:${profileId}`
+import { LANGUAGE_KEY, profileLanguageKey } from '../profiles/profileKeys'
 
 function hasKey(getStorage: () => Storage, key: string): boolean {
   try {

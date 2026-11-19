@@ -453,7 +453,12 @@ one <code>.zip</code> file: that is your game.</p>
 </figure>
 <p>Players open Datajack, press <strong>Add a game…</strong> (or drop the file on it), and play. Datajack
 runs in the browser too, at <a href="https://pnguyen9.github.io/Cyberdeck/datajack/">pnguyen9.github.io/Cyberdeck/datajack/</a>,
-and installs from there like Cyberdeck (on a phone, <strong>Add to home screen</strong> in the browser's menu).</p>
+and installs from there like Cyberdeck (on a phone, <strong>Add to home screen</strong> in the browser's menu).
+Players sharing Datajack each have a profile, and each profile its own library: a game added, updated
+or removed by one player leaves the others' libraries as they are. A player moving to another device
+<strong>exports</strong> their profile to a file, from the profiles screen, games, saves and settings
+included, and <strong>imports</strong> it there, where it is always added as a new profile, never merged
+into one already there; the file is not encrypted, so anyone who has it can read its saves.</p>
 <figure>
   <a href="images/library.png"><img src="images/library.png" alt="Datajack's library: “The Letter 1.0 installed”, its cover, 2 chapters, endings reached 0 of 1, and the Play button." loading="lazy"></a>
 </figure>
@@ -527,7 +532,8 @@ found or places visited, declare it with <code>multi</code>:</p>
 …
 [unset: Clues = Key]</pre>
 <p><code>[set]</code> gives a value without asking the player. <code>[unset]</code> takes it away (the key
-was lost), and <code>[unset: Clues]</code> takes them all away.</p>
+was lost), and <code>[unset: Clues]</code> takes them all away. A value cannot hold a comma: tags
+read it as a space, so <code>Yes, please</code> is <code>Yes please</code>, and the import warns.</p>
 <p>What the story counts, such as affection, money or the rounds of a fight, is a <strong>counter</strong>.
 <code>[add]</code> adds 1, or the number after the name, and a condition compares it with a number:</p>
 <pre>[add: Affection]

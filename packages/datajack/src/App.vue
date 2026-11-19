@@ -21,16 +21,17 @@ import { createLanguageChoice } from './i18n/languageChoice'
 import { createDesktopLibraryStorage } from './library/desktopLibraryStorage'
 import { GameLibrary } from './library/gameLibrary'
 import { createIndexedDbLibraryStorage } from './library/indexedDbLibraryStorage'
+import { createSampleRecord } from './library/sampleShelf'
 import GalleryView from './library/GalleryView.vue'
 import LibraryView from './library/LibraryView.vue'
 import { createDesktopProfileStore } from './profiles/desktopProfileStore'
+import { createProfileTransfer } from './profiles/profileFile'
+import { DEVICE_LOOK_KEY, gameSettingsKey, lookKey, settingsKey } from './profiles/profileKeys'
 import { createProfileLocks } from './profiles/profileLocks'
 import { createBrowserProfileStore, type Profile, type ProfileStore } from './profiles/profileStore'
 import ProfilesView from './profiles/ProfilesView.vue'
 import LandscapeOffer from './play/LandscapeOffer.vue'
 
-/** The last look a profile chose, which the profiles screen shows. */
-const DEVICE_LOOK_KEY = 'datajack:look'
 const desktop = window.datajackDesktop
 /** Null while the player picks or creates a profile. */
 const profile = shallowRef<Profile | null>(null)
@@ -51,7 +52,7 @@ provideApp({
   name: 'Datajack',
   hasDesktopBridge: desktop !== undefined,
   keepSafe: { en: appMessages.en.keepSafe, fr: appMessages.fr.keepSafe },
-  lookKeys: () => profile.value === null ? [DEVICE_LOOK_KEY] : [`${DEVICE_LOOK_KEY}:${profile.value.id}`, DEVICE_LOOK_KEY],
+  lookKeys: () => profile.value === null ? [DEVICE_LOOK_KEY] : [lookKey(profile.value.id), DEVICE_LOOK_KEY],
 })
 const profileStore: ProfileStore = desktop === undefined
   ? createBrowserProfileStore(() => window.localStorage, () => crypto.randomUUID(), () => new Date().toISOString())
@@ -60,11 +61,20 @@ const profileStore: ProfileStore = desktop === undefined
 const locks = createProfileLocks(() => window.localStorage)
 /** The profile played last, when its PIN must be entered before it opens again. */
 const entering = ref<string | null>(null)
-const library = new GameLibrary(desktop === undefined ? createIndexedDbLibraryStorage() : createDesktopLibraryStorage(desktop))
+/**
+ * Each profile has its own library; the profiles listed receive the games installed before that, and
+ * the shelf's record of the samples among them.
+ */
+const library = new GameLibrary(desktop === undefined ? createIndexedDbLibraryStorage() : createDesktopLibraryStorage(desktop), {
+  knownProfiles: async () => (await profileStore.list()).profiles.map(listed => listed.id),
+  adopted: profileIds => createSampleRecord(() => window.localStorage).adoptEarlier(profileIds),
+})
+/** Profiles to files and back, with their games, saves and what the page keeps for them. */
+const transfer = createProfileTransfer({ store: profileStore, library, locks, storage: () => window.localStorage })
 const isLoading = ref(true)
 const saveStore = computed(() => profile.value === null ? null : profileStore.saveStore(profile.value.id))
 /** Each profile has its own settings, kept in the browser (Electron's page too). */
-const settingsStore = computed(() => profile.value === null ? null : createStorageSettingsStore(() => window.localStorage, `datajack:settings:${profile.value.id}`))
+const settingsStore = computed(() => profile.value === null ? null : createStorageSettingsStore(() => window.localStorage, settingsKey(profile.value.id)))
 const settings = shallowRef<PlayerSettings>(DEFAULT_PLAYER_SETTINGS)
 watch(settingsStore, store => {
   settings.value = store?.read() ?? DEFAULT_PLAYER_SETTINGS
@@ -73,7 +83,7 @@ watch(settings, value => settingsStore.value?.write(value))
 
 /** A game's own settings, when the player gave it some, kept beside the profile's. */
 function gameSettingsStore(gameId: string) {
-  return profile.value === null ? null : createStorageSettingsStore(() => window.localStorage, `datajack:settings:${profile.value.id}:game:${gameId}`)
+  return profile.value === null ? null : createStorageSettingsStore(() => window.localStorage, gameSettingsKey(profile.value.id, gameId))
 }
 /** The game played or whose settings are open, and its own settings: null while it uses the profile's. */
 const gameSettingsOf = shallowRef<{ gameId: string; gameName: string; own: PlayerSettings | null } | null>(null)
@@ -169,10 +179,21 @@ function dismissLandscape(gameId: string) {
   landscapeDismissedFor.value = new Set([...landscapeDismissedFor.value, gameId])
 }
 
-/** The profile played last opens directly, unless it has a PIN: the player is asked only the first time, or when switching. */
+/** Leaving a profile means nobody is playing: the next start shows the profiles screen, not that profile. */
+function switchProfile() {
+  profile.value = null
+  void profileStore.use(null).catch(() => undefined)
+}
+
+/**
+ * The profile played last opens directly, unless it has a PIN, asked first; after *Switch profile*,
+ * none was left open, and the profiles screen shows.
+ */
 onMounted(async () => {
   try {
     const list = await profileStore.list()
+    // Before any profile can be made, so that a new profile starts with an empty library.
+    await library.adoptEarlierGames().catch(() => undefined)
     const last = list.profiles.find(candidate => candidate.id === list.lastUsedId) ?? null
     // A profile with a PIN never opens without it: the profiles screen asks it first.
     if (last !== null && locks.isLocked(last.id)) {
@@ -188,7 +209,7 @@ onMounted(async () => {
 
 <template>
   <template v-if="!isLoading">
-    <ProfilesView v-if="profile === null || saveStore === null" v-model:language-choice="languageChoice" :store="profileStore" :locks="locks" :entering="entering" @chosen="chosen => { entering = null; profile = chosen }" />
+    <ProfilesView v-if="profile === null || saveStore === null" v-model:language-choice="languageChoice" :store="profileStore" :locks="locks" :transfer="transfer" :entering="entering" @chosen="chosen => { entering = null; profile = chosen }" />
     <MapView
       v-else-if="mapShown !== null"
       :story="mapShown.story"
@@ -236,7 +257,7 @@ onMounted(async () => {
       @gallery="showGallery"
       @settings="settingsShown = true"
       @game-settings="showGameSettings"
-      @switch-profile="profile = null"
+      @switch-profile="switchProfile"
     />
     <!-- On a phone or a tablet, asked over the game itself, until the player says *Not now* for that game. -->
     <LandscapeOffer v-if="isGameShown && playing !== null" :is-dismissed="landscapeDismissedFor.has(playing.story.project.id)" @dismiss="dismissLandscape(playing.story.project.id)" />

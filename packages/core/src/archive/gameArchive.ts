@@ -442,6 +442,32 @@ export async function readGameArchive(bytes: Uint8Array<ArrayBuffer>): Promise<G
   return { manifest, chapters, scenes, assetFiles }
 }
 
+/**
+ * A game as a player installed it, its archives merged, written again as one archive the game import
+ * reads: to carry a player's library elsewhere. `readAsset` gives the content of a file the manifest
+ * lists; files of one path have one content, as `checkGameManifest` makes sure.
+ */
+export async function writeInstalledGameArchive(
+  manifest: GameManifest,
+  documents: { chapters: readonly ChapterDocument[]; scenes: readonly ChapterDocument[] },
+  readAsset: (file: ArchivedAssetFile) => Promise<Uint8Array<ArrayBuffer>>,
+): Promise<Uint8Array<ArrayBuffer>> {
+  const assetEntries: ZipEntryToWrite[] = []
+  const writtenPaths = new Set<string>()
+  for (const file of Object.values(manifest.assetFiles)) {
+    if (!writtenPaths.has(file.path)) {
+      writtenPaths.add(file.path)
+      assetEntries.push({ path: file.path, bytes: await readAsset(file), compress: false })
+    }
+  }
+  return writeZip([
+    jsonEntry(MANIFEST_PATH, manifest),
+    ...documents.chapters.map(chapter => jsonEntry(chapterPath(chapter.id), chapter)),
+    ...documents.scenes.map(scene => jsonEntry(scenePath(scene.id), scene)),
+    ...assetEntries,
+  ], new Date(manifest.exportedAt))
+}
+
 /** Assets shown or played by the chapters: what an archive of these chapters must carry. */
 export function assetsUsedBy(project: ProjectDocument, chapters: readonly ChapterDocument[]): Set<string> {
   // Fonts are named by the CSS, which any chapter's styles may use, and frames draw every page: every archive carries them all.

@@ -1,5 +1,9 @@
 import { ArchiveError, type ArchiveProblem } from '@cyberdeck/core'
 import type { Locale } from '@cyberdeck/stage'
+import { LibraryBlockedError } from '../library/indexedDbLibraryStorage'
+import { ProfileFileError, type ProfileFileProblem } from '../profiles/profileFile'
+import { libraryMessages } from './libraryMessages'
+import { profileMessages } from './profileMessages'
 
 /** Why an archive is refused, in French; English is the message of the error itself. */
 function frenchArchiveMessage(problem: ArchiveProblem): string {
@@ -50,10 +54,54 @@ const archiveMessages: Readonly<Record<Locale, (error: ArchiveError) => string>>
   fr: error => frenchArchiveMessage(error.problem),
 }
 
+/**
+ * A zip locked with a password, as players may lock a profile file they keep: Datajack does not
+ * unlock zips, so it says how to give it one it reads, whatever the file is meant to be.
+ */
+const lockedZipMessages: Readonly<Record<Locale, string>> = {
+  en: 'This file is locked with a password, which Datajack cannot open. Unzip it with its password, zip what it holds again without one, then use that new file.',
+  fr: 'Ce fichier est protégé par un mot de passe, que Datajack ne sait pas ouvrir. Décompressez-le avec son mot de passe, compressez de nouveau son contenu sans mot de passe, puis utilisez ce nouveau fichier.',
+}
+
+/** Another Datajack tab, from before the library changed shape, keeps it from opening. */
+const libraryBlockedMessages: Readonly<Record<Locale, string>> = {
+  en: 'Datajack is open in another tab or window, which keeps the library from opening. Close the other Datajack tabs or windows, then reload this page.',
+  fr: 'Datajack est ouvert dans un autre onglet ou une autre fenêtre, ce qui empêche d’ouvrir la bibliothèque. Fermez les autres onglets ou fenêtres de Datajack, puis rechargez cette page.',
+}
+
+/** Why a profile file is refused, or cannot be made or imported. */
+function profileFileMessage(problem: ProfileFileProblem, locale: Locale): string {
+  const text = profileMessages[locale]
+  switch (problem.code) {
+    case 'notProfile':
+      return text.notProfileFile
+    case 'isGame':
+      return text.gameNotProfile(libraryMessages[locale].addGame)
+    case 'newerFormat':
+      return text.newerProfileFile
+    case 'damaged':
+      return text.damagedProfileFile
+    case 'game':
+      return text.gameInFile(problem.gameName, describeError(problem.error, locale))
+    case 'tooLarge':
+      return text.tooLarge(Math.floor(problem.maximumSize / 1024 ** 3))
+    case 'saveNotWritten':
+      return text.saveNotWritten(problem.gameName, problem.slot)
+    case 'progressNotWritten':
+      return text.progressNotWritten(problem.gameName)
+  }
+}
+
 /** An error as the player reads it: archives refused in their language, other errors by their message. */
 export function describeError(error: unknown, locale: Locale): string {
   if (error instanceof ArchiveError) {
-    return archiveMessages[locale](error)
+    return error.code === 'encryptedFile' ? lockedZipMessages[locale] : archiveMessages[locale](error)
+  }
+  if (error instanceof ProfileFileError) {
+    return profileFileMessage(error.problem, locale)
+  }
+  if (error instanceof LibraryBlockedError) {
+    return libraryBlockedMessages[locale]
   }
   return error instanceof Error ? error.message : String(error)
 }

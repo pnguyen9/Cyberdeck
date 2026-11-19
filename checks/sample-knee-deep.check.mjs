@@ -98,7 +98,7 @@ export default async function check(page, { url }) {
     const offered = (await options(page)).filter(option => !/bakery|Take the gold|Bread never/i.test(option))
     if (offered.length > 0) {
       const labels = await gaugeLabels(page)
-      if (labels.includes('The Lost Property')) {
+      if (labels.some(label => label.includes('Lost Property'))) {
         seen.lostProperty.push(offered.some(option => option === 'Talk' || option === 'Run away'))
       }
       if (labels.length === 2) {

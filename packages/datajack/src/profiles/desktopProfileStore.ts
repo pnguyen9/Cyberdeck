@@ -17,6 +17,7 @@ export function createDesktopProfileStore(bridge: DesktopBridge): ProfileStore {
     rename: (profileId, name) => invoke('profiles:rename', profileId, name),
     remove: profileId => invoke('profiles:remove', profileId),
     use: profileId => invoke('profiles:use', profileId),
+    savedGames: profileId => invoke('saves:games', profileId),
     changeSaveFolder: (profileId, saveFolder) => invoke('profiles:changeSaveFolder', profileId, saveFolder),
     saveStore: (profileId): SaveStore => {
       const readJson = async (gameId: string, slot: string): Promise<unknown> => {

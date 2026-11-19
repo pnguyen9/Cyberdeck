@@ -31,6 +31,11 @@ export function slotsErased(erased: ErasedData): string[] {
   return [...(erased.saves ? [AUTOSAVE_SLOT, ...MANUAL_SLOTS] : []), ...(erased.progress ? [PROGRESS_SLOT] : [])]
 }
 
+/** The keys of a `Storage` starting with the prefix. */
+export function storageKeysStartingWith(storage: Pick<Storage, 'key' | 'length'>, prefix: string): string[] {
+  return Array.from({ length: storage.length }, (_, index) => storage.key(index)).filter((key): key is string => key?.startsWith(prefix) ?? false)
+}
+
 /**
  * Keeps saves in a `Storage` (`localStorage` in the browser), under keys starting with `keyPrefix`.
  * Each write replaces one key as a whole, so an interrupted write never leaves half a save. Storage
@@ -70,8 +75,7 @@ export function createStorageSaveStore(getStorage: () => Pick<Storage, 'getItem'
     eraseAll: async () => {
       try {
         const storage = getStorage()
-        const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index)).filter(key => key?.startsWith(keyPrefix) === true) as string[]
-        keys.forEach(key => storage.removeItem(key))
+        storageKeysStartingWith(storage, keyPrefix).forEach(key => storage.removeItem(key))
       } catch {
         // Storage refused: there is nothing it lets us erase.
       }

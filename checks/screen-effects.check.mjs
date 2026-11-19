@@ -1,5 +1,6 @@
 // Screen effects in the preview: a tint that lasts until changed, a fade out that leaves the text on
-// black until a fade in, and a shake and a flash played as the text reaches them.
+// black until a fade in, a shake and a flash played as the text reaches them, and a background cut
+// that leaves the old one behind at once, a tint on stage or not.
 import { pause, shownStep } from './harness.mjs'
 
 const STORY = `[tint: sepia]
@@ -8,7 +9,9 @@ A memory.
 In the dark.
 [transition: black 0.6s] [bg: rooftop]
 [fade in: 0.4s] [tint: none]
-Back on the roof. [shake: strong 0.3s] It shook. [flash: red 0.2s]`
+Back on the roof. [shake: strong 0.3s] It shook. [flash: red 0.2s]
+[tint: night] [bg: street]
+Down in the street.`
 
 export default async function check(page, { url }) {
   await page.navigate(url)
@@ -55,4 +58,9 @@ export default async function check(page, { url }) {
   page.check('a fade in uncovers it, the tint gone too', [await coverOpacity(), await page.evaluate(`document.querySelector('.viewport .stage').classList.length`)], ['0', 1])
   await pause(1500)
   page.check('the shake and the flash play as the text reaches them', await page.evaluate(`window.animations.filter(animation => /^(scene|flash) /.test(animation))`), ['scene 300', 'flash 200'])
+
+  await page.press(' ')
+  await page.waitUntil(`document.querySelector('.viewport .text')?.textContent === 'Down in the street.'`, 1000)
+  await pause(100)
+  page.check('a cut leaves the old background behind at once, under a tint too', await page.evaluate(`document.querySelectorAll('.viewport .stage > .background').length`), 1)
 }

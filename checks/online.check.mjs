@@ -114,16 +114,17 @@ export default async function check(page, { url }) {
     page.check('Cyberdeck broke no rule of its security policy', await page.violations(), '[]')
     await createProject(page, `${siteUrl}cyberdeck/`, 'Online story')
     page.check('a project is made online', await page.evaluate(`!!document.querySelector('.import .source')`), true)
+    // Datajack, which the site's root opened first, keeps its own beside them: its library, read at start.
     page.check('Cyberdeck’s storage names keep its prefix', await page.evaluate(`(async () => [
-      ...Object.keys(localStorage).filter(key => !key.startsWith('cyberdeck:')),
-      ...(await indexedDB.databases()).map(database => database.name).filter(name => !name.startsWith('cyberdeck')),
+      ...Object.keys(localStorage).filter(key => !key.startsWith('cyberdeck:') && !key.startsWith('datajack:')),
+      ...(await indexedDB.databases()).map(database => database.name).filter(name => !name.startsWith('cyberdeck') && !name.startsWith('datajack')),
     ])()`), [])
 
     // Datajack beside it on the same site.
     await createProfile(page, `${siteUrl}datajack/`, 'Pascal')
     await page.watchViolations()
     page.check('Datajack opens under its folder, its library with its version', await page.evaluate(`document.querySelector('.library .about-app .version')?.textContent`), `Datajack ${version}`)
-    page.check('saying to keep games and saves as files', (await page.evaluate(`document.querySelector('.may-erase')?.textContent`))?.endsWith('Keep each game’s archive, and export your progress and saves to files (“Progress to a file”, and “Save to a file” in a game’s saves).'), true)
+    page.check('saying to export the profile to a file', (await page.evaluate(`document.querySelector('.may-erase')?.textContent`))?.endsWith('Export your profile now and then (Export to a file, on the profiles screen): one file keeps your games, saves and progress.'), true)
     page.check('its service worker is its own', await page.waitUntil(`navigator.serviceWorker.getRegistration().then(registration => registration?.active !== null && new URL(registration.scope).pathname === '/Cyberdeck/datajack/')`), true)
     page.check('each application keeps its files in its own cache', await page.evaluate(`caches.keys().then(names => names.map(name => name.replace(/-[0-9a-f]{12}$/, '')).sort())`), [`cyberdeck-${version}`, `datajack-${version}`])
     page.check('storage names stay apart on the shared site', await page.evaluate(`(async () => {

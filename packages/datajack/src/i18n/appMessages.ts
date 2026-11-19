@@ -3,7 +3,7 @@ const en = {
   library: 'Library',
   game: 'Game',
   /** After the warning that a browser may erase what the web build keeps. */
-  keepSafe: 'Keep each game’s archive, and export your progress and saves to files (“Progress to a file”, and “Save to a file” in a game’s saves).',
+  keepSafe: 'Export your profile now and then (Export to a file, on the profiles screen): one file keeps your games, saves and progress.',
 }
 
 type AppMessages = typeof en
@@ -11,7 +11,7 @@ type AppMessages = typeof en
 const fr: AppMessages = {
   library: 'Bibliothèque',
   game: 'Jeu',
-  keepSafe: 'Conservez l’archive de chaque jeu, et exportez votre progression et vos sauvegardes dans des fichiers (« Exporter la progression » dans la bibliothèque, et « Enregistrer dans un fichier » dans les sauvegardes d’un jeu).',
+  keepSafe: 'Exportez votre profil de temps en temps (Exporter dans un fichier, sur l’écran des profils) : un seul fichier conserve vos jeux, vos sauvegardes et votre progression.',
 }
 
 export const appMessages = { en, fr }

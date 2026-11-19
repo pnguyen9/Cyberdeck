@@ -207,7 +207,8 @@ function onLeave(element: Element, done: () => void) {
 
 <template>
   <div class="stage" :class="stage.tint === null ? null : `tint-${stage.tint}`" :style="transition.style">
-    <Transition :name="transition.name" :mode="transition.mode">
+    <!-- A cut leaves at once: left to CSS, it would wait out the tint's transition with the old background still drawn. -->
+    <Transition :name="transition.name" :mode="transition.mode" :css="transition.name !== 'cut'">
       <div :key="background.key" class="background" :style="background.style">
         <StagePicture v-if="background.url !== null" class="fill" :url="background.url" alt="" />
       </div>
@@ -287,9 +288,11 @@ function onLeave(element: Element, done: () => void) {
   gap: 32px;
 }
 
+/* A layer of their own: depths order the characters among themselves, and an illustration still covers them all. */
 .characters {
   position: absolute;
   inset: 0;
+  isolation: isolate;
 }
 
 /* `left` is the character's centre; moves glide over the duration the stage state gives. */
@@ -394,6 +397,13 @@ function onLeave(element: Element, done: () => void) {
   transform: translateX(-50%);
 }
 
+/* Tints colour everything on stage, backgrounds and characters, until changed. Before the transitions
+   below, which take over while a background changes. */
+.background,
+.characters {
+  transition: filter 0.8s ease;
+}
+
 .illustration-enter-active,
 .illustration-leave-active {
   transition: opacity 0.6s ease;
@@ -424,12 +434,6 @@ function onLeave(element: Element, done: () => void) {
 .white-enter-from,
 .white-leave-to {
   opacity: 0;
-}
-
-/* Tints colour everything on stage, backgrounds and characters, until changed. */
-.background,
-.characters {
-  transition: filter 0.8s ease;
 }
 
 .tint-sepia .background,

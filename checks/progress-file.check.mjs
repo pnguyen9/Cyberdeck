@@ -34,7 +34,7 @@ export default async function check(page, { url, serve }) {
   await pause(200)
   const file = await page.saveDownload('progress.json', link)
 
-  await page.clickButton('Erase what Datajack keeps…', '.erase .link-button')
+  await page.clickButton('Erase your games and saves…', '.erase .link-button')
   await pause(200)
   await page.clickButton('Erase the games, the saves and the progress', '.erase .button')
   await pause(800)

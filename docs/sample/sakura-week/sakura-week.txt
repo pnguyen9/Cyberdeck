@@ -586,7 +586,7 @@ Mochi leads you away from the crowd, tail high, down the path to the riverbank.
 The river is full of floating lights tonight, tiny paper lanterns drifting on the water like stars that have decided to take a day off.
 [sound: meow]
 Mochi settles into your lap with a satisfied sigh.
-[mochi: sleepy]
+[exit: mochi fade]
 Far behind you, the fireworks begin. They sound distant and gentle, like a drum heard through water.
 [style: Thought]This might be the best seat in the whole town.[style: none]
 The cat purrs. The river glitters. The night goes on forever, just a little bit.
@@ -846,12 +846,13 @@ You roll the banner up together, one on each end, and carry it like a very long 
 [else]
 [set: MikaSeen = Three]
 [end]
-[enter: mika center normal]
 [if: Pick is 1]
+[enter: mika center normal]
 Mika flicks a drop of blue paint at you by accident. You flick one back on purpose. A short and extremely dignified paint war follows.
 [mika: smile]
 — Mika: Truce! Truce! We'll both be wearing this home.
 [else if: Pick is 2]
+[enter: mika center normal]
 Mika sketches your portrait in the corner of a notebook. In it, you have whiskers and a very serious expression.
 — Mika: It's you as a cat. It's your best look.
 [else]
@@ -975,8 +976,8 @@ The river murmurs. The blossoms fall. You sit with a cat on the first warm day o
 Mochi sees you from far away and runs. Actually runs. Cats are not supposed to run.
 [enter: mochi center happy]
 [sound: meow]
-She climbs into your lap, kneads the fabric of your uniform for a while, and finally settles down with a great sigh.
 [illustration: Catnap]
+She climbs into your lap, kneads the fabric of your uniform for a while, and finally settles down with a great sigh.
 The sun is warm on your shoulders, the river is glittering, and the weight of a sleeping cat is the heaviest and most wonderful thing in the world.
 [mochi: sleepy]
 You do not move for twenty minutes. Your leg goes numb. It is worth it.

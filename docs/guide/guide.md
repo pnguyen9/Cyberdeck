@@ -228,7 +228,7 @@ In **Details**, add a description, credits and a cover picture: players see them
 
 ![The Export tab: the release “1.0”, both chapters ticked, and the Export button.](images/export.png)
 
-Players open Datajack, press **Add a game…** (or drop the file on it), and play. Datajack runs in the browser too, at [pnguyen9.github.io/Cyberdeck/datajack/](https://pnguyen9.github.io/Cyberdeck/datajack/), and installs from there like Cyberdeck (on a phone, **Add to home screen** in the browser's menu).
+Players open Datajack, press **Add a game…** (or drop the file on it), and play. Datajack runs in the browser too, at [pnguyen9.github.io/Cyberdeck/datajack/](https://pnguyen9.github.io/Cyberdeck/datajack/), and installs from there like Cyberdeck (on a phone, **Add to home screen** in the browser's menu). Players sharing Datajack each have a profile, and each profile its own library: a game added, updated or removed by one player leaves the others' libraries as they are. A player moving to another device **exports** their profile to a file, from the profiles screen, games, saves and settings included, and **imports** it there, where it is always added as a new profile, never merged into one already there; the file is not encrypted, so anyone who has it can read its saves.
 
 ![Datajack's library: “The Letter 1.0 installed”, its cover, 2 chapters, endings reached 0 of 1, and the Play button.](images/library.png)
 
@@ -300,7 +300,7 @@ A decision normally holds one value, each new one replacing the last. To collect
 [unset: Clues = Key]
 ```
 
-`[set]` gives a value without asking the player. `[unset]` takes it away (the key was lost), and `[unset: Clues]` takes them all away.
+`[set]` gives a value without asking the player. `[unset]` takes it away (the key was lost), and `[unset: Clues]` takes them all away. A value cannot hold a comma: tags read it as a space, so `Yes, please` is `Yes please`, and the import warns.
 
 What the story counts, such as affection, money or the rounds of a fight, is a **counter**. `[add]` adds 1, or the number after the name, and a condition compares it with a number:
 

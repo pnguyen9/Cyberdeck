@@ -1,5 +1,5 @@
 import type { Directive, ImportProblem, InlineDirective } from './importTypes'
-import { SHOWN_DIRECTIVES } from './readControl'
+import { declarationKind, SHOWN_DIRECTIVES } from './readControl'
 
 /** A problem found on a line, before the importer adds the line number. */
 export type LineProblem = Omit<ImportProblem, 'line'>
@@ -127,8 +127,9 @@ function readDirective(content: string): Directive | null {
   }
 
   const directive = { name, arguments: argumentsPart.split(/[\s,]+/).filter(argument => argument !== '') }
-  // Arguments drop commas, which separate names and belong to sentences.
-  return AS_WRITTEN_DIRECTIVES.has(name) ? { ...directive, written: argumentsPart.trim() } : directive
+  // Arguments drop commas, which separate names and belong to sentences. Decisions keep them as written
+  // too: their values lose their commas, which the import points out.
+  return AS_WRITTEN_DIRECTIVES.has(name) || declarationKind(name)?.kind === 'decision' ? { ...directive, written: argumentsPart.trim() } : directive
 }
 
 /**

@@ -32,8 +32,10 @@ const MAXIMUM_MANIFEST_LENGTH = 10_000_000
 const MAXIMUM_CHAPTER_LENGTH = 20_000_000
 
 /**
- * The games installed on the desktop, in the application's data folder:
- * `games/<game>/game.json`, `games/<game>/chapters/<chapter>.json` and `assets/<sha-256>.<extension>`.
+ * The games installed on the desktop, in the application's data folder: each profile's library in
+ * `profiles/<profile>/games/<game>/game.json` and `…/chapters/<chapter>.json`, the asset files of every
+ * library in `assets/<sha-256>.<extension>`. `games/<game>/…` keeps the games installed before each
+ * profile had its own library, until the page copies them into each.
  * The page checks archives before installing them; this checks again what reaches the disk.
  */
 export class LibraryFiles {
@@ -41,40 +43,51 @@ export class LibraryFiles {
 
   constructor(private readonly folder: string) {}
 
-  listManifests(): Promise<string[]> {
+  listManifests(profileId: string): Promise<string[]> {
+    return this.inTurn(() => readManifestsIn(this.gamesFolder(profileId)))
+  }
+
+  /** The manifests of the games installed before each profile had its own library. */
+  listEarlierManifests(): Promise<string[]> {
+    return this.inTurn(() => readManifestsIn(this.earlierFolder))
+  }
+
+  /** Every library's manifests, the earlier games' included: what decides which asset files are kept. */
+  listAllManifests(): Promise<string[]> {
     return this.inTurn(async () => {
-      const games = await readdir(join(this.folder, 'games'), { withFileTypes: true }).catch(() => [])
-      const manifests: string[] = []
-      for (const game of games.filter(entry => entry.isDirectory() && SAFE_SEGMENT.test(entry.name))) {
-        const text = await readOptional(join(this.folder, 'games', game.name, 'game.json'))
-        if (text !== null) {
-          manifests.push(text)
-        }
+      const profiles = await readdir(join(this.folder, 'profiles'), { withFileTypes: true }).catch(() => [])
+      const manifests = await readManifestsIn(this.earlierFolder)
+      for (const profile of profiles.filter(entry => entry.isDirectory() && SAFE_SEGMENT.test(entry.name))) {
+        manifests.push(...await readManifestsIn(this.gamesFolder(profile.name)))
       }
       return manifests
     })
   }
 
-  readManifest(gameId: string): Promise<string | null> {
-    return this.inTurn(() => readOptional(this.manifestPath(gameId)))
+  readManifest(profileId: string, gameId: string): Promise<string | null> {
+    return this.inTurn(() => readOptional(join(this.gameFolder(profileId, gameId), 'game.json')))
   }
 
-  writeManifest(gameId: string, text: string): Promise<void> {
+  writeManifest(profileId: string, gameId: string, text: string): Promise<void> {
     return this.inTurn(async () => {
-      const path = this.manifestPath(gameId)
+      const path = join(this.gameFolder(profileId, gameId), 'game.json')
       checkJson(text, MAXIMUM_MANIFEST_LENGTH)
       await mkdir(join(path, '..'), { recursive: true })
       await writeAtomically(path, text)
     })
   }
 
-  readChapter(gameId: string, chapterId: string): Promise<string | null> {
-    return this.inTurn(() => readOptional(this.chapterPath(gameId, chapterId)))
+  readChapter(profileId: string, gameId: string, chapterId: string): Promise<string | null> {
+    return this.inTurn(() => readOptional(chapterPath(this.gameFolder(profileId, gameId), chapterId)))
   }
 
-  writeChapter(gameId: string, chapterId: string, text: string): Promise<void> {
+  readEarlierChapter(gameId: string, chapterId: string): Promise<string | null> {
+    return this.inTurn(() => readOptional(chapterPath(this.earlierGameFolder(gameId), chapterId)))
+  }
+
+  writeChapter(profileId: string, gameId: string, chapterId: string, text: string): Promise<void> {
     return this.inTurn(async () => {
-      const path = this.chapterPath(gameId, chapterId)
+      const path = chapterPath(this.gameFolder(profileId, gameId), chapterId)
       checkJson(text, MAXIMUM_CHAPTER_LENGTH)
       await mkdir(join(path, '..'), { recursive: true })
       await writeAtomically(path, text)
@@ -97,9 +110,36 @@ export class LibraryFiles {
     })
   }
 
-  removeGame(gameId: string): Promise<void> {
+  /** Null when the file is not stored. */
+  readAsset(fileName: string): Promise<Uint8Array | null> {
     return this.inTurn(async () => {
-      await rm(join(this.folder, 'games', checkedSegment(gameId, 'game')), { recursive: true, force: true })
+      try {
+        return new Uint8Array(await readFile(this.assetPath(fileName)))
+      } catch (error) {
+        if (isFileError(error, 'ENOENT')) {
+          return null
+        }
+        throw error
+      }
+    })
+  }
+
+  removeGame(profileId: string, gameId: string): Promise<void> {
+    return this.inTurn(async () => {
+      await rm(this.gameFolder(profileId, gameId), { recursive: true, force: true })
+    })
+  }
+
+  removeEarlierGame(gameId: string): Promise<void> {
+    return this.inTurn(async () => {
+      await rm(this.earlierGameFolder(gameId), { recursive: true, force: true })
+    })
+  }
+
+  /** Removes a profile's library, every game of it. */
+  removeLibrary(profileId: string): Promise<void> {
+    return this.inTurn(async () => {
+      await rm(join(this.folder, 'profiles', checkedSegment(profileId, 'profile')), { recursive: true, force: true })
     })
   }
 
@@ -124,12 +164,20 @@ export class LibraryFiles {
     return join(this.folder, 'assets', fileName)
   }
 
-  private manifestPath(gameId: string) {
-    return join(this.folder, 'games', checkedSegment(gameId, 'game'), 'game.json')
+  private gamesFolder(profileId: string) {
+    return join(this.folder, 'profiles', checkedSegment(profileId, 'profile'), 'games')
   }
 
-  private chapterPath(gameId: string, chapterId: string) {
-    return join(this.folder, 'games', checkedSegment(gameId, 'game'), 'chapters', `${checkedSegment(chapterId, 'chapter')}.json`)
+  private gameFolder(profileId: string, gameId: string) {
+    return join(this.gamesFolder(profileId), checkedSegment(gameId, 'game'))
+  }
+
+  private get earlierFolder() {
+    return join(this.folder, 'games')
+  }
+
+  private earlierGameFolder(gameId: string) {
+    return join(this.earlierFolder, checkedSegment(gameId, 'game'))
   }
 
   private inTurn<Result>(operation: () => Promise<Result>): Promise<Result> {
@@ -148,6 +196,23 @@ function checkedSegment(identifier: string, kind: string): string {
     throw new Error(`Invalid ${kind} identifier ${JSON.stringify(identifier)}`)
   }
   return identifier
+}
+
+/** The manifest of each game folder in there that has one. */
+async function readManifestsIn(gamesFolder: string): Promise<string[]> {
+  const games = await readdir(gamesFolder, { withFileTypes: true }).catch(() => [])
+  const manifests: string[] = []
+  for (const game of games.filter(entry => entry.isDirectory() && SAFE_SEGMENT.test(entry.name))) {
+    const text = await readOptional(join(gamesFolder, game.name, 'game.json'))
+    if (text !== null) {
+      manifests.push(text)
+    }
+  }
+  return manifests
+}
+
+function chapterPath(gameFolder: string, chapterId: string) {
+  return join(gameFolder, 'chapters', `${checkedSegment(chapterId, 'chapter')}.json`)
 }
 
 function checkJson(text: string, maximumLength: number) {

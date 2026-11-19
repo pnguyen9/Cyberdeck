@@ -1,6 +1,8 @@
+import { pinKey } from './profileKeys'
+
 /**
  * The PIN a profile may be locked with: four digits Datajack asks for before opening the profile, and
- * again before erasing its saves or progress, renaming, moving or removing it, or changing its PIN. Only a salted hash is kept, never the digits; the
+ * again before exporting it, erasing its saves or progress, renaming, moving or removing it, or changing its PIN. Only a salted hash is kept, never the digits; the
  * profile's data is not encrypted: it keeps people using Datajack out, not the browser's tools.
  */
 export const PIN_LENGTH = 4
@@ -11,6 +13,11 @@ export const WAIT_SECONDS = [30, 60, 300, 900] as const
 const PIN_PATTERN = new RegExp(`^[0-9]{${PIN_LENGTH}}$`)
 /** PBKDF2 rounds: slow enough to make each try cost, fast enough on a small tablet. */
 const ITERATIONS = 100_000
+/** More rounds than any PIN carried in a file may ask, which would keep the page busy for ever. */
+const MAXIMUM_ITERATIONS = 10_000_000
+const SALT_LENGTH = 16
+/** The bytes of a PBKDF2-SHA-256 hash, as `hashOf` derives it. */
+const HASH_LENGTH = 32
 
 /** What is kept for a locked profile, in the page's storage, beside its settings. */
 interface StoredLock {
@@ -23,6 +30,13 @@ interface StoredLock {
   failures: number
   /** When tries are allowed again, in milliseconds since 1970; 0 when they are. */
   waitUntil: number
+}
+
+/** A PIN as a profile file carries it: its salted hash, never its digits. */
+export interface CarriedLock {
+  salt: string
+  hash: string
+  iterations: number
 }
 
 export type PinCheck =
@@ -40,6 +54,10 @@ export interface ProfileLocks {
   waitUntil: (profileId: string) => number | null
   /** Unlocks the profile, or forgets the lock of a profile removed. */
   remove: (profileId: string) => void
+  /** The profile's PIN, to carry in a profile file; null without one. */
+  carried: (profileId: string) => CarriedLock | null
+  /** Locks the profile with a PIN carried in a profile file; false, and nothing kept, when it cannot be read. */
+  restore: (profileId: string, lock: unknown) => boolean
 }
 
 /** Four digits, nothing else. */
@@ -47,7 +65,6 @@ export function isPinShaped(pin: string): boolean {
   return PIN_PATTERN.test(pin)
 }
 
-const lockKey = (profileId: string) => `datajack:pin:${profileId}`
 
 interface LockOptions {
   now?: () => number
@@ -58,13 +75,13 @@ interface LockOptions {
 export function createProfileLocks(getStorage: () => Storage, { now = Date.now, iterations = ITERATIONS }: LockOptions = {}): ProfileLocks {
   const read = (profileId: string): StoredLock | null => {
     try {
-      const value: unknown = JSON.parse(getStorage().getItem(lockKey(profileId)) ?? 'null')
+      const value: unknown = JSON.parse(getStorage().getItem(pinKey(profileId)) ?? 'null')
       return isStoredLock(value) ? value : null
     } catch {
       return null
     }
   }
-  const write = (profileId: string, lock: StoredLock) => getStorage().setItem(lockKey(profileId), JSON.stringify(lock))
+  const write = (profileId: string, lock: StoredLock) => getStorage().setItem(pinKey(profileId), JSON.stringify(lock))
   /**
    * When tries are allowed again, null when they are. A wait further ahead than the one its wrong PINs
    * earned (the clock was put back) is shortened to that, and kept so.
@@ -88,7 +105,7 @@ export function createProfileLocks(getStorage: () => Storage, { now = Date.now, 
       if (!isPinShaped(pin)) {
         throw new Error(`A PIN is ${PIN_LENGTH} digits.`)
       }
-      const salt = toBase64(crypto.getRandomValues(new Uint8Array(16)))
+      const salt = toBase64(crypto.getRandomValues(new Uint8Array(SALT_LENGTH)))
       write(profileId, { salt, hash: await hashOf(pin, salt, iterations), iterations, failures: 0, waitUntil: 0 })
     },
     check: async (profileId, pin) => {
@@ -119,7 +136,23 @@ export function createProfileLocks(getStorage: () => Storage, { now = Date.now, 
       const lock = read(profileId)
       return lock === null ? null : waitUntil(profileId, lock)
     },
-    remove: profileId => getStorage().removeItem(lockKey(profileId)),
+    remove: profileId => getStorage().removeItem(pinKey(profileId)),
+    carried: profileId => {
+      const lock = read(profileId)
+      return lock === null ? null : { salt: lock.salt, hash: lock.hash, iterations: lock.iterations }
+    },
+    // Wrong PINs entered elsewhere are not carried: this device counts its own.
+    restore: (profileId, lock) => {
+      const fields: Partial<CarriedLock> = typeof lock === 'object' && lock !== null ? lock : {}
+      const kept = { salt: fields.salt, hash: fields.hash, iterations: fields.iterations, failures: 0, waitUntil: 0 }
+      // A salt or hash of another shape would make a profile no PIN opens, nor lets remove.
+      if (!isStoredLock(kept) || !Number.isInteger(kept.iterations) || kept.iterations > MAXIMUM_ITERATIONS
+        || !isBase64Of(kept.salt, SALT_LENGTH) || !isBase64Of(kept.hash, HASH_LENGTH)) {
+        return false
+      }
+      write(profileId, kept)
+      return true
+    },
   }
 }
 
@@ -132,7 +165,7 @@ export function waitSecondsAfter(failures: number): number {
 async function hashOf(pin: string, salt: string, iterations: number): Promise<string> {
   const saltBytes = fromBase64(salt)
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits'])
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: saltBytes, iterations }, key, 256)
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: saltBytes, iterations }, key, HASH_LENGTH * 8)
   return toBase64(new Uint8Array(bits))
 }
 
@@ -142,6 +175,16 @@ function toBase64(bytes: Uint8Array): string {
 
 function fromBase64(text: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(atob(text), character => character.charCodeAt(0))
+}
+
+/** Base64, as `toBase64` writes it, of so many bytes. */
+function isBase64Of(text: string, length: number): boolean {
+  try {
+    const bytes = fromBase64(text)
+    return bytes.length === length && toBase64(bytes) === text
+  } catch {
+    return false
+  }
 }
 
 function isStoredLock(value: unknown): value is StoredLock {

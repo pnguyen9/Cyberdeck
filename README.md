@@ -20,7 +20,7 @@ the game's cover.
 <https://pnguyen9.github.io/Cyberdeck/cyberdeck/> and the guide at
 <https://pnguyen9.github.io/Cyberdeck/guide/>. Once opened they work offline, and the browser
 installs them as applications (on a phone or a computer). What they keep stays in that browser: back up projects
-and keep games and saves as files, since a browser may erase what a site keeps. The desktop builds
+and export Datajack profiles to files, since a browser may erase what a site keeps. The desktop builds
 and the builds to open as files are on the [Releases](https://github.com/pnguyen9/Cyberdeck/releases)
 page.
 
@@ -72,10 +72,11 @@ a new notion gets its word here before it gets code.
 | Game archive | The `.zip` a game travels in, whole or with some of its chapters. | `GameArchive` |
 | Release | The label an export carries, shown in libraries. | |
 | Backup | A project folder zipped, which *Restore* reads back. | `ProjectBackup` |
-| Library | The games installed in Datajack, each a card. | |
+| Library | The games installed in Datajack, each a card. Each profile has its own: a game added, updated or removed in one leaves the others alone; asset files two profiles have are stored once. | `GameLibrary` |
 | Sample | A story of `docs/sample` built into both applications: a shelf in Datajack's library to add games from, and *New project from a sample* in Cyberdeck. | `samples/<id>.<hash>.js`, `sampleBuild.ts` |
-| Profile | One player in Datajack: settings, saves, progress, memories and lasting values. | |
-| PIN | Four digits a profile may be locked with, asked for before it opens, before its saves or progress are erased and before it is renamed, moved or removed; only a salted hash is kept. | `ProfileLocks`, `PinDialog` |
+| Profile | One player in Datajack: their library, settings, saves, progress, memories and lasting values. | |
+| PIN | Four digits a profile may be locked with, asked for before it opens, before its saves or progress are erased and before it is renamed, moved, exported or removed; only a salted hash is kept. | `ProfileLocks`, `PinDialog` |
+| Profile file | The `.zip` a whole profile travels in: its games at its versions, saves, progress, settings, look, language and PIN; not encrypted. Importing one always adds a new profile. | `ProfileContents` (`datajack-profile.json`) |
 
 **How the applications run**
 
@@ -301,11 +302,12 @@ on another computer, and bring the game archive along to install it there.
 
 Each application erases what it keeps, from its first page: in Cyberdeck, *Erase what Cyberdeck
 keeps…*, below the projects (the saves and progress of the previews, and every project if wished);
-in Datajack, *Erase what Datajack keeps…*, below the games (every game, and the profile's saves and
-progress if wished). That reaches only the copy opened. For copies no longer at hand, or to erase
-everything at once, the browser's own ways follow. They delete every project, profile, installed
-game and save of the copies concerned: back up the projects to keep first (*Back up* in Cyberdeck),
-and save to a file the games worth keeping.
+in Datajack, *Erase your games and saves…*, below the games (every game of the profile's library,
+other profiles' libraries staying, and the profile's saves and progress if wished). That reaches only
+the copy opened. For copies no longer at hand, or to erase everything at once, the browser's own
+ways follow. They delete every project, profile, installed game and save of the copies concerned:
+back up the projects to keep first (*Back up* in Cyberdeck), and save to a file the games worth
+keeping.
 
 **Put on a web host** (GitHub Pages, for instance), the applications are a site like any other: the
 browser's own "clear site data" for that address erases them, the files kept offline with them.
@@ -551,7 +553,7 @@ one per language, of the same shape: another language is one more table each.
 | `[marie: surprised]` | Marie changes expression. Any name that is not a keyword is a character. |
 | `[card: ace flip]`, `[card: {Drawn} flip 0.6s wait]` | The picture turns over, as a card does: the old one narrows to its edge, the new one widens from it, in 0.4 s unless told; `wait` holds the text until it is done. A picture named `flip` alone is still a picture. Players who ask for less motion see it change at once. Needs Datajack 3.1. |
 | `[wait: 0.5]` | Pauses the text, in seconds, and the tags written after it: `[card: back] [wait: 0.3] [card: ace]` shows the back, then the ace. |
-| `[decision: Confession = Accept \| Refuse]` | Declares a decision and its possible values. Optional: a choice declares its own. |
+| `[decision: Confession = Accept \| Refuse]` | Declares a decision and its possible values. Optional: a choice declares its own. A value cannot hold a comma, which tags read as a space: `Yes, please` is `Yes please`, and the import warns. |
 | `[decision multi: Clues = Letter \| Key]` | A decision where several values can hold at once. |
 | `[choice: Confession]` then `> Yes = Accept` lines | Offers a choice; the option picked becomes the decision's value. From five options on, they are drawn closer; a list longer than its place above the text box scrolls, its edges fading where more lie beyond, and past eight the import points it out. Without `= Value`, an option's value is its letter: `A`, `B`, `C`… |
 | `> The library = Library [if: Visited is not Library]` | An option offered only while its condition holds. A choice none of whose options holds is skipped; one with no option always offered is reported. |
@@ -1041,13 +1043,24 @@ illustrations seen, and removal (saves are kept). *Add a game…* or dropping an
 its card: the language picked is kept for that game, by each profile; Datajack's own is taken first when
 the game has it. A save resumes in the language it was played in; one loaded in another language from
 the game's own Load panel resumes at the start of its chapter, with its decisions. On
-the desktop, games live in the application's data folder (`library/games/<game>/…`, assets in
-`library/assets/<sha-256>.<extension>`, shared by every game); in the browser, in IndexedDB.
+the desktop, games live in the application's data folder (`library/profiles/<profile>/games/<game>/…`,
+assets in `library/assets/<sha-256>.<extension>`, shared by every game); in the browser, in IndexedDB.
+
+Each profile has its own library. A game added in one profile is not in the others'; added by two,
+each has its own copy, at the version it installed: one profile updating it leaves the other's
+version alone, until that one adds the newer archive too, and an archive is compared with the
+profile's own copy only, so nothing tells a profile what the others have. Removing a game, or
+erasing the games, empties that profile's library alone. The shelf's samples are added and updated
+per profile in the same way. Only the asset files are shared, named by their content: the pictures
+and sounds two profiles have are stored once, and deleted when no game of any profile uses them.
+Removing a profile deletes its library, on the desktop too, where its saves stay. Games installed
+before Datajack 3.7.0 go into every profile there was then; a profile made later starts empty. It is
+no lock, any more than the PIN: the libraries are stored side by side, as files or in the browser.
 
 At the foot of the library and of the profiles screen, as of Cyberdeck's projects screen: the
 application's version and **About** (the version again, how it runs, the licence, links to the guide
 and the repository), and online, the note that a browser may erase what a site keeps, with what to
-keep as files. A new version online is offered there too (see
+keep as files (in Datajack, the profile, exported to a file). A new version online is offered there too (see
 [Online, on GitHub Pages](#online-on-github-pages)).
 
 ### Controls
@@ -1155,10 +1168,11 @@ end and any other input stop it.
 
 The first start asks for a profile: a name and, on the desktop, a save folder (by default
 `Documents/Datajack/<name>`, or any folder picked in the system dialog, a synced one for instance).
-Datajack then opens the last profile directly; *Switch profile* goes back to the list, where profiles
-are renamed, moved or removed. Changing the folder moves the saves there, keeping any save already
-in the new folder for the same game and slot. Removing a profile forgets it; on the desktop its
-files stay where they are. In the browser, profiles and saves live in the browser's storage.
+Datajack then opens the profile played last directly, unless the player left it with *Switch
+profile*: the next start then shows the list, where profiles are renamed, moved or removed. Changing
+the folder moves the saves there, keeping any save already in the new folder for the same game and
+slot. Removing a profile forgets it, and deletes its library, settings and PIN; on the desktop its
+save files stay where they are. Its confirmation suggests exporting it first, to keep a copy. In the browser, profiles and saves live in the browser's storage.
 
 A profile may have a **PIN**, four digits, so that players sharing Datajack (parents and children,
 say) keep out of each other's profile. The **Add a PIN** button, next to the profile's name in the
@@ -1166,9 +1180,9 @@ library (**PIN** with a padlock once there is one), sets it, changes it or remov
 removing it asks for the current one. The digits are typed on the keyboard or on the dialog's own,
 and **OK** or Enter sends them; on a touch screen the system's keyboard stays closed. Datajack then
 asks for the PIN before opening the profile (at startup too: a locked profile never opens without
-it), and again before erasing its saves or progress, and before renaming, moving or removing it on
-the profiles screen, where the profile shows a padlock. Erasing only the games asks nothing: they are
-every profile's, and removing a game keeps every profile's saves. Five wrong PINs in a row make the
+it), and again before erasing its saves or progress, and before renaming, moving, exporting or
+removing it on the profiles screen, where the profile shows a padlock. Erasing only the games asks nothing: they can
+be added again, and removing a game keeps the saves. Five wrong PINs in a row make the
 player wait 30 seconds, then each further wrong one 1 minute, 5 minutes, then 15 minutes each time,
 until the right PIN starts the count again; the wait is kept with the lock, a restart does not end
 it, and a clock put back does not lengthen it. Only a salted hash of the PIN is kept (PBKDF2), beside
@@ -1185,6 +1199,29 @@ settings, language and look; profiles and save files stay.
 On the desktop, each save is a file, `<save folder>/<game>/<slot>.json`, written beside the old one
 and swapped in one move, so that a crash never leaves half a save. The list of profiles is in the
 application's data folder.
+
+**Export to a file** on the profiles screen makes a **profile file**, one `.zip` to carry a profile to another
+device or keep it safe: its name and identifier, the games of its library at the versions it has
+(each a game archive, `games/<game>.zip`), its saves and the progress of every game
+(`saves/<game>/<slot>.json`, those of games removed since included), its settings and each game's,
+its look, its language, what the samples shelf installed, and its PIN's salted hash, so that the PIN
+comes along (`datajack-profile.json` says what is where, with `profileFormat`). A profile with a PIN
+asks for it first. The browser downloads the file; the desktop asks where to save it. **The file is
+not encrypted**: anyone who has it can read its saves, and the PIN, which guards only Datajack's own
+screens, does not protect it. Players may put a password on the zip themselves, and remove it before
+importing: Datajack does not open zips locked with a password, and says so, for a game added too.
+
+**Import a profile**, below *New profile*, reads a profile file, checks it whole (its games
+included), says whose profile it holds and when it was exported, then, on **Import <name>**, makes a
+new profile with all of it (on the desktop, in the save folder chosen as for a new profile); entering
+it asks its PIN if it has one. An import **always adds a new profile**, with an identifier of its
+own: it never merges into nor replaces a profile already on the device, even the one it was exported
+from. When another profile has the file's name, the next free one is offered (*Pascal is taken: this
+one will be Pascal 2, or choose another name*), which the player may change; a name taken is refused,
+as on creating a profile. If any part of it cannot be written (storage full, disk error), the new
+profile is removed again and the device stays as it was. A file made by a newer Datajack, a damaged
+one, a game chosen instead, or a profile too large for one file (over 2 GB, on export), is refused in
+plain words.
 
 ### Saves
 
@@ -1251,7 +1288,8 @@ imports each sample the normal way and compares every page's end.
   tavern to rest, eat, drink and hear rumours), five floors of five rooms drawn at random, each room offering
   three doors that hint at what lies behind them: a fight, nine chests of which one may be opened (a
   grid over a shuffled list), or one of nineteen odd encounters, none met twice before all are, one of
-  them a fight with the Lost Property that may be slipped past. Fights
+  them a fight with the Lost Property that may be slipped past, and comes back bigger after each win
+  (health, gold and XP times 1.1 a win, a loop; six names and entrances, one per size). Fights
   roll a twenty-sided die against armour (a natural 20 doubles the damage, a natural 1 fumbles):
   swing, heave, hide behind the beard, drink, throw a bomb, talk the monster round or run; fifteen
   monsters, each with its own lines, levels gained from experience. Fallen, the hero is carried back

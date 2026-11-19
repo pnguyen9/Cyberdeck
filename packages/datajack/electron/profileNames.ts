@@ -28,3 +28,21 @@ export function checkedProfileName(name: string, otherNames: readonly string[]):
       return trimmedName
   }
 }
+
+/**
+ * The name, or, when another profile has it, the first of `<name> 2`, `<name> 3`… that none has, the
+ * name shortened to leave room for the number.
+ */
+export function freeProfileName(name: string, otherNames: readonly string[]): string {
+  const trimmedName = name.trim()
+  if (profileNameProblem(trimmedName, otherNames) !== 'taken') {
+    return trimmedName
+  }
+  for (let number = 2; ; number++) {
+    const suffix = ` ${number}`
+    const candidate = `${trimmedName.slice(0, MAXIMUM_PROFILE_NAME_LENGTH - suffix.length).trimEnd()}${suffix}`
+    if (profileNameProblem(candidate, otherNames) === null) {
+      return candidate
+    }
+  }
+}

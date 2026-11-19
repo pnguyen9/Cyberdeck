@@ -1,6 +1,7 @@
 import { nextTick, ref } from 'vue'
 import { describe, expect, it } from 'vitest'
-import { createLanguageChoice, LANGUAGE_KEY, profileLanguageKey } from '../../src/i18n/languageChoice'
+import { createLanguageChoice } from '../../src/i18n/languageChoice'
+import { LANGUAGE_KEY, profileLanguageKey } from '../../src/profiles/profileKeys'
 import { memoryStorage } from '../memoryStorage'
 
 describe("the player's language", () => {

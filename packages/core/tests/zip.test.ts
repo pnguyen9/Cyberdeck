@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { ArchiveError } from '../src/archive/archiveError'
 import { readZip, writeZip } from '../src/archive/zip'
 
 const encoder = new TextEncoder()
@@ -40,6 +41,15 @@ describe('ZIP archives', () => {
     expect(await writeZip(entries, MODIFIED_AT)).toEqual(await writeZip(entries, MODIFIED_AT))
   })
 
+  it('writes entries given one at a time, as a generator yields them', async () => {
+    async function* entries() {
+      yield { path: 'a.txt', bytes: new TextEncoder().encode('first'), compress: true }
+      yield { path: 'b.bin', bytes: new Uint8Array([1, 2, 3]), compress: false }
+    }
+    const read = readZip(await writeZip(entries(), new Date('2026-01-01')))
+    expect(await Promise.all(read.map(async entry => [entry.path, [...await entry.read()]]))).toEqual([['a.txt', [...new TextEncoder().encode('first')]], ['b.bin', [1, 2, 3]]])
+  })
+
   it('refuses what is not a ZIP archive', () => {
     expect(() => readZip(encoder.encode('just some text'))).toThrow('not a ZIP archive')
   })
@@ -68,6 +78,25 @@ describe('ZIP archives', () => {
     const centralDirectoryOffset = view.getUint32(lying.length - 6, true)
     view.setUint32(centralDirectoryOffset + 24, 1000, true)
     await expect(readAll(lying)).rejects.toThrow('larger than it declares')
+  })
+
+  it('refuses an entry locked with a password, marked so in the file list or in its own header', async () => {
+    const bytes = await writeZip([{ path: 'save.json', bytes: encoder.encode('{}'), compress: false }], MODIFIED_AT)
+    const view = new DataView(bytes.buffer)
+    const centralOffset = view.getUint32(bytes.length - 22 + 16, true)
+    for (const flagsOffset of [centralOffset + 8, 6]) {
+      const locked = bytes.slice()
+      new DataView(locked.buffer).setUint16(flagsOffset, view.getUint16(flagsOffset, true) | 1, true)
+      const error = (() => {
+        try {
+          readZip(locked)
+        } catch (caught) {
+          return caught
+        }
+      })()
+      expect(error).toBeInstanceOf(ArchiveError)
+      expect((error as ArchiveError).problem).toEqual({ code: 'encryptedFile', path: 'save.json' })
+    }
   })
 
   it('refuses archives over the limits before inflating anything', async () => {

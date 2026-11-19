@@ -46,21 +46,32 @@ const STORED = 0
 const DEFLATED = 8
 /** Sizes and offsets at this value announce ZIP64, which game archives never need. */
 const ZIP64_MARKER = 0xffffffff
+const MAXIMUM_ENTRIES_WITHOUT_ZIP64 = 0xffff
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder('utf-8', { fatal: true })
 
-export async function writeZip(entries: readonly ZipEntryToWrite[], modifiedAt: Date): Promise<Uint8Array<ArrayBuffer>> {
+/**
+ * Entries may come one at a time, from a generator: an entry is only held until the archive is put
+ * together. Throws when the archive would need ZIP64: over 65,535 entries, or 4 GB.
+ */
+export async function writeZip(entries: Iterable<ZipEntryToWrite> | AsyncIterable<ZipEntryToWrite>, modifiedAt: Date): Promise<Uint8Array<ArrayBuffer>> {
   const { time, date } = dosDateTime(modifiedAt)
   const localParts: Uint8Array<ArrayBuffer>[] = []
   const centralParts: Uint8Array<ArrayBuffer>[] = []
   let offset = 0
 
-  for (const entry of entries) {
+  for await (const entry of entries) {
     checkPath(entry.path)
+    if (centralParts.length === MAXIMUM_ENTRIES_WITHOUT_ZIP64) {
+      throw new ArchiveError({ code: 'tooManyFiles', fileCount: centralParts.length + 1 })
+    }
     const name = encoder.encode(entry.path)
     const data = entry.compress ? await transform(entry.bytes, new CompressionStream('deflate-raw')) : entry.bytes
     const checksum = crc32(entry.bytes)
+    if (offset + LOCAL_HEADER_LENGTH + name.length + data.length >= ZIP64_MARKER || entry.bytes.length >= ZIP64_MARKER) {
+      throw new ArchiveError({ code: 'fileTooLarge', path: entry.path })
+    }
 
     const local = new Uint8Array(LOCAL_HEADER_LENGTH + name.length)
     const localView = new DataView(local.buffer)
@@ -101,8 +112,8 @@ export async function writeZip(entries: readonly ZipEntryToWrite[], modifiedAt: 
   const end = new Uint8Array(END_OF_CENTRAL_DIRECTORY_LENGTH)
   const endView = new DataView(end.buffer)
   endView.setUint32(0, END_OF_CENTRAL_DIRECTORY_SIGNATURE, true)
-  endView.setUint16(8, entries.length, true)
-  endView.setUint16(10, entries.length, true)
+  endView.setUint16(8, centralParts.length, true)
+  endView.setUint16(10, centralParts.length, true)
   endView.setUint32(12, centralLength, true)
   endView.setUint32(16, offset, true)
   return concatenate([...localParts, ...centralParts, end])
@@ -161,6 +172,10 @@ export function readZip(bytes: Uint8Array<ArrayBuffer>, limits: ZipLimits = DEFA
     }
     if (localOffset + LOCAL_HEADER_LENGTH > bytes.length || view.getUint32(localOffset, true) !== LOCAL_HEADER_SIGNATURE) {
       throw new ArchiveError({ code: 'damagedFile', path })
+    }
+    // Some tools mark the encryption on the local header alone.
+    if ((view.getUint16(localOffset + 6, true) & ENCRYPTED_FLAG) !== 0) {
+      throw new ArchiveError({ code: 'encryptedFile', path })
     }
     const dataOffset = localOffset + LOCAL_HEADER_LENGTH + view.getUint16(localOffset + 26, true) + view.getUint16(localOffset + 28, true)
     if (dataOffset + compressedSize > bytes.length) {

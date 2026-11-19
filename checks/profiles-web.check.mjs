@@ -1,6 +1,6 @@
 // Profiles in the web build of Datajack: the first start, the last profile opening directly,
 // switching, names already taken, removal, and saves kept per profile.
-import { createProjectWithSample, exportGame, installGame, pause } from './harness.mjs'
+import { askProfileRemoval, createProjectWithSample, exportGame, installGame, pause, playProfile, switchProfile } from './harness.mjs'
 
 export const app = 'datajack'
 
@@ -39,9 +39,11 @@ export default async function check(page, { url, serve }) {
   await page.waitFor('.library')
   page.check('the last profile opens directly after a restart', await profileButton(), 'Pascal · Switch profile')
 
-  await page.evaluate(`document.querySelector('.profile-button').click()`)
-  await pause(500)
+  await switchProfile(page)
   page.check('switching lists the profiles', await page.evaluate(`[...document.querySelectorAll('.profile-name')].map(element => element.textContent).join()`), 'Pascal')
+  await page.reload()
+  await page.waitFor('.profile-name')
+  page.check('after switching, a restart shows the profiles, not the last one', await page.evaluate(`document.querySelector('.library') === null`), true)
   await page.evaluate(`document.querySelector('.new-profile .text-input').focus()`)
   await page.typeText('pascal')
   await submitNewProfile()
@@ -51,21 +53,17 @@ export default async function check(page, { url, serve }) {
   await submitNewProfile()
   await pause(300)
   page.check('a second profile has no Continue', await hasContinue(), false)
-  await page.evaluate(`document.querySelector('.profile-button').click()`)
-  await pause(500)
+  await switchProfile(page)
   await page.screenshot('profile-list')
-  await page.evaluate(`[...document.querySelectorAll('.link-button')].filter(button => button.textContent === 'Remove')[1].click()`)
-  await pause(200)
-  page.check('removing asks first', await page.evaluate(`document.querySelector('.confirmation p')?.textContent.trim()`), 'Remove Alex? Its saves are deleted with it.')
+  await askProfileRemoval(page, 'Alex')
+  page.check('removing asks first', await page.evaluate(`document.querySelector('.confirmation p')?.textContent.trim()`), 'Remove Alex? Its games and saves are deleted with it. Export it first to keep a copy.')
   await page.evaluate(`document.querySelector('.button.danger').click()`)
   await pause(300)
-  await page.evaluate(`document.querySelector('.play-profile').click()`)
-  await pause(800)
+  await playProfile(page, 'Pascal')
   page.check('back on Pascal, Continue is still there', await hasContinue(), true)
 
   await page.send('Emulation.setDeviceMetricsOverride', { width: 375, height: 700, deviceScaleFactor: 1, mobile: true })
-  await page.evaluate(`document.querySelector('.profile-button').click()`)
-  await pause(500)
+  await switchProfile(page)
   page.check('no horizontal scroll at phone width', await page.evaluate(`document.documentElement.scrollWidth <= 375`), true)
   await page.screenshot('profile-phone')
 }

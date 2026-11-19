@@ -13,6 +13,7 @@ import {
   readGameArchive,
   readZip,
   storeImport,
+  writeInstalledGameArchive,
   writeZip,
   type ProjectDocument,
   type StoredNode,
@@ -235,6 +236,14 @@ describe('game archives', () => {
     }))
     const page = (await readGameArchive(bytes)).chapters[0]!.nodes.find(node => node.type === 'page')
     expect(page).not.toHaveProperty('mood')
+  })
+
+  it('is written again from what a player installed, and reads back the same', async () => {
+    const game = buildGame()
+    const installed = await readGameArchive(await game.archive())
+    const filesByHash = new Map(Object.values(installed.manifest.assetFiles).map(file => [file.sha256, installed.assetFiles.get(file.path)!]))
+    const rewritten = await readGameArchive(await writeInstalledGameArchive(installed.manifest, installed, async file => filesByHash.get(file.sha256)!))
+    expect(rewritten).toEqual(installed)
   })
 
   describe('refuses', () => {

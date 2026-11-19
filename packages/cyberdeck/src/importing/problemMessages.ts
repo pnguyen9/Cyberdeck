@@ -129,6 +129,7 @@ const en: ProblemMessages = {
   notADefinition: () => 'Only declarations belong here: [decision: …], [decision multi: …], [counter: …] and [style: Name = …].',
   invalidStageDirective: subject => `[${subject}: …] is not understood: ${STAGE_DIRECTIVE_HINTS[subject] ?? 'a name, a position (left, center, right) or a number is missing'}.`,
   looksLikeStageKeyword: (subject, suggestion) => `[${subject}] would create a character called "${subject}". Did you mean [${suggestion}]?`,
+  commaInValue: (subject, suggestion) => `"${subject}": a value cannot contain a comma; tags read it as a space, so this value is "${suggestion}". Write it without the comma.`,
 }
 
 const STAGE_DIRECTIVE_HINTS_FR: Readonly<Record<string, string>> = {
@@ -259,6 +260,7 @@ const fr: ProblemMessages = {
   notADefinition: () => 'Seules des déclarations ont leur place ici\u00a0: [decision: …], [decision multi: …], [counter: …] et [style: Nom = …].',
   invalidStageDirective: subject => `[${subject}: …] n’est pas compris\u00a0: ${STAGE_DIRECTIVE_HINTS_FR[subject] ?? 'il manque un nom, une position (left, center, right) ou un nombre'}.`,
   looksLikeStageKeyword: (subject, suggestion) => `[${subject}] créerait un personnage appelé ${quoted(subject)}. Vouliez-vous dire [${suggestion}]\u00a0?`,
+  commaInValue: (subject, suggestion) => `${quoted(subject)}\u00a0: une valeur ne peut pas contenir de virgule\u00a0; les balises la lisent comme un espace, donc cette valeur est ${quoted(suggestion)}. Écrivez-la sans la virgule.`,
 }
 
 const MESSAGES: Readonly<Record<Locale, ProblemMessages>> = { en, fr }

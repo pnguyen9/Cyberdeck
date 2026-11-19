@@ -12,18 +12,45 @@
 - A character drawn full body grows and shrinks around its feet, the lowest drawn line of its
   picture, when it comes nearer or goes farther: a picture with empty space under the feet no
   longer rises as it steps forward. Save pictures follow.
+- An illustration now covers the characters on stage, as it always should have: they were drawn
+  over it, unless a tint was on.
+- `[transition: fade]`, `black` and `white` animate again, over the time asked for: a background
+  change used to cut, or blink to black for a moment.
+- A background change without a transition is a clean cut: the old background no longer lingers for
+  a moment behind the new one, showing through while its picture is still loading.
+- After `[fade out]`, what the story changes next, a background, a tint, a character, waits until the
+  screen is covered, rather than showing while it darkens.
+
+### Cyberdeck
+- The import warns about a comma in a decision's value: tags read commas as spaces, so
+  `The Lost Property, Again` is `The Lost Property Again`.
 
 ### Datajack
 - A profile can have a **PIN**, a 4-digit code added, changed or removed from its own button next
   to the profile's name (*Add a PIN* until there is one). Entering the profile asks for it, at
-  startup too, and so do erasing its saves or progress, and renaming, moving or removing it. Digits
+  startup too, and so do erasing its saves or progress, and renaming, moving, exporting or removing it. Digits
   can be typed or tapped on large keys; after five wrong tries in a row, Datajack waits 30 seconds,
   then longer with each further one. A lock against other players, not against the browser's
   developer tools: a forgotten PIN cannot be recovered in Datajack, and *Forgot the PIN?* says what
   can be done.
+- Each profile has its own **library**: games added, updated or removed in one profile leave the
+  others alone, and a profile keeps the version it chose until it updates. Pictures and sounds two
+  profiles share are stored once. Games installed before go into every profile.
+- *Switch profile* now logs off: the next start shows the profiles instead of opening the last
+  player's profile again.
+- **Export to a file** saves a profile as one file (its games, saves, progress, settings, look,
+  language and PIN), and **Import a profile** brings it back, on this device or another. An import
+  always adds a new profile, never merging into or replacing one already there: when its name is
+  taken, it offers the next free one, such as *Pascal 2*. The file is not encrypted; a zip locked
+  with a password, a profile's or a game's, is refused with how to unlock it.
+- Online, the note that a browser may erase what Datajack keeps now suggests exporting the profile.
+- Removing a profile says its games go with it, and suggests exporting it first. *Erase what
+  Datajack keeps…* in the library is now *Erase your games and saves…*.
 - In French, the built-in games are now **Échantillons**.
 
 ### Samples
+- **Sakura Week**: Mika and Mochi no longer stand in front of the pictures that already show them,
+  nor stand up while the text has them asleep or in your lap.
 - **Battle**: the three creatures line up on the stage, each named, to pick your partner; the one
   picked steps forward, the others step back, and you team up with it or see the others again.
 - **Knee-Deep** grows:
@@ -35,7 +62,9 @@
     level 1. The journal keeps which ones you have.
   - A new odd encounter, **the Lost Property**: a heap of everything ever dropped down the Delve,
     which cannot be talked to or run from. Slip past, or beat it for gold and plenty of XP; the
-    first win ever earns Saint Gravel's thanks.
+    first win ever earns Saint Gravel's thanks. Each win makes it come back bigger for the rest
+    of the adventure, with a new name and entrance: a little more health, gold and XP every time,
+    and now and then one more to its armour, to-hit and damage.
   - **The Deep Delve**: once you have won the cheese back, a new poster in the tavern offers a
     harder adventure with a sixth floor, someone even older than Ember, and a seventh ending.
   - A first game left before any ending now starts again with a short "back again" opening

@@ -14,6 +14,7 @@ const CHANNELS: Record<DesktopChannel, true> = {
   'saves:write': true,
   'saves:eraseAll': true,
   'saves:erase': true,
+  'saves:games': true,
   'library:listManifests': true,
   'library:readManifest': true,
   'library:writeManifest': true,
@@ -21,8 +22,14 @@ const CHANNELS: Record<DesktopChannel, true> = {
   'library:writeChapter': true,
   'library:hasAsset': true,
   'library:writeAsset': true,
+  'library:readAsset': true,
   'library:removeGame': true,
   'library:removeAssetsExcept': true,
+  'library:listAllManifests': true,
+  'library:removeLibrary': true,
+  'library:listEarlierManifests': true,
+  'library:readEarlierChapter': true,
+  'library:removeEarlierGame': true,
 }
 
 exposeChannels('datajackDesktop', CHANNELS)

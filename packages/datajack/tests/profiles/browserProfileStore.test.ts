@@ -25,6 +25,16 @@ describe('createBrowserProfileStore', () => {
     })
   })
 
+  it('forgets the last one used when the player switches profile', async () => {
+    const storage = memoryStorage()
+    const store = createStore(storage)
+    const pascal = await store.create('Pascal', null)
+    await store.use(pascal.id)
+    await store.use(null)
+
+    expect((await createStore(storage).list()).lastUsedId).toBeNull()
+  })
+
   it('refuses blank or taken names, with a message for the player', async () => {
     const store = createStore()
     await store.create('Pascal', null)

@@ -15,7 +15,7 @@ export interface ProfileRecord {
 
 export interface ProfileList {
   profiles: ProfileRecord[]
-  /** The profile played last, opened directly at the next start. */
+  /** The profile played last, opened directly at the next start; null once the player switched profile. */
   lastUsedId: string | null
 }
 
@@ -38,21 +38,31 @@ export interface DesktopChannels {
   'profiles:rename': (profileId: string, name: string) => void
   /** Forgets the profile; its save files stay where they are. */
   'profiles:remove': (profileId: string) => void
-  'profiles:use': (profileId: string) => void
+  'profiles:use': (profileId: string | null) => void
   'profiles:changeSaveFolder': (profileId: string, saveFolder: string) => SaveFolderChange
   'saves:read': (profileId: string, gameId: string, slot: string) => string | null
   'saves:write': (profileId: string, gameId: string, slot: string, text: string) => void
   'saves:eraseAll': (profileId: string) => void
   'saves:erase': (profileId: string, gameId: string, slots: string[]) => void
-  'library:listManifests': () => string[]
-  'library:readManifest': (gameId: string) => string | null
-  'library:writeManifest': (gameId: string, text: string) => void
-  'library:readChapter': (gameId: string, chapterId: string) => string | null
-  'library:writeChapter': (gameId: string, chapterId: string, text: string) => void
+  /** The games the profile's save folder holds saves or progress of, installed or not. */
+  'saves:games': (profileId: string) => string[]
+  'library:listManifests': (profileId: string) => string[]
+  'library:listAllManifests': () => string[]
+  'library:readManifest': (profileId: string, gameId: string) => string | null
+  'library:writeManifest': (profileId: string, gameId: string, text: string) => void
+  'library:readChapter': (profileId: string, gameId: string, chapterId: string) => string | null
+  'library:writeChapter': (profileId: string, gameId: string, chapterId: string, text: string) => void
   'library:hasAsset': (fileName: string) => boolean
   'library:writeAsset': (fileName: string, bytes: Uint8Array) => void
-  'library:removeGame': (gameId: string) => void
+  /** Null when the file is not stored. */
+  'library:readAsset': (fileName: string) => Uint8Array | null
+  'library:removeGame': (profileId: string, gameId: string) => void
+  'library:removeLibrary': (profileId: string) => void
   'library:removeAssetsExcept': (fileNames: string[]) => void
+  /** The games installed before each profile had its own library: read, then removed once copied into each. */
+  'library:listEarlierManifests': () => string[]
+  'library:readEarlierChapter': (gameId: string, chapterId: string) => string | null
+  'library:removeEarlierGame': (gameId: string) => void
 }
 
 /** Where the page loads installed assets from, by file name. */

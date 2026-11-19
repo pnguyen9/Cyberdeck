@@ -98,6 +98,8 @@ describe('profiles', () => {
 
     expect((await createProfileFiles().list()).lastUsedId).toBe(pascal.id)
     await expect(profileFiles.use('unknown')).rejects.toThrow('profile')
+    await profileFiles.use(null)
+    expect((await createProfileFiles().list()).lastUsedId).toBeNull()
   })
 
   it('forgets a removed profile but leaves its saves on the disk', async () => {
@@ -124,6 +126,16 @@ describe('profiles', () => {
 })
 
 describe('saves', () => {
+  it('lists the games the profile has saves of', async () => {
+    const profileFiles = createProfileFiles()
+    const profile = await profileFiles.create('Pascal', null)
+    await profileFiles.writeSave(profile.id, 'game-1', '1', SAVE_TEXT)
+    await profileFiles.writeSave(profile.id, 'game-2', 'progress', SAVE_TEXT)
+    await mkdir(join(profile.saveFolder, 'empty'), { recursive: true })
+
+    expect((await profileFiles.savedGames(profile.id)).sort()).toEqual(['game-1', 'game-2'])
+  })
+
   it('writes each save as a readable file per game and slot, and reads it back', async () => {
     const profileFiles = createProfileFiles()
     const profile = await profileFiles.create('Pascal', null)

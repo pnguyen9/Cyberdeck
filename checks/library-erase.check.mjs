@@ -13,7 +13,7 @@ export default async function check(page, { url, serve }) {
   await createProfile(page, await serve('datajack'), 'Pascal')
   const buttons = () => page.evaluate(`[...document.querySelectorAll('.game .button')].map(button => button.textContent.trim())`)
   const erase = async label => {
-    await page.clickButton('Erase what Datajack keeps…', '.erase .link-button')
+    await page.clickButton('Erase your games and saves…', '.erase .link-button')
     await pause(200)
     await page.clickButton(label, '.erase .button')
     await pause(800)
@@ -30,12 +30,12 @@ export default async function check(page, { url, serve }) {
   page.check('a game played can be continued', (await buttons()).includes('Continue'), true)
 
   await erase('Erase the games')
-  page.check('erasing the games empties the library', [await page.evaluate(`document.querySelectorAll('.game').length`), await page.statusText()], [0, 'Every game was erased.'])
+  page.check('erasing the games empties the library', [await page.evaluate(`document.querySelectorAll('.game').length`), await page.statusText()], [0, 'Every game in your library was erased.'])
   await installGame(page, archive)
   page.check('its saves were kept: installed again, it continues', (await buttons()).includes('Continue'), true)
 
   await erase('Erase the games, the saves and the progress')
-  page.check('erasing the saves too', await page.statusText(), 'Every game was erased, with the saves and the progress.')
+  page.check('erasing the saves too', await page.statusText(), 'Every game in your library was erased, with your saves and progress.')
   await installGame(page, archive)
   page.check('installed again, the same file, it starts afresh', [await page.evaluate(`document.querySelectorAll('.game').length`), (await buttons()).includes('Continue')], [1, false])
 

@@ -16,7 +16,7 @@ export interface Directive {
   /** Lower-cased, so writers can type `[BG: …]` or `[bg: …]`. */
   name: string
   arguments: string[]
-  /** What follows the colon as written, commas included: for the few directives listing names or giving words to read. */
+  /** What follows the colon as written, commas included: for the few directives listing names or giving words to read, and decisions. */
   written?: string
 }
 
@@ -373,6 +373,7 @@ export type ImportProblemCode =
   | 'timeoutOutsideOption'
   | 'invalidStageDirective'
   | 'looksLikeStageKeyword'
+  | 'commaInValue'
   | 'unreachable'
   | 'breakOutsideLoop'
   | 'unclosedLoop'

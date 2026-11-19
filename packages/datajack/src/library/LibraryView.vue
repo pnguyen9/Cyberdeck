@@ -6,6 +6,7 @@ import { describeError } from '../i18n/errorMessages'
 import { describeInstall, describeSampleInstall, libraryMessages } from '../i18n/libraryMessages'
 import { pinMessages } from '../i18n/pinMessages'
 import { usePinAsk } from '../profiles/pinAsk'
+import { isProfileFile } from '../profiles/profileFile'
 import LockIcon from '../profiles/LockIcon.vue'
 import PinDialog from '../profiles/PinDialog.vue'
 import type { ProfileLocks } from '../profiles/profileLocks'
@@ -26,7 +27,7 @@ const isInstalling = ref(false)
 const isDraggingOver = ref(false)
 const message = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
-/** The game whose removal, or whose restart over an autosave, waits for confirmation. */
+/** The game whose removal, restart over an autosave, or erasing waits for confirmation. */
 const confirming = ref<{ gameId: string; action: 'remove' | 'restart' | 'erase' } | null>(null)
 const shownCredits = ref<string | null>(null)
 const locale = useLocale()
@@ -89,7 +90,7 @@ watch(() => props.saveStore, refresh)
 
 async function refresh() {
   try {
-    entries.value = await props.library.list()
+    entries.value = await props.library.list(props.profile.id)
     const found = await Promise.all(entries.value.map(async entry => [entry.id, await props.saveStore.read(entry.id, AUTOSAVE_SLOT)] as const))
     autosaves.value = new Map(found.filter((pair): pair is readonly [string, SaveData] => pair[1] !== null))
     const progress = await Promise.all(entries.value.map(async entry => [entry.id, await props.saveStore.readProgress(entry.id)] as const))
@@ -117,10 +118,13 @@ async function install(files: readonly File[]) {
   errorMessage.value = null
   const reports: string[] = []
   for (const file of files) {
+    let bytes: Uint8Array<ArrayBuffer> | null = null
     try {
-      reports.push(describeInstall(await props.library.install(new Uint8Array(await file.arrayBuffer())), text.value))
+      bytes = new Uint8Array(await file.arrayBuffer())
+      reports.push(describeInstall(await props.library.install(bytes, props.profile.id), text.value))
     } catch (error) {
-      errorMessage.value = text.value.fileError(file.name, errorText(error))
+      // A profile file goes to the profiles screen: the player is told where, not that it is no game.
+      errorMessage.value = text.value.fileError(file.name, bytes !== null && isProfileFile(bytes) ? text.value.profileNotGame : errorText(error))
     }
   }
   message.value = reports.length === 0 ? null : reports.join(' ')
@@ -129,7 +133,7 @@ async function install(files: readonly File[]) {
 }
 
 /** What the shelf installed, read again after each installation. */
-const shelfRecord = ref(installedSamples())
+const shelfRecord = ref(installedSamples(props.profile.id))
 /** The sample being loaded, whose button waits. */
 const loadingSampleId = ref<string | null>(null)
 const shelf = computed(() => {
@@ -154,7 +158,7 @@ async function addSample(sample: SampleIndexEntry) {
   loadingSampleId.value = sample.id
   sampleReport.value = null
   try {
-    sampleReport.value = { sampleId: sample.id, text: describeSampleInstall(await installSample(props.library, sample), text.value), isError: false }
+    sampleReport.value = { sampleId: sample.id, text: describeSampleInstall(await installSample(props.library, sample, props.profile.id), text.value), isError: false }
   } catch (error) {
     const notLoaded = error instanceof SampleNotLoaded
     const isOnHost = about !== null && isHosted(about.howItRuns)
@@ -165,7 +169,7 @@ async function addSample(sample: SampleIndexEntry) {
       about.checkNewVersion()
     }
   }
-  shelfRecord.value = installedSamples()
+  shelfRecord.value = installedSamples(props.profile.id)
   loadingSampleId.value = null
   await refresh()
   // The button may be gone, a label in its place: the report takes the focus.
@@ -178,7 +182,7 @@ async function play(entry: LibraryEntry, resumeFrom: SaveData | null) {
   try {
     // A save is resumed in the language it was played in, when the game still has it.
     const language = resumeFrom?.language !== undefined && entry.languages.includes(resumeFrom.language) ? resumeFrom.language : languageOf(entry)
-    emit('play', await props.library.open(entry.id, language), resumeFrom)
+    emit('play', await props.library.open(entry.id, props.profile.id, language), resumeFrom)
   } catch (error) {
     errorMessage.value = text.value.cannotOpen(entry.name, errorText(error))
   }
@@ -186,7 +190,7 @@ async function play(entry: LibraryEntry, resumeFrom: SaveData | null) {
 
 async function openMap(entry: LibraryEntry, view: 'map' | 'gallery' = 'map') {
   try {
-    const story = await props.library.open(entry.id, languageOf(entry))
+    const story = await props.library.open(entry.id, props.profile.id, languageOf(entry))
     if (view === 'map') {
       emit('map', story)
     } else {
@@ -219,7 +223,7 @@ async function eraseGameDataNow(entry: LibraryEntry, erased: ErasedData) {
 
 async function remove(entry: LibraryEntry) {
   confirming.value = null
-  await props.library.remove(entry.id)
+  await props.library.remove(entry.id, props.profile.id)
   message.value = text.value.removed(entry.name)
   await refresh()
 }
@@ -227,7 +231,7 @@ async function remove(entry: LibraryEntry) {
 /** Erasing what Datajack keeps waits for the player to say what. */
 const isConfirmingErase = ref(false)
 
-/** The games are everyone's, the saves and progress only this profile's: those ask for its PIN. */
+/** The profile's library is emptied, the other profiles' left alone; erasing its saves and progress asks for its PIN. */
 function eraseAll(withSaves: boolean) {
   if (withSaves) {
     withPin(props.profile, 'confirm', () => eraseAllNow(true))
@@ -240,7 +244,7 @@ async function eraseAllNow(withSaves: boolean) {
   isConfirmingErase.value = false
   confirming.value = null
   try {
-    await props.library.removeAll()
+    await props.library.removeAll(props.profile.id)
     if (withSaves) {
       await props.saveStore.eraseAll()
     }
@@ -477,7 +481,7 @@ function onDrop(event: DragEvent) {
     <section class="erase">
       <button v-if="!isConfirmingErase" class="link-button" @click="isConfirmingErase = true">{{ text.eraseAll }}</button>
       <div v-else class="confirmation">
-        <p>{{ text.confirmErase(profile.name) }}</p>
+        <p>{{ text.confirmErase }}</p>
         <div class="actions">
           <button class="button danger" @click="eraseAll(false)">{{ text.eraseGames }}</button>
           <button class="button danger" @click="eraseAll(true)">{{ text.eraseGamesAndSaves }}</button>

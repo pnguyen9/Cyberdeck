@@ -87,10 +87,11 @@ export class ProfileFiles {
     })
   }
 
-  use(profileId: string): Promise<void> {
+  /** The profile that opens directly at the next start; null after switching, so the profiles screen shows. */
+  use(profileId: string | null): Promise<void> {
     return this.inTurn(async () => {
       const settings = await this.readSettings()
-      findProfile(settings, profileId)
+      if (profileId !== null) findProfile(settings, profileId)
       await this.writeSettings({ ...settings, lastUsedId: profileId })
     })
   }
@@ -189,6 +190,14 @@ export class ProfileFiles {
     })
   }
 
+  /** The games the profile's folder holds saves or progress of, installed or not. */
+  savedGames(profileId: string): Promise<string[]> {
+    return this.inTurn(async () => {
+      const profile = findProfile(await this.readSettings(), profileId)
+      return [...await savesIn(profile.saveFolder)].filter(([, slots]) => slots.length > 0).map(([gameId]) => gameId)
+    })
+  }
+
   private inTurn<Result>(operation: () => Promise<Result>): Promise<Result> {
     const result = this.queue.then(operation)
     this.queue = result.catch(() => undefined)
@@ -282,7 +291,8 @@ async function savesIn(folder: string): Promise<Map<string, string[]>> {
     if (!game.isDirectory() || !SAFE_SEGMENT.test(game.name)) {
       continue
     }
-    const slots = (await readdir(join(folder, game.name)))
+    // A folder that cannot be read holds no save Datajack could read either.
+    const slots = (await readdir(join(folder, game.name)).catch(() => []))
       .filter(fileName => fileName.endsWith(SAVE_EXTENSION))
       .map(fileName => fileName.slice(0, -SAVE_EXTENSION.length))
       .filter(slot => SAFE_SEGMENT.test(slot))

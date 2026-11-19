@@ -1,6 +1,7 @@
 import type { SaveFolderChange } from '../../electron/bridge'
 import { checkedProfileName } from '../../electron/profileNames'
-import { createStorageSaveStore, type Locale, type SaveStore } from '@cyberdeck/stage'
+import { createStorageSaveStore, storageKeysStartingWith, type Locale, type SaveStore } from '@cyberdeck/stage'
+import { PROFILES_KEY, savesKeyPrefix } from './profileKeys'
 
 /** Who is playing, and where their saves go. */
 export interface Profile {
@@ -30,13 +31,14 @@ export interface ProfileStore {
   rename: (profileId: string, name: string) => Promise<void>
   /** Forgets the profile. Desktop save files stay on the disk; browser saves are deleted with it. */
   remove: (profileId: string) => Promise<void>
-  use: (profileId: string) => Promise<void>
+  /** The profile that opens directly at the next start; null after switching, so the profiles screen shows. */
+  use: (profileId: string | null) => Promise<void>
   changeSaveFolder: (profileId: string, saveFolder: string) => Promise<SaveFolderChange>
   saveStore: (profileId: string) => SaveStore
+  /** The games the profile has saves or progress of, installed or not. */
+  savedGames: (profileId: string) => Promise<string[]>
 }
 
-const PROFILES_KEY = 'datajack:profiles'
-const savesKeyPrefix = (profileId: string) => `datajack:profile:${profileId}:save:`
 
 /** Profiles kept in a `Storage` (`localStorage`), with their saves next to them. */
 export function createBrowserProfileStore(getStorage: () => Storage, createId: () => string, now: () => string): ProfileStore {
@@ -49,6 +51,7 @@ export function createBrowserProfileStore(getStorage: () => Storage, createId: (
     }
   }
   const write = (list: ProfileList) => getStorage().setItem(PROFILES_KEY, JSON.stringify(list))
+  const saveStoreOf = (profileId: string) => createStorageSaveStore(getStorage, savesKeyPrefix(profileId))
   const find = (list: ProfileList, profileId: string) => {
     const profile = list.profiles.find(candidate => candidate.id === profileId)
     if (profile === undefined) {
@@ -83,10 +86,7 @@ export function createBrowserProfileStore(getStorage: () => Storage, createId: (
     remove: async profileId => {
       const list = read()
       find(list, profileId)
-      const storage = getStorage()
-      const saveKeys = Array.from({ length: storage.length }, (_, index) => storage.key(index))
-        .filter((key): key is string => key?.startsWith(savesKeyPrefix(profileId)) ?? false)
-      saveKeys.forEach(key => storage.removeItem(key))
+      await saveStoreOf(profileId).eraseAll()
       write({
         profiles: list.profiles.filter(profile => profile.id !== profileId),
         lastUsedId: list.lastUsedId === profileId ? null : list.lastUsedId,
@@ -94,13 +94,18 @@ export function createBrowserProfileStore(getStorage: () => Storage, createId: (
     },
     use: async profileId => {
       const list = read()
-      find(list, profileId)
+      if (profileId !== null) find(list, profileId)
       write({ ...list, lastUsedId: profileId })
     },
     changeSaveFolder: async () => {
       throw new Error('The browser keeps the saves itself.')
     },
-    saveStore: profileId => createStorageSaveStore(getStorage, savesKeyPrefix(profileId)),
+    saveStore: saveStoreOf,
+    // Keys are `<prefix><game>:<slot>`, a game's identifier holding no colon.
+    savedGames: async profileId => {
+      const prefix = savesKeyPrefix(profileId)
+      return [...new Set(storageKeysStartingWith(getStorage(), prefix).map(key => key.slice(prefix.length).split(':')[0]!))]
+    },
   }
 }
 
