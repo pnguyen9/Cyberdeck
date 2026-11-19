@@ -45,7 +45,7 @@ export default async function check(page, { url, serve }) {
   page.check('white text on a bright gradient is warned about', await page.evaluate(`document.querySelector('.contrast').classList.contains('low')`), true)
   await page.evaluate(`document.querySelector('.app-look input[type=checkbox]').click()`)
   await pause(100)
-  page.check('the box under the text does not mend white text on a bright background', await page.evaluate(`document.querySelector('.contrast').classList.contains('low')`), true)
+  page.check('the box under the text, dark under white text, mends it', await page.evaluate(`document.querySelector('.contrast').classList.contains('low')`), false)
   await page.evaluate(`(() => { const field = ${textField}; field.value = '#2a1a10'; field.dispatchEvent(new Event('input')); field.dispatchEvent(new Event('change', { bubbles: true })) })()`)
   await pause(100)
   page.check('dark text on the light box reads', await page.evaluate(`document.querySelector('.contrast').textContent.includes('hard to read for many people')`), false)

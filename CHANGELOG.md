@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.7.1 — 2026-11-19
+
+### Both applications
+- A splash screen, the application's icon and name, shows from the moment the page opens, while it
+  loads: on a phone, the installed application no longer stays on a black screen for a while
+  before its first screen appears. Datajack keeps it until its profiles are ready. Should the application
+  fail to start, a line asking to reload the page appears after 15 seconds.
+- Appearance: the plain box under the text now follows the text's colour, dark under light text and
+  light under dark text, and goes as far as the text and the titles need to read (4.5:1). White text
+  on a bright background no longer gets a near-white box.
+
+### Knee-Deep
+- Helping Sir Lorimer out of his tunnel takes a total of 8 or more to earn the potion, and says so;
+  a lower total gets you sat on, for 2 damage. Any roll used to earn it.
+- Backing away from Great-Uncle Flint leaves him in the Bedrock: he no longer follows you back to
+  town, and the Bucket brings you back down to his floor whenever you like.
+- Great-Uncle Flint is now the hardest fight of the Deep Delve, as the last boss should be: he
+  was weaker than Gristle Goldgrin there (180 HP rather than 110, harder to hit, and he hits
+  harder), and he warns you to bring potions before you choose to fight.
+- In the *Long Overdue* ending, RENEWED is stamped on the side of the cheese wheel, inside its frame,
+  rather than floating over the edge of the wheel.
+
 ## 3.7.0 — 2026-11-19
 
 ### Both applications

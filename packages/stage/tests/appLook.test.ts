@@ -55,15 +55,30 @@ describe('the apps’ own look', () => {
     expect(presetOf({ ...PRESET_LOOKS.paper, borderKind: 'dotted' })).toBeNull()
   })
 
-  it('makes the readable box dark on a dark background, light on a bright one', () => {
+  it('makes the readable box dark under light text, light under dark text', () => {
     const night: AppLook = { ...DEFAULT_APP_LOOK, backgroundKind: 'gradient', corners: ['#000033', '#330000', '#003300', '#222222'], readableBox: true }
-    const day: AppLook = { ...night, corners: ['#ffeeaa', '#aaddff', '#ffffff', '#ccffcc'] }
+    const day: AppLook = { ...night, corners: ['#ffeeaa', '#aaddff', '#ffffff', '#ccffcc'], textColour: '#1f2328', accentColour: '#1a5296' }
     expect(isBright(readableBoxColour(night))).toBe(false)
     expect(isBright(readableBoxColour(day))).toBe(true)
     // Calmer than the background: further from the middle grey.
     expect(contrastRatio(readableBoxColour(day), '#000000')).toBeGreaterThan(contrastRatio('#bbddcc', '#000000'))
     expect(lookVariables(day)['--look-box']).toBe(readableBoxColour(day))
     expect(lookVariables(day)['--look-scheme']).toBe('light')
+  })
+
+  it('keeps the text and the accent readable over the box, whatever the background', () => {
+    const looks: AppLook[] = [
+      { ...DEFAULT_APP_LOOK, ...flatLook('#ffe066'), textColour: '#ffffff', accentColour: '#ffd27f', readableBox: true },
+      { ...DEFAULT_APP_LOOK, ...flatLook('#0b2545'), textColour: '#000000', accentColour: '#1a5296', readableBox: true },
+      { ...DEFAULT_APP_LOOK, ...flatLook('#808080'), textColour: '#ffffff', accentColour: '#9eeaff', readableBox: true },
+      { ...DEFAULT_APP_LOOK, ...flatLook('#808080'), textColour: '#202020', accentColour: '#a1006b', readableBox: true },
+    ]
+    for (const look of looks) {
+      expect(worstContrast(look.textColour, look)).toBeGreaterThanOrEqual(READABLE_CONTRAST)
+      expect(worstContrast(look.accentColour, look)).toBeGreaterThanOrEqual(READABLE_CONTRAST)
+    }
+    expect(isBright(readableBoxColour(looks[0]!))).toBe(false)
+    expect(isBright(readableBoxColour(looks[1]!))).toBe(true)
   })
 
   it('judges the text by the worst corner, or by the box when there is one', () => {
@@ -144,3 +159,7 @@ describe('the apps’ own look', () => {
     expect(lookVariables({ ...PRESET_LOOKS.paper, accentColour: '#eeeeee' })['--look-focus']).toBe(PRESET_LOOKS.paper.textColour)
   })
 })
+
+function flatLook(colour: string): Pick<AppLook, 'backgroundKind' | 'backgroundColour' | 'corners'> {
+  return { backgroundKind: 'colour', backgroundColour: colour, corners: [colour, colour, colour, colour] }
+}

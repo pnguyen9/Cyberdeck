@@ -25,7 +25,7 @@ const en = {
   colour: 'Colour',
   corners: ['Top left', 'Top right', 'Bottom left', 'Bottom right'] as readonly [string, string, string, string],
   readableBox: 'A plain box under the text, to keep it readable',
-  readableBoxHelp: 'Its colour follows the background: dark on a dark one, light on a bright one.',
+  readableBoxHelp: 'Its colour follows the text: dark under light text, light under dark text.',
   font: 'Font',
   fontNames: {
     system: 'System font',
@@ -82,7 +82,7 @@ const fr: LookMessages = {
   colour: 'Couleur',
   corners: ['En haut à gauche', 'En haut à droite', 'En bas à gauche', 'En bas à droite'],
   readableBox: 'Un encadré uni sous le texte, pour qu’il reste lisible',
-  readableBoxHelp: 'Sa couleur s’adapte au fond : sombre sur un fond sombre, claire sur un fond clair.',
+  readableBoxHelp: 'Sa couleur s’adapte au texte : sombre sous un texte clair, claire sous un texte foncé.',
   font: 'Police',
   fontNames: {
     system: 'Police du système',

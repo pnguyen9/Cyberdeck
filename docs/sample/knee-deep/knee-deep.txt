@@ -1852,10 +1852,10 @@ You sit down on a heap of coins and ask her how she's been. Really been. You rol
 [else if: Foe is Flint]
 [set: FoeName = Great-Uncle Flint]
 [set: FoeMove = whacks you with his walking stick]
-[set: FoeMax = 110]
-[set: FoeAC = 16]
-[set: FoeHit = 9]
-[set: FoeDmg = 5]
+[set: FoeMax = 180]
+[set: FoeAC = 18]
+[set: FoeHit = 12]
+[set: FoeDmg = 7]
 [set: FoeXP = 0]
 [set: FoeGold = 0]
 [set: FoeTalk = 99]
@@ -2089,6 +2089,8 @@ You roll [style: Roll]{Roll}[style: none], {Total} against {FoeAC}: a miss. You 
 [else if: Foe is Heap]
 [add: Damage {Floor}]
 [add: Damage 2]
+[else if: Foe is Flint]
+[add: Damage 11]
 [else]
 [add: Damage 9]
 [end]
@@ -2869,10 +2871,16 @@ A very tall knight is stuck in a very low tunnel, bent double, his helmet wedged
 [if: Odd choice is A]
 [set: Bonus = 0]
 [play: Roll]
+[if: Total >= 8]
 [add: Potions]
 [sound: heal]
 [dwarf: happy]
-You roll [style: Roll]{Roll}[style: none] and pull, push, and finally kick. He pops free with a sound like a cork. He gives you a [style: Good]potion[style: none] and goes back up, saying quests are better on the surface.
+You roll [style: Roll]{Roll}[style: none], {Total} against 8, and pull, push, and finally kick. He pops free with a sound like a cork. He gives you a [style: Good]potion[style: none] and goes back up, saying quests are better on the surface.
+[else]
+[set: Damage = 2]
+[play: Hurt a little]
+You roll [style: Roll]{Roll}[style: none], {Total} against 8, and pull with all your might. He pops free all at once and sits down on you. [style: Hurt]2 damage[style: none]. He apologises at length, then wedges himself in again, further along.
+[end]
 [else if: Odd choice is B]
 — Sir Lorimer: YOUR cheese? Well. I suppose you are shorter than me, which down here is a great advantage. Very well, it's yours. Do give the dragon my regards.
 [dwarf: think]
@@ -3227,6 +3235,7 @@ At the very bottom of everything, where the Delve runs out of Delve, a dragon so
 [dwarf: think]
 — {Hero}: I'm a dwarf, sir. I'm forty-three.
 — Great-Uncle Flint: Like I said. That cheese was lent for a fortnight. Late fees are one copper a day, compounded, and by my reckoning your town now owes me your town.
+He stretches, and the whole cave creaks. Three hundred years of collecting late fees have left him enormous, armoured in stone, and very, very cross. Whoever fights him had better bring every potion they own.
 [dwarf: normal]
 [loop]
 [choice: Lair]
@@ -3235,6 +3244,8 @@ At the very bottom of everything, where the Delve runs out of Delve, a dragon so
 [if: Lair is Leave]
 [sound: door]
 — Great-Uncle Flint: Leaving? WHAT? Young people. No patience. In my day we waited a thousand years for anything.
+The Bucket can bring you back down to this floor whenever you feel braver.
+[exit: foe]
 [set: Outcome = Home]
 [break]
 [end]

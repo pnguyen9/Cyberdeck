@@ -5,6 +5,8 @@ import { mergeConfig, type Plugin, type UserConfig } from 'vite'
 import { fileBuild } from './fileBuild'
 import { builtInSamples } from './sampleBuild'
 import { SERVICE_WORKER, TAKE_OVER } from './packages/stage/src/app/offline'
+import { SPLASH_ID } from './packages/stage/src/app/splash'
+import { FONT_STACKS, PRESET_LOOKS } from './packages/stage/src/look/appLook'
 
 /** What a web build says of its application: in the manifest, and to the page. */
 export interface WebApp {
@@ -16,7 +18,7 @@ export interface WebApp {
 }
 
 /** The colour of the applications' background, given to the system for the window and the splash screen. */
-export const THEME_COLOUR = '#0b0d12'
+export const THEME_COLOUR = PRESET_LOOKS.cyberpunk.backgroundColour
 
 /** The version of the application, as its `package.json` says. */
 export function versionOf(folder: string): string {
@@ -33,8 +35,33 @@ export function versionOf(folder: string): string {
  */
 export function webApp(app: WebApp, mode: string): UserConfig {
   const version = versionOf(app.folder)
-  const shared: UserConfig = { base: './', define: { __APP_VERSION__: JSON.stringify(version) }, plugins: [builtInSamples()] }
+  const shared: UserConfig = { base: './', define: { __APP_VERSION__: JSON.stringify(version) }, plugins: [builtInSamples(), splashScreen(app.name)] }
   return mode === 'file' ? mergeConfig(shared, fileBuild()) : mergeConfig(shared, { plugins: [installableApp(app, version)] })
+}
+
+/**
+ * The splash screen: the application's icon and name in the default look's colours, written into the page
+ * itself so that it shows from the first paint, while the script loads (slow on a phone), rather than
+ * a blank window. The application takes it away once its first screen is drawn (`removeSplash`); should
+ * the script never start, a line asking to reload fades in after a while.
+ */
+function splashScreen(appName: string): Plugin {
+  const look = PRESET_LOOKS.cyberpunk
+  const style = `<style>
+      #${SPLASH_ID} { position: fixed; inset: 0; z-index: 2147483647; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; background: ${look.backgroundColour}; color: ${look.accentColour}; font: 600 1.25rem ${FONT_STACKS[look.font]}; letter-spacing: 0.08em; }
+      #${SPLASH_ID} img { width: 6rem; height: 6rem; border-radius: 1.25rem; }
+      #${SPLASH_ID} small { max-width: 20rem; padding: 0 1rem; text-align: center; color: ${look.textColour}; font-weight: 400; font-size: 0.9rem; letter-spacing: normal; animation: splash-late 0.6s 15s both; }
+      @media (prefers-reduced-motion: no-preference) { #${SPLASH_ID} img { animation: splash-pulse 1.6s ease-in-out infinite alternate; } }
+      @keyframes splash-pulse { from { opacity: 0.55; } to { opacity: 1; } }
+      @keyframes splash-late { from { opacity: 0; } to { opacity: 1; } }
+    </style>`
+  const markup = `<div id="${SPLASH_ID}" aria-hidden="true"><img src="./icon.svg" alt="" /><span>${appName}</span><small>Still loading… If nothing appears, reload the page.</small></div>`
+  return {
+    name: 'splash-screen',
+    transformIndexHtml: html => html
+      .replace('</head>', `  ${style}\n  </head>`)
+      .replace('<body>', `<body>\n    ${markup}`),
+  }
 }
 
 /** The manifest browsers read to install the application; its paths are relative to it. */

@@ -1356,8 +1356,9 @@ def cover():
 
 def overdue_cg():
     d = Defs()
-    stamp = (f'<g transform="translate(1000 640) rotate(-12)"><rect x="-210" y="-60" width="420" height="120" rx="14" fill="none" stroke="#c0392b" stroke-width="12"/>'
-             f'<text x="0" y="28" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="86" fill="#c0392b">RENEWED</text></g>')
+    # On the curved side of the wheel, inside its band, barely tilted: a stamp that sits on the rind.
+    stamp = (f'<g transform="translate(1000 755) rotate(-3) scale(0.75)"><rect x="-210" y="-60" width="420" height="120" rx="14" fill="none" stroke="#c0392b" stroke-width="12"/>'
+             f'<text x="0" y="25" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="70" fill="#c0392b">RENEWED</text></g>')
     wheel = (f'<g transform="translate(1000 640)"><ellipse cx="0" cy="110" rx="300" ry="80" fill="#d8a020" stroke="{INK}" stroke-width="7"/>'
              f'<rect x="-300" y="-20" width="600" height="130" fill="{d.linear("orind", "#ffe07a", "#d8a020")}"/>'
              f'<path d="M-300 -20 v130 M300 -20 v130" stroke="{INK}" stroke-width="7"/>'

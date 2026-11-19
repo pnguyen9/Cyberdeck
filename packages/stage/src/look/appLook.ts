@@ -14,7 +14,7 @@ export interface AppLook {
   textColour: string
   /** Titles, buttons chosen, links hovered, focus. */
   accentColour: string
-  /** A plain box under the text, its colour taken from the background's brightness. */
+  /** A plain box under the text, its colour taken from the background, dark under light text, light under dark text. */
   readableBox: boolean
 }
 
@@ -185,10 +185,20 @@ export function isBright(colour: string): boolean {
   return luminance(colour) > 0.179
 }
 
-/** The readable box's colour: the background's, darkened when it is dark, lightened when it is bright. */
+/**
+ * The readable box's colour: the background's, darkened under light text, lightened under dark
+ * text, and pushed further until the text and the accent read over it.
+ */
 export function readableBoxColour(look: AppLook): string {
   const background = backgroundOf(look)
-  return isBright(background) ? mixColours(background, '#ffffff', 0.82) : mixColours(background, '#000000', 0.72)
+  const [towards, start] = isBright(look.textColour) ? ['#000000', 0.72] : ['#ffffff', 0.82]
+  for (let amount = start; amount < 1; amount += 0.02) {
+    const candidate = mixColours(background, towards, amount)
+    if (contrastRatio(look.textColour, candidate) >= READABLE_CONTRAST && contrastRatio(look.accentColour, candidate) >= READABLE_CONTRAST) {
+      return candidate
+    }
+  }
+  return towards
 }
 
 /** The background as one colour: the colour itself, or the gradient's average. */

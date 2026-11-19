@@ -10,12 +10,13 @@ import {
   PlayerView,
   provideApp,
   provideLocale,
+  removeSplash,
   SettingsScreen,
   useSystemLessMotion,
   wantsLessMotion,
   type PlayerSettings,
 } from '@cyberdeck/stage'
-import { computed, onMounted, provide, ref, shallowRef, watch, watchEffect } from 'vue'
+import { computed, nextTick, onMounted, provide, ref, shallowRef, watch, watchEffect } from 'vue'
 import { appMessages } from './i18n/appMessages'
 import { createLanguageChoice } from './i18n/languageChoice'
 import { createDesktopLibraryStorage } from './library/desktopLibraryStorage'
@@ -203,6 +204,9 @@ onMounted(async () => {
     }
   } finally {
     isLoading.value = false
+    // The splash screen stays until the first screen is drawn under it.
+    await nextTick()
+    removeSplash()
   }
 })
 </script>

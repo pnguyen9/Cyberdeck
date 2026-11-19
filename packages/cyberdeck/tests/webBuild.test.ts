@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { cacheNameOf, filesToKeep, manifestOf, serviceWorkerOf, versionOf, webApp } from '../../../webBuild'
+import { SPLASH_ID } from '../../stage/src/app/splash'
 
 const folder = new URL('..', import.meta.url).pathname
 
@@ -15,9 +16,22 @@ describe('the web build', () => {
 
   it('is installable, except as files to double-click, which are built as such', () => {
     const plugins = (mode: string) => (webApp({ name: 'Cyberdeck', description: '', folder }, mode).plugins ?? []).map(plugin => (plugin as { name: string }).name)
-    expect(plugins('production')).toEqual(['built-in-samples', 'installable-app'])
-    expect(plugins('file')).toEqual(['built-in-samples', 'classic-script'])
+    expect(plugins('production')).toEqual(['built-in-samples', 'splash-screen', 'installable-app'])
+    expect(plugins('file')).toEqual(['built-in-samples', 'splash-screen', 'classic-script'])
     expect(webApp({ name: 'Cyberdeck', description: '', folder }, 'file').build?.outDir).toBe('dist-file')
+  })
+
+  it('writes a splash screen into the page, shown before any script runs', () => {
+    const plugin = (webApp({ name: 'Datajack', description: '', folder }, 'production').plugins ?? [])
+      .find(candidate => (candidate as { name: string }).name === 'splash-screen') as unknown as { transformIndexHtml: (html: string) => string }
+    const html = plugin.transformIndexHtml('<head><title>Datajack</title></head><body><div id="app"></div></body>')
+    const splashAt = html.indexOf(`<div id="${SPLASH_ID}"`)
+    expect(html.indexOf('<style>')).toBeLessThan(html.indexOf('</head>'))
+    expect(splashAt).toBeGreaterThan(html.indexOf('<body>'))
+    expect(splashAt).toBeLessThan(html.indexOf('<div id="app">'))
+    expect(html).toContain('src="./icon.svg"')
+    expect(html).toContain('<span>Datajack</span>')
+    expect(html).toContain('reload the page')
   })
 
   it('has a manifest whose paths stay in the application’s folder', () => {

@@ -201,7 +201,7 @@ a new notion gets its word here before it gets code.
 |---|---|---|
 | Appearance | How Cyberdeck's or Datajack's own screens look: background, borders, font, colours. Never a game's, which its author's CSS sets. | `AppLook` |
 | Preset | A look ready to take: Cyberpunk (the default), Graphite, Paper, Dusk, Playground (bright, for children), Forest, Ocean, High contrast. | `LookPreset` |
-| Readable box | A plain box under an application's text, dark or light as its background is, so that a busy background never gets in the way. | `readableBox` |
+| Readable box | A plain box under an application's text, dark under light text and light under dark text, so that a busy background never gets in the way. | `readableBox` |
 
 ## Development
 
@@ -882,7 +882,7 @@ A **project** holds the whole game. Its screens:
   A preset (*Cyberpunk*, the default, *Graphite*, *Paper*, *Dusk*, *Playground*, bright
   and meant for children, *Forest*, *Ocean*, *High contrast*), or each part in
   depth: the background, one colour or a gradient from four corners; the readable box under the text,
-  dark on a dark background and light on a bright one; the font, the text's colour and the titles';
+  dark under light text and light under dark text; the font, the text's colour and the titles';
   the borders' colour and kind (solid, dashed, dotted, double, none). Colours are picked or typed as
   `#rrggbb`; the contrast of the text and titles is shown, with a warning under 4.5:1 (WCAG AA). The
   colours the screens give meaning to (errors, warnings, the storyboard's kinds) are darkened or
