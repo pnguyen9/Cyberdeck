@@ -47,6 +47,7 @@
 [shown: Money]
 
 # Blackjack
+[game mode]
 [bg: table]
 [music: lounge]
 [if: Money < 1]
@@ -79,7 +80,6 @@ The dealer draws until 17 or more. Beat the dealer and you win as much as you be
 [end]
 [set: Cut = {Decks} * 13]
 [play: Fill the shoe]
-[game mode]
 [loop]
 [if: Money < 1]
 [break]

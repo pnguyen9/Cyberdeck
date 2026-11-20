@@ -16,6 +16,7 @@ const en = {
   readAloudHelp: 'Leave it off with a screen reader, which reads the text already: you would hear it twice.',
   captions: 'Captions on videos that have them',
   untimedChoices: 'Choices wait for me, even timed ones',
+  showKeys: 'Show the keys on the menu’s buttons',
   namePlate: 'The name over the text box',
   namePlatePlace: 'Where the name stays',
   namePlateMotions: { slide: 'Slides to who speaks', jump: 'Jumps to who speaks', fixed: 'Stays put' } as Record<'slide' | 'jump' | 'fixed', string>,
@@ -32,6 +33,9 @@ const en = {
     skip: 'Skip read text',
     auto: 'Auto mode',
     journal: 'Journal',
+    save: 'Save',
+    load: 'Load',
+    map: 'Map',
     hideText: 'Hide the text',
     settings: 'Settings',
     fullscreen: 'Full screen',
@@ -70,7 +74,7 @@ const en = {
   addKey: 'Add a key',
   defaultKeys: 'Default keys',
   touchHelp: 'On a touch screen, a tap is a left click and a long press a right click; swiping right goes back, swiping left moves on.',
-  keyPositions: 'Keys are recognised by their place on the keyboard, and named as on a US keyboard: on another layout, the name may differ from the letter printed on the key.',
+  keyPositions: 'This browser does not tell the keyboard’s layout: keys are named as on a US keyboard, and on another layout a name may differ from the letter printed on the key.',
 }
 
 type SettingsMessages = typeof en
@@ -90,6 +94,7 @@ const fr: SettingsMessages = {
   readAloudHelp: 'Si vous utilisez un lecteur d’écran, laissez cette option désactivée : il lit déjà le texte, et vous l’entendriez deux fois.',
   captions: 'Sous-titres des vidéos, quand il y en a',
   untimedChoices: 'Les choix m’attendent, même ceux qui sont minutés',
+  showKeys: 'Afficher les touches sur les boutons du menu',
   namePlate: 'Le nom au-dessus de la zone de texte',
   namePlatePlace: 'Position du nom',
   namePlateMotions: { slide: 'Glisse vers le personnage qui parle', jump: 'Saute vers le personnage qui parle', fixed: 'Reste en place' },
@@ -106,6 +111,9 @@ const fr: SettingsMessages = {
     skip: 'Passer le texte lu',
     auto: 'Lecture automatique',
     journal: 'Journal',
+    save: 'Sauvegarder',
+    load: 'Charger',
+    map: 'Carte',
     hideText: 'Masquer le texte',
     settings: 'Paramètres',
     fullscreen: 'Plein écran',
@@ -144,7 +152,7 @@ const fr: SettingsMessages = {
   addKey: 'Ajouter une touche',
   defaultKeys: 'Touches par défaut',
   touchHelp: 'Sur un écran tactile, un appui bref vaut un clic gauche et un appui long un clic droit ; un balayage vers la droite revient en arrière, un balayage vers la gauche fait avancer.',
-  keyPositions: 'Les touches sont reconnues par leur place sur le clavier et nommées comme sur un clavier américain (QWERTY) : sur un clavier AZERTY ou une autre disposition, le nom peut différer de la lettre inscrite sur la touche.',
+  keyPositions: 'Ce navigateur n’indique pas la disposition du clavier\u00a0: les touches sont nommées comme sur un clavier américain (QWERTY), et sur un clavier AZERTY ou une autre disposition, le nom peut différer de la lettre inscrite sur la touche.',
 }
 
 export const settingsMessages = { en, fr }

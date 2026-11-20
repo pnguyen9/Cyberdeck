@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { onUnmounted, ref, useTemplateRef } from 'vue'
-import { actionOf, DEFAULT_BINDINGS, describeInput as describeInputIn, rebind, unbind, type InputBinding, type PlayerAction } from '../input/bindings'
+import { actionOf, defaultBindings, PLAYER_ACTIONS, describeInput as describeInputIn, rebind, unbind, type InputBinding, type PlayerAction } from '../input/bindings'
+import { knowsKeyboardLayout } from '../input/keyboardLayout'
 import { useLocale, useMessages, type LanguageChoice } from '../i18n/locale'
 import { settingsMessages } from '../i18n/settingsMessages'
-import { AUTO_SPEED_RANGE, DEFAULT_PLAYER_SETTINGS, MOTION_CHOICES, NAME_PLATE_MOTIONS, NAME_PLATE_PLACES, TEXT_SCALES, TEXT_SPEED_RANGE, type PlayerSettings } from '../settings/playerSettings'
+import { AUTO_SPEED_RANGE, DEFAULT_CHOICES, MOTION_CHOICES, NAME_PLATE_MOTIONS, NAME_PLATE_PLACES, TEXT_SCALES, TEXT_SPEED_RANGE, type PlayerSettings } from '../settings/playerSettings'
 import { keepScrollingKeys, useDialogFocus } from '../useDialogFocus'
 import LanguageSelect from './LanguageSelect.vue'
 
@@ -22,7 +23,6 @@ const locale = useLocale()
 const text = useMessages(settingsMessages)
 const describeInput = (input: InputBinding) => describeInputIn(input, locale.value)
 const actionLabel = (action: PlayerAction) => text.value.actions[action]
-const actions = Object.keys(DEFAULT_BINDINGS) as PlayerAction[]
 
 /** The action waiting for an input to be given to it; the next key or mouse button pressed is taken. */
 const listeningFor = ref<PlayerAction | null>(null)
@@ -35,13 +35,13 @@ const category = ref<(typeof CATEGORIES)[number]>('general')
 const canReadAloud = typeof speechSynthesis !== 'undefined'
 
 function resetSpeedAndVolumes() {
-  const { textSpeed, musicVolume, soundVolume, voiceVolume, autoSpeed } = DEFAULT_PLAYER_SETTINGS
+  const { textSpeed, musicVolume, soundVolume, voiceVolume, autoSpeed } = DEFAULT_CHOICES
   update({ textSpeed, musicVolume, soundVolume, voiceVolume, autoSpeed })
 }
 
 function resetAccessibility() {
-  const { textScale, readableFont, strongContrast, readAloud, untimedChoices, captions, namePlateMotion, namePlatePlace, motion } = DEFAULT_PLAYER_SETTINGS
-  update({ textScale, readableFont, strongContrast, readAloud, untimedChoices, captions, namePlateMotion, namePlatePlace, motion })
+  const { textScale, readableFont, strongContrast, readAloud, untimedChoices, captions, namePlateMotion, namePlatePlace, motion, showKeys } = DEFAULT_CHOICES
+  update({ textScale, readableFont, strongContrast, readAloud, untimedChoices, captions, namePlateMotion, namePlatePlace, motion, showKeys })
 }
 
 function update(change: Partial<PlayerSettings>) {
@@ -49,7 +49,7 @@ function update(change: Partial<PlayerSettings>) {
 }
 
 function setInstant(isOn: boolean) {
-  update({ textSpeed: isOn ? 0 : DEFAULT_PLAYER_SETTINGS.textSpeed })
+  update({ textSpeed: isOn ? 0 : DEFAULT_CHOICES.textSpeed })
 }
 
 function listen(action: PlayerAction) {
@@ -102,7 +102,7 @@ function remove(action: PlayerAction, input: InputBinding) {
 }
 
 function resetKeys() {
-  update({ bindings: DEFAULT_BINDINGS })
+  update({ bindings: defaultBindings() })
   notice.value = text.value.defaultKeysBack
 }
 
@@ -223,6 +223,11 @@ useDialogFocus(() => categoryArea.value)
         <input type="checkbox" :checked="settings.captions" @change="update({ captions: ($event.target as HTMLInputElement).checked })">
         {{ text.captions }}
       </label>
+      <label class="check">
+        <input type="checkbox" :checked="settings.showKeys" @change="update({ showKeys: ($event.target as HTMLInputElement).checked })">
+        {{ text.showKeys }}
+      </label>
+      <p v-if="settings.showKeys && !knowsKeyboardLayout()" class="setting-value hint">{{ text.keyPositions }}</p>
       <div class="setting">
         <span class="setting-name">{{ text.namePlate }}</span>
         <div class="choices" role="radiogroup" :aria-label="text.namePlate">
@@ -274,7 +279,7 @@ useDialogFocus(() => categoryArea.value)
     </section>
 
     <section v-else ref="categoryArea" class="category keys panel-focus" tabindex="0" :aria-label="text.keys">
-      <div v-for="action in actions" :key="action" class="key-row" :class="{ listening: listeningFor === action }">
+      <div v-for="action in PLAYER_ACTIONS" :key="action" class="key-row" :class="{ listening: listeningFor === action }">
         <span class="setting-name">{{ actionLabel(action) }}</span>
         <span class="inputs">
           <span v-for="input in settings.bindings[action]" :key="JSON.stringify(input)" class="input">
@@ -289,7 +294,7 @@ useDialogFocus(() => categoryArea.value)
       <p class="setting-value touch-help">{{ text.touchHelp }}</p>
       <button class="wide-button" @click="resetKeys">{{ text.defaultKeys }}</button>
     </section>
-    <p class="notice" role="status">{{ notice ?? (category === 'controls' ? text.keyPositions : '') }}</p>
+    <p class="notice" role="status">{{ notice ?? (category === 'controls' && !knowsKeyboardLayout() ? text.keyPositions : '') }}</p>
   </div>
 </template>
 

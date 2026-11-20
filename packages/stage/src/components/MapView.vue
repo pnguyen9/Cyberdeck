@@ -3,7 +3,7 @@ import { isStageLocked, journalOf, layOutProgressMap, stateFromSave, type MapNod
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useLocale, useMessages } from '../i18n/locale'
 import { mapMessages } from '../i18n/mapMessages'
-import { describeInput } from '../input/bindings'
+import { describeInput, isPlainKeyPress, type InputBinding } from '../input/bindings'
 import { useSystemLessMotion } from '../settings/lessMotion'
 import { useDialogFocus } from '../useDialogFocus'
 import { useScrollEdges } from '../useScrollEdges'
@@ -13,7 +13,8 @@ import { useScrollEdges } from '../useScrollEdges'
  * `everyPath`: the map explored from the story for its author rather than the paths played, whole or
  * in part; its points tell all their values. `switchLabel`: a button to show the other map.
  */
-const props = defineProps<{ story: PlayableStory; progress: ProgressData; closeLabel: string; ignoresLocks?: boolean; everyPath?: { isWhole: boolean } | null; switchLabel?: string }>()
+/** `closeInputs`: the player's inputs for the map, which close it as they open it. */
+const props = defineProps<{ story: PlayableStory; progress: ProgressData; closeLabel: string; ignoresLocks?: boolean; everyPath?: { isWhole: boolean } | null; switchLabel?: string; closeInputs?: readonly InputBinding[] }>()
 const emit = defineEmits<{ play: [save: SaveData]; close: []; switch: [] }>()
 const text = useMessages(mapMessages)
 /** What a point held of what the journal shows players, as it was then: shown on hovering its card, or with its button. */
@@ -371,9 +372,11 @@ watch(() => map.value.nodes.length > 0, isDrawn => {
   }
 })
 
-/** Escape closes the map from anywhere on it: a header button, its background, an empty map. A card's buttons keep theirs. */
+/** Escape, or the player's key for the map, closes the map from anywhere on it: a header button, its background, an empty map. A card's buttons keep theirs. */
 function onScreenKeydown(event: KeyboardEvent) {
-  if (event.code === 'Escape' && !event.defaultPrevented) {
+  const isMapKey = !event.repeat && isPlainKeyPress(event)
+    && (props.closeInputs ?? []).some(input => input.type === 'key' && input.code === event.code)
+  if ((event.code === 'Escape' || isMapKey) && !event.defaultPrevented) {
     event.preventDefault()
     emit('close')
   }

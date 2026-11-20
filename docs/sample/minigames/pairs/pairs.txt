@@ -15,11 +15,11 @@
 [shown: Turns, Found, Best]
 
 # Pairs
+[game mode]
 [bg: meadow]
 Sixteen tiles, eight pairs of animals. Turn two tiles at a time: a pair stays face up, two different animals turn back over at your next pick.
 Find every pair in as few turns as you can. The journal (J) keeps your best.
 [shuffle: Deck]
-[game mode]
 [loop]
 [choice: Cell grid 4 × 4 from Shown with tile]
 [if: Wrong is 1]

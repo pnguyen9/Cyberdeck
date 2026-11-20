@@ -12,6 +12,7 @@
 [shown: Hunger, Mood, Energy, Visits]
 
 # Pip
+[game mode]
 [bg: room]
 [music: stop]
 [add: Visits]
@@ -40,7 +41,6 @@ Pip hops to the edge of the basket to greet you.
 Pip tilts its head, as if you had never left.
 [end]
 [play: Bounds]
-[game mode]
 [loop]
 [if: Energy <= 2]
 [pip: asleep]

@@ -1,17 +1,22 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import {
   actionForKey,
   actionForMouseButton,
   actionForWheel,
   actionOf,
   DEFAULT_BINDINGS,
+  defaultBindings,
   describeInput,
+  firstKeyOf,
   marksTile,
   MOUSE_BUTTON,
   rebind,
 } from '../src/input/bindings'
+import { setKeyboardLayout } from '../src/input/keyboardLayout'
 
 describe('bindings', () => {
+  afterEach(() => setKeyboardLayout(null))
+
   it('maps the default keys, by physical position', () => {
     expect(actionForKey(DEFAULT_BINDINGS, 'Space')).toBe('advance')
     expect(actionForKey(DEFAULT_BINDINGS, 'ArrowLeft')).toBe('back')
@@ -82,5 +87,18 @@ describe('bindings', () => {
       'Entrée', 'Échap', 'Espace', 'Retour arrière', 'Page préc.', 'Entrée (pavé numérique)', '5 (pavé numérique)', '+ (pavé numérique)', 'L', '3',
       'Clic droit', 'Bouton Précédent de la souris', 'Bouton 8 de la souris', 'Molette vers le haut',
     ])
+  })
+  it('gives save, load and the map a key each', () => {
+    expect([actionForKey(DEFAULT_BINDINGS, 'KeyK'), actionForKey(DEFAULT_BINDINGS, 'KeyD'), actionForKey(DEFAULT_BINDINGS, 'KeyM')]).toEqual(['save', 'load', 'map'])
+    expect(firstKeyOf(DEFAULT_BINDINGS, 'back')).toEqual({ type: 'key', code: 'ArrowLeft' })
+    expect(firstKeyOf(DEFAULT_BINDINGS, 'advance')).toEqual({ type: 'key', code: 'Space' })
+  })
+
+  it('follows the letters printed on the player\'s keyboard, where the browser tells them', () => {
+    expect(defaultBindings()).toEqual(DEFAULT_BINDINGS)
+    setKeyboardLayout(new Map([['KeyQ', 'a'], ['KeyA', 'q'], ['Semicolon', 'm'], ['KeyM', ','], ['Digit1', '&']]))
+    const bindings = defaultBindings()
+    expect([actionForKey(bindings, 'KeyQ'), actionForKey(bindings, 'Semicolon'), actionForKey(bindings, 'KeyA'), actionForKey(bindings, 'KeyL')]).toEqual(['auto', 'map', null, 'log'])
+    expect(['KeyQ', 'KeyM', 'Digit1', 'Space'].map(code => describeInput({ type: 'key', code }))).toEqual(['A', ',', '&', 'Space'])
   })
 })

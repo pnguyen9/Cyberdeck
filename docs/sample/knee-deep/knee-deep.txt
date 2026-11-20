@@ -140,6 +140,7 @@
 [shown after an ending: Won at level 1, Deep Delve cleared, endings reached]
 
 # Knee-Deep
+[game mode]
 [bg: town]
 [music: town]
 [set: Savings = 0]
@@ -165,7 +166,6 @@
 [end]
 [play: Old glories]
 [set: Run = Playing]
-[game mode]
 [loop]
 [play: Town]
 [if: Where is Bakery]

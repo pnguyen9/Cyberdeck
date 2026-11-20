@@ -41,9 +41,9 @@
 [shown: Left, Cleared, Best beginner, Best intermediate, Best expert]
 
 # Minesweeper
+[game mode]
 [bg: field]
 Open every cell that hides no mine. A number tells how many mines touch that cell; the first cell you open never hides one. Right-click a cell, or press F on it, to flag a mine you have found.
-[game mode]
 [loop]
 [choice: Level]
 > Beginner: 9 × 9, 10 mines = Beginner

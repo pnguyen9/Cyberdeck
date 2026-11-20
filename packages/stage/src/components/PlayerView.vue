@@ -5,6 +5,8 @@ import {
   actionForMouseButton,
   actionForWheel,
   describeInput,
+  firstKeyOf,
+  isPlainKeyPress,
   MOUSE_BUTTON,
   type PlayerAction,
 } from '../input/bindings'
@@ -13,7 +15,7 @@ import { createTouchTracker } from '../input/touchTracker'
 import { useLocale, useMessages, type LanguageChoice } from '../i18n/locale'
 import { playerMessages } from '../i18n/playerMessages'
 import { storyLocale, storyMessages } from '../i18n/storyMessages'
-import { DEFAULT_PLAYER_SETTINGS, type PlayerSettings } from '../settings/playerSettings'
+import { defaultPlayerSettings, type PlayerSettings } from '../settings/playerSettings'
 import {
   createStageCatalog,
   emptyProgress,
@@ -104,7 +106,7 @@ const props = defineProps<{
 /** `newGame`: the end screen asks for the game again from its start, as the library's *New game* starts it. */
 const emit = defineEmits<{ leave: []; map: []; newGame: []; ownSettings: [isOwn: boolean] }>()
 /** The player's choices: text speed, volumes, inputs. The application keeps them. */
-const settings = defineModel<PlayerSettings>('settings', { default: () => DEFAULT_PLAYER_SETTINGS })
+const settings = defineModel<PlayerSettings>('settings', { default: defaultPlayerSettings })
 /** The application's language, which the Settings panel offers when the application gives it. */
 const languageChoice = defineModel<LanguageChoice>('languageChoice')
 
@@ -113,6 +115,11 @@ const text = useMessages(playerMessages)
 /** The end screen speaks the game's language, whoever plays it. */
 const storyText = computed(() => storyMessages[storyLocale(props.story.project)])
 const escapeKey = computed(() => describeInput({ type: 'key', code: 'Escape' }, locale.value))
+/** The key a menu's button shows beside its name, when the player asks for them (`showKeys`); empty for none. */
+function menuKey(action: PlayerAction): string {
+  const key = settings.value.showKeys ? firstKeyOf(settings.value.bindings, action) : undefined
+  return key === undefined ? '' : describeInput(key, locale.value)
+}
 
 /** While skipping, each page already read stays this long. */
 const SKIP_INTERVAL_MILLISECONDS = 70
@@ -176,6 +183,8 @@ const NOTICE_MILLISECONDS = 3500
 const visibleLength = ref(0)
 let typingTimer: ReturnType<typeof setTimeout> | undefined
 let lastClickTime = Number.NEGATIVE_INFINITY
+/** When the player mounted, on the clock of `Event.timeStamp`. */
+let mountedAt = Number.POSITIVE_INFINITY
 /** What this profile has seen of the game over every playthrough; loaded before the game starts. */
 const progress = shallowRef<ProgressData>(emptyProgress(props.story))
 /** The choice shown last, and the option picked there until we know where it leads. */
@@ -406,7 +415,6 @@ async function startNewGame() {
   }
 }
 
-/** The map, once a choice has been reached: before, it would have nothing to show. */
 /** The map, once a choice was reached; for an author testing the story, from the start, every path shown. */
 const isMapOffered = computed(() => props.canOpenMap === true && (progress.value.points.length > 0 || props.canInspect === true))
 /** The title of a chapter just started, over the stage before its text: each time one starts, if the game shows them. */
@@ -919,11 +927,26 @@ function autosave() {
     .catch(() => showNotice(text.value.autosaveFailed))
 }
 
+/** Set while the slots are read, so that a second press does not open the panel twice. */
+let isOpeningSlots = false
+
 async function openSlots(mode: 'save' | 'load') {
   if (isGameLocked.value) {
     showNotice(lockedNote.value ?? '')
     return
   }
+  if (isOpeningSlots) {
+    return
+  }
+  isOpeningSlots = true
+  try {
+    await readSlots(mode)
+  } finally {
+    isOpeningSlots = false
+  }
+}
+
+async function readSlots(mode: 'save' | 'load') {
   const gameId = props.story.project.id
   if (mode === 'save') {
     const now = new Date()
@@ -1200,6 +1223,10 @@ function choose(optionId: string) {
 }
 
 function perform(action: PlayerAction) {
+  // While the end screen asks about a new game, inputs wait for the answer.
+  if (isConfirmingNewGame.value) {
+    return
+  }
   if (action === 'auto') {
     toggleAuto()
     return
@@ -1242,6 +1269,18 @@ function perform(action: PlayerAction) {
         openPanel.value = 'journal'
       }
       break
+    case 'save':
+    case 'load':
+      // A game at its end has nothing left to save; an earlier save can still be loaded.
+      if (action === 'load' || snapshot.value.step.type !== 'end') {
+        void openSlots(action)
+      }
+      break
+    case 'map':
+      if (isMapOffered.value) {
+        emit('map')
+      }
+      break
     case 'skip':
       toggleSkipping()
       break
@@ -1265,19 +1304,30 @@ function onKeydown(event: KeyboardEvent) {
   if (event.target instanceof HTMLInputElement && event.target.type === 'text' && event.code !== 'Escape') {
     return
   }
+  // A key that brought the player here (Enter on a card, the map's key closing the map) is not its own.
+  if (event.timeStamp < mountedAt || !isPlainKeyPress(event)) {
+    return
+  }
   const action = actionForKey(bindings.value, event.code)
   if (action === null) {
     return
   }
-  // Escape while the end screen asks about a new game answers the question, and leaves nothing.
-  if (action === 'leave' && isConfirmingNewGame.value) {
+  // A key held down repeats moving on and going back only: a panel or a mode held would flicker.
+  if (event.repeat && action !== 'advance' && action !== 'back') {
     event.preventDefault()
-    void cancelNewGame()
     return
   }
-  // A panel takes the keyboard: Escape (or the log key for the log) closes it, its buttons do the rest.
+  // While the end screen asks about a new game, Escape answers the question and other keys wait for it.
+  if (isConfirmingNewGame.value) {
+    if (action === 'leave') {
+      event.preventDefault()
+      void cancelNewGame()
+    }
+    return
+  }
+  // A panel takes the keyboard: Escape (or the key that opens it) closes it, its buttons do the rest.
   if (openPanel.value !== 'none') {
-    if (action === 'leave' || (action === 'log' && openPanel.value === 'log') || (action === 'journal' && openPanel.value === 'journal') || (action === 'settings' && openPanel.value === 'settings')) {
+    if (action === 'leave' || action === openPanel.value) {
       event.preventDefault()
       openPanel.value = 'none'
     }
@@ -1392,6 +1442,7 @@ watch(textBox, (current, previous) => {
 })
 
 onMounted(async () => {
+  mountedAt = performance.now()
   window.addEventListener('keydown', onKeydown)
   window.addEventListener('mousedown', onMouseDown)
   window.addEventListener('mouseup', onMouseUp)
@@ -1541,16 +1592,16 @@ onUnmounted(() => {
       </form>
       <!-- Kept while a panel is open, hidden, so that closing the panel gives the focus back to the button that opened it. -->
       <div v-if="isHudShown || openPanel !== 'none'" v-show="isHudShown" class="quick-menu" :class="{ low: fullScreenPages !== null }" :style="fullScreenPages === null ? { bottom: `${quickMenuBottom}px` } : undefined">
-        <button class="quick-button" :disabled="!canGoBackNow" @click.stop="fromMenu(goBack)">{{ text.back }}</button>
-        <button class="quick-button" @click.stop="fromMenu(openLog)">{{ text.log }}</button>
-        <button v-if="isJournalOffered" class="quick-button" @click.stop="fromMenu(() => { openPanel = 'journal' })">{{ text.journal }}</button>
-        <button class="quick-button" :disabled="isGameLocked" @click.stop="fromMenu(() => openSlots('save'))">{{ text.save }}</button>
-        <button class="quick-button" :disabled="isGameLocked" @click.stop="fromMenu(() => openSlots('load'))">{{ text.load }}</button>
+        <button class="quick-button" :disabled="!canGoBackNow" @click.stop="fromMenu(goBack)">{{ text.back }}<kbd v-if="menuKey('back')" aria-hidden="true">{{ menuKey('back') }}</kbd></button>
+        <button class="quick-button" @click.stop="fromMenu(openLog)">{{ text.log }}<kbd v-if="menuKey('log')" aria-hidden="true">{{ menuKey('log') }}</kbd></button>
+        <button v-if="isJournalOffered" class="quick-button" @click.stop="fromMenu(() => { openPanel = 'journal' })">{{ text.journal }}<kbd v-if="menuKey('journal')" aria-hidden="true">{{ menuKey('journal') }}</kbd></button>
+        <button class="quick-button" :disabled="isGameLocked" @click.stop="fromMenu(() => openSlots('save'))">{{ text.save }}<kbd v-if="menuKey('save')" aria-hidden="true">{{ menuKey('save') }}</kbd></button>
+        <button class="quick-button" :disabled="isGameLocked" @click.stop="fromMenu(() => openSlots('load'))">{{ text.load }}<kbd v-if="menuKey('load')" aria-hidden="true">{{ menuKey('load') }}</kbd></button>
         <button v-if="canInspect" class="quick-button" :class="{ active: isStateShown }" :aria-pressed="isStateShown" @click.stop="fromMenu(() => { isStateShown = !isStateShown })">{{ text.state }}</button>
-        <button class="quick-button auto-button" :class="{ active: isAuto }" :aria-pressed="isAuto" @click.stop="toggleAuto">{{ text.auto }}</button>
-        <button class="quick-button" :class="{ active: isSkipping }" :aria-pressed="isSkipping" @click.stop="fromMenu(toggleSkipping)">{{ text.skip }}</button>
-        <button v-if="isMapOffered" class="quick-button" @click.stop="fromMenu(() => emit('map'))">{{ text.map }}</button>
-        <button class="quick-button" @click.stop="fromMenu(() => { openPanel = 'settings' })">{{ text.settings }}</button>
+        <button class="quick-button auto-button" :class="{ active: isAuto }" :aria-pressed="isAuto" @click.stop="toggleAuto">{{ text.auto }}<kbd v-if="menuKey('auto')" aria-hidden="true">{{ menuKey('auto') }}</kbd></button>
+        <button class="quick-button" :class="{ active: isSkipping }" :aria-pressed="isSkipping" @click.stop="fromMenu(toggleSkipping)">{{ text.skip }}<kbd v-if="menuKey('skip')" aria-hidden="true">{{ menuKey('skip') }}</kbd></button>
+        <button v-if="isMapOffered" class="quick-button" @click.stop="fromMenu(() => emit('map'))">{{ text.map }}<kbd v-if="menuKey('map')" aria-hidden="true">{{ menuKey('map') }}</kbd></button>
+        <button class="quick-button" @click.stop="fromMenu(() => { openPanel = 'settings' })">{{ text.settings }}<kbd v-if="menuKey('settings')" aria-hidden="true">{{ menuKey('settings') }}</kbd></button>
       </div>
       <!-- Kept under the other panels: it takes the focus when the State button opens it, never as one of them closes. -->
       <StatePanel
@@ -1677,6 +1728,9 @@ onUnmounted(() => {
   right: 200px;
   bottom: 310px;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 1720px;
   gap: 16px;
 }
 
@@ -1969,7 +2023,12 @@ onUnmounted(() => {
 
 kbd {
   margin-left: 6px;
+  padding: 0 0.35em;
+  border: 1px solid currentColor;
+  border-radius: 4px;
   font: inherit;
+  font-size: 0.75em;
+  vertical-align: 0.1em;
   opacity: 0.7;
 }
 </style>

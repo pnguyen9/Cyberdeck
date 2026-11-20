@@ -1,5 +1,6 @@
 // The player's settings, in Cyberdeck's preview, a category at a time: pages shown at once, a key given to another action,
-// the music volume, the text hidden with the right button, and all of it kept for the next preview.
+// the music volume, the text hidden with the right button, and all of it kept for the next preview;
+// the menu's buttons showing their keys, and the keys of Save, Load and the map, Ctrl left to the browser.
 import { createProjectWithSample, pause, shownStep, visibleText } from './harness.mjs'
 
 export default async function check(page, { url }) {
@@ -69,4 +70,38 @@ export default async function check(page, { url }) {
     await page.evaluate(`[...document.querySelectorAll('.overlay .key-row')].find(row => row.textContent.includes('Next')).querySelector('.inputs').textContent.includes('N')`),
   ], ['instant', true])
   await page.screenshot('settings-controls')
+
+  await page.evaluate(`[...document.querySelectorAll('.overlay .category-button')].find(button => button.textContent.trim() === 'Accessibility').click()`)
+  await pause(100)
+  await page.evaluate(`[...document.querySelectorAll('.overlay .check')].find(label => label.textContent.includes('Show the keys')).querySelector('input').click()`)
+  await page.press('Escape')
+  await pause(200)
+  // Log lost its keys above; State, Cyberdeck's own, has none.
+  page.check('each button of the menu shows its first key', await page.evaluate(`[...document.querySelectorAll('.viewport .quick-button')].map(button => button.querySelector('kbd')?.textContent ?? '')`), ['←', '', 'K', 'D', '', 'A', 'S', 'M', 'O'])
+  page.check('the menu stays within the stage', await page.evaluate(`(() => {
+    const stage = document.querySelector('.viewport .screen').getBoundingClientRect()
+    const menu = document.querySelector('.viewport .quick-menu').getBoundingClientRect()
+    return menu.left >= stage.left && menu.right <= stage.right
+  })()`), true)
+  await page.screenshot('menu-keys')
+  await page.press('k', { ctrl: true })
+  await pause(200)
+  page.check('Ctrl+K stays the browser\'s', await page.evaluate(`document.querySelector('.overlay') === null`), true)
+  await page.press('k')
+  await pause(200)
+  page.check('K opens the save panel', await page.evaluate(`document.querySelector('.overlay')?.getAttribute('aria-label')`), 'Save')
+  await page.press('k')
+  await pause(200)
+  page.check('and K closes it', await page.evaluate(`document.querySelector('.overlay') === null`), true)
+  await page.press('d')
+  await pause(200)
+  page.check('D opens the load panel', await page.evaluate(`document.querySelector('.overlay')?.getAttribute('aria-label')`), 'Load')
+  await page.press('Escape')
+  await pause(200)
+  await page.press('m')
+  await pause(800)
+  page.check('M opens the map', await page.evaluate(`document.querySelector('.map-screen') !== null`), true)
+  await page.press('m')
+  await pause(400)
+  page.check('M closes the map', await page.evaluate(`document.querySelector('.map-screen') === null`), true)
 }

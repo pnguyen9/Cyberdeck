@@ -17,10 +17,10 @@
 [shown: Wins, Losses, Draws, Total wins, Total losses, Total draws]
 
 # Rock, paper, scissors
+[game mode]
 [ask: Player = You]
 Rock beats scissors, scissors beat paper, paper beats rock. The computer is ready when you are.
 Press J at any time to open the journal: this game's score, and the score of every game played.
-[game mode]
 [loop]
 [choice: Hand]
 > Rock = Rock

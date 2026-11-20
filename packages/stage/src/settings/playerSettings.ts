@@ -1,4 +1,4 @@
-import { DEFAULT_BINDINGS, type Bindings, type InputBinding, type PlayerAction } from '../input/bindings'
+import { actionOf, DEFAULT_BINDINGS, defaultBindings, isSameInput, PLAYER_ACTIONS, type Bindings, type InputBinding, type PlayerAction } from '../input/bindings'
 
 /** What a player chooses about how every game plays. */
 export interface PlayerSettings {
@@ -33,6 +33,13 @@ export interface PlayerSettings {
    * soft glow.
    */
   motion: MotionChoice
+  /** Each button of the menu shows its action's first key beside its name. */
+  showKeys: boolean
+  /**
+   * The keys are on the player's keyboard. Settings written before keys followed the keyboard lack
+   * it: their actions on the US defaults are moved to the keys printing the same letters.
+   */
+  keysOnLayout: true
   bindings: Bindings
 }
 
@@ -51,7 +58,13 @@ export const AUTO_SPEED_RANGE = { slowest: 6, fastest: 40 } as const
 export const TEXT_SCALES = [1, 1.25, 1.5] as const
 export type TextScale = (typeof TEXT_SCALES)[number]
 
-export const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
+/** The default settings, with the default keys of the player's keyboard (`readKeyboardLayout`). */
+export function defaultPlayerSettings(): PlayerSettings {
+  return { ...DEFAULT_CHOICES, bindings: defaultBindings() }
+}
+
+/** The default settings but the keys, which depend on the player's keyboard. */
+export const DEFAULT_CHOICES: Readonly<Omit<PlayerSettings, 'bindings'>> = {
   textSpeed: 45,
   musicVolume: 0.6,
   soundVolume: 0.8,
@@ -66,39 +79,54 @@ export const DEFAULT_PLAYER_SETTINGS: PlayerSettings = {
   namePlateMotion: 'slide',
   namePlatePlace: 'left',
   motion: 'system',
-  bindings: DEFAULT_BINDINGS,
+  showKeys: false,
+  keysOnLayout: true,
 }
 
 /**
  * Settings read back from storage: what is missing or damaged takes its default, and an action
- * newer than the settings gets its default inputs.
+ * newer than the settings gets its default inputs, but for those another action holds. In settings
+ * from before `keysOnLayout`, an action on the US keyboard's defaults gets those of the player's.
  */
 export function parsePlayerSettings(value: unknown): PlayerSettings {
   const fields = isRecord(value) ? value : {}
-  const savedBindings = isRecord(fields.bindings) ? fields.bindings : {}
-  const actions = Object.keys(DEFAULT_BINDINGS) as PlayerAction[]
+  const defaults = defaultPlayerSettings()
   return {
     textSpeed: fields.textSpeed === 0 || (isNumber(fields.textSpeed) && fields.textSpeed >= TEXT_SPEED_RANGE.slowest && fields.textSpeed <= TEXT_SPEED_RANGE.fastest)
       ? fields.textSpeed
-      : DEFAULT_PLAYER_SETTINGS.textSpeed,
-    musicVolume: isVolume(fields.musicVolume) ? fields.musicVolume : DEFAULT_PLAYER_SETTINGS.musicVolume,
-    soundVolume: isVolume(fields.soundVolume) ? fields.soundVolume : DEFAULT_PLAYER_SETTINGS.soundVolume,
-    voiceVolume: isVolume(fields.voiceVolume) ? fields.voiceVolume : DEFAULT_PLAYER_SETTINGS.voiceVolume,
-    autoSpeed: isNumber(fields.autoSpeed) && fields.autoSpeed >= AUTO_SPEED_RANGE.slowest && fields.autoSpeed <= AUTO_SPEED_RANGE.fastest ? fields.autoSpeed : DEFAULT_PLAYER_SETTINGS.autoSpeed,
-    textScale: (TEXT_SCALES as readonly unknown[]).includes(fields.textScale) ? fields.textScale as TextScale : DEFAULT_PLAYER_SETTINGS.textScale,
+      : defaults.textSpeed,
+    musicVolume: isVolume(fields.musicVolume) ? fields.musicVolume : defaults.musicVolume,
+    soundVolume: isVolume(fields.soundVolume) ? fields.soundVolume : defaults.soundVolume,
+    voiceVolume: isVolume(fields.voiceVolume) ? fields.voiceVolume : defaults.voiceVolume,
+    autoSpeed: isNumber(fields.autoSpeed) && fields.autoSpeed >= AUTO_SPEED_RANGE.slowest && fields.autoSpeed <= AUTO_SPEED_RANGE.fastest ? fields.autoSpeed : defaults.autoSpeed,
+    textScale: (TEXT_SCALES as readonly unknown[]).includes(fields.textScale) ? fields.textScale as TextScale : defaults.textScale,
     readableFont: fields.readableFont === true,
     strongContrast: fields.strongContrast === true,
     readAloud: fields.readAloud === true,
     untimedChoices: fields.untimedChoices === true,
     captions: fields.captions === true,
-    namePlateMotion: (NAME_PLATE_MOTIONS as readonly unknown[]).includes(fields.namePlateMotion) ? fields.namePlateMotion as NamePlateMotion : DEFAULT_PLAYER_SETTINGS.namePlateMotion,
-    namePlatePlace: (NAME_PLATE_PLACES as readonly unknown[]).includes(fields.namePlatePlace) ? fields.namePlatePlace as NamePlatePlace : DEFAULT_PLAYER_SETTINGS.namePlatePlace,
-    motion: (MOTION_CHOICES as readonly unknown[]).includes(fields.motion) ? fields.motion as MotionChoice : DEFAULT_PLAYER_SETTINGS.motion,
-    bindings: Object.fromEntries(actions.map(action => {
-      const saved = savedBindings[action]
-      return [action, Array.isArray(saved) ? saved.filter(isInputBinding) : DEFAULT_BINDINGS[action]]
-    })) as Bindings,
+    namePlateMotion: (NAME_PLATE_MOTIONS as readonly unknown[]).includes(fields.namePlateMotion) ? fields.namePlateMotion as NamePlateMotion : defaults.namePlateMotion,
+    namePlatePlace: (NAME_PLATE_PLACES as readonly unknown[]).includes(fields.namePlatePlace) ? fields.namePlatePlace as NamePlatePlace : defaults.namePlatePlace,
+    motion: (MOTION_CHOICES as readonly unknown[]).includes(fields.motion) ? fields.motion as MotionChoice : defaults.motion,
+    showKeys: fields.showKeys === true,
+    keysOnLayout: true,
+    bindings: parseBindings(isRecord(fields.bindings) ? fields.bindings : {}, fields.keysOnLayout !== true, defaults.bindings),
   }
+}
+
+function parseBindings(saved: Record<string, unknown>, isOnUsKeys: boolean, defaults: Bindings): Bindings {
+  const chosen = new Map<PlayerAction, InputBinding[]>()
+  for (const action of PLAYER_ACTIONS) {
+    const inputs = Array.isArray(saved[action]) ? saved[action].filter(isInputBinding) : null
+    if (inputs !== null && !(isOnUsKeys && isSameInput(inputs, DEFAULT_BINDINGS[action]))) {
+      chosen.set(action, inputs)
+    }
+  }
+  const chosenBindings = Object.fromEntries(PLAYER_ACTIONS.map(action => [action, chosen.get(action) ?? []])) as Record<PlayerAction, InputBinding[]>
+  return Object.fromEntries(PLAYER_ACTIONS.map(action => [
+    action,
+    chosen.get(action) ?? defaults[action].filter(input => actionOf(chosenBindings, input, action) === null),
+  ])) as Record<PlayerAction, InputBinding[]>
 }
 
 /** Settings kept in a `Storage` (`localStorage`) under one key; unreadable or unwritable storage keeps the defaults. */
@@ -108,7 +136,7 @@ export function createStorageSettingsStore(storage: () => Storage, key: string) 
       try {
         return parsePlayerSettings(JSON.parse(storage().getItem(key) ?? 'null'))
       } catch {
-        return DEFAULT_PLAYER_SETTINGS
+        return defaultPlayerSettings()
       }
     },
     write(settings: PlayerSettings): boolean {

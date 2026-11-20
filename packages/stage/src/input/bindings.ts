@@ -1,8 +1,9 @@
 import type { Locale } from '../i18n/locale'
 import { inputMessages } from '../i18n/inputMessages'
+import { codePrinting, printedOn } from './keyboardLayout'
 
 /** What the player can do with an input. */
-export type PlayerAction = 'advance' | 'back' | 'log' | 'journal' | 'skip' | 'auto' | 'hideText' | 'settings' | 'fullscreen' | 'leave' | 'markTile'
+export type PlayerAction = 'advance' | 'back' | 'log' | 'journal' | 'save' | 'load' | 'skip' | 'auto' | 'map' | 'hideText' | 'settings' | 'fullscreen' | 'leave' | 'markTile'
 
 /**
  * Actions of a grid that marks, `marking Flag`, done on its tiles alone: their inputs may be the
@@ -25,6 +26,10 @@ export type Bindings = Readonly<Record<PlayerAction, readonly InputBinding[]>>
 /** `MouseEvent.button` values. */
 export const MOUSE_BUTTON = { main: 0, middle: 1, secondary: 2, back: 3, forward: 4 } as const
 
+/**
+ * The default inputs, letters at their place on a US keyboard: `defaultBindings` moves them to the
+ * keys printing the same letters on the player's keyboard.
+ */
 export const DEFAULT_BINDINGS: Bindings = {
   advance: [
     { type: 'key', code: 'Space' },
@@ -45,14 +50,23 @@ export const DEFAULT_BINDINGS: Bindings = {
   log: [
     { type: 'key', code: 'KeyL' },
   ],
-  skip: [
-    { type: 'key', code: 'KeyS' },
+  journal: [
+    { type: 'key', code: 'KeyJ' },
+  ],
+  save: [
+    { type: 'key', code: 'KeyK' },
+  ],
+  load: [
+    { type: 'key', code: 'KeyD' },
   ],
   auto: [
     { type: 'key', code: 'KeyA' },
   ],
-  journal: [
-    { type: 'key', code: 'KeyJ' },
+  skip: [
+    { type: 'key', code: 'KeyS' },
+  ],
+  map: [
+    { type: 'key', code: 'KeyM' },
   ],
   hideText: [
     { type: 'key', code: 'KeyH' },
@@ -71,6 +85,23 @@ export const DEFAULT_BINDINGS: Bindings = {
     { type: 'key', code: 'KeyF' },
     { type: 'mouseButton', button: MOUSE_BUTTON.secondary },
   ],
+}
+
+export const PLAYER_ACTIONS = Object.keys(DEFAULT_BINDINGS) as PlayerAction[]
+
+/** The default inputs on the player's keyboard: Auto mode on the key printing A, whatever its place. */
+export function defaultBindings(): Bindings {
+  const onPlayersKeyboard = (binding: InputBinding): InputBinding => {
+    const letter = binding.type === 'key' ? /^Key([A-Z])$/.exec(binding.code)?.[1] : undefined
+    const code = letter === undefined ? undefined : codePrinting(letter.toLowerCase())
+    return code === undefined ? binding : { type: 'key', code }
+  }
+  return Object.fromEntries(PLAYER_ACTIONS.map(action => [action, DEFAULT_BINDINGS[action].map(onPlayersKeyboard)])) as Record<PlayerAction, InputBinding[]>
+}
+
+/** The first key of an action, as its button shows it, if it has one. */
+export function firstKeyOf(bindings: Bindings, action: PlayerAction): InputBinding | undefined {
+  return bindings[action].find(binding => binding.type === 'key')
 }
 
 /** The everyday action an input does, or with `onGrid`, the grid's action. */
@@ -101,8 +132,17 @@ export function actionForWheel(bindings: Bindings, deltaY: number): PlayerAction
   return findAction(bindings, binding => binding.type === 'wheel' && binding.direction === direction)
 }
 
-function isSameInput(first: InputBinding, second: InputBinding): boolean {
+/** Whether two inputs, or two lists of inputs, are the same. */
+export function isSameInput<Input extends InputBinding | readonly InputBinding[]>(first: Input, second: Input): boolean {
   return JSON.stringify(first) === JSON.stringify(second)
+}
+
+/**
+ * Whether a key press may be a binding's: bindings hold single keys, so with Ctrl, Alt or ⌘ held the
+ * key is the browser's or the system's shortcut. The modifier keys themselves may be bound.
+ */
+export function isPlainKeyPress(event: KeyboardEvent): boolean {
+  return !(event.ctrlKey || event.altKey || event.metaKey) || /^(Control|Alt|Meta|Shift|OS)/.test(event.code)
 }
 
 /**
@@ -131,8 +171,8 @@ export function actionOf(bindings: Bindings, input: InputBinding, action: Player
 const MOUSE_BUTTON_NAMES = Object.fromEntries(Object.entries(MOUSE_BUTTON).map(([name, button]) => [button, name])) as Readonly<Record<number, keyof typeof MOUSE_BUTTON>>
 
 /**
- * An input as players call it, in their language. Keys are named after the US layout, which `code`
- * follows: on another layout the key is the one at that place.
+ * An input as players call it, in their language. A key is named by what it prints on the player's
+ * keyboard where the browser tells it, else after the US layout, which `code` follows.
  */
 export function describeInput(input: InputBinding, locale: Locale = 'en'): string {
   const names = inputMessages[locale]
@@ -140,6 +180,7 @@ export function describeInput(input: InputBinding, locale: Locale = 'en'): strin
     case 'key': {
       const keypadKey = /^Numpad(.+)$/.exec(input.code)
       return names.keys[input.code]
+        ?? printedOn(input.code)?.replace(/^[a-z]$/, letter => letter.toUpperCase())
         ?? (keypadKey === null ? input.code.replace(/^(Key|Digit)/, '') : names.keypadKey(names.keypadSymbols[keypadKey[1]!] ?? keypadKey[1]!))
     }
     case 'mouseButton': {

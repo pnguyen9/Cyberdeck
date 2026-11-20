@@ -193,6 +193,8 @@ a new notion gets its word here before it gets code.
 | Gallery | The illustrations a profile has seen. | |
 | Skip, Auto | Passing text already read; moving on by itself. | |
 | Settings | The profile's, or a game's own once chosen for it. | `PlayerSettings` |
+| Menu | The row of buttons over the text box while a story plays: Back, Log, Journal, Save, Load, Auto, Skip, Map, Settings. | `PlayerView` |
+| Keyboard layout | What the player's keyboard prints on each key, where the browser tells it: default letters and key names follow it. | `KeyboardLayout` |
 | Tap, long press, swipe | What a finger does on a touch screen: a left click, a right click, going back (to the right) or moving on (to the left). | `TouchGesture` |
 | Landscape request | On a phone or a tablet, the request to turn the device sideways, or the offer of full screen. | `LandscapeAsk` |
 
@@ -1072,6 +1074,8 @@ keep as files (in Datajack, the profile, exported to a file). A new version onli
 | Go back one step (a choice can be picked again) | ←, Backspace, Page Up, mouse back button, wheel up, the ◀ Back button |
 | Log of past pages and choices (click a line to go back to it) | L, the Log button |
 | Journal: what the author shows of what the player holds, and the endings reached | J, the Journal button (when the story shows anything) |
+| Save, Load | K, D, the Save and Load buttons |
+| Map of the paths taken, where the application offers it | M, the Map button |
 | Skip text already read | S, the Skip button |
 | Auto mode: move on by itself, until any other input | A, the Auto ▶ button |
 | Hide the text and the menu, to look at the picture (any input shows them again) | H, right click |
@@ -1116,16 +1120,24 @@ choices that wait for the player, the captions of videos that have them, and the
 box: sliding to the character speaking (the default), jumping there, or staying put at the left,
 middle or right, for players whom the moving name distracts, and *Motion*: as the system asks (the
 default), less or all of it; with less, animated pictures stand still, pictures change without
-turning, the stage does not shake and flashes are soft. Screen readers (NVDA,
+turning, the stage does not shake and flashes are soft; and the keys written on the menu's buttons,
+for players who play from the keyboard. Screen readers (NVDA,
 JAWS, VoiceOver, Orca) read the game as they read any page: each page is announced whole as it
 appears, never letter by letter as it is typed, and choices, the name asked for and every menu are
 buttons and fields they reach. With one, reading aloud is best left off, or the text is heard
 twice. **Controls** sets the inputs of every action: *Add a key* then
 press a key or a mouse button, which leaves the action that had it; × removes one; *Default keys*
 restores them.
-Keys are bound by their place on the keyboard (`KeyboardEvent.code`), so a binding means the same
-key on AZERTY and QWERTY; they are named as on a US keyboard, so on another layout a name may
-differ from the letter printed on the key. Datajack keeps the settings per
+Keys are bound by their place on the keyboard (`KeyboardEvent.code`). The default letters, and the
+names of keys, follow the letters printed on the player's keyboard where the browser tells its
+layout (Chromium and the desktop applications: on AZERTY, Auto mode is the key printed A); an
+action still on the US defaults of an earlier version moves to those of the player's keyboard.
+Firefox and Safari do not tell the layout: there, keys are placed and named as on a US keyboard,
+and on another layout a name may differ from the letter printed on the key. *Show the keys on the
+menu's buttons*, in **Accessibility**, writes each button's first key beside its name. Keys act
+alone: with Ctrl, Alt or ⌘ held they stay the browser's shortcuts, and a key held down repeats only
+moving on and going back. A default key another action already holds, the player's own choice, is
+left to it. Datajack keeps the settings per
 profile; Cyberdeck keeps the author's for its previews.
 
 **Appearance**, in the library's header, sets the look of Datajack's own screens (profiles, library,

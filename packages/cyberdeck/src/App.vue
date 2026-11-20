@@ -144,6 +144,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :progress="previewMap.everyPath?.progress ?? previewMap.progress"
       :close-label="text.previewLabel"
       :every-path="previewMap.everyPath"
+      :close-inputs="previewSettings.bindings.map"
       :switch-label="isExploring ? text.exploring : previewMap.everyPath === null ? text.showEveryPath : text.showPlayed"
       ignores-locks
       @switch="switchPreviewMap"

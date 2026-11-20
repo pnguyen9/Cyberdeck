@@ -3,7 +3,7 @@ import { emptyProgress, type PlayableStory, type ProgressData, type SaveData } f
 import {
   AUTOSAVE_SLOT,
   createStorageSettingsStore,
-  DEFAULT_PLAYER_SETTINGS,
+  defaultPlayerSettings,
   LESS_MOTION,
   localeOfChoice,
   MapView,
@@ -76,9 +76,9 @@ const isLoading = ref(true)
 const saveStore = computed(() => profile.value === null ? null : profileStore.saveStore(profile.value.id))
 /** Each profile has its own settings, kept in the browser (Electron's page too). */
 const settingsStore = computed(() => profile.value === null ? null : createStorageSettingsStore(() => window.localStorage, settingsKey(profile.value.id)))
-const settings = shallowRef<PlayerSettings>(DEFAULT_PLAYER_SETTINGS)
+const settings = shallowRef<PlayerSettings>(defaultPlayerSettings())
 watch(settingsStore, store => {
-  settings.value = store?.read() ?? DEFAULT_PLAYER_SETTINGS
+  settings.value = store?.read() ?? defaultPlayerSettings()
 }, { immediate: true })
 watch(settings, value => settingsStore.value?.write(value))
 
@@ -225,6 +225,7 @@ onMounted(async () => {
       :story="mapShown.story"
       :progress="mapShown.progress"
       :close-label="mapShown.returnTo === 'game' ? text.game : text.library"
+      :close-inputs="gameSettings.bindings.map"
       @play="playFrom"
       @close="closeMap"
     />

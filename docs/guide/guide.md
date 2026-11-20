@@ -161,6 +161,8 @@ Capitals, spaces, hyphens and underscores don't matter. Dropping a new file repl
 | Read what came before | <kbd>L</kbd> (the log) |
 | Hide the text to see the picture | <kbd>H</kbd> or a right click |
 | Skip what you have already read | <kbd>S</kbd> |
+| Save, load | <kbd>K</kbd>, <kbd>D</kbd> |
+| See the map of the paths taken | <kbd>M</kbd> |
 | Settings: text speed, volumes, keys | <kbd>O</kbd> |
 
 In **Accessibility**, *Motion* follows the system's wish for less motion unless the player chooses: with less, animated pictures stand still, pictures change without turning, the name plate jumps, `[shake]` does nothing and `[flash]` is a soft glow.
@@ -571,11 +573,11 @@ From the keyboard, <kbd>Tab</kbd> goes from box to box, bringing each into view,
 
 ## 23. What your players see
 
-Players have their own **Settings**, in three categories. **General**: text speed, volumes (music and videos, sounds, voices), the speed of auto mode, full screen. **Accessibility**: larger text, a plainer font, a stronger contrast, pages read aloud, choices that wait for them, captions on videos, and a name over the text box that slides to who speaks, jumps there, or stays put. Players with a screen reader hear each page whole as it appears. **Controls**: their own keys. They open them in a game, or from their library, before playing; a game can have its own, from its card, a slower text for one, a louder music for another. You have nothing to do for any of it: it works in every game. Datajack's own screens, the profiles, the library and the gallery, wear the look the player chooses with **Appearance**, as in Cyberdeck; your game keeps yours. Each profile has its own Appearance and language, so a child can have Playground and a parent another; the profiles screen shows those of the profile played last.
+Players have their own **Settings**, in three categories. **General**: text speed, volumes (music and videos, sounds, voices), the speed of auto mode, full screen. **Accessibility**: larger text, a plainer font, a stronger contrast, pages read aloud, choices that wait for them, captions on videos, a name over the text box that slides to who speaks, jumps there, or stays put, and the keys written on the menu's buttons. Keys follow the letters printed on the player's keyboard, AZERTY included. Players with a screen reader hear each page whole as it appears. **Controls**: their own keys. They open them in a game, or from their library, before playing; a game can have its own, from its card, a slower text for one, a louder music for another. You have nothing to do for any of it: it works in every game. Datajack's own screens, the profiles, the library and the gallery, wear the look the player chooses with **Appearance**, as in Cyberdeck; your game keeps yours. Each profile has its own Appearance and language, so a child can have Playground and a parent another; the profiles screen shows those of the profile played last.
 
 ![The Settings screen, General: text speed, the volumes of music, sounds and voices, full screen.](images/settings.png)
 
-![The Settings screen, Accessibility: text size at 100, 125 or 150 %, a plainer font, stronger contrast, reading aloud, choices that wait, and where the name over the text box goes.](images/accessibility.png)
+![The Settings screen, Accessibility: text size at 100, 125 or 150 %, a plainer font, stronger contrast, reading aloud, choices that wait, captions, the keys on the menu's buttons, and where the name over the text box goes.](images/accessibility.png)
 
 The **Log** shows what they read and picked. Clicking a line goes back to it. The **Journal** (<kbd>J</kbd>) shows what you chose to let them see (see section 10). A game in several languages asks which one, on its card in the library: **Play in**.
 

@@ -1,5 +1,30 @@
 # Changelog
 
+## 3.9.0 — 2026-11-20
+
+### Both applications
+- Save, Load and the map have keys: K, D and M, each closing what it opens, as L, J and O do. A
+  new Accessibility setting, *Show the keys on the menu's buttons*, writes each button's first key
+  beside its name.
+- Keys follow the player's keyboard layout where the browser tells it (Chromium and the desktop
+  applications): the default letters move to the keys printing them (on AZERTY, Auto mode is the
+  key printed A) and keys are named as printed. Actions still on the US defaults of an earlier
+  version move to the player's keyboard once; keys the player chose stay where they are, and a
+  new default key another action already holds is left to it. Elsewhere, Settings says that keys
+  are named as on a US keyboard.
+- Keys act alone: with Ctrl, Alt or ⌘ held, they stay the browser's or the system's shortcuts
+  (Ctrl+D bookmarks the page again). A key held down repeats only moving on and going back, so a
+  panel or a mode no longer flickers on and off.
+- The menu wraps onto a second row rather than leaving the stage when its buttons are long, in
+  French or with long key names. Controls lists the actions in the menu's order.
+- At the end of a game, Save does nothing (Load still works); while the end screen asks about a new
+  game, other keys wait for the answer.
+
+### Samples
+- The mini games and Knee-Deep are in game mode from their first page: their introductions cannot
+  be undone, saved or loaded, and their opening choices (Blackjack's rules and shoe, Knee-Deep's
+  mode) are no longer points on the map.
+
 ## 3.8.1 — 2026-11-20
 
 ### Samples
