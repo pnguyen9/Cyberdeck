@@ -1306,7 +1306,7 @@ imports each sample the normal way and compares every page's end.
   carries over to the next playthrough, through `lasting` values and `[remember]`: one keepsake left
   in the tavern's cellar (picked from three shelves, with a way back between them), a bigger purse
   and a shop discount (10% a cheese, up to 30%) for every cheese returned, Barnaby's
-  Champion's Feast (three levels at once) once a game has ended without a single rescue, half the gold left (a quarter after a game over or a game left unfinished), the bosses' rewards and the trophies on the tavern wall, the blessings
+  Champion's Feast (three levels at once) once a game has reached an ending, half the gold left (a quarter after a game over or a game left unfinished), the bosses' rewards and the trophies on the tavern wall, the blessings
   of four odd encounters (listed in the journal with what they give), what was won at level 1 and
   the Deep Delves cleared, and a town and a dragon that remember how the last game ended. Every number a counter, every monster's stats set by one scene
   (`[set: FoeName = The Gloop]`), the doors' hints decisions copied from one another

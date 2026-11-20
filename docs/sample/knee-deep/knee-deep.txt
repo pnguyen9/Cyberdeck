@@ -948,7 +948,7 @@ You eat a stew with more gravy than stew, sleep twelve hours in a chair, and wak
 > A pint of Quickstout, 40 gold: on a roll of 16 or more, you act again before the foe can = Quickstout [if: Gold >= 40 and Meal is not Quickstout]
 > Granny Anvil's meat pie, 15 gold: every hit you land does two more damage = Pie [if: Gold >= 15 and Meal is not Pie]
 > A rock cake, 20 gold: every ordinary blow does two less to you = Rock cake [if: Gold >= 20 and Meal is not Rock cake]
-> The Champion's Feast, 100 gold: three levels at once, once a game = Feast [if: remembered Clean finish and Feasts is 0 and Gold >= 100 and Bag is not Humble hat]
+> The Champion's Feast, 100 gold: three levels at once, once a game = Feast [if: remembered Feast unlocked and Feasts is 0 and Gold >= 100 and Bag is not Humble hat]
 > Nothing for now = Back
 [if: Menu is Quickstout]
 [add: Gold -40]
@@ -979,7 +979,7 @@ You chew it for some time. Your jaw, your belly and somehow your whole skin feel
 [add: Feasts]
 [sound: drink]
 [dwarf: happy]
-— Barnaby: The Champion's Feast! Seven courses, three puddings and a cheese board, out of respect. I only cook it for heroes who never needed carrying home.
+— Barnaby: The Champion's Feast! Seven courses, three puddings and a cheese board, out of respect. I only cook it for heroes who've seen the Delve through to the end.
 You eat until you can no longer see your boots, then a little more, out of politeness.
 [set: XP = {NextXP}]
 [play: Level up]
@@ -1098,6 +1098,7 @@ Still, next time you will know where the bombs are. And the dragon will still be
 [set: Last ending = Policy]
 [set: Run = Policy]
 [unset: Keepsake]
+[play: Feast unlocked]
 [ending: The Gnomes Have a Policy]
 
 # Scene: Bakery
@@ -1111,16 +1112,18 @@ Somewhere far below, a dragon is sleeping on three hundred years of cheddar. You
 [play: Leave behind]
 [ending: Rolls Not Dice]
 
+# Scene: Feast unlocked
+
+[if: Mode is not Sightseeing and not remembered Feast unlocked]
+Word gets round that you went all the way. Barnaby is saving you a seat: [style: Good]the Champion's Feast[style: none] (three levels at once) is on his menu from now on.
+[remember: Feast unlocked]
+[end]
+
 # Scene: Leave behind
 
 [set: Run = Finished]
 [unset: Keepsake]
-[if: Mode is not Sightseeing and Rescued is 0 and Last ending is not Bakery]
-[if: not remembered Clean finish]
-Word gets round that you never once needed the gnomes. Barnaby is saving you a seat: [style: Good]the Champion's Feast[style: none] is on his menu from now on.
-[end]
-[remember: Clean finish]
-[end]
+[play: Feast unlocked]
 [if: Bag is Lucky socks or Bag is Spare beard or Bag is Cup holder helmet or Bag is Umbrella or Bag is Fancy crackers or Bag is Union card or Bag is Small talk book or Bag is Knitting kit or Bag is Phrasebook or Bag is Gnome whistle or Bag is Humble hat or Bag is Rubber duck or Bag is Candle hat or Bag is Cat portrait or Bag is Snow globe or Bag is Hungry chest or Bag is Kazoo or Bag is Tiny statue]
 Barnaby offers to keep one thing in his cellar for you. Just in case. Cheeses have a way of rolling off again. Crowns, shields and parachutes need no cellar: the town looks after those.
 [loop]

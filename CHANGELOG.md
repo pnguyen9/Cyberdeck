@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.8.1 — 2026-11-20
+
+### Samples
+- Knee-Deep: the Champion's Feast is on Barnaby's menu after any ending, game over included
+  (Sightseeing aside); it no longer asks for a game without a single rescue.
+- Battle: Rei's creature stands on its own platform again, at the back of the arena.
+
 ## 3.8.0 — 2026-11-20
 
 ### Both applications
