@@ -21,7 +21,13 @@ const previewSettingsStore = createStorageSettingsStore(() => window.localStorag
 const previewSettings = shallowRef<PlayerSettings>(previewSettingsStore.read())
 watch(previewSettings, value => previewSettingsStore.write(value))
 const openProjectId = ref<string | null>(null)
-const previewing = shallowRef<{ story: PlayableStory; resumeFrom: SaveData | null; fromMap?: true } | null>(null)
+/** `newGame` counts the new games started from the preview's end screen: each one plays in a fresh player. */
+const previewing = shallowRef<{ story: PlayableStory; resumeFrom: SaveData | null; fromMap?: true; newGame?: number } | null>(null)
+function startNewGame() {
+  if (previewing.value !== null) {
+    previewing.value = { story: previewing.value.story, resumeFrom: null, newGame: (previewing.value.newGame ?? 0) + 1 }
+  }
+}
 const { shortcuts, isPanelOpen } = useShortcuts()
 
 /** The map of the story previewed: the routes the previews explored, as Datajack shows players theirs. */
@@ -117,6 +123,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     <ProjectView v-show="previewing === null && previewMap === null" :store="store" :project-id="openProjectId" @close="openProjectId = null" @preview="(story, resumeFrom) => previewing = { story, resumeFrom }" />
     <PlayerView
       v-if="previewing !== null"
+      :key="previewing.newGame ?? 0"
       v-model:settings="previewSettings"
       :story="previewing.story"
       :save-store="previewSaves"
@@ -128,6 +135,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       ignores-locks
       skips-unread
       @leave="previewing = null"
+      @new-game="startNewGame"
       @map="showPreviewMap(previewing.story)"
     />
     <MapView

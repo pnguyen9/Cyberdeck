@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onUnmounted, ref } from 'vue'
+import { onUnmounted, ref, useTemplateRef } from 'vue'
 import { actionOf, DEFAULT_BINDINGS, describeInput as describeInputIn, rebind, unbind, type InputBinding, type PlayerAction } from '../input/bindings'
 import { useLocale, useMessages, type LanguageChoice } from '../i18n/locale'
 import { settingsMessages } from '../i18n/settingsMessages'
 import { AUTO_SPEED_RANGE, DEFAULT_PLAYER_SETTINGS, MOTION_CHOICES, NAME_PLATE_MOTIONS, NAME_PLATE_PLACES, TEXT_SCALES, TEXT_SPEED_RANGE, type PlayerSettings } from '../settings/playerSettings'
+import { keepScrollingKeys, useDialogFocus } from '../useDialogFocus'
 import LanguageSelect from './LanguageSelect.vue'
 
 /**
@@ -106,10 +107,14 @@ function resetKeys() {
 }
 
 onUnmounted(stopListening)
+
+/** The category shown takes the focus, so that the arrow keys scroll it from the start; Tab goes on to its settings. */
+const categoryArea = useTemplateRef<HTMLElement>('categoryArea')
+useDialogFocus(() => categoryArea.value)
 </script>
 
 <template>
-  <div class="overlay" role="dialog" :aria-label="text.settings" @click.stop @wheel.stop @contextmenu.stop.prevent>
+  <div class="overlay" role="dialog" :aria-label="text.settings" @click.stop @wheel.stop @contextmenu.stop.prevent @keydown="keepScrollingKeys">
     <header class="overlay-header">
       <h2>{{ text.settings }}</h2>
       <button class="close-button" @click="emit('close')">{{ text.close }} <kbd>{{ describeInput({ type: 'key', code: 'Escape' }) }}</kbd></button>
@@ -134,7 +139,7 @@ onUnmounted(stopListening)
       </button>
     </nav>
 
-    <section v-if="category === 'general'" class="category general">
+    <section v-if="category === 'general'" ref="categoryArea" class="category general panel-focus" tabindex="0" :aria-label="text.categories.general">
       <label class="setting">
         <span class="setting-name">{{ text.textSpeed }}</span>
         <input
@@ -180,7 +185,7 @@ onUnmounted(stopListening)
       </label>
     </section>
 
-    <section v-else-if="category === 'accessibility'" class="category general">
+    <section v-else-if="category === 'accessibility'" ref="categoryArea" class="category general panel-focus" tabindex="0" :aria-label="text.categories.accessibility">
       <div class="setting">
         <span class="setting-name">{{ text.textSize }}</span>
         <div class="choices" role="radiogroup" :aria-label="text.textSize">
@@ -268,7 +273,7 @@ onUnmounted(stopListening)
       <button class="wide-button" @click="resetAccessibility">{{ text.defaultAccessibility }}</button>
     </section>
 
-    <section v-else class="category keys" :aria-label="text.keys">
+    <section v-else ref="categoryArea" class="category keys panel-focus" tabindex="0" :aria-label="text.keys">
       <div v-for="action in actions" :key="action" class="key-row" :class="{ listening: listeningFor === action }">
         <span class="setting-name">{{ actionLabel(action) }}</span>
         <span class="inputs">

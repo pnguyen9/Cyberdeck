@@ -256,7 +256,7 @@ It also tells you about pages nobody can reach (every path before them has ended
 [ending: Alone]
 ```
 
-The story ends there, with that name on the end screen. Players see how many of your endings they have found. A branch that ends stops there; one that doesn't carries on after its `[end]`. So several branches can share one ending: just write it after the block.
+The story ends there, with that name on the end screen. Players see how many of your endings they have found, and **New game** there, once confirmed, plays the story again from its start, as the library's does: what lasts, below, carries over. A branch that ends stops there; one that doesn't carries on after its `[end]`. So several branches can share one ending: just write it after the block.
 
 ```text
 [remember: The ghost's name]

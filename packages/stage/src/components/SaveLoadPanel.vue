@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { SaveData } from '@cyberdeck/core'
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { describeInput } from '../input/bindings'
 import { useLocale, useMessages } from '../i18n/locale'
 import { saveLoadMessages } from '../i18n/saveLoadMessages'
+import { keepScrollingKeys, useDialogFocus } from '../useDialogFocus'
 
 export interface SlotSummary {
   slot: string
@@ -24,17 +25,23 @@ const dateFormat = computed(() => new Intl.DateTimeFormat(locale.value, { dateSt
 function isEnabled(summary: SlotSummary): boolean {
   return props.mode === 'save' ? summary.slot !== 'auto' : summary.save !== null
 }
+
+/** The panel opens on the first slot that can be picked; with none, on its Close button. */
+const slotButtons = useTemplateRef<HTMLButtonElement[]>('slotButtons')
+const closeButton = useTemplateRef<HTMLButtonElement>('closeButton')
+useDialogFocus(() => slotButtons.value?.find(button => !button.disabled) ?? closeButton.value)
 </script>
 
 <template>
-  <div class="overlay" role="dialog" :aria-label="mode === 'save' ? text.save : text.load" @click.stop @wheel.stop>
+  <div class="overlay" role="dialog" :aria-label="mode === 'save' ? text.save : text.load" @click.stop @wheel.stop @keydown="keepScrollingKeys">
     <header class="overlay-header">
       <h2>{{ mode === 'save' ? text.save : text.load }}</h2>
-      <button class="close-button" @click="emit('close')">{{ text.close }} <kbd>{{ escapeKey }}</kbd></button>
+      <button ref="closeButton" class="close-button" @click="emit('close')">{{ text.close }} <kbd>{{ escapeKey }}</kbd></button>
     </header>
     <div class="slots">
       <button
         v-for="summary in slots"
+        ref="slotButtons"
         :key="summary.slot"
         class="slot"
         :disabled="!isEnabled(summary)"

@@ -29,6 +29,6 @@ export default async function check(page, { url, fixtures, serve }) {
   }
   page.check('every paragraph is read, cut into pages', pages.join(' ').includes('walked out into the rain.'), true)
   page.check('and the story ends', (await shownStep(page))?.startsWith('The end'), true)
-  page.check('without a map, there being no choice to show', await page.evaluate(`[...document.querySelectorAll('.end-button')].map(button => button.textContent.trim()).join(', ')`), '◀ Back, ← Library')
+  page.check('without a map, there being no choice to show', await page.evaluate(`[...document.querySelectorAll('.end-button')].map(button => button.textContent.trim()).join(', ')`), 'New game, ◀ Back, ← Library')
   await page.screenshot('end')
 }

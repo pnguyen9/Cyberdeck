@@ -1,23 +1,35 @@
 <script setup lang="ts">
 import { useMessages } from '@cyberdeck/stage'
-import { onMounted, ref } from 'vue'
+import { onMounted, useTemplateRef } from 'vue'
 import { editorMessages } from '../i18n/editorMessages'
 
-/** Asks what to do with changes not saved, before what would lose them: the first button takes the focus. */
-defineProps<{ question: string; canSave: boolean; cannotSaveReason?: string }>()
+/**
+ * Asks what to do with changes not saved, before what would lose them: the first button that can be
+ * pressed takes the focus, and Escape keeps editing.
+ */
+const props = defineProps<{ question: string; canSave: boolean; cannotSaveReason?: string }>()
 const emit = defineEmits<{ save: []; discard: []; keep: [] }>()
-const saveButton = ref<HTMLButtonElement | null>(null)
-onMounted(() => saveButton.value?.focus())
+const saveButton = useTemplateRef<HTMLButtonElement>('saveButton')
+const discardButton = useTemplateRef<HTMLButtonElement>('discardButton')
+onMounted(() => (props.canSave ? saveButton.value : discardButton.value)?.focus())
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    event.stopPropagation()
+    emit('keep')
+  }
+}
 const text = useMessages(editorMessages)
 </script>
 
 <template>
-  <div class="pending" role="alertdialog" :aria-label="text.unsavedChanges">
+  <div class="pending" role="alertdialog" :aria-label="text.unsavedChanges" @keydown="onKeydown">
     <p>{{ question }}</p>
     <p v-if="!canSave && cannotSaveReason !== undefined" class="muted">{{ cannotSaveReason }}</p>
     <div class="pending-actions">
       <button ref="saveButton" class="button primary small" :disabled="!canSave" @click="emit('save')">{{ text.save }}</button>
-      <button class="button small danger" @click="emit('discard')">{{ text.discard }}</button>
+      <button ref="discardButton" class="button small danger" @click="emit('discard')">{{ text.discard }}</button>
       <button class="button small" @click="emit('keep')">{{ text.keepEditing }}</button>
     </div>
   </div>

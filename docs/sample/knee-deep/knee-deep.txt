@@ -24,11 +24,12 @@
 [decision multi lasting: Blessings = Wishing well: +4 HP | Mushroom feast: +3 HP | Saint Gravel's wink: +1 to hit | Saint Gravel's thanks: +1 armour]
 [decision multi lasting: Won at level 1 = King Fungus | Sir Rattlebones | Gristle Goldgrin | Auntie Ember]
 [decision lasting: Run = Playing | Finished | Policy]
+[decision lasting: Mode = Adventure | Sightseeing]
 [decision: Pint = Rest | Kitchen | Ale | Rumour | Stamp | Mayor | Posters | Leave]
 [decision: RestPrice = 5 gold | free for the hero who brought the cheese home]
 [decision: Quest = Cheese | Deep]
 [decision: Meal = Quickstout | Pie | Rock cake]
-[decision: Menu = Quickstout | Pie | Rock cake | Back]
+[decision: Menu = Quickstout | Pie | Rock cake | Feast | Back]
 [decision: Start = Top | Deep]
 [decision: Outcome = Going | Home | Dead | Done]
 [decision: Place = Cellars | Grotto | Crypt | Forge | Hoard | Bedrock]
@@ -69,6 +70,15 @@
 [counter: Price = 0]
 [counter: WeaponPrice = 40]
 [counter: ArmourPrice = 35]
+[counter: PotionPrice = 10]
+[counter: BombPrice = 20]
+[counter: RopePrice = 15]
+[counter: SocksPrice = 70]
+[counter: CrackersPrice = 150]
+[counter: Off = 0]
+[counter: Pct = 100]
+[counter: Rescued = 0]
+[counter: Feasts = 0]
 [decision: Door = Left | Ahead | Right | Potion | Rope]
 [decision: Kind = Fight | Treasure | Odd]
 [decision: LeftKind = Fight | Treasure | Odd]
@@ -133,11 +143,14 @@
 [bg: town]
 [music: town]
 [set: Savings = 0]
+[if: Mode is not Sightseeing]
 [if: Run is Finished]
 [set: Savings = {Gold} * 0.5]
 [else if: Run is Playing or Run is Policy]
 [set: Savings = {Gold} * 0.25]
 [end]
+[end]
+[play: How to play]
 [if: Last ending is Victory or Last ending is Crackers or Last ending is Tea or Last ending is Bribe or Last ending is Bakery or Last ending is Policy or Last ending is Deep]
 [play: Return]
 [else if: Run is Playing]
@@ -145,7 +158,11 @@
 [else]
 [play: First time]
 [end]
+[if: Mode is Sightseeing]
+[play: Tourist]
+[else]
 [play: Savings]
+[end]
 [play: Old glories]
 [set: Run = Playing]
 [game mode]
@@ -161,6 +178,23 @@
 [end]
 [end]
 [play: Bakery]
+
+# Scene: How to play
+
+How would you like to play?
+[choice: Mode]
+> The adventure: every coin earned the hard way, and a fee each time you need rescuing = Adventure
+> Sightseeing: 2000 gold to spend, and rescues are free: whenever things go badly, you are carried home, as often as it takes = Sightseeing
+
+# Scene: Tourist
+
+[enter: fizzwick 72%]
+— Fizzwick: Rescue Gnomes Incorporated, Tourist Department! You have the Sightseeing ticket, I see. Very wise.
+[sound: coin]
+[set: Gold = 2000]
+— Fizzwick: It comes with [style: Good]2000 gold of spending money[style: none], courtesy of the Mossbottom Tourist Board, and [style: Good]free rescues[style: none], as many as it takes. No stamps, no fees. Tourists are never charged. We have a policy.
+— Fizzwick: Go and see everything. Send postcards. Touch nothing. Actually, touch everything: we'll carry you home.
+[exit: fizzwick]
 
 # Scene: First time
 
@@ -243,7 +277,7 @@ Every head in the square turns slowly towards you. Again.
 [dwarf: think]
 — {Hero}: What happened to my old axe?
 [if: Cheeses returned >= 1]
-— Mayor Puddifoot: It's in the town museum, behind a velvet rope. So here is your grandfather's axe again, and {Purse} gold: a little more for every cheese you have brought home. The town is grateful. Within reason.
+— Mayor Puddifoot: It's in the town museum, behind a velvet rope. So here is your grandfather's axe again, and {Purse} gold: a little more for every cheese you have brought home. The town is grateful. Within reason. And Grizelda has promised you a discount. She said it through her teeth.
 [else]
 — Mayor Puddifoot: Sold, to pay for the cheese. So here is your grandfather's axe again, and twenty-five gold, as before. The town has a budget.
 [end]
@@ -450,6 +484,10 @@ Saint Gravel still remembers who sent the Lost Property home. [style: Good]One m
 [else]
 — Grizelda: Back again, {Hero}? Still in one piece? How disappointing for the Gnomes.
 [end]
+[play: Price list]
+[if: Off > 0]
+— Grizelda: And for the hero who brought the cheese home, [style: Good]{Off}% off everything[style: none]. Don't tell the cat. The cat pays full price.
+[end]
 [if: ShelfTrip is not {Trips}]
 [set: ShelfTrip = {Trips}]
 [set: BargainSold = 1]
@@ -469,9 +507,9 @@ Saint Gravel still remembers who sent the Lost Property home. [style: Good]One m
 [loop]
 [play: Price list]
 [choice: Buy]
-> A healing potion, 10 gold ({Potions} carried) = Potion
-> A bomb, 20 gold ({Bombs} carried) = Bomb
-> A rope to climb home from anywhere, 15 gold = Rope
+> A healing potion, {PotionPrice} gold ({Potions} carried) = Potion
+> A bomb, {BombPrice} gold ({Bombs} carried) = Bomb
+> A rope to climb home from anywhere, {RopePrice} gold = Rope
 > {NextWeapon}, {WeaponPrice} gold = Weapon [if: NextWeapon is not Nothing]
 > {NextArmour}, {ArmourPrice} gold = Armour [if: NextArmour is not Nothing]
 > The shelf of curiosities = Curios
@@ -488,21 +526,21 @@ Saint Gravel still remembers who sent the Lost Property home. [style: Good]One m
 [else if: Buy is Curios]
 [play: Curios]
 [else if: Buy is Potion]
-[set: Price = 10]
+[set: Price = {PotionPrice}]
 [play: Pay]
 [if: Price is 0]
 [add: Potions]
 — Grizelda: Drink it when you're hurt, not when you're thirsty. I've had complaints.
 [end]
 [else if: Buy is Bomb]
-[set: Price = 20]
+[set: Price = {BombPrice}]
 [play: Pay]
 [if: Price is 0]
 [add: Bombs]
 — Grizelda: Light the fuse, throw it at them. In that order. Not the other order.
 [end]
 [else if: Buy is Rope]
-[set: Price = 15]
+[set: Price = {RopePrice}]
 [play: Pay]
 [if: Price is 0]
 [add: Ropes]
@@ -532,27 +570,38 @@ Saint Gravel still remembers who sent the Lost Property home. [style: Good]One m
 
 # Scene: Price list
 
+[set: Off = {Cheeses returned} * 10]
+[if: Off > 30]
+[set: Off = 30]
+[end]
+[set: Pct = 100]
+[add: Pct -{Off}]
+[set: PotionPrice = {Pct} * 0.1]
+[set: BombPrice = {Pct} * 0.2]
+[set: RopePrice = {Pct} * 0.15]
+[set: SocksPrice = {Pct} * 0.7]
+[set: CrackersPrice = {Pct} * 1.5]
 [if: Weapon is Rusty axe]
 [set: NextWeapon = Sturdy pick]
-[set: WeaponPrice = 40]
+[set: WeaponPrice = {Pct} * 0.4]
 [else if: Weapon is Sturdy pick]
 [set: NextWeapon = Battle axe]
-[set: WeaponPrice = 110]
+[set: WeaponPrice = {Pct} * 1.1]
 [else if: Weapon is Battle axe]
 [set: NextWeapon = Mrs Choppy]
-[set: WeaponPrice = 240]
+[set: WeaponPrice = {Pct} * 2.4]
 [else]
 [set: NextWeapon = Nothing]
 [end]
 [if: Armour is Woolly jumper]
 [set: NextArmour = Leather jerkin]
-[set: ArmourPrice = 35]
+[set: ArmourPrice = {Pct} * 0.35]
 [else if: Armour is Leather jerkin]
 [set: NextArmour = Chainmail]
-[set: ArmourPrice = 100]
+[set: ArmourPrice = {Pct} * 1]
 [else if: Armour is Chainmail]
 [set: NextArmour = Dwarfplate]
-[set: ArmourPrice = 220]
+[set: ArmourPrice = {Pct} * 2.2]
 [else]
 [set: NextArmour = Nothing]
 [end]
@@ -606,8 +655,8 @@ Saint Gravel still remembers who sent the Lost Property home. [style: Good]One m
 
 — Grizelda: The curiosities! Every one of them is either magical or a very convincing fake.
 [choice: Curio]
-> Lucky socks, 70 gold: one more on every roll you make = Socks [if: Bag is not Lucky socks]
-> A box of fancy crackers, 150 gold = Crackers [if: Bag is not Fancy crackers]
+> Lucky socks, {SocksPrice} gold: one more on every roll you make = Socks [if: Bag is not Lucky socks]
+> A box of fancy crackers, {CrackersPrice} gold = Crackers [if: Bag is not Fancy crackers]
 > Today's bargain: {BargainName}, {BargainPrice} gold = Bargain [if: BargainSold is 0]
 > A humble hat, 5 gold: while you wear it, you learn nothing at all = Humble [if: Bag is not Humble hat]
 > Hand the humble hat back = Unhat [if: Bag is Humble hat]
@@ -628,7 +677,7 @@ Saint Gravel still remembers who sent the Lost Property home. [style: Good]One m
 — Grizelda: Today's bargain is gone, but there'll be a new one after your next trip down. There always is.
 [end]
 [if: Curio is Socks]
-[set: Price = 70]
+[set: Price = {SocksPrice}]
 [play: Pay]
 [if: Price is 0]
 [set: Bag = Lucky socks]
@@ -636,7 +685,7 @@ Saint Gravel still remembers who sent the Lost Property home. [style: Good]One m
 — Grizelda: Never washed, never lost a game of dice. Put them on and feel the luck soak in. Through the toes.
 [end]
 [else if: Curio is Crackers]
-[set: Price = 150]
+[set: Price = {CrackersPrice}]
 [play: Pay]
 [if: Price is 0]
 [set: Bag = Fancy crackers]
@@ -899,6 +948,7 @@ You eat a stew with more gravy than stew, sleep twelve hours in a chair, and wak
 > A pint of Quickstout, 40 gold: on a roll of 16 or more, you act again before the foe can = Quickstout [if: Gold >= 40 and Meal is not Quickstout]
 > Granny Anvil's meat pie, 15 gold: every hit you land does two more damage = Pie [if: Gold >= 15 and Meal is not Pie]
 > A rock cake, 20 gold: every ordinary blow does two less to you = Rock cake [if: Gold >= 20 and Meal is not Rock cake]
+> The Champion's Feast, 100 gold: three levels at once, once a game = Feast [if: remembered Clean finish and Feasts is 0 and Gold >= 100 and Bag is not Humble hat]
 > Nothing for now = Back
 [if: Menu is Quickstout]
 [add: Gold -40]
@@ -923,6 +973,20 @@ You feel heavy, solid, and very, very sure of your swing.
 [dwarf: happy]
 — Barnaby: A rock cake. The recipe says rock. We took it literally.
 You chew it for some time. Your jaw, your belly and somehow your whole skin feel a little harder.
+[dwarf: normal]
+[else if: Menu is Feast]
+[add: Gold -100]
+[add: Feasts]
+[sound: drink]
+[dwarf: happy]
+— Barnaby: The Champion's Feast! Seven courses, three puddings and a cheese board, out of respect. I only cook it for heroes who never needed carrying home.
+You eat until you can no longer see your boots, then a little more, out of politeness.
+[set: XP = {NextXP}]
+[play: Level up]
+[set: XP = {NextXP}]
+[play: Level up]
+[set: XP = {NextXP}]
+[play: Level up]
 [dwarf: normal]
 [end]
 
@@ -980,7 +1044,14 @@ Everything goes dark, and a little bit muddy.
 [enter: dwarf 25% ko]
 [enter: fizzwick 72%]
 [sound: drink]
+[if: Mode is Sightseeing]
+[set: HP = {MaxHP}]
+[dwarf: hurt]
+— Fizzwick: Rise and shine, tourist! Carried home free of charge, as your ticket says. Your lunch survived too: we carry tourists gently. We have a policy.
+[dwarf: normal]
+[else]
 [add: Gnome rescues]
+[add: Rescued]
 [if: Meal is Quickstout or Meal is Pie or Meal is Rock cake]
 [unset: Meal]
 — Fizzwick: Whatever you had for lunch didn't survive the trip. Gnomes aren't gentle carriers. We have a policy about that too.
@@ -1014,6 +1085,7 @@ Everything goes dark, and a little bit muddy.
 — {Hero}: How did you even find me?
 — Fizzwick: We followed the screaming. Good day!
 [end]
+[end]
 [exit: fizzwick]
 
 # Scene: Policy
@@ -1043,6 +1115,12 @@ Somewhere far below, a dragon is sleeping on three hundred years of cheddar. You
 
 [set: Run = Finished]
 [unset: Keepsake]
+[if: Mode is not Sightseeing and Rescued is 0 and Last ending is not Bakery]
+[if: not remembered Clean finish]
+Word gets round that you never once needed the gnomes. Barnaby is saving you a seat: [style: Good]the Champion's Feast[style: none] is on his menu from now on.
+[end]
+[remember: Clean finish]
+[end]
 [if: Bag is Lucky socks or Bag is Spare beard or Bag is Cup holder helmet or Bag is Umbrella or Bag is Fancy crackers or Bag is Union card or Bag is Small talk book or Bag is Knitting kit or Bag is Phrasebook or Bag is Gnome whistle or Bag is Humble hat or Bag is Rubber duck or Bag is Candle hat or Bag is Cat portrait or Bag is Snow globe or Bag is Hungry chest or Bag is Kazoo or Bag is Tiny statue]
 Barnaby offers to keep one thing in his cellar for you. Just in case. Cheeses have a way of rolling off again. Crowns, shields and parachutes need no cellar: the town looks after those.
 [loop]
@@ -1403,7 +1481,7 @@ Behind the door there is an office. Carpet. A water cooler. A desk the size of a
 [end]
 [play: Foe stats]
 [play: Fight]
-[if: Result is Won and Level is 1]
+[if: Result is Won and Level is 1 and Mode is not Sightseeing]
 [play: Level one win]
 [end]
 [play: After fight]
@@ -1575,7 +1653,7 @@ You sit down on a heap of coins and ask her how she's been. Really been. You rol
 [play: Foe stats]
 [exit: ember instant]
 [play: Fight]
-[if: Result is Won and Level is 1]
+[if: Result is Won and Level is 1 and Mode is not Sightseeing]
 [play: Level one win]
 [end]
 [if: Result is Won]

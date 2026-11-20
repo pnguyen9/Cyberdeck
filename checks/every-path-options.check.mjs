@@ -30,7 +30,7 @@ export default async function check(page, { url }) {
   await page.waitFor('.map-screen .node')
   await pause(600)
   page.check('the map from the first page, on every path', await page.evaluate(`document.querySelector('.map-screen .subtitle').textContent`), 'every path the story allows')
-  await page.clickButton('← Preview', '.close-button')
+  await page.clickButton('← Preview Esc', '.close-button')
   await page.waitFor('.viewport .text')
   await pause(600)
   for (let press = 0; press < 4 && (await options(page)).length === 0; press++) {

@@ -356,17 +356,20 @@ function onDrop(event: DragEvent) {
     <NewVersionBar />
     <header class="header">
       <h1>Datajack</h1>
+      <!-- Two groups, each wrapping whole: the profile line, when it does not fit, moves to a row of its own. -->
       <div class="header-tools">
-        <label class="language-field">
-          <span>{{ text.language }}</span>
-          <LanguageSelect v-model="languageChoice" />
-        </label>
-        <button class="button" @click="emit('settings')">{{ text.settings }}</button>
-        <AppLookButton class="button" />
-        <button class="button pin-button" aria-haspopup="dialog" @click="choosePin">
-          <template v-if="hasPin"><LockIcon /> {{ pinText.pin }}</template>
-          <template v-else>{{ pinText.addPin }}</template>
-        </button>
+        <div class="header-group">
+          <label class="language-field">
+            <span>{{ text.language }}</span>
+            <LanguageSelect v-model="languageChoice" />
+          </label>
+          <button class="button" @click="emit('settings')">{{ text.settings }}</button>
+          <AppLookButton class="button" />
+          <button class="button pin-button" aria-haspopup="dialog" @click="choosePin">
+            <template v-if="hasPin"><LockIcon /> {{ pinText.pin }}</template>
+            <template v-else>{{ pinText.addPin }}</template>
+          </button>
+        </div>
         <button class="profile-button" @click="emit('switchProfile')">{{ profile.name }} <span class="switch">· {{ text.switchProfile }}</span></button>
       </div>
     </header>
@@ -519,7 +522,25 @@ h1 {
   color: var(--look-accent);
 }
 
+/* The tools keep to the right, beside the title or, when they do not fit there, below it. */
+.header .header-tools {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+
+.header-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+/* A long name wraps, anywhere if it must, to stay within a phone's screen; "· Switch profile" stays whole. */
 .profile-button {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: right;
   padding: 0;
   border: 0;
   background: none;
@@ -530,6 +551,7 @@ h1 {
 }
 
 .profile-button .switch {
+  white-space: nowrap;
   font-weight: 400;
   color: var(--look-muted);
 }

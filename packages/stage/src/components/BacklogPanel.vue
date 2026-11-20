@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, useTemplateRef } from 'vue'
+import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
 import { describeInput } from '../input/bindings'
 import { backlogMessages } from '../i18n/backlogMessages'
 import { useLocale, useMessages } from '../i18n/locale'
 import { textRuns, type StyledPart } from '../textRuns'
+import { focusAndReveal, keepScrollingKeys, SCROLLING_KEYS, stepFocus, useDialogFocus } from '../useDialogFocus'
 
 export interface BacklogLine {
   stopIndex: number
@@ -28,25 +29,90 @@ const locale = useLocale()
 const text = useMessages(backlogMessages)
 const escapeKey = computed(() => describeInput({ type: 'key', code: 'Escape' }, locale.value))
 
+const lineButtons = useTemplateRef<HTMLButtonElement[]>('lineButtons')
+/** Lines that can be gone back to; in a part played as a game, none, and the list itself scrolls. */
+const isLocked = computed(() => props.lockedNote != null)
+
 /** The most recent lines are at the bottom, where the reader's eye already is. */
 onMounted(() => {
   if (list.value !== null) {
     list.value.scrollTop = list.value.scrollHeight
   }
 })
+/**
+ * The focus starts on the list, not on a line: a key pressed out of habit (Space, Enter) cannot go
+ * back in the story. A first arrow, Home or End enters the lines.
+ */
+useDialogFocus(() => list.value)
+
+/**
+ * The line Tab stops at, the others reached with the arrows: the most recent one until another is
+ * focused, so that the Close button is a Tab away whatever the length of the log.
+ */
+const tabLineIndex = ref(props.lines.length - 1)
+watch(() => props.lines.length, length => {
+  tabLineIndex.value = length - 1
+})
+
+/**
+ * From line to line: up and down move a line, Page Up and Page Down a screen's worth, Home and End
+ * to the first and the most recent; from the list itself, the first key lands on the most recent
+ * line (the first one, for Home). A locked list has no lines to focus and scrolls as any list.
+ * These keys stay the log's: none of them reaches the story behind.
+ */
+function onKeydown(event: KeyboardEvent) {
+  keepScrollingKeys(event)
+  const buttons = lineButtons.value ?? []
+  if (!SCROLLING_KEYS.has(event.code) || isLocked.value || buttons.length === 0 || list.value === null) {
+    return
+  }
+  event.preventDefault()
+  const lastIndex = buttons.length - 1
+  if (event.code === 'Home' || event.code === 'End') {
+    focusAndReveal(buttons[event.code === 'Home' ? 0 : lastIndex])
+  } else if (event.code === 'ArrowUp' || event.code === 'ArrowDown') {
+    stepFocus(buttons, event.code === 'ArrowUp' ? -1 : 1, lastIndex, false)
+  } else {
+    const focusedIndex = buttons.findIndex(button => button === document.activeElement)
+    focusAndReveal(lineAScreenAway(buttons, focusedIndex === -1 ? lastIndex : focusedIndex, event.code === 'PageDown' ? 1 : -1))
+  }
+}
+
+/** The line about a screen's height above or below another; measured on screen, so that the stage's scale cancels out. */
+function lineAScreenAway(buttons: HTMLButtonElement[], fromIndex: number, direction: 1 | -1) {
+  const screenHeight = list.value?.getBoundingClientRect().height ?? 0
+  const wantedTop = buttons[fromIndex]!.getBoundingClientRect().top + direction * screenHeight
+  let target = buttons[fromIndex]
+  for (let index = fromIndex + direction; index >= 0 && index < buttons.length; index += direction) {
+    target = buttons[index]
+    const top = target!.getBoundingClientRect().top
+    if (direction > 0 ? top >= wantedTop : top <= wantedTop) {
+      break
+    }
+  }
+  return target
+}
 </script>
 
 <template>
-  <div class="overlay" role="dialog" :aria-label="text.log" @click.stop @wheel.stop>
+  <div class="overlay" role="dialog" :aria-label="text.log" @click.stop @wheel.stop @keydown="onKeydown">
     <header class="overlay-header">
       <h2>{{ text.log }}</h2>
       <span class="hint">{{ lockedNote ?? text.hint }}</span>
       <button class="close-button" @click="emit('close')">{{ text.close }} <kbd>{{ escapeKey }}</kbd></button>
     </header>
-    <ol ref="list" class="lines">
+    <ol ref="list" class="lines panel-focus" :tabindex="isLocked || lines.length === 0 ? 0 : -1" :aria-label="text.log">
       <li v-if="lines.length === 0" class="empty">{{ text.nothingRead }}</li>
-      <li v-for="line in shownLines" :key="line.stopIndex">
-        <button class="line" :class="{ choice: line.isChoice }" :disabled="lockedNote != null" @click="emit('goBack', line.stopIndex)">
+      <li v-for="(line, lineIndex) in shownLines" :key="line.stopIndex">
+        <button
+          ref="lineButtons"
+          class="line panel-focus"
+          :class="{ choice: line.isChoice }"
+          :disabled="isLocked"
+          :tabindex="lineIndex === tabLineIndex ? 0 : -1"
+          @focus="tabLineIndex = lineIndex"
+          @click="emit('goBack', line.stopIndex)"
+        >
           <span v-if="line.speaker !== null" class="speaker">{{ line.speaker }}</span>
           <span class="text"><template v-if="line.isChoice">▸ </template><span v-for="run in line.runs" :key="run.start" :class="run.classes">{{ run.text }}</span></span>
         </button>
@@ -128,10 +194,8 @@ kbd {
   cursor: pointer;
 }
 
-.line:hover,
-.line:focus-visible {
-  outline: none;
-  background: rgb(120 220 255 / 0.08);
+.line:hover {
+  background: rgb(var(--stage-cyan) / 0.08);
 }
 
 .speaker {

@@ -1,5 +1,7 @@
 // The looks of styled text, shared by every component drawing the story's text: global, as the classes runs carry are.
 import './textStyles.css'
+// The stage's cyan and the focus ring of its panels, shared by the panels' components.
+import './stageLook.css'
 
 export { default as PlayerView } from './components/PlayerView.vue'
 export { describeInput } from './input/bindings'
@@ -14,6 +16,7 @@ export { default as NewVersionBar } from './components/NewVersionBar.vue'
 export { default as SampleNotLoadedNote } from './components/SampleNotLoadedNote.vue'
 export { provideApp, useAboutApp } from './app/aboutApp'
 export { useBackdropClose } from './app/backdropClose'
+export { useDialogFocus } from './useDialogFocus'
 export { loadSample, sampleGameId, type SampleIndexEntry } from './app/samples'
 export { default as SampleCard } from './components/SampleCard.vue'
 export { isHosted } from './app/howItRuns'

@@ -45,7 +45,7 @@ export default async function check(page, { url }) {
   await page.evaluate(`[...document.querySelectorAll('.viewport .quick-button')].find(button => button.textContent.trim() === 'Map').click()`)
   await page.waitFor('.map-screen')
   await pause(400)
-  await page.clickButton('← Preview', '.close-button')
+  await page.clickButton('← Preview Esc', '.close-button')
   await page.waitFor('.viewport')
   await pause(600)
   page.check('closing the map goes back to the preview', await shownStep(page), 'CHOICE')

@@ -158,6 +158,11 @@ describe('the apps’ own look', () => {
     expect(lookVariables(DEFAULT_APP_LOOK)['--look-focus']).toBe('#9eeaff')
     expect(lookVariables({ ...PRESET_LOOKS.paper, accentColour: '#eeeeee' })['--look-focus']).toBe(PRESET_LOOKS.paper.textColour)
   })
+
+  it('keeps a focus colour that shows over the surfaces that stay dark', () => {
+    expect(lookVariables(PRESET_LOOKS.graphite)['--look-focus-on-dark']).toBe(PRESET_LOOKS.graphite.accentColour)
+    expect(lookVariables(PRESET_LOOKS.paper)['--look-focus-on-dark']).toBe(DEFAULT_APP_LOOK.accentColour)
+  })
 })
 
 function flatLook(colour: string): Pick<AppLook, 'backgroundKind' | 'backgroundColour' | 'corners'> {

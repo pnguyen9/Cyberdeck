@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { journalOf, type PlayableStory, type PlayerSnapshot } from '@cyberdeck/core'
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { describeInput } from '../input/bindings'
 import { useLocale, useMessages } from '../i18n/locale'
 import { playerMessages } from '../i18n/playerMessages'
+import { keepScrollingKeys, useDialogFocus } from '../useDialogFocus'
 
 /**
  * What the player holds, as far as the author shows it: the items of a bag, a counter's number, the
@@ -16,15 +17,18 @@ const text = useMessages(playerMessages)
 const escapeKey = computed(() => describeInput({ type: 'key', code: 'Escape' }, locale.value))
 const journal = computed(() => journalOf(props.story.project, props.snapshot, props.endingIds))
 const isEmpty = computed(() => journal.value.entries.length === 0 && journal.value.endings === null)
+/** Nothing in the journal is a control: the keyboard scrolls the entries themselves. */
+const entries = useTemplateRef<HTMLElement>('entries')
+useDialogFocus(() => entries.value)
 </script>
 
 <template>
-  <div class="overlay" role="dialog" :aria-label="text.journal" @click.stop @wheel.stop>
+  <div class="overlay" role="dialog" :aria-label="text.journal" @click.stop @wheel.stop @keydown="keepScrollingKeys">
     <header class="overlay-header">
-      <h2>{{ text.journal }}</h2>
+      <h2 id="journal-title">{{ text.journal }}</h2>
       <button class="close-button" @click="emit('close')">{{ text.close }} <kbd>{{ escapeKey }}</kbd></button>
     </header>
-    <div class="entries">
+    <div ref="entries" class="entries panel-focus" tabindex="0" aria-labelledby="journal-title">
       <p v-if="isEmpty" class="empty">{{ text.journalEmpty }}</p>
       <section v-for="entry in journal.entries" :key="entry.id" class="entry">
         <h3>{{ entry.name }}</h3>

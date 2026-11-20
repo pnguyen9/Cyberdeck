@@ -16,6 +16,26 @@ html {
   color-scheme: var(--look-scheme, dark);
 }
 
+/*
+ * Scrollbars, the same everywhere: thin, the thumb tinted, the track see-through, the thumb stronger
+ * under the pointer. A surface tints them by setting `--scrollbar-thumb` to an opaque colour.
+ * light-dark() is read where each scrollbar is, so a surface keeping dark colours under a bright look
+ * (the map) gets a thumb that shows over it.
+ */
+html {
+  --scrollbar-thumb: light-dark(var(--look-focus, #9eeaff), var(--look-focus-on-dark, #9eeaff));
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 40%, transparent) transparent;
+}
+
+/* The page's own scrollbar is under the pointer whenever the pointer is in the page: it stays light. */
+:not(:root):hover {
+  scrollbar-color: color-mix(in srgb, var(--scrollbar-thumb) 70%, transparent) transparent;
+}
+
 body {
   margin: 0;
   min-height: 100%;

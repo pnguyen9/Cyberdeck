@@ -11,6 +11,14 @@ const en = {
   forwardOnly: 'The story only goes forward here',
   theEnd: 'The end',
   showValues: 'What the journal showed here',
+  fromCardToCard: 'move from card to card',
+  turnPage: 'turn a page',
+  startOrLastColumn: 'go to the start or the last column',
+  pageLeft: 'Page to the left',
+  pageRight: 'Page to the right',
+  pageUp: 'Page above',
+  pageDown: 'Page below',
+  pointCard: (chapter: string, decision: string, playKey: string | null) => `${chapter}, ${decision}: ${playKey === null ? 'the story only goes forward here' : `${playKey} to play from here`}`,
 }
 
 type MapMessages = typeof en
@@ -27,6 +35,14 @@ const fr: MapMessages = {
   forwardOnly: 'Ici, l’histoire ne fait qu’avancer',
   theEnd: 'Fin',
   showValues: 'Contenu du journal à cet endroit',
+  fromCardToCard: 'passer d’une carte à l’autre',
+  turnPage: 'tourner une page',
+  startOrLastColumn: 'aller au début ou à la dernière colonne',
+  pageLeft: 'Page de gauche',
+  pageRight: 'Page de droite',
+  pageUp: 'Page au-dessus',
+  pageDown: 'Page en dessous',
+  pointCard: (chapter, decision, playKey) => `${chapter}, ${decision}\u00a0: ${playKey === null ? 'ici, l’histoire ne fait qu’avancer' : `${playKey} pour jouer à partir d’ici`}`,
 }
 
 export const mapMessages = { en, fr }

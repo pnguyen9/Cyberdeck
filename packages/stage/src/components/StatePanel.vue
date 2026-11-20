@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { readTypedNumber, valuesReader, type Counter, type Decision, type HeldChange, type PlayableStory, type PlayerSnapshot } from '@cyberdeck/core'
-import { computed, ref } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { useMessages } from '../i18n/locale'
 import { playerMessages } from '../i18n/playerMessages'
+import { keepScrollingKeys, useDialogFocus } from '../useDialogFocus'
 
 /**
  * What the story holds on the page shown, for an author testing it: each decision's values, each
@@ -46,13 +47,32 @@ function changeCounter(counter: Counter, typed: string) {
   refusedCounters.value = refused
 }
 
+const panel = useTemplateRef<HTMLElement>('panel')
+useDialogFocus(() => panel.value)
+
+/**
+ * The story goes on beside the panel, its keys working while the panel has the focus; Escape closes
+ * the panel, and the keys that scroll it or change one of its fields stay the panel's.
+ */
+function onKeydown(event: KeyboardEvent) {
+  if (event.code === 'Escape') {
+    event.stopPropagation()
+    event.preventDefault()
+    emit('close')
+  } else if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
+    event.stopPropagation()
+  } else {
+    keepScrollingKeys(event)
+  }
+}
+
 function toggleValue(decision: Decision, valueIds: readonly string[], valueId: string, isHeld: boolean) {
   emit('change', { type: 'decision', decisionId: decision.id, valueIds: isHeld ? [...valueIds, valueId] : valueIds.filter(held => held !== valueId) })
 }
 </script>
 
 <template>
-  <aside class="state-panel" :aria-label="text.state" @click.stop @wheel.stop>
+  <aside ref="panel" class="state-panel panel-focus" :aria-label="text.state" tabindex="-1" @click.stop @wheel.stop @keydown="onKeydown">
     <header class="state-header">
       <h2>{{ text.state }}</h2>
       <button class="close" :aria-label="text.close" @click="emit('close')">×</button>

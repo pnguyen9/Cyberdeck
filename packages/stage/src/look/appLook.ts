@@ -282,6 +282,7 @@ export function lookVariables(look: AppLook, preset: LookPreset | null = presetO
   const background = backgroundOf(look)
   const ground = groundOf(look)
   const text = look.textColour
+  const focus = focusColourOf(look)
   const [topLeft, topRight, bottomLeft, bottomRight] = look.backgroundKind === 'colour' ? flat(look.backgroundColour).corners : look.corners
   const variables: Record<string, string> = {
     '--look-corner-top-left': topLeft,
@@ -309,7 +310,9 @@ export function lookVariables(look: AppLook, preset: LookPreset | null = presetO
     // A double line needs three pixels to show as two.
     '--look-border-width': look.borderKind === 'double' ? '3px' : '1px',
     '--look-control-border': controlBorderOf(look, ground),
-    '--look-focus': focusColourOf(look),
+    '--look-focus': focus,
+    /** The focus colour over what stays dark whatever the look (the map): the default look's accent under a bright look. */
+    '--look-focus-on-dark': isBright(ground) ? DEFAULT_APP_LOOK.accentColour : focus,
   }
   for (const [name, colour] of Object.entries(SIGNAL_COLOURS)) {
     variables[`--look-${name}`] = readableOver(colour, ground)

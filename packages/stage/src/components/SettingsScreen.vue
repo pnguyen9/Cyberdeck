@@ -51,6 +51,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeyDown))
   overflow: hidden;
   background: #05070c;
   color-scheme: dark;
+  --scrollbar-thumb: rgb(var(--stage-cyan));
 }
 
 .stage {

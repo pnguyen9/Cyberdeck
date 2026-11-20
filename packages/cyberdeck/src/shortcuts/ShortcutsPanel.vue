@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useBackdropClose, useLocale, useMessages } from '@cyberdeck/stage'
+import { useBackdropClose, useDialogFocus, useLocale, useMessages } from '@cyberdeck/stage'
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
 import { shortcutMessages } from '../i18n/shortcutMessages'
 import { useShortcuts } from './shortcutStore'
@@ -18,6 +18,7 @@ const capturing = ref<ShortcutId | null>(null)
 const pending = ref<{ actionId: ShortcutId; chord: KeyChord; conflicts: ShortcutId[] } | null>(null)
 const dialog = useTemplateRef<HTMLDialogElement>('dialog')
 const backdrop = useBackdropClose(dialog)
+useDialogFocus(() => dialog.value)
 
 const groups = computed(() => SCREENS.map(screen => ({
   screen,
@@ -64,7 +65,6 @@ function confirm() {
 onMounted(() => {
   window.addEventListener('keydown', onKeydown, true)
   dialog.value?.showModal()
-  dialog.value?.focus()
 })
 onUnmounted(() => window.removeEventListener('keydown', onKeydown, true))
 </script>

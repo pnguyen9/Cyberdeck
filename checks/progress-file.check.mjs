@@ -20,7 +20,7 @@ export default async function check(page, { url, serve }) {
     await page.press(' ')
     await pause(400)
   }
-  await page.evaluate(`document.querySelector('.leave-button, .end-button')?.click()`)
+  await page.evaluate(`document.querySelector('.leave-button')?.click()`)
   await pause(800)
   if (await page.evaluate(`!document.querySelector('.library')`)) {
     await page.press('Escape')

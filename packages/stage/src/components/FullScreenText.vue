@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useTemplateRef } from 'vue'
+import { useMessages } from '../i18n/locale'
+import { playerMessages } from '../i18n/playerMessages'
 import { textRuns, type StyledPart } from '../textRuns'
+import { useDialogFocus } from '../useDialogFocus'
 
 /**
  * Text over the whole screen, as in a book: the pages of the screen one under the other, the last
@@ -20,18 +23,25 @@ const paragraphs = computed(() => props.pages.map((page, index) => ({
   speakerStyle: page.speakerColor == null ? undefined : { color: page.speakerColor },
   runs: textRuns(page.text, index === props.pages.length - 1 ? props.visibleLength : page.text.length, page.styles),
 })))
+
+/** Text the player chose larger may run past the screen: with the focus, the arrow keys scroll it. */
+const fullText = useTemplateRef<HTMLElement>('fullText')
+const text = useMessages(playerMessages)
+useDialogFocus(() => fullText.value)
 </script>
 
 <template>
-  <div class="full-text" aria-hidden="true">
+  <div ref="fullText" class="full-text" role="region" :aria-label="text.storyText" tabindex="-1">
     <!-- Typed a letter at a time: screen readers hear each page whole from the player's announcements instead. -->
-    <div v-for="paragraph in paragraphs" :key="paragraph.id" class="paragraph">
-      <div v-if="paragraph.speaker !== null" class="speaker" :class="paragraph.speakerClasses" :style="paragraph.speakerStyle">{{ paragraph.speaker }}</div>
-      <p class="paragraph-text">
-        <span v-for="run in paragraph.runs" :key="run.start" :class="run.classes">{{ run.text }}</span>
-      </p>
+    <div aria-hidden="true">
+      <div v-for="paragraph in paragraphs" :key="paragraph.id" class="paragraph">
+        <div v-if="paragraph.speaker !== null" class="speaker" :class="paragraph.speakerClasses" :style="paragraph.speakerStyle">{{ paragraph.speaker }}</div>
+        <p class="paragraph-text">
+          <span v-for="run in paragraph.runs" :key="run.start" :class="run.classes">{{ run.text }}</span>
+        </p>
+      </div>
+      <div v-if="isComplete" class="continue-mark">▼</div>
     </div>
-    <div v-if="isComplete" class="continue-mark" aria-hidden="true">▼</div>
   </div>
 </template>
 
@@ -48,6 +58,7 @@ const paragraphs = computed(() => props.pages.map((page, index) => ({
   /* Text the player chose larger may not hold on one screen: it scrolls rather than spill. */
   overflow-y: auto;
   color: #f2f4f8;
+  outline: none;
 }
 
 .paragraph {

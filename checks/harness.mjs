@@ -1,6 +1,6 @@
 // Drives headless Chrome, or an Electron application, through the DevTools Protocol, without dependencies: what the browser checks share.
 import { spawn } from 'node:child_process'
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 
 export const pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds))
 
@@ -99,12 +99,13 @@ function createPage(outputDirectory, connection, stop) {
     /**
      * A key as the keyboard sends it, to the element that has the focus. `commands` are the editing
      * commands Chrome runs for the key, such as `undo`, which synthetic key events do not trigger.
+     * `text`: the character the key types, for a key with a name: `\r` makes Enter click a focused button.
      */
-    press: async (key, { ctrl = false, shift = false, alt = false, commands = [] } = {}) => {
+    press: async (key, { ctrl = false, shift = false, alt = false, commands = [], text: typed } = {}) => {
       const modifiers = (alt ? 1 : 0) | (ctrl ? 2 : 0) | (shift ? 8 : 0)
       const windowsVirtualKeyCode = KEY_CODES[key] ?? key.toUpperCase().charCodeAt(0)
       const code = PHYSICAL_CODES[key] ?? (key.length === 1 ? `Key${key.toUpperCase()}` : key)
-      const text = key.length === 1 && !ctrl ? key : undefined
+      const text = typed ?? (key.length === 1 && !ctrl ? key : undefined)
       await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode, modifiers, ...(text === undefined ? {} : { text }), ...(commands.length === 0 ? {} : { commands }) })
       await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode, modifiers })
       await pause(150)
@@ -518,6 +519,40 @@ export async function advanceUntil(page, condition, limit = 20) {
   for (let press = 0; press < limit && !condition(await shownStep(page)); press++) {
     await page.press(' ')
   }
+}
+
+/** Clicks the option of the player's menu whose text holds `text`; 'missing' when there is none. */
+export function pickOption(page, text) {
+  return page.evaluate(`[...document.querySelectorAll('.viewport .option')].find(option => option.textContent.includes(${JSON.stringify(text)}))?.click() ?? 'missing'`)
+}
+
+/** Presses Space in the player until a choice or the end screen, then waits for the options to take clicks. */
+export async function playUntilStop(page) {
+  for (let press = 0; press < 20; press++) {
+    if (await shownStep(page) === 'CHOICE' || await page.evaluate(`!!document.querySelector('.viewport .end-screen')`)) {
+      break
+    }
+    await page.press(' ')
+  }
+  await pause(500)
+}
+
+/** Imports Sakura Week into a new project, previews it and opens its map of every path. */
+export async function openEveryPathMap(page, url) {
+  await createProject(page, url, 'Sakura Week')
+  await page.setValue('.import .source', readFileSync(new URL('../docs/sample/sakura-week/sakura-week.txt', import.meta.url), 'utf8'))
+  await pause(1500)
+  await page.clickButton('Import', '.import-actions .button')
+  await pause(1500)
+  await page.clickButton('Preview ▶', '.button')
+  await page.waitFor('.viewport')
+  await pause(2500)
+  await page.clickButton('Map', '.viewport .quick-button')
+  await page.waitFor('.map-screen')
+  await pause(400)
+  await page.clickButton('Every path', '.switch-button')
+  await page.waitFor('.map-screen .node', 30000)
+  await pause(1500)
 }
 
 /**

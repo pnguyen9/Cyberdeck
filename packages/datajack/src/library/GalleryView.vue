@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PlayableStory, ProgressData } from '@cyberdeck/core'
 import { describeInput, StagePicture, useLocale, useMessages } from '@cyberdeck/stage'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { galleryMessages } from '../i18n/galleryMessages'
 
 /** The illustrations of a game this profile has seen, in any playthrough; the others stay locked. */
@@ -19,6 +19,20 @@ const tiles = computed(() => props.story.project.illustrations.map(illustration 
 const seenCount = computed(() => tiles.value.filter(tile => tile.isSeen).length)
 /** The illustration shown on the whole screen; Escape or a click goes back to the gallery. */
 const shown = ref<(typeof tiles.value)[number] | null>(null)
+
+/** The illustration shown takes the focus, and gives it back to its tile when it goes. */
+const shownDialog = useTemplateRef<HTMLElement>('shownDialog')
+let focusBeforeShown: HTMLElement | null = null
+watch(() => shown.value !== null, async isShown => {
+  if (isShown) {
+    focusBeforeShown = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    await nextTick()
+    shownDialog.value?.focus()
+  } else {
+    focusBeforeShown?.focus()
+    focusBeforeShown = null
+  }
+})
 
 function onKeydown(event: KeyboardEvent) {
   if (event.code === 'Escape') {
@@ -47,10 +61,10 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           <img v-if="tile.url !== null" :src="tile.url" alt="">
           <span v-else class="tile-name">{{ tile.name }}</span>
         </button>
-        <div v-else class="tile locked" :aria-label="text.notSeenYet">?</div>
+        <div v-else class="tile locked" role="img" :aria-label="text.notSeenYet">?</div>
       </li>
     </ul>
-    <div v-if="shown !== null" class="shown" role="dialog" :aria-label="shown.name" @click="shown = null">
+    <div v-if="shown !== null" ref="shownDialog" class="shown" role="dialog" :aria-label="shown.name" tabindex="-1" @click="shown = null">
       <StagePicture v-if="shown.url !== null" class="shown-picture" :url="shown.url" :alt="shown.name" />
       <span v-else class="tile-name">{{ shown.name }}</span>
     </div>
@@ -135,6 +149,11 @@ kbd {
   place-items: center;
   background: #000;
   cursor: pointer;
+}
+
+/* The whole screen is the dialog: a ring around it would only frame the picture. */
+.shown:focus {
+  outline: none;
 }
 
 .shown-picture {

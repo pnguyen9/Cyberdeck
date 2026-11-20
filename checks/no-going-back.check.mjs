@@ -44,7 +44,7 @@ export default async function check(page, { url, serve }) {
   await pause(500)
   page.check('the map records the choice, without playing from it', await mapPoint(page), [['Way', 'The story only goes forward here']])
   page.check('its point tells, hovered, what the journal showed then, a counter at 0 shown while not zero left out', await page.evaluate(`document.querySelector('.map-screen .node.point')?.title`), 'Steps: 3\nCoins: 2')
-  await page.clickButton('← Game', '.close-button')
+  await page.clickButton('← Game Esc', '.close-button')
   await page.waitFor('.viewport .text')
   await pause(800)
   for (let press = 0; press < 4 && !(await page.evaluate(`!!document.querySelector('.viewport .end-screen')`)); press++) {

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { StoredChoice } from '@cyberdeck/core'
-import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
+import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue'
 import { useMessages } from '../i18n/locale'
 import { playerMessages } from '../i18n/playerMessages'
+import { stepFocus } from '../useDialogFocus'
+import { useScrollEdges } from '../useScrollEdges'
 
 const props = defineProps<{
   choice: StoredChoice
@@ -42,16 +44,7 @@ const columnsBelow = computed(() => {
  * wheel scrolls it rather than going back or on, until it reaches an end.
  */
 const menu = useTemplateRef<HTMLElement>('menu')
-const moreAbove = ref(false)
-const moreBelow = ref(false)
-function measureScroll() {
-  const element = menu.value
-  if (element === null) {
-    return
-  }
-  moreAbove.value = element.scrollTop > 1
-  moreBelow.value = element.scrollTop + element.clientHeight < element.scrollHeight - 1
-}
+const { moreUp: moreAbove, moreDown: moreBelow, measure: measureScroll } = useScrollEdges(menu)
 function onWheel(event: WheelEvent) {
   if ((event.deltaY < 0 && moreAbove.value) || (event.deltaY > 0 && moreBelow.value)) {
     event.stopPropagation()
@@ -79,21 +72,10 @@ function onKeydown(event: KeyboardEvent) {
     return
   }
   event.preventDefault()
-  const focusedIndex = buttons.findIndex(button => button === document.activeElement)
-  const nextIndex = focusedIndex === -1 ? (step > 0 ? 0 : buttons.length - 1) : focusedIndex + step
-  const next = buttons[(nextIndex + buttons.length) % buttons.length]
-  next?.focus()
-  next?.scrollIntoView({ block: 'nearest' })
+  stepFocus(buttons, step, step > 0 ? 0 : buttons.length - 1, true)
 }
 
-/** A larger text, or a smaller window, may make the list overflow: it is measured again then. */
-const resizeObserver = new ResizeObserver(measureScroll)
-
 onMounted(() => {
-  void nextTick(measureScroll)
-  if (menu.value !== null) {
-    resizeObserver.observe(menu.value)
-  }
   armingTimer = setTimeout(() => {
     isArmed.value = true
   }, ARMING_DELAY_MILLISECONDS)
@@ -101,7 +83,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  resizeObserver.disconnect()
   clearTimeout(armingTimer)
   window.removeEventListener('keydown', onKeydown)
 })
@@ -148,8 +129,6 @@ onUnmounted(() => {
   gap: 28px;
   overflow-y: auto;
   padding: 12px 0;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(120 220 255 / 0.4) transparent;
 }
 
 .option {

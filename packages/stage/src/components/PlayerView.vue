@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, provide, ref, shallowRef, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, provide, ref, shallowRef, useTemplateRef, watch } from 'vue'
 import {
   actionForKey,
   actionForMouseButton,
@@ -101,7 +101,8 @@ const props = defineProps<{
   /** Whether the settings are this game's own rather than the profile's; left out, the choice is not offered. */
   hasOwnSettings?: boolean
 }>()
-const emit = defineEmits<{ leave: []; map: []; ownSettings: [isOwn: boolean] }>()
+/** `newGame`: the end screen asks for the game again from its start, as the library's *New game* starts it. */
+const emit = defineEmits<{ leave: []; map: []; newGame: []; ownSettings: [isOwn: boolean] }>()
 /** The player's choices: text speed, volumes, inputs. The application keeps them. */
 const settings = defineModel<PlayerSettings>('settings', { default: () => DEFAULT_PLAYER_SETTINGS })
 /** The application's language, which the Settings panel offers when the application gives it. */
@@ -359,6 +360,52 @@ const endingName = computed(() => {
   const step = snapshot.value.step
   return step.type === 'end' && step.endingId !== null ? props.story.project.endings.find(ending => ending.id === step.endingId)?.name ?? null : null
 })
+
+/**
+ * A new game always asks first: it replaces the autosave, where the player may want to come back to
+ * this end (or, the story to be continued, where its next chapters take it on).
+ */
+const isConfirmingNewGame = ref(false)
+const isToBeContinued = computed(() => {
+  const step = snapshot.value.step
+  return step.type === 'end' && step.endingId === null && missingChapters.value
+})
+/** A second click while the first waits for the writing starts no second game. */
+let isStartingNewGame = false
+const newGameButton = useTemplateRef<HTMLButtonElement>('newGameButton')
+const cancelNewGameButton = useTemplateRef<HTMLButtonElement>('cancelNewGameButton')
+
+/** Cancelled, the question goes and the focus is back on the New game button that asked it. */
+async function cancelNewGame() {
+  isConfirmingNewGame.value = false
+  await nextTick()
+  newGameButton.value?.focus()
+}
+watch(() => snapshot.value.step, () => { isConfirmingNewGame.value = false })
+
+/**
+ * Once what the profile keeps is written, and the last autosave, the application starts the game
+ * again, with no save, as from the library: its lasting values carry over as they always do.
+ */
+async function startNewGame() {
+  if (!isConfirmingNewGame.value) {
+    isConfirmingNewGame.value = true
+    // The question takes the focus on Cancel, which reads it out: the key that asked cannot also answer.
+    await nextTick()
+    cancelNewGameButton.value?.focus()
+    return
+  }
+  if (isStartingNewGame) {
+    return
+  }
+  isStartingNewGame = true
+  isConfirmingNewGame.value = false
+  await Promise.all([progressWriting, autosaving])
+  if (!isLeaving) {
+    emit('newGame')
+  }
+}
+
 /** The map, once a choice has been reached: before, it would have nothing to show. */
 /** The map, once a choice was reached; for an author testing the story, from the start, every path shown. */
 const isMapOffered = computed(() => props.canOpenMap === true && (progress.value.points.length > 0 || props.canInspect === true))
@@ -745,6 +792,17 @@ function preparePicturesAhead() {
   })
 }
 
+/**
+ * What the profile keeps is written one change after the other, and a new game waits for the last:
+ * it starts with the lasting values read back from there, the ending just reached included.
+ */
+let progressWriting: Promise<unknown> = Promise.resolve()
+function writeProgress(recorded: ProgressData) {
+  progressWriting = progressWriting
+    .then(() => props.saveStore.writeProgress(props.story.project.id, recorded))
+    .catch(() => false)
+}
+
 /** Notes the page read, the choice reached or the end, and where the option picked last led. */
 function recordProgress() {
   const step = runtime.snapshot.step
@@ -773,7 +831,7 @@ function recordProgress() {
   recorded = recordIllustrationSeen(recorded, runtime.snapshot.stage.illustrationId)
   if (recorded !== progress.value) {
     progress.value = recorded
-    void props.saveStore.writeProgress(props.story.project.id, recorded)
+    writeProgress(recorded)
   }
 }
 
@@ -1065,7 +1123,7 @@ function changeHeld(change: HeldChange) {
   }
   recorded = recordLasting(recorded, runtime.lastingValues)
   progress.value = recorded
-  void props.saveStore.writeProgress(props.story.project.id, recorded)
+  writeProgress(recorded)
 }
 
 /** Gives the name typed; nothing typed keeps the default. */
@@ -1135,7 +1193,7 @@ function choose(optionId: string) {
     pendingChoiceCount = runtime.snapshot.choices.length + 1
     if (pendingOption !== null) {
       progress.value = recordOptionPicked(progress.value, pendingOption)
-      void props.saveStore.writeProgress(props.story.project.id, progress.value)
+      writeProgress(progress.value)
     }
   }
   playForward(() => runtime.choose(optionId))
@@ -1209,6 +1267,12 @@ function onKeydown(event: KeyboardEvent) {
   }
   const action = actionForKey(bindings.value, event.code)
   if (action === null) {
+    return
+  }
+  // Escape while the end screen asks about a new game answers the question, and leaves nothing.
+  if (action === 'leave' && isConfirmingNewGame.value) {
+    event.preventDefault()
+    void cancelNewGame()
     return
   }
   // A panel takes the keyboard: Escape (or the log key for the log) closes it, its buttons do the rest.
@@ -1399,8 +1463,10 @@ onUnmounted(() => {
           <track v-if="playingVideo.captionsUrl !== null && settings.captions" kind="captions" :src="playingVideo.captionsUrl" :srclang="story.project.locale" default>
         </video>
       </div>
+      <!-- Kept while hidden under a panel: shown again, it leaves the focus where closing the panel put it. -->
       <FullScreenText
-        v-if="fullScreenPages !== null && fullScreenPages.length > 0 && isHudShown"
+        v-if="fullScreenPages !== null && fullScreenPages.length > 0"
+        v-show="isHudShown"
         :pages="fullScreenPages"
         :visible-length="page === null ? Number.POSITIVE_INFINITY : visibleLength"
         :is-complete="isTypingComplete"
@@ -1473,7 +1539,8 @@ onUnmounted(() => {
         <span id="asked-number-note" class="ask-note" :class="{ refused: !isTypedNumberTaken }" aria-live="polite">{{ typedNumberNote }}</span>
         <button class="ask-button" type="submit" :disabled="!isTypedNumberTaken">{{ text.confirmName }}</button>
       </form>
-      <div v-if="isHudShown" class="quick-menu" :class="{ low: fullScreenPages !== null }" :style="fullScreenPages === null ? { bottom: `${quickMenuBottom}px` } : undefined">
+      <!-- Kept while a panel is open, hidden, so that closing the panel gives the focus back to the button that opened it. -->
+      <div v-if="isHudShown || openPanel !== 'none'" v-show="isHudShown" class="quick-menu" :class="{ low: fullScreenPages !== null }" :style="fullScreenPages === null ? { bottom: `${quickMenuBottom}px` } : undefined">
         <button class="quick-button" :disabled="!canGoBackNow" @click.stop="fromMenu(goBack)">{{ text.back }}</button>
         <button class="quick-button" @click.stop="fromMenu(openLog)">{{ text.log }}</button>
         <button v-if="isJournalOffered" class="quick-button" @click.stop="fromMenu(() => { openPanel = 'journal' })">{{ text.journal }}</button>
@@ -1485,8 +1552,10 @@ onUnmounted(() => {
         <button v-if="isMapOffered" class="quick-button" @click.stop="fromMenu(() => emit('map'))">{{ text.map }}</button>
         <button class="quick-button" @click.stop="fromMenu(() => { openPanel = 'settings' })">{{ text.settings }}</button>
       </div>
+      <!-- Kept under the other panels: it takes the focus when the State button opens it, never as one of them closes. -->
       <StatePanel
-        v-if="canInspect && isStateShown && openPanel === 'none'"
+        v-if="canInspect && isStateShown"
+        v-show="openPanel === 'none'"
         :story="story"
         :snapshot="snapshot"
         :memory-ids="remembered.memoryIds"
@@ -1528,7 +1597,14 @@ onUnmounted(() => {
         <p v-if="errorMessage === null && story.project.endings.length > 0" class="endings-count">
           {{ storyText.endingsReached(endingsReached, endingsCounted) }}
         </p>
-        <div class="end-actions">
+        <p v-if="isConfirmingNewGame" id="end-confirm" class="end-confirm">{{ text.confirmNewGame(isToBeContinued) }}</p>
+        <div v-if="isConfirmingNewGame" class="end-actions">
+          <button class="end-button danger" @click="startNewGame">{{ text.newGame }}</button>
+          <button ref="cancelNewGameButton" class="end-button" aria-describedby="end-confirm" @click="cancelNewGame">{{ text.cancel }}</button>
+        </div>
+        <div v-else class="end-actions">
+          <!-- First in order: one Tab from the end screen reaches it; never focused at once, so that the keys reading the last page cannot start the game again. -->
+          <button v-if="errorMessage === null" ref="newGameButton" class="end-button" @click="startNewGame">{{ text.newGame }}</button>
           <button v-if="canGoBackNow" class="end-button" @click="goBack">{{ text.back }}</button>
           <button v-if="isMapOffered && errorMessage === null" class="end-button" @click="emit('map')">{{ text.map }}</button>
           <button class="end-button" @click="emit('leave')">← {{ leaveLabel }}</button>
@@ -1547,6 +1623,7 @@ onUnmounted(() => {
   background: #000;
   /* The game's own colours, whatever the look of the application around it: its controls stay dark. */
   color-scheme: dark;
+  --scrollbar-thumb: rgb(var(--stage-cyan));
 }
 
 /* Under full-screen text, the menu goes to the bottom edge. */
@@ -1823,6 +1900,12 @@ onUnmounted(() => {
   opacity: 0;
 }
 
+.end-confirm {
+  max-width: 1200px;
+  font: 32px/1.4 system-ui, sans-serif;
+  text-align: center;
+}
+
 .endings-count {
   font: 28px/1.3 system-ui, sans-serif;
   color: #a3acbb;
@@ -1845,6 +1928,13 @@ onUnmounted(() => {
 .end-button {
   padding: 16px 40px;
   font: 32px/1.2 system-ui, sans-serif;
+}
+
+/* Confirming a new game replaces the autosave: the button says so in a warning red. */
+.end-button.danger {
+  border-color: rgb(255 140 120 / 0.6);
+  background: #361512;
+  color: #ffb4a8;
 }
 
 .leave-button {

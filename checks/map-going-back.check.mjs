@@ -31,7 +31,7 @@ export default async function check(page, { url }) {
   }
   const mapNow = async () => [
     await page.evaluate(`[...document.querySelectorAll('.map-screen .node')].map(node => node.querySelector('h2')?.textContent).join(' / ')`),
-    await page.evaluate(`document.querySelectorAll('.map-screen .curves path').length`),
+    await page.evaluate(`document.querySelectorAll('.map-screen .curves path:not(.highlighted)').length`),
   ]
 
   await createProjectWithStory(page, url, 'Roads back', STORY)

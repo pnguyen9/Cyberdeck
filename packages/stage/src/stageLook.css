@@ -1,0 +1,13 @@
+/*
+ * The stage's own cyan, which its panels, plates and scrollbars are drawn in, as the red, green and
+ * blue of rgb(): `rgb(var(--stage-cyan))`, or with an alpha, `rgb(var(--stage-cyan) / 0.5)`.
+ */
+:root {
+  --stage-cyan: 120 220 255;
+}
+
+/* A panel's scrolling part, or one of its lines, holding the keyboard focus: a ring inside its edge. */
+.panel-focus:focus-visible {
+  outline: 2px solid rgb(var(--stage-cyan) / 0.5);
+  outline-offset: -2px;
+}

@@ -1,5 +1,53 @@
 # Changelog
 
+## 3.8.0 — 2026-11-20
+
+### Both applications
+- The end screen offers **New game**, first among its buttons: the story starts again from its
+  first page, lasting values carried over, as from the library. It is one Tab away (not focused on
+  arrival, so the key that read the last page cannot start a new game by accident), and always asks
+  first: the autosave it replaces is where players come back to the end, or where the next
+  chapters pick up a story to be continued. The question takes the focus on Cancel, which reads it
+  out; Escape or Cancel puts it away and gives the focus back to New game.
+- The player's panels take the keyboard focus as they open: the log on its list, where Space or
+  Enter goes back nowhere, the first ↑, Home or End entering its lines and ↑/↓, Page Up/Down and
+  Home/End moving from line to line, one Tab from Close; Save and Load on their first slot; the
+  journal, the settings and full-screen text scroll with the arrows at once. Keys used in a panel
+  stay the panel's, never acting on the story behind it, and Escape closes the state panel while it
+  has the focus. Closing a panel opened by keyboard gives the focus back to its button; after a
+  click, Space reads on as before.
+- The map turns like a book's pages: Ctrl+→ (⌘+→ on a Mac), or the › strip at its edge, brings the last column in
+  view to the left, so that every line can still be followed; Ctrl+← goes back, Ctrl+↑/↓ do the
+  same by rows, taking the focus to the first card of the new page. Home and End go to the map's
+  start and its last column.
+- The map works from the keyboard: it opens with the focus on the card reached last, the arrows go
+  from card to card, Tab goes through the card's buttons (its options' ▶ first), Enter plays from
+  the card, and Escape closes the map from anywhere on it, as its close button says.
+- For screen readers and the keyboard: full-screen text and the journal's entries have names; in
+  Datajack's gallery, a locked illustration reads as one, and the illustration shown takes the focus
+  and gives it back to its tile; in Cyberdeck, the question about unsaved changes focuses the first
+  button that can be pressed, and Escape keeps editing.
+- Scrollbars look the same everywhere: thin, tinted with the look's accent, stronger under the
+  pointer. The stage and the map keep a light one over their dark screens, whatever the look.
+
+### Datajack
+- The library keeps its top buttons and the profile line on the right. In French, when they do not
+  fit on one row, the profile line moves whole to a row of its own, rather than being left
+  stranded at the bottom left. A long profile name wraps within a phone's screen.
+
+### Knee-Deep
+- Every new game first asks how to play: **the adventure**, as before, or **sightseeing**, for
+  players who only want to see what the game holds: 2000 gold to spend, and the Rescue Gnomes
+  carry you home for free, as often as it takes (no stamp, no gold lost, no *Gnomes Have a Policy*
+  ending). Endings, trophies and blessings count as usual; a sightseeing game's gold does not carry
+  over to the next game, and a boss beaten at level 1 is only recorded in the adventure.
+- Barnaby's kitchen gains **the Champion's Feast**, 100 gold for three levels at once, once a
+  game. It is on the menu for heroes who once reached an ending, the bakery aside, in the
+  adventure without a single rescue.
+- Every cheese brought home now also earns a **discount at Grizelda's**, 10% a cheese up to 30%,
+  on everything she sells but the day's bargain and the humble hat. The Mayor mentions it, and
+  Grizelda says so when you come in.
+
 ## 3.7.1 — 2026-11-19
 
 ### Both applications

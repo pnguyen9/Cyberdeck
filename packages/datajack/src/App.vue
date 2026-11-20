@@ -123,7 +123,13 @@ function showGameSettings(gameId: string, gameName: string) {
   loadGameSettings(gameId, gameName)
   gameSettingsShown.value = true
 }
-const playing = shallowRef<{ story: PlayableStory; resumeFrom: SaveData | null; fromMap?: true } | null>(null)
+/** `newGame` counts the new games started from an end screen: each one plays in a fresh player, as from the library. */
+const playing = shallowRef<{ story: PlayableStory; resumeFrom: SaveData | null; fromMap?: true; newGame?: number } | null>(null)
+function startNewGame() {
+  if (playing.value !== null) {
+    playing.value = { story: playing.value.story, resumeFrom: null, newGame: (playing.value.newGame ?? 0) + 1 }
+  }
+}
 watch(playing, current => {
   if (current !== null) {
     loadGameSettings(current.story.project.id, current.story.project.name)
@@ -235,6 +241,7 @@ onMounted(async () => {
     <GalleryView v-else-if="galleryShown !== null" :story="galleryShown.story" :progress="galleryShown.progress" @close="galleryShown = null" />
     <PlayerView
       v-else-if="playing !== null"
+      :key="playing.newGame ?? 0"
       :story="playing.story"
       :save-store="saveStore"
       :settings="gameSettings"
@@ -248,6 +255,7 @@ onMounted(async () => {
       can-open-map
       @leave="playing = null"
       @map="showMap(playing.story, 'game')"
+      @new-game="startNewGame"
     />
     <LibraryView
       v-else

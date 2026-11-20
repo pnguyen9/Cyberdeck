@@ -1,27 +1,9 @@
 // The lines of the map, on Sakura Week's every path: where a point branches, each line says the option
 // it follows; and a line with a point in its way goes under it rather than through it.
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { createProject, pause } from './harness.mjs'
-
-const sample = join(dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'sample', 'sakura-week')
+import { openEveryPathMap, pause } from './harness.mjs'
 
 export default async function check(page, { url }) {
-  await createProject(page, url, 'Sakura Week')
-  await page.setValue('.import .source', readFileSync(join(sample, 'sakura-week.txt'), 'utf8'))
-  await pause(1500)
-  await page.clickButton('Import', '.import-actions .button')
-  await pause(1500)
-  await page.clickButton('Preview ▶', '.button')
-  await page.waitFor('.viewport')
-  await pause(2500)
-  await page.evaluate(`[...document.querySelectorAll('.viewport .quick-button')].find(button => button.textContent.trim() === 'Map').click()`)
-  await page.waitFor('.map-screen')
-  await pause(400)
-  await page.clickButton('Every path', '.switch-button')
-  await page.waitFor('.map-screen .node', 30000)
-  await pause(1500)
+  await openEveryPathMap(page, url)
   // The lines leaving Monday's job, each the option it follows, the long ones by their value.
   const labelsAfter = decision => page.evaluate(`(() => {
     const point = [...document.querySelectorAll('.map-screen .node')].find(node => node.querySelector('h2')?.textContent === ${JSON.stringify(decision)})

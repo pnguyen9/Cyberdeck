@@ -1,5 +1,6 @@
 // The Knee-Deep sample in docs/sample/knee-deep: its text imports without a problem and its files,
-// given as the zip they come in, each find their entry, its cover the game's; played, the hero is named,
+// given as the zip they come in, each find their entry, its cover the game's; played, it first asks
+// whether to play the adventure or go sightseeing, then the hero is named,
 // the town offers its three places, the journal the hero's to-hit and armour by readable names, the Delve
 // shows the hero's gauge and three doors with what lies behind them; then a player picking at random wanders it for a while, fighting, opening chests, meeting odd
 // folk, and never finds the game stuck or a value left unfilled; met, the Lost Property can be neither
@@ -45,6 +46,11 @@ export default async function check(page, { url }) {
   await page.clickButton('Preview ▶', '.button')
   await pause(300)
   await page.evaluate(`Math.random = window.__random`)
+  await untilOptions(page)
+  page.check('the game first asks how to play: the adventure or sightseeing', (await options(page)).map(option => option.split(':')[0]), ['The adventure', 'Sightseeing'])
+  await page.waitFor('.viewport .armed .option')
+  await pick(page, (await options(page))[0])
+  await pause(300)
   for (let press = 0; press < 20 && !await page.evaluate(`!!document.querySelector('.viewport .ask-input')`); press++) {
     await page.press(' ')
     await pause(200)

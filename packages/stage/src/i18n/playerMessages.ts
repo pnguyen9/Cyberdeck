@@ -9,6 +9,8 @@ const en = {
   state: 'State',
   journal: 'Journal',
   journalEmpty: 'Nothing yet.',
+  /** The name of full-screen text, for a screen reader reaching it with the focus. */
+  storyText: 'Story text',
   endingsReached: (reached: number, total: number) => `Endings reached: ${reached} of ${total}`,
   stateDecisions: 'Decisions',
   stateCounters: 'Counters',
@@ -20,6 +22,13 @@ const en = {
   stateNotGiven: (defaultName: string) => defaultName === '' ? 'not given yet' : `not given yet (${defaultName})`,
   close: 'Close',
   map: 'Map',
+  /** The end screen's way to play the game again from its start, as the library's *New game* does. */
+  newGame: 'New game',
+  /** Asked before every new game, which replaces the autosave; to be continued, the autosave is where the next chapters take the story on. */
+  confirmNewGame: (isToBeContinued: boolean): string => isToBeContinued
+    ? 'Start a new game? Your autosave, where the story goes on once its next chapters are installed, will be replaced; your saved slots are kept.'
+    : 'Start a new game? Your autosave, here at the end, will be replaced; your saved slots are kept.',
+  cancel: 'Cancel',
   settings: 'Settings',
   autosaveSlot: 'Autosave',
   slot: (slot: string) => `Slot ${slot}`,
@@ -59,6 +68,7 @@ const fr: PlayerMessages = {
   auto: 'Auto ▶',
   state: 'État',
   journal: 'Journal',
+  storyText: 'Texte de l’histoire',
   journalEmpty: 'Rien pour l’instant.',
   endingsReached: (reached, total) => `Fins atteintes\u00a0: ${reached} sur ${total}`,
   stateDecisions: 'Décisions',
@@ -71,6 +81,11 @@ const fr: PlayerMessages = {
   stateNotGiven: defaultName => defaultName === '' ? 'pas encore donné' : `pas encore donné (${defaultName})`,
   close: 'Fermer',
   map: 'Carte',
+  newGame: 'Nouvelle partie',
+  confirmNewGame: isToBeContinued => isToBeContinued
+    ? 'Commencer une nouvelle partie\u00a0? Votre sauvegarde automatique, d’où l’histoire reprendra une fois ses prochains chapitres installés, sera remplacée\u00a0; vos emplacements de sauvegarde sont conservés.'
+    : 'Commencer une nouvelle partie\u00a0? Votre sauvegarde automatique, ici à la fin, sera remplacée\u00a0; vos emplacements de sauvegarde sont conservés.',
+  cancel: 'Annuler',
   settings: 'Paramètres',
   autosaveSlot: 'Sauvegarde automatique',
   slot: slot => `Emplacement ${slot}`,

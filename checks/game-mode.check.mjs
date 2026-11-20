@@ -76,6 +76,6 @@ export default async function check(page, { url, serve }) {
   await page.waitFor('.map-screen')
   await pause(500)
   page.check('the map leaves the game out, from the choice before it to the one after', await page.evaluate(`[...document.querySelectorAll('.map-screen .node.point h2')].map(heading => heading.textContent)`), ['Start', 'End'])
-  page.check('linked', await page.evaluate(`document.querySelectorAll('.map-screen .curves path').length`), 2)
+  page.check('linked', await page.evaluate(`document.querySelectorAll('.map-screen .curves path:not(.highlighted)').length`), 2)
   await page.screenshot('map')
 }

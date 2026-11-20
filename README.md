@@ -187,6 +187,7 @@ a new notion gets its word here before it gets code.
 | Progress | What a profile reached in a game across playthroughs: choices, options taken, endings, pages read, memories, lasting values. | `ProgressData` |
 | Map | The routes a profile explored, each point a choice reached, from which to *Play from here*. | `ProgressMap`, `ProgressPoint` |
 | Line (map) | On the map, the way from an option taken to where it led, carrying that option where its point branches; it goes under a point in its way. | `MapEdge` |
+| Page (map) | What of the map fits in view. Turning a page brings its last column (or row) to the start, so every line can still be followed. | `MapView` |
 | Log | The pages and choices passed, a click going back to one. | `BacklogEntry` |
 | Journal | What the author shows players of what they hold, and the endings reached. | `Journal` |
 | Gallery | The illustrations a profile has seen. | |
@@ -1298,11 +1299,14 @@ imports each sample the normal way and compares every page's end.
   WANTED posters on the landings, each with a big move every third turn and its own trick. Once the
   dragon is beaten, a fourth poster offers the Deep Delve: tougher monsters and bigger rewards on
   every floor, and a sixth floor below the Hoard with an older, grumpier dragon and the seventh
-  ending. A humble hat that stops all experience, for those who want to win at level 1. The shop's
+  ending. A humble hat that stops all experience, for those who want to win at level 1. Every game
+  first asks how to play: the adventure, or sightseeing, for those who only want to see what the
+  game holds (2000 gold to spend, and free rescues, as often as it takes). The shop's
   curiosity shelf offers a new bargain after every trip, from nineteen, mostly cheap and silly. What
   carries over to the next playthrough, through `lasting` values and `[remember]`: one keepsake left
   in the tavern's cellar (picked from three shelves, with a way back between them), a bigger purse
-  for every cheese returned, half the gold left (a quarter after a game over or a game left unfinished), the bosses' rewards and the trophies on the tavern wall, the blessings
+  and a shop discount (10% a cheese, up to 30%) for every cheese returned, Barnaby's
+  Champion's Feast (three levels at once) once a game has ended without a single rescue, half the gold left (a quarter after a game over or a game left unfinished), the bosses' rewards and the trophies on the tavern wall, the blessings
   of four odd encounters (listed in the journal with what they give), what was won at level 1 and
   the Deep Delves cleared, and a town and a dragon that remember how the last game ended. Every number a counter, every monster's stats set by one scene
   (`[set: FoeName = The Gloop]`), the doors' hints decisions copied from one another
