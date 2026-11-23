@@ -36,7 +36,7 @@ const en = {
   playedBy: (names: string) => `played by ${names}`,
   scenePlayedBy: (names: string, count: number) => `${names} ${count === 1 ? 'plays' : 'play'} it: without it, those [play] tags would play nothing.`,
   sceneTextHelp: '· edit it, then import it: it replaces the scene of the same name.',
-  orStartWithout: 'or start without a text:',
+  orStartWithout: 'Or start without a text:',
   newChapter: 'New chapter',
   newScene: 'New scene',
 }
@@ -81,7 +81,7 @@ const fr: StoryLevelMessages = {
   playedBy: names => `jouée par ${names}`,
   scenePlayedBy: (names, count) => `${names} ${count <= 1 ? 'la joue' : 'la jouent'}\u00a0: sans elle, ces [play] ne joueraient plus rien.`,
   sceneTextHelp: '· modifiez-la, puis réimportez-la\u00a0: elle remplacera la scène du même nom.',
-  orStartWithout: 'ou commencez sans texte\u00a0:',
+  orStartWithout: 'Ou commencez sans texte\u00a0:',
   newChapter: 'Nouveau chapitre',
   newScene: 'Nouvelle scène',
 }

@@ -147,7 +147,7 @@ export const libraryMessages = { en, fr }
 /** What installing an archive did, in a sentence: a new game, chapters added or updated, or nothing. */
 export function describeInstall(outcome: InstallOutcome, text: LibraryMessages): string {
   const name = `${outcome.gameName} ${outcome.release}`
-  const list = (titles: string[]) => titles.join(', ')
+  const list = (titles: (string | null)[]) => titles.map(title => title ?? text.untitledChapter).join(', ')
   if (outcome.isNewGame) {
     return text.installed(name)
   }

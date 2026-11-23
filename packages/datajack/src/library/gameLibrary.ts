@@ -74,8 +74,9 @@ export interface InstallOutcome {
   gameName: string
   release: string
   isNewGame: boolean
-  addedChapters: string[]
-  updatedChapters: string[]
+  /** Titles of the chapters added and updated; null for a chapter without one. */
+  addedChapters: (string | null)[]
+  updatedChapters: (string | null)[]
   /** True when the archive is older than what was installed: it only added missing chapters. */
   wasOlder: boolean
 }
@@ -235,7 +236,7 @@ export class GameLibrary {
     }
 
     const wasInstalled = new Set(installed?.chapters.filter(chapter => chapter.included).map(chapter => chapter.id))
-    const titleOf = (chapterId: string) => manifest.chapters.find(chapter => chapter.id === chapterId)?.title ?? 'Untitled chapter'
+    const titleOf = (chapterId: string) => manifest.chapters.find(chapter => chapter.id === chapterId)?.title ?? null
     const written = manifest.chapters.map(chapter => chapter.id).filter(chapterId => chapterIdsToWrite.has(chapterId))
     return {
       gameName: manifest.project.name,
