@@ -6,7 +6,7 @@ import { libraryMessages } from './libraryMessages'
 import { profileMessages } from './profileMessages'
 
 /** Why an archive is refused, in French; English is the message of the error itself. */
-function frenchArchiveMessage(problem: ArchiveProblem): string {
+function frenchArchiveMessage(problem: Exclude<ArchiveProblem, { code: 'encryptedFile' }>): string {
   switch (problem.code) {
     case 'notZip':
       return 'Ce fichier n’est pas une archive ZIP'
@@ -20,8 +20,6 @@ function frenchArchiveMessage(problem: ArchiveProblem): string {
       return `${problem.path} dépasse la taille annoncée`
     case 'duplicateFile':
       return `L’archive contient deux fois ${problem.path}`
-    case 'encryptedFile':
-      return `${problem.path} est chiffré`
     case 'unknownCompression':
       return `${problem.path} utilise une méthode de compression que Datajack ne sait pas lire`
     case 'fileTooLarge':
@@ -47,11 +45,6 @@ function frenchArchiveMessage(problem: ArchiveProblem): string {
     case 'newerPlayer':
       return 'Ce jeu a été conçu pour une version plus récente de Datajack : téléchargez la dernière version'
   }
-}
-
-const archiveMessages: Readonly<Record<Locale, (error: ArchiveError) => string>> = {
-  en: error => error.message,
-  fr: error => frenchArchiveMessage(error.problem),
 }
 
 /**
@@ -95,7 +88,11 @@ function profileFileMessage(problem: ProfileFileProblem, locale: Locale): string
 /** An error as the player reads it: archives refused in their language, other errors by their message. */
 export function describeError(error: unknown, locale: Locale): string {
   if (error instanceof ArchiveError) {
-    return error.code === 'encryptedFile' ? lockedZipMessages[locale] : archiveMessages[locale](error)
+    const problem = error.problem
+    if (problem.code === 'encryptedFile') {
+      return lockedZipMessages[locale]
+    }
+    return locale === 'fr' ? frenchArchiveMessage(problem) : error.message
   }
   if (error instanceof ProfileFileError) {
     return profileFileMessage(error.problem, locale)

@@ -45,6 +45,10 @@ Once a version's features are all in (not between them), in this order:
    - bugs;
    - optimisation, meaning all of: efficiency, dead code, duplication, reuse of existing helpers;
    - usability and GUI, with a fresh eye.
+
+   Fix the findings by package, not by review: one worker for `core` and `stage`, one for
+   `cyberdeck`, one for `datajack` and `desktop`, so each owns its files and none carries every fix.
+   A finding spanning two groups goes to one worker. A small round of fixes can stay with one worker.
 4. Rerun the tests and checks after the review fixes.
 5. Documentation: README (and its Vocabulary), the guide (`npm run guide:images`), CHANGELOG.
 6. Reread every French string added or changed since the last tag:
