@@ -58,7 +58,7 @@ Cyberdeck saves everything as you go: there is no Save button to remember.
 > **Tip**
 >
 > Nothing to install: Cyberdeck runs in your browser at [pnguyen9.github.io/Cyberdeck/cyberdeck/](https://pnguyen9.github.io/Cyberdeck/cyberdeck/), always the latest version, and keeps working without a network once opened. To install it, opening in a window of its own: in Chrome or Edge, the install button at the end of the address bar, or **Install** in the browser's menu (on an iPad, Safari's **Share**, then **Add to Home Screen**). Firefox on a computer installs no web page. Install from an ordinary window: a private window forgets everything once closed. **About**, at the foot of the projects screen, gives the same help. When a new version is online, the projects screen offers to **Reload**. Your projects stay in that browser, on that computer, and a browser may erase what a site keeps (Safari does after about seven days without a visit, unless Cyberdeck is installed): press **Back up** in each project now and then, and keep the file. The desktop version keeps projects as folders instead.
-> The foot of the projects screen gives the version; **About** tells how Cyberdeck runs, its licence, and links to this guide and to the source code.
+> The foot of the projects screen gives the version; **About** tells how Cyberdeck runs, its licence, and links to this guide and to the source code. The desktop version carries its own copy of this guide, which opens in your browser even without an Internet connection.
 
 ## 2. Write or paste your story
 
@@ -72,7 +72,7 @@ A new project opens on the **Import** tab. Paste your text there, or press **Ope
 >
 > The samples below are built into both applications, with nothing to download. In Cyberdeck, the projects screen has **New project from a sample**: the sample opens as a new project of its own, text and files together, never replacing one you have (if a project has its name, you choose between **Open mine** and **Fresh copy**). In Datajack, the library has a **Samples** shelf: **Add to library** installs one, to play from its card like any game.
 
-The same games, to download, each a text and the zip of its pictures and sounds: paste or open the text in **Import**, then drop the zip in **Cast & files**.
+The same games to download, online and in their latest version, each a text and the zip of its pictures and sounds: paste or open the text in **Import**, then drop the zip in **Cast & files**.
 
 - **Sakura Week**, a week of school before a festival: [text](https://pnguyen9.github.io/Cyberdeck/sample/sakura-week/sakura-week.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/sakura-week/sakura-week-assets.zip).
 - **Knee-Deep**, a very small dwarf, a dragon and a stolen cheese, in a dungeon of random rooms: [text](https://pnguyen9.github.io/Cyberdeck/sample/knee-deep/knee-deep.txt), [files](https://pnguyen9.github.io/Cyberdeck/sample/knee-deep/knee-deep-assets.zip).
@@ -343,7 +343,7 @@ A picture can move by itself, too: an animated WebP, GIF or PNG plays as it is, 
 — Kai: Ow.
 ```
 
-`kai-falling.webp` plays the fall; `[wait]` lets it finish before Kai lies still and speaks. This example is in [examples/falling](examples/falling/falling.txt), its three pictures beside it: import the text, then drop the pictures in Cast & files. Prefer WebP to GIF for characters: a GIF's 256 colours and hard-edged transparency show around them. Players who ask for less motion see where the animation ends, at once.
+`kai-falling.webp` plays the fall; `[wait]` lets it finish before Kai lies still and speaks. This example is in [examples/falling](examples/falling/falling.txt), its three pictures beside it: import the text, then drop the pictures in Cast & files. The sample Knee-Deep does the same when its hero loses a fight, and makes the hero spring back up once carried home. Prefer WebP to GIF for characters: a GIF's 256 colours and hard-edged transparency show around them. Players who ask for less motion see where the animation ends, at once.
 
 For games, a **list** keeps values in numbered places: `[list: Board = 16 × none]`, `[set: Board 3 = cat]`, `{Board 3}`, `[shuffle: Board]`. And `[choice: Cell grid 4 × 4 from Board with tile]` shows a grid of picture buttons, one per place; the one picked gives `Cell` its number; with `, marking Flag`, a right click or F gives `Flag` its number instead, to mark a tile rather than open it. Players can change those in the settings, *Mark a tile of a game board*; on the board alone, they keep hiding the text and going full screen everywhere else. The Pairs and Minesweeper samples are made of these.
 

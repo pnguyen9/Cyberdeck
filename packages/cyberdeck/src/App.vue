@@ -101,7 +101,7 @@ const text = computed(() => appMessages[locale.value])
  * The version and how the page runs, for the projects screen; the service worker of the web build;
  * Cyberdeck's own look, never the preview's, which plays as Datajack shows it.
  */
-provideApp({ name: 'Cyberdeck', hasDesktopBridge: desktop !== undefined, keepSafe: { en: appMessages.en.keepSafe, fr: appMessages.fr.keepSafe } })
+provideApp({ name: 'Cyberdeck', hasDesktopBridge: desktop !== undefined, aboutLinks: 'project', keepSafe: { en: appMessages.en.keepSafe, fr: appMessages.fr.keepSafe } })
 
 /** The shortcuts open from anywhere but a field being typed in, and not over the preview, which has its own keys. */
 function onKeydown(event: KeyboardEvent) {

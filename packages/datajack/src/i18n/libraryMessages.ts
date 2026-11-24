@@ -11,7 +11,7 @@ const en = {
   /** Around the extensions of a game's file and a save's, shown as code. */
   dropHint: { beforeGame: 'or drop a game (', beforeSave: ' file) or a save (', after: ' file) anywhere on this page' },
   noGames: { before: 'No games yet. Add a game you downloaded (a ', after: ' file).' },
-  untitledChapter: 'Untitled chapter',
+  untitledChapters: (count: number) => count <= 1 ? 'an untitled chapter' : `${count} untitled chapters`,
   chapterCount: (count: number) => `${count} ${count === 1 ? 'chapter' : 'chapters'}`,
   someChapters: (installed: number, total: number, missing: readonly string[]) => `${installed} of ${total} chapters${missing.length === 0 ? '' : ` · not installed: ${missing.join(', ')}`}`,
   endingsReached: (reached: number, total: number) => `endings reached: ${reached} of ${total}`,
@@ -73,6 +73,11 @@ const en = {
 
 type LibraryMessages = typeof en
 
+/** « de » before a list of chapters, « d’ » before « un chapitre sans titre » (or a title beginning with « un »). */
+function ofFrench(titles: string): string {
+  return titles.startsWith('un ') ? `d’${titles}` : `de ${titles}`
+}
+
 const fr: LibraryMessages = {
   switchProfile: 'Changer de profil',
   settings: 'Paramètres',
@@ -82,7 +87,7 @@ const fr: LibraryMessages = {
   loadSave: 'Charger une sauvegarde ou une progression…',
   dropHint: { beforeGame: 'ou déposez sur cette page un jeu (fichier ', beforeSave: ') ou une sauvegarde (fichier ', after: ')' },
   noGames: { before: 'Aucun jeu pour l’instant. Ajoutez un jeu que vous avez téléchargé (fichier ', after: ').' },
-  untitledChapter: 'Chapitre sans titre',
+  untitledChapters: count => count <= 1 ? 'un chapitre sans titre' : `${count} chapitres sans titre`,
   chapterCount: count => `${count} ${count <= 1 ? 'chapitre' : 'chapitres'}`,
   someChapters: (installed, total, missing) => `${installed} ${installed <= 1 ? 'chapitre' : 'chapitres'} sur ${total}${missing.length === 0 ? '' : ` · ${missing.length <= 1 ? 'non installé' : 'non installés'} : ${missing.join(', ')}`}`,
   endingsReached: (reached, total) => `fins atteintes : ${reached} sur ${total}`,
@@ -125,8 +130,8 @@ const fr: LibraryMessages = {
   progressOfGameNotInstalled: (fileName, gameName) => `${fileName} contient la progression de ${gameName}, mais ce jeu n’est pas installé : ajoutez-le d’abord.`,
   gameNotInstalled: (fileName, gameName) => `${fileName} est une sauvegarde de ${gameName}, mais ce jeu n’est pas installé : ajoutez-le d’abord.`,
   installed: name => `Jeu installé : ${name}.`,
-  addedChapters: titles => `ajout de ${titles}`,
-  updatedChapters: titles => `mise à jour de ${titles}`,
+  addedChapters: titles => `ajout ${ofFrench(titles)}`,
+  updatedChapters: titles => `mise à jour ${ofFrench(titles)}`,
   changeSeparator: ' ; ',
   nothingNew: name => `${name} : rien de nouveau.`,
   changed: (name, changes) => `${name} : ${changes}.`,
@@ -147,7 +152,11 @@ export const libraryMessages = { en, fr }
 /** What installing an archive did, in a sentence: a new game, chapters added or updated, or nothing. */
 export function describeInstall(outcome: InstallOutcome, text: LibraryMessages): string {
   const name = `${outcome.gameName} ${outcome.release}`
-  const list = (titles: (string | null)[]) => titles.map(title => title ?? text.untitledChapter).join(', ')
+  const list = (titles: (string | null)[]) => {
+    const titled = titles.filter(title => title !== null)
+    const untitledCount = titles.length - titled.length
+    return [...titled, ...(untitledCount === 0 ? [] : [text.untitledChapters(untitledCount)])].join(', ')
+  }
   if (outcome.isNewGame) {
     return text.installed(name)
   }

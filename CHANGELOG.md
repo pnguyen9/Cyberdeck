@@ -1,6 +1,23 @@
 # Changelog
 
-## 3.9.0 — 2026-11-20
+## 3.10.0 — 2026-11-24
+
+### Cyberdeck
+- The desktop application carries the guide: its About panel opens that copy in the system's
+  browser, without an Internet connection. The guide's list of samples to download says it is
+  online, for the latest version.
+- An empty story level's "Or start without a text" begins with a capital, after a full stop.
+
+### Datajack
+- The About panel is for players: no links for authors, and, in the desktop application and the
+  files opened in a browser (neither updates itself), one link, *Download the latest Datajack*,
+  where a game asking for a newer Datajack sends them. Online or installed, it has no link.
+- Installing an update names untitled chapters in the player's language and counts them: "added
+  2 untitled chapters", « ajout de 2 chapitres sans titre ».
+
+### Samples
+- Knee-Deep's hero tips over on falling, to a boss too, and springs back up in the tavern
+  whichever way the rescue comes.
 
 ### Both applications
 - Save, Load and the map have keys: K, D and M, each closing what it opens, as L, J and O do. A

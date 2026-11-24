@@ -1,7 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain, net, protocol, session, shell, type IpcMainInvokeEvent } from 'electron'
+import { existsSync } from 'node:fs'
 import { isAbsolute, join, relative, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { isProjectLink } from './projectLinks.js'
+import { addressToOpen } from './projectLinks.js'
 
 /**
  * The desktop shell both applications share. The page runs sandboxed, without Node, served from a
@@ -33,6 +34,8 @@ export interface SecureAppOptions {
   pageFolder: string
   preloadPath: string
   backgroundColor: string
+  /** The guide's copy packaged with the application (`index.html` and its images), opened offline in place of the online guide when it is there. */
+  guideFolder?: string
   /** Called once the application is ready, when its paths are known. */
   start: (context: ChannelContext) => { channels: Record<string, ChannelHandler>; routes?: FileRoute[] }
 }
@@ -59,6 +62,8 @@ const CONTENT_SECURITY_POLICY = [
 
 export function startSecureApp(options: SecureAppOptions) {
   const pageOrigin = `${options.scheme}://app`
+  // A build run from the repository, not packaged, has no copy: the online guide opens.
+  const guideFolder = options.guideFolder !== undefined && existsSync(join(options.guideFolder, 'index.html')) ? options.guideFolder : null
   app.setName(options.name)
   app.enableSandbox()
   protocol.registerSchemesAsPrivileged([{ scheme: options.scheme, privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }])
@@ -78,9 +83,10 @@ export function startSecureApp(options: SecureAppOptions) {
     contents.on('will-navigate', event => event.preventDefault())
     contents.on('will-attach-webview', event => event.preventDefault())
     contents.setWindowOpenHandler(({ url }) => {
-      // The About panel's links open in the system's browser; no window opens in the application.
-      if (isProjectLink(url)) {
-        void shell.openExternal(url)
+      // A link to one of the project's pages opens in the system's browser, any other link nowhere; no window opens in the application.
+      const address = addressToOpen(url, guideFolder)
+      if (address !== null) {
+        void shell.openExternal(address)
       }
       return { action: 'deny' }
     })

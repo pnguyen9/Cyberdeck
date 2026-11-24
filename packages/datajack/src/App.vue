@@ -52,6 +52,7 @@ const text = computed(() => appMessages[locale.value])
 provideApp({
   name: 'Datajack',
   hasDesktopBridge: desktop !== undefined,
+  aboutLinks: 'downloads',
   keepSafe: { en: appMessages.en.keepSafe, fr: appMessages.fr.keepSafe },
   lookKeys: () => profile.value === null ? [DEVICE_LOOK_KEY] : [lookKey(profile.value.id), DEVICE_LOOK_KEY],
 })

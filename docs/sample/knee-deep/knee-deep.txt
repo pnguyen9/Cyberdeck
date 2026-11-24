@@ -1046,7 +1046,7 @@ Everything goes dark, and a little bit muddy.
 [sound: drink]
 [if: Mode is Sightseeing]
 [set: HP = {MaxHP}]
-[dwarf: hurt]
+[dwarf: rising]
 — Fizzwick: Rise and shine, tourist! Carried home free of charge, as your ticket says. Your lunch survived too: we carry tourists gently. We have a policy.
 [dwarf: normal]
 [else]
@@ -1059,9 +1059,12 @@ Everything goes dark, and a little bit muddy.
 [if: Bag is Golden parachute]
 [unset: Bag = Golden parachute]
 [set: HP = {MaxHP}]
+[dwarf: rising]
 — Fizzwick: A golden parachute! Rescue Gnomes Incorporated honours every golden parachute. No charge, no stamp. We have a policy. A nicer one, for once.
+[dwarf: normal]
 [else]
 [if: Stamps <= 0]
+[dwarf: rising]
 — Fizzwick: Ah. {Hero}. I see you've run out of stamps.
 [dwarf: scared]
 — Fizzwick: Rescue Gnomes Incorporated has a policy. I would love to help. The policy would not.
@@ -1074,7 +1077,7 @@ Everything goes dark, and a little bit muddy.
 [set: Gold = {Gold} * 0.5]
 [end]
 [set: HP = {MaxHP}]
-[dwarf: hurt]
+[dwarf: rising]
 — Fizzwick: Rise and shine! Rescue Gnomes Incorporated, at your service. Six of us carried you all the way up, which is a lot of stairs for a lot of gnomes.
 [if: Bag is Gnome whistle]
 — Fizzwick: You blew the whistle! So considerate. Only a quarter of your gold, then, and one stamp off your loyalty card. {Stamps} left.
@@ -1664,8 +1667,10 @@ You sit down on a heap of coins and ask her how she's been. Really been. You rol
 [end]
 [if: Result is Lost]
 [set: Outcome = Dead]
-[exit: foe]
-[dwarf: ko]
+[sound: faint]
+[dwarf: falling]
+Everything goes wobbly, then sideways, then dark.
+[exit: foe fade]
 [break]
 [end]
 [enter: ember 70%]
@@ -2282,7 +2287,7 @@ Gristle Goldgrin checks his pocket watch. "Nearly time for the quarterly review.
 [if: Result is Lost]
 [set: Outcome = Dead]
 [sound: faint]
-[dwarf: ko]
+[dwarf: falling]
 Everything goes wobbly, then sideways, then dark.
 [exit: foe fade]
 [else if: Result is Fled]
@@ -3338,8 +3343,10 @@ The Bucket can bring you back down to this floor whenever you feel braver.
 [play: Long overdue]
 [end]
 [set: Outcome = Dead]
-[exit: foe]
-[dwarf: ko]
+[sound: faint]
+[dwarf: falling]
+Everything goes wobbly, then sideways, then dark.
+[exit: foe fade]
 [break]
 [end]
 

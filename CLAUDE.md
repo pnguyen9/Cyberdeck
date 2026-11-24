@@ -40,13 +40,15 @@ Once a version's features are all in (not between them), in this order:
    new features.
 2. All web checks and desktop checks. They take about half an hour together: run them once, at the
    end, rather than after every small change; a targeted check is enough along the way.
-3. Three separate reviews of the whole diff since the previous tag, each one's findings fixed; one
-   does not stand in for another:
-   - bugs;
-   - optimisation, meaning all of: efficiency, dead code, duplication, reuse of existing helpers;
-   - usability and GUI, with a fresh eye.
+3. Two reviews of the whole diff since the previous tag, run in parallel:
+   - `/code-review high --max-findings all <previous tag>...HEAD`, without `--fix`: bugs,
+     optimisation (efficiency, dead code, duplication, reuse of existing helpers) and the
+     `CLAUDE.md` conventions. Its opening line must show cleanup angles (`3+5 angles`); a bugs-only
+     run needs a separate optimisation review. `/simplify` is not run on top: these cleanup angles
+     are its review;
+   - usability and GUI, with a fresh eye (an agent: `/code-review` does not cover it).
 
-   Fix the findings by package, not by review: one worker for `core` and `stage`, one for
+   Pool the findings of both, then fix them by package, not by review: one worker for `core` and `stage`, one for
    `cyberdeck`, one for `datajack` and `desktop`, so each owns its files and none carries every fix.
    A finding spanning two groups goes to one worker. A small round of fixes can stay with one worker.
 4. Rerun the tests and checks after the review fixes.

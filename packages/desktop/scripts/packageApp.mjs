@@ -1,18 +1,20 @@
 // Makes a folder that runs an application without installing anything: Electron's own runtime with
 // the application inside, as Electron loads one from `resources/app`. Run from the application's
 // package folder after its `build:desktop`:
-//   node ../desktop/scripts/packageApp.mjs <Product name> <executable name> [linux | win32 | darwin]
+//   node ../desktop/scripts/packageApp.mjs <Product name> <executable name> [linux | win32 | darwin] [--guide]
 // The system is this computer's unless named: the application is the same JavaScript everywhere, so
-// only Electron's runtime differs. The folder lands in the package's `release/`.
+// only Electron's runtime differs. With --guide, the guide goes in too (`resources/app/guide`), which
+// the About panel opens offline. The folder lands in the package's `release/`.
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 
-const [, , productName, executableName, platform = process.platform] = process.argv
+const withGuide = process.argv.includes('--guide')
+const [productName, executableName, platform = process.platform] = process.argv.slice(2).filter(argument => argument !== '--guide')
 if (productName === undefined || executableName === undefined || !['linux', 'win32', 'darwin'].includes(platform)) {
-  console.error('Usage: node ../desktop/scripts/packageApp.mjs <Product name> <executable name> [linux | win32 | darwin]')
+  console.error('Usage: node ../desktop/scripts/packageApp.mjs <Product name> <executable name> [linux | win32 | darwin] [--guide]')
   process.exit(1)
 }
 
@@ -48,6 +50,11 @@ const appFolder = join(resourcesFolder, 'app')
 mkdirSync(appFolder, { recursive: true })
 cpSync(join(packageFolder, 'dist'), join(appFolder, 'dist'), { recursive: true })
 cpSync(join(packageFolder, 'dist-electron'), join(appFolder, 'dist-electron'), { recursive: true })
+if (withGuide) {
+  // The page and its images; its Markdown copy is for reading on GitHub.
+  const guideFolder = join(packageFolder, '..', '..', 'docs', 'guide')
+  cpSync(guideFolder, join(appFolder, 'guide'), { recursive: true, filter: source => source !== join(guideFolder, 'guide.md') })
+}
 writeFileSync(join(appFolder, 'package.json'), `${JSON.stringify({ name: executableName, productName, version, type: 'module', main: 'dist-electron/main.js' }, null, 2)}\n`)
 
 const executables = { linux: ['electron', executableName], win32: ['electron.exe', `${productName}.exe`], darwin: ['Electron.app', `${productName}.app`] }

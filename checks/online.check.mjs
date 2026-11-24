@@ -124,6 +124,12 @@ export default async function check(page, { url }) {
     await createProfile(page, `${siteUrl}datajack/`, 'Pascal')
     await page.watchViolations()
     page.check('Datajack opens under its folder, its library with its version', await page.evaluate(`document.querySelector('.library .about-app .version')?.textContent`), `Datajack ${version}`)
+    await page.clickButton('About', '.about-button')
+    await pause(300)
+    page.check('its About panel, for players, links to nothing on the web, where it updates itself', await page.evaluate(`[document.querySelectorAll('.about-panel a').length, [...document.querySelectorAll('.about-panel p')].at(-1)?.textContent]`),
+      [0, 'Public domain, under the Unlicense. Anyone can use it, change it and share it, for any purpose.'])
+    await page.press('Escape')
+    await pause(200)
     page.check('saying to export the profile to a file', (await page.evaluate(`document.querySelector('.may-erase')?.textContent`))?.endsWith('Export your profile now and then (Export to a file, on the profiles screen): one file keeps your games, saves and progress.'), true)
     page.check('its service worker is its own', await page.waitUntil(`navigator.serviceWorker.getRegistration().then(registration => registration?.active !== null && new URL(registration.scope).pathname === '/Cyberdeck/datajack/')`), true)
     page.check('each application keeps its files in its own cache', await page.evaluate(`caches.keys().then(names => names.map(name => name.replace(/-[0-9a-f]{12}$/, '')).sort())`), [`cyberdeck-${version}`, `datajack-${version}`])

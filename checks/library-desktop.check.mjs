@@ -17,6 +17,16 @@ export default async function check(page, { home, output, assets, serve }) {
   await pause(800)
   const profileId = JSON.parse(readFileSync(`${home}/.config/Datajack/profiles.json`, 'utf8')).profiles[0].id
   const gamesFolder = `${libraryFolder}/profiles/${profileId}/games`
+  await page.clickButton('About', '.about-button')
+  await pause(300)
+  page.check('its About panel links to the latest Datajack to download, and to nothing else', await page.evaluate(`[...document.querySelectorAll('.about-panel a')].map(link => link.textContent + ' ' + link.href)`),
+    ['Download the latest Datajack(new tab) https://github.com/pnguyen9/Cyberdeck/releases/latest'])
+  page.check('Close keeps the gap it has below Cyberdeck’s links', await page.evaluate(`(() => {
+    const close = document.querySelector('.about-panel .close')
+    return Math.round(close.getBoundingClientRect().top - close.previousElementSibling.getBoundingClientRect().bottom)
+  })()`), 16)
+  await page.clickButton('Close', '.about-panel .close')
+  await pause(200)
   await installGame(page, archive)
   page.check('installing reports the game', await page.statusText(), 'The Letter 1.0 installed.')
   page.check('the cover is served from the installed files', await page.evaluate(`(() => { const image = document.querySelector('.cover img'); return image !== null && image.src.startsWith('datajack://app/installed-assets/') && image.naturalWidth > 0 })()`), true)

@@ -16,6 +16,13 @@ describe('install reports', () => {
     expect(describeInstall(outcome, libraryMessages.fr)).toBe('The Letter 1.1 : ajout de Three, Four ; mise à jour de One.')
   })
 
+  it('count the untitled chapters after those named by their titles', () => {
+    expect(describeInstall({ ...OUTCOME, addedChapters: [null, 'Three'] }, libraryMessages.en)).toBe('The Letter 1.1: added Three, an untitled chapter.')
+    expect(describeInstall({ ...OUTCOME, addedChapters: [null, 'Three', null], updatedChapters: [null] }, libraryMessages.en)).toBe('The Letter 1.1: added Three, 2 untitled chapters; updated an untitled chapter.')
+    expect(describeInstall({ ...OUTCOME, addedChapters: [null, 'Three'] }, libraryMessages.fr)).toBe('The Letter 1.1\u00a0: ajout de Three, un chapitre sans titre.')
+    expect(describeInstall({ ...OUTCOME, addedChapters: [null, 'Three', null], updatedChapters: [null] }, libraryMessages.fr)).toBe('The Letter 1.1\u00a0: ajout de Three, 2 chapitres sans titre\u00a0; mise à jour d’un chapitre sans titre.')
+  })
+
   it('say when nothing is new, or the archive is older than the game installed', () => {
     expect(describeInstall(OUTCOME, libraryMessages.en)).toBe('The Letter 1.1: nothing new.')
     expect(describeInstall({ ...OUTCOME, wasOlder: true }, libraryMessages.en)).toBe('This archive of The Letter is older than 1.1, installed already: nothing to add.')

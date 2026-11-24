@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, ref, useTemplateRef } from 'vue'
-import { GUIDE_ADDRESS, LICENSE_ADDRESS, REPOSITORY_ADDRESS, useAboutApp } from '../app/aboutApp'
+import { DOWNLOADS_ADDRESS, GUIDE_ADDRESS, LICENSE_ADDRESS, REPOSITORY_ADDRESS, useAboutApp } from '../app/aboutApp'
 import { useBackdropClose } from '../app/backdropClose'
 import { isHosted } from '../app/howItRuns'
 import { aboutMessages } from '../i18n/aboutMessages'
@@ -60,14 +60,22 @@ function onClose() {
         </ul>
         <p>{{ text.install.note }}</p>
       </div>
-      <p>
-        {{ text.license }}<a :href="LICENSE_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.unlicense }}<span class="new-tab">{{ text.newTab }}</span></a>{{ text.licenseAfter }}
-      </p>
-      <ul class="links">
-        <li><a :href="GUIDE_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.guide }}<span class="new-tab">{{ text.newTab }}</span></a></li>
-        <li><a :href="REPOSITORY_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.repository }}<span class="new-tab">{{ text.newTab }}</span></a></li>
-      </ul>
-      <button class="button" type="button" @click="dialog?.close()">{{ text.close }}</button>
+      <template v-if="about.aboutLinks === 'project'">
+        <p>
+          {{ text.license }}<a :href="LICENSE_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.unlicense }}<span class="new-tab">{{ text.newTab }}</span></a>{{ text.licenseAfter }}
+        </p>
+        <ul class="links">
+          <li><a :href="GUIDE_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.guide }}<span class="new-tab">{{ text.newTab }}</span></a></li>
+          <li><a :href="REPOSITORY_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.repository }}<span class="new-tab">{{ text.newTab }}</span></a></li>
+        </ul>
+      </template>
+      <template v-else>
+        <p>{{ text.license }}{{ text.unlicense }}{{ text.licenseAfter }}</p>
+        <p v-if="about.aboutLinks === 'downloads'">
+          <a :href="DOWNLOADS_ADDRESS" target="_blank" rel="noopener noreferrer">{{ text.downloadLatest(about.name) }}<span class="new-tab">{{ text.newTab }}</span></a>
+        </p>
+      </template>
+      <button class="button close" type="button" @click="dialog?.close()">{{ text.close }}</button>
     </dialog>
   </footer>
 </template>
@@ -179,7 +187,12 @@ function onClose() {
 }
 
 .links {
-  margin: 0 0 16px;
+  margin: 0 0 10px;
   padding-left: 20px;
+}
+
+/* Below the last paragraph or the links alike. */
+.close {
+  margin-top: 6px;
 }
 </style>

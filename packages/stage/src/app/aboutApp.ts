@@ -5,12 +5,26 @@ import { provideAppLook } from '../look/appLookState'
 import { howThisPageRuns, isHosted, type HowItRuns } from './howItRuns'
 import { keepOffline, SERVICE_WORKER } from './offline'
 
-export { GUIDE_ADDRESS, LICENSE_ADDRESS, REPOSITORY_ADDRESS } from './projectAddresses'
+export { DOWNLOADS_ADDRESS, GUIDE_ADDRESS, LICENSE_ADDRESS, REPOSITORY_ADDRESS } from './projectAddresses'
+
+/**
+ * What the About panel links to: `project`, the licence, the guide and the repository, for authors;
+ * `downloads`, the latest version to download, for players of a build that does not update itself;
+ * `none`, nothing.
+ */
+export type AboutLinks = 'project' | 'downloads' | 'none'
+
+/** The links shown, for how the page runs: a web build online or installed updates itself, so only the desktop build and the files opened in a browser link to the downloads. */
+export function aboutLinksOf(links: AboutLinks, how: HowItRuns): AboutLinks {
+  return links === 'downloads' && how !== 'desktop' && how !== 'files' ? 'none' : links
+}
 
 export interface AppOptions {
   /** `Cyberdeck` or `Datajack`. */
   name: string
   hasDesktopBridge: boolean
+  /** What the About panel links to: Cyberdeck, the project; Datajack, the downloads (on the desktop and from files only); a build sold in a store, `none`. */
+  aboutLinks: AboutLinks
   /** What keeps the work safe should the browser erase it, in each language: exporting it. */
   keepSafe: Readonly<Record<Locale, string>>
   /** Where its look is kept, the first holding one read (Datajack: the profile's, then the device's); `<name>:look` without. */
@@ -22,6 +36,8 @@ export interface AboutApp {
   name: string
   version: string
   howItRuns: HowItRuns
+  /** What the About panel links to, for how the page runs. */
+  aboutLinks: AboutLinks
   keepSafe: Readonly<Record<Locale, string>>
   /** Reloads into the new version waiting; null while there is none. */
   newVersion: Readonly<Ref<(() => void) | null>>
@@ -63,7 +79,7 @@ export function provideApp(options: AppOptions): AboutApp {
       // A browser refusing service workers (private windows, some settings) still runs the page, online.
     })
   }
-  const about: AboutApp = { name: options.name, version: __APP_VERSION__, howItRuns: how, keepSafe: options.keepSafe, newVersion, isNewVersionPutOff: ref(false), checkNewVersion: () => checkNewVersion() }
+  const about: AboutApp = { name: options.name, version: __APP_VERSION__, howItRuns: how, aboutLinks: aboutLinksOf(options.aboutLinks, how), keepSafe: options.keepSafe, newVersion, isNewVersionPutOff: ref(false), checkNewVersion: () => checkNewVersion() }
   provide(ABOUT_APP, about)
   provideAppLook(() => window.localStorage, options.lookKeys ?? `${options.name.toLowerCase()}:look`)
   return about

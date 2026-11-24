@@ -17,6 +17,7 @@ startSecureApp({
   pageFolder: fileURLToPath(new URL('../dist/', import.meta.url)),
   preloadPath: fileURLToPath(new URL('./preload.cjs', import.meta.url)),
   backgroundColor: '#0b0d12',
+  guideFolder: fileURLToPath(new URL('../guide/', import.meta.url)),
   start: context => {
     const projectFolders = new ProjectFolders({
       settingsFolder: app.getPath('userData'),

@@ -1,10 +1,15 @@
-"""Makes the pictures and sounds of Knee-Deep, from code alone: python3 knee_deep_assets.py <folder> [--png name…].
+"""Makes the pictures and sounds of Knee-Deep, from code alone:
+python3 knee_deep_assets.py <folder> [--no-sounds] [--no-animations] [--png name…].
 
 The style is the glossy, rounded mascot look of 2000s desktop software: soft gradients, a white shine on
 every round thing, chubby shapes facing the viewer, dark outlines only where shapes meet. Pictures are
 written as SVG, which the stage draws sharp at any size; --png also renders the named ones through
-Chromium, to look at them.
+Chromium, to look at them. The dwarf's falling and rising are animated WebPs, their frames drawn as SVG
+and rendered through Chromium too, which needs Pillow; --no-animations leaves them out, for a run
+without either.
 """
+import base64
+import math
 import shutil
 import subprocess
 import sys
@@ -20,6 +25,7 @@ INK = '#2a2230'
 SPRITE_W = 600
 FEET_Y = 860
 SPACE_BELOW = 360
+SPRITE_H = FEET_Y + 30 + SPACE_BELOW
 
 
 # ------------------------------------------------------------------------------------- helpers
@@ -56,7 +62,7 @@ def picture(width, height, body, defs):
 
 
 def sprite(body, defs, width=SPRITE_W):
-    return picture(width, FEET_Y + 30 + SPACE_BELOW, body, defs)
+    return picture(width, SPRITE_H, body, defs)
 
 
 def shadow(cx=300, rx=190):
@@ -119,15 +125,26 @@ def potion_bottle(x, y, color='#ff4f7a', scale=1.0):
 
 
 def dwarf(pose):
-    d = Defs()
-    tunic = d.radial('tunic', '#6fb3ff', '#1f4f9a')
-    skin = d.radial('skin', '#ffe2c6', '#e59a6e', 0.4, 0.35)
-    beard = d.radial('beard', '#ffb35a', '#b8471d', 0.4, 0.25, 0.85)
-    helm = d.radial('helm', '#ffffff', '#6d7889', 0.35, 0.25, 0.9)
-    boot = d.radial('boot', '#a8754a', '#4b2c18', 0.35, 0.3)
-    nose = d.radial('nose', '#ffb0a0', '#d9534f', 0.35, 0.3)
-    gold = d.radial('gold', '#fff6b0', '#d49a12', 0.35, 0.3)
-    hand = d.radial('hand', '#ffe2c6', '#e59a6e', 0.35, 0.3)
+    if pose == 'ko':
+        # Flat on his back, boots up: the whole dwarf tipped over, stars circling.
+        return tipped_dwarf('ko', 90, 1)
+    if pose == 'hurt':
+        return tipped_dwarf('hurt', 6, 0)
+    gradients, figure, stars = dwarf_parts(pose)
+    return sprite(scaled(shadow() + figure + stars, DWARF_SCALE), gradients)
+
+
+def dwarf_parts(pose):
+    """The dwarf standing upright in a pose, and the stars circling his head when hurt: its gradients, figure and stars."""
+    gradients = Defs()
+    tunic = gradients.radial('tunic', '#6fb3ff', '#1f4f9a')
+    skin = gradients.radial('skin', '#ffe2c6', '#e59a6e', 0.4, 0.35)
+    beard = gradients.radial('beard', '#ffb35a', '#b8471d', 0.4, 0.25, 0.85)
+    helm = gradients.radial('helm', '#ffffff', '#6d7889', 0.35, 0.25, 0.9)
+    boot = gradients.radial('boot', '#a8754a', '#4b2c18', 0.35, 0.3)
+    nose = gradients.radial('nose', '#ffb0a0', '#d9534f', 0.35, 0.3)
+    gold = gradients.radial('gold', '#fff6b0', '#d49a12', 0.35, 0.3)
+    hand = gradients.radial('hand', '#ffe2c6', '#e59a6e', 0.35, 0.3)
 
     body_y = 640
     parts = []
@@ -148,10 +165,10 @@ def dwarf(pose):
     hands = lambda x, y: f'<circle cx="{x}" cy="{y}" r="34" fill="{hand}" stroke="{INK}" stroke-width="5"/>' + shine(x - 10, y - 12, 9, 6, -20, 0.7)
     sleeve = lambda x1, y1, x2, y2: f'<path d="M{x1} {y1} L{x2} {y2}" stroke="{INK}" stroke-width="66" stroke-linecap="round"/><path d="M{x1} {y1} L{x2} {y2}" stroke="#2c66b8" stroke-width="56" stroke-linecap="round"/>'
     if pose == 'normal':
-        arms_back.append(axe(d, 486, 650, 8))
+        arms_back.append(axe(gradients, 486, 650, 8))
         arms_front += [sleeve(150, 560, 110, 700), hands(108, 712), sleeve(450, 560, 495, 650), hands(500, 655)]
     elif pose == 'attack':
-        arms_back.append(axe(d, 450, 430, 12, 1.1))
+        arms_back.append(axe(gradients, 450, 430, 12, 1.1))
         arms_front += [sleeve(150, 560, 100, 640), hands(96, 650), sleeve(450, 560, 452, 440), hands(452, 430)]
     elif pose == 'hurt':
         arms_front += [sleeve(150, 560, 80, 470), hands(74, 456), sleeve(450, 560, 520, 470), hands(526, 456)]
@@ -204,13 +221,42 @@ def dwarf(pose):
 
     figure = (''.join(arms_back) + ''.join(parts) + ears + face + beard_shape + beard_lines + moustache + mouth
               + nose_part + eyes + helmet + ''.join(arms_front) + sweat)
-    if pose == 'ko':
-        # Flat on his back, boots up: the whole dwarf tipped over, stars circling.
-        figure = f'<g transform="translate(300 {FEET_Y - 120}) scale(0.68) rotate(-90) translate(-300 -560)">{figure}</g>'
-        return sprite(scaled(shadow(300, 260) + figure + stars, DWARF_SCALE), d)
-    if pose == 'hurt':
-        figure = f'<g transform="rotate(-6 300 {FEET_Y})">{figure}</g>'
-    return sprite(scaled(shadow() + figure + stars, DWARF_SCALE), d)
+    return gradients, figure, stars
+
+
+def tipped_dwarf(pose, angle, slide, lift=0):
+    """
+    The dwarf turned backwards by `angle` degrees about the middle of his feet, which slide forwards as
+    he goes over (`slide` from 0, standing, to 1, lying), and lifted `lift` above the ground: at 6, 0
+    the hurt pose, leaning; at 90, 1 the ko pose, lying. The pose's stars are not turned with him: they
+    keep their place on every frame of an animation.
+    """
+    gradients, figure, stars = dwarf_parts(pose)
+    # The ko pose's transform, written about the feet: lying, they are 204 further right and 120 higher.
+    transform = (f'translate({204 * slide:.1f} {-120 * slide - lift:.1f}) translate(300 {FEET_Y}) '
+                 f'scale({1 - 0.32 * slide:.4f}) rotate({-angle:.2f}) translate(-300 {-FEET_Y})')
+    ground = shadow(300, 190 + 70 * slide)
+    return sprite(scaled(ground + f'<g transform="{transform}">{figure}</g>' + stars, DWARF_SCALE), gradients)
+
+
+def dwarf_animations():
+    """
+    The dwarf's animated pictures, each a list of (SVG, milliseconds) frames played once: falling over
+    from the hurt pose to the ko pose, faster and faster, with a bounce; and springing back up from ko
+    in one hop, landing in the hurt pose, dizzy. Each stops on its last frame, the ko or hurt picture.
+    """
+    falling = [(dwarf('hurt'), 250)]
+    for step in range(1, 8):
+        share = math.sin(step / 8 * math.pi / 2) ** 2
+        falling.append((tipped_dwarf('hurt', 6 + 84 * share, share), 45))
+    falling += [(tipped_dwarf('ko', 90, 1, lift=40), 70), (tipped_dwarf('ko', 90, 1, lift=12), 60),
+                (dwarf('ko'), 1000)]
+    rising = [(dwarf('ko'), 450), (tipped_dwarf('ko', 90, 1, lift=-8), 90)]
+    for step in range(1, 9):
+        share = 1 - (1 - step / 9) ** 2
+        rising.append((tipped_dwarf('hurt', 90 - 84 * share, 1 - share, lift=170 * math.sin(math.pi * step / 9)), 45))
+    rising += [(tipped_dwarf('hurt', 6, 0, lift=-6), 80), (dwarf('hurt'), 1000)]
+    return {'dwarf-falling': falling, 'dwarf-rising': rising}
 
 
 # Every sprite shares one height, so that sizes compare on stage: the dwarf is drawn small in his.
@@ -1256,7 +1302,7 @@ def embed(svg, x, y, height, prefix, flip=False):
 
 def feet_at(svg_height_px, ground_y):
     """The top at which a sprite drawn this tall stands with its feet on ground_y."""
-    return ground_y - svg_height_px * FEET_Y / (FEET_Y + 30 + SPACE_BELOW)
+    return ground_y - svg_height_px * FEET_Y / SPRITE_H
 
 
 def stand(svg, x, ground, height, prefix, flip=False):
@@ -1502,6 +1548,37 @@ def render(svg_text, path, width, height):
         shutil.move(shot, path)
 
 
+def write_animation(folder, name, frames):
+    """
+    An animated WebP played once, from (SVG, milliseconds) frames. The frames are rendered side by side
+    in one picture, for a single start of Chromium, each as an image of its own so that the names of
+    their gradients cannot clash, then cut apart.
+    """
+    from PIL import Image
+    strip_width = SPRITE_W * len(frames)
+    strip = ''.join(f'<image x="{SPRITE_W * index}" y="0" width="{SPRITE_W}" height="{SPRITE_H}" '
+                    f'href="data:image/svg+xml;base64,{base64.b64encode(svg.encode()).decode()}"/>'
+                    for index, (svg, _) in enumerate(frames))
+    with tempfile.TemporaryDirectory() as work:
+        shot = Path(work) / 'frames.png'
+        render(picture(strip_width, SPRITE_H, strip, Defs()), shot, strip_width, SPRITE_H)
+        with Image.open(shot) as rendered:
+            whole = rendered.convert('RGBA')
+    images = [whole.crop((SPRITE_W * index, 0, SPRITE_W * (index + 1), SPRITE_H)) for index in range(len(frames))]
+    images[0].save(folder / f'{name}.webp', save_all=True, append_images=images[1:], duration=[time for _, time in frames],
+                   loop=1, quality=80, method=6, minimize_size=True)
+
+
+def missing_for_animations():
+    """What the animated pictures need and this machine lacks, in words; empty when nothing is missing."""
+    missing = [] if CHROMIUM is not None else ['Chromium']
+    try:
+        import PIL  # noqa: F401
+    except ImportError:
+        missing.append('Pillow')
+    return missing
+
+
 def pictures():
     """Every picture of the game, by file name (without .svg)."""
     out = {}
@@ -1533,6 +1610,10 @@ CAST = {
 
 
 def main(arguments):
+    if '--no-animations' not in arguments:
+        missing = missing_for_animations()
+        if missing:
+            sys.exit(f'The animated pictures need {" and ".join(missing)}: install {"them" if len(missing) > 1 else "it"}, or run with --no-animations.')
     folder = Path(arguments[0])
     folder.mkdir(parents=True, exist_ok=True)
     png = arguments[arguments.index('--png') + 1:] if '--png' in arguments else []
@@ -1544,6 +1625,9 @@ def main(arguments):
             width = int(svg.split('width="')[1].split('"')[0])
             height = int(svg.split('height="')[1].split('"')[0])
             render(svg, folder / f'{name}.png', width, height)
+    if '--no-animations' not in arguments:
+        for name, frames in dwarf_animations().items():
+            write_animation(folder, name, frames)
 
 
 if __name__ == '__main__':

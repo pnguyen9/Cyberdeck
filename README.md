@@ -7,7 +7,8 @@ text editor), import it, and get pages ready to play, without cutting dialogue b
 - **Datajack**: the player, which plays a published story in a browser or as a desktop app.
 
 Authors start with the illustrated guide: the basics of the interface first, then each feature.
-Open [docs/guide/index.html](docs/guide/index.html) in a browser, or read
+Read it online at <https://pnguyen9.github.io/Cyberdeck/guide/> (the latest version), or in this
+repository: open [docs/guide/index.html](docs/guide/index.html) in a browser, or read
 [docs/guide/guide.md](docs/guide/guide.md), the same guide as Markdown, where HTML is not shown as a
 page (on GitHub, in an editor). This README is the complete reference.
 
@@ -90,7 +91,7 @@ a new notion gets its word here before it gets code.
 | Installed | A web build installed from the browser (a progressive web app), in a window of its own. | `'installed'`, `manifest.webmanifest` |
 | Kept offline | A web build's files kept on the device by its service worker, so that it opens without a network. | `serviceWorker.js`, `keepOffline` |
 | New version | A version online newer than the one kept offline: the first screen offers to reload into it. | `AboutApp` |
-| About panel | The application's version, licence, links and how it runs, opened from the foot of the first screen. | `AboutApp` |
+| About panel | The application's version, how it runs and its licence, opened from the foot of the first screen. Cyberdeck's links to the licence, the guide and the repository; Datajack's, to the latest Datajack to download, on the desktop and from files; online or installed, to nothing, as it updates itself. | `AboutApp`, `aboutLinksOf` |
 
 **The story as written**
 
@@ -415,7 +416,10 @@ so a Windows folder only takes Electron's Windows runtime, downloaded once into
 `node_modules/.cache/electron` and checked against the SHA-256 the electron package lists
 (`unzip` must be installed on Linux or macOS). The applications are not signed: Windows asks
 to confirm (*More info → Run anyway*), macOS too (right-click → *Open*). From VS Code's terminal,
-start them as `ELECTRON_RUN_AS_NODE= ./cyberdeck` (see Development).
+start them as `ELECTRON_RUN_AS_NODE= ./cyberdeck` (see Development). Cyberdeck's folder also
+holds a copy of the guide (`resources/app/guide`; on macOS, `Cyberdeck.app/Contents/Resources/app/guide`), which its About panel opens in the system's
+browser, offline and of the same version; started from the repository (`npm run desktop`), it
+opens the online guide.
 
 Building a version again replaces its folder; those of other versions stay until deleted, by hand
 or by `npm run release`, about 370 MB each.
@@ -760,7 +764,7 @@ grid's tile, the gallery's picture enlarged) is played by the stage itself, fram
 start each time it is shown, in every browser (Firefox, left to it, plays a
 picture once per page); one that plays once stops on its last frame, which players who ask for less
 motion see at once. `docs/guide/examples/falling/` makes a character fall that way, its pictures
-made by `scripts/examples/falling_assets.py`. Browsers without `ImageDecoder` show the file as it is.
+made by `scripts/examples/falling_assets.py`; so does Knee-Deep's hero, who also springs back up. Browsers without `ImageDecoder` show the file as it is.
 The browser checks run in Chrome; those exporting `firefox = true` run in a headless Firefox too.
 
 A paragraph longer than the textbox is cut into several pages: between sentences first, then
@@ -1061,10 +1065,15 @@ before Datajack 3.7.0 go into every profile there was then; a profile made later
 no lock, any more than the PIN: the libraries are stored side by side, as files or in the browser.
 
 At the foot of the library and of the profiles screen, as of Cyberdeck's projects screen: the
-application's version and **About** (the version again, how it runs, the licence, links to the guide
-and the repository), and online, the note that a browser may erase what a site keeps, with what to
+application's version and **About** (the version again, how it runs, the licence), and online, the note that a browser may erase what a site keeps, with what to
 keep as files (in Datajack, the profile, exported to a file). A new version online is offered there too (see
 [Online, on GitHub Pages](#online-on-github-pages)).
+
+Cyberdeck's About panel links to the licence, the guide and the repository, for authors. Datajack's,
+for players, links to one page on the desktop and from files: *Download the latest Datajack*, the project's latest
+release on GitHub, where a player goes when a game says it needs a newer Datajack. Online or installed it links
+to nothing, the page updating itself. A build sold in a store would pass `aboutLinks: 'none'` and show
+no link either.
 
 ### Controls
 
@@ -1259,9 +1268,10 @@ header on the desktop and a meta tag on the web). A game's CSS is checked before
 only the story's text, its text box and name plate (see Styles and CSS).
 
 On the desktop it runs sandboxed, without Node, served from a private `datajack://` scheme;
-navigation, new windows, web views and permission requests are refused (the About panel's links
-to the project's own pages, on `github.com/pnguyen9/Cyberdeck` and `pnguyen9.github.io/Cyberdeck/`,
-open in the system's browser instead; any other address is ignored). It reaches the disk only
+navigation, new windows, web views and permission requests are refused. The About panel's one link,
+to the latest release on `github.com/pnguyen9/Cyberdeck`, opens in the system's browser: the
+desktop shell, shared with Cyberdeck, opens there any link to the project's own pages, on
+`github.com/pnguyen9/Cyberdeck` and `pnguyen9.github.io/Cyberdeck/`, and ignores any other address. It reaches the disk only
 through a short list of channels whose arguments the main process checks again: strings, bytes and
 lists of strings only; identifiers that cannot leave their folder; asset files whose content matches
 the SHA-256 in their name; and only save folders the player picked in the system dialog.
@@ -1305,7 +1315,9 @@ imports each sample the normal way and compares every page's end.
   (health, gold and XP times 1.1 a win, a loop; six names and entrances, one per size). Fights
   roll a twenty-sided die against armour (a natural 20 doubles the damage, a natural 1 fumbles):
   swing, heave, hide behind the beard, drink, throw a bomb, talk the monster round or run; fifteen
-  monsters, each with its own lines, levels gained from experience. Fallen, the hero is carried back
+  monsters, each with its own lines, levels gained from experience. Fallen, the hero tips over (an
+  animated picture, `dwarf-falling.webp`, that stops on its last frame) and springs back up in the
+  tavern (`dwarf-rising.webp`), carried back
   to town for half their gold, three times; the fourth is an ending. Seven endings in all, four of
   them with the dragon at the bottom. Three optional bosses, stronger than the dragon, wait behind
   WANTED posters on the landings, each with a big move every third turn and its own trick. Once the
@@ -1323,7 +1335,7 @@ imports each sample the normal way and compares every page's end.
   the Deep Delves cleared, and a town and a dragon that remember how the last game ended. Every number a counter, every monster's stats set by one scene
   (`[set: FoeName = The Gloop]`), the doors' hints decisions copied from one another
   (`[set: LeftHint = {Hint}]`), the pictures in a glossy cartoon style by
-  `scripts/samples/knee_deep_assets.py`.
+  `scripts/samples/knee_deep_assets.py`, the animated ones rendered from SVG frames through Chromium.
 
 - **Rock, paper, scissors** (`rock-paper-scissors/`): three choices against a random pick, text on a
   black screen, the score of this game and of every game played kept in the journal.

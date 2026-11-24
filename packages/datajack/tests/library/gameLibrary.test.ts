@@ -20,10 +20,10 @@ const ME = 'sam'
 const STORY = ['# One', '[bg: street]', 'Hello.', '# Two', '[bg: rooftop]', 'Goodbye.'].join('\n')
 
 /** One game, from which archives are exported at various dates with various chapters. */
-function buildGame(name = 'The Letter', idPrefix = 'id') {
+function buildGame(name = 'The Letter', idPrefix = 'id', story = STORY) {
   let nextId = 1
   const environment = { createId: () => `${idPrefix}-${nextId++}`, now: () => '2026-10-26T09:00:00.000Z' }
-  const stored = storeImport(importText(STORY, { layout: monospaceLayout, locale: 'en' }), createProject({ name, locale: 'en' }, environment), { fileName: null }, environment)
+  const stored = storeImport(importText(story, { layout: monospaceLayout, locale: 'en' }), createProject({ name, locale: 'en' }, environment), { fileName: null }, environment)
   let project: ProjectDocument = stored.project
   for (const [fileName, byte] of [['street.png', 1], ['rooftop.png', 2]] as const) {
     project = assignAsset(project, matchAssetFile(fileName, 'image/png', project)!, { id: `asset-${byte}`, fileName, mediaType: 'image/png', byteSize: 1 })
@@ -104,6 +104,13 @@ describe('GameLibrary', () => {
     expect(await pagesOf()).toEqual(['Bye for now.', 'After.'])
     await library.install(await exportWith('An older goodbye.', '2026-10-20T10:00:00Z'), ME)
     expect(await pagesOf()).toEqual(['Bye for now.', 'After.'])
+  })
+
+  it('gives no title for a chapter without one, for the report to name in the player’s language', async () => {
+    const game = buildGame('The Letter', 'id', ['[bg: street]', 'Hello.', '# Two', '[bg: rooftop]', 'Goodbye.'].join('\n'))
+    const library = new GameLibrary(memoryLibraryStorage().storage)
+
+    expect(await library.install(await game.export({ exportedAt: '2026-10-01' }), ME)).toMatchObject({ addedChapters: [null, 'Two'] })
   })
 
   it('adds the chapters of a later release to those installed', async () => {
